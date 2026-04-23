@@ -10,8 +10,16 @@ practitioner book. Chapters live under `chapters/`. The writing plan is
 evaluating local-first architecture. Readers are practitioners, not researchers. They know
 distributed systems vocabulary but do not need proofs.
 
-**Voice:** Direct, practitioner-grade. First person is fine. No academic scaffolding
-("this paper argues", "as we have seen", "the author contends"). No hedging. Take positions.
+**Voice:** Governed by `Unified Technical Writing Style Guide.md` at the repo root.
+Key constraints:
+- **Purpose before process.** Every section opens with why it exists, not what it does.
+- **Active voice. Strong verbs.** "The gateway routes requests" — not "requests are routed."
+- **Agency vocabulary.** "The service fails when X" — not "this issue may be encountered."
+- **No hedging as default register.** Replace "could potentially" with a specific claim.
+- **No synonym cycling.** Name a concept once; use that name everywhere.
+- **Narrative for persuasion.** Part I uses scenario-driven Story Spine structure (Luhn).
+- **No academic scaffolding.** No "this paper argues", "as we have seen", "the author contends."
+- **Lead with the punchline.** Decision before reasoning. Constraint before implementation detail.
 
 ---
 

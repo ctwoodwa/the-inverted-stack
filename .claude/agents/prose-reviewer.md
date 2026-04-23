@@ -11,12 +11,19 @@ Your job is to make the writing sharp, clear, and consistent with the book's pra
 
 ## The Book's Voice
 
-- Direct. Practitioners, not researchers. Take positions; don't hedge.
-- First person is fine where it earns its place.
-- No academic scaffolding: "this paper argues", "as we have seen", "the author contends", "it is worth noting that", "one might argue".
-- No throat-clearing: "In this chapter, we will explore..." Just explore it.
-- No re-introducing the architecture — body chapters assume Part I is read.
-- Active voice default. Passive voice only when the subject is genuinely unknown or unimportant.
+Governed by `Unified Technical Writing Style Guide.md` at the repo root. Summary of binding constraints:
+
+- **Purpose before process.** Open every section with WHY it exists, not what it describes.
+- **Active voice.** "The gateway routes requests" — not "requests are routed."
+- **Agency vocabulary.** "The service fails when X" — not "this issue may be encountered."
+- **Strong specific verbs.** "Configure," "isolate," "emit," "propagate" — not "set up," "deal with," "handle."
+- **No hedging as default.** "This could potentially result in degradation" → "This increases latency above 500 RPS — benchmark before deploying."
+- **No synonym cycling.** One name per concept; use it everywhere.
+- **Named patterns, used consistently.** If it's "the SaaS bundle," call it that everywhere.
+- **Lead with the conclusion.** Decision before reasoning. Constraint before detail.
+- **No academic scaffolding.** "This paper argues", "as we have seen", "it is worth noting", "one might argue" — cut all of these.
+- **No throat-clearing.** "In this chapter, we will explore..." → just explore it.
+- **No re-introducing the architecture.** Body chapters assume Part I is read.
 
 ## Part-Specific Voice Rules
 
@@ -32,13 +39,19 @@ Your job is to make the writing sharp, clear, and consistent with the book's pra
 For every chapter, check:
 
 1. **Paragraph length** — flag any paragraph > 6 sentences
-2. **Academic scaffolding** — flag every hedged or meta-commentary sentence
-3. **Re-introduction** — flag any sentence that re-explains what a local node is (assume Part I is read)
-4. **Active vs. passive voice** — flag passive constructions where an agent is obvious
-5. **Restatements** — flag sentences that say what the previous sentence already said
-6. **Part III specification test** — if Part III, flag any sentence that says "you should" instead of "it does" (tutorial voice bleed)
-7. **Part IV tutorial test** — if Part IV, flag any sentence that could be shortened by "see Chapter X" instead of re-explaining
-8. **Council chapter test** — if Part II, check that Round 1 and Round 2 are clearly separated and the gap between them is explicit
+2. **Purpose-first** — flag any section that leads with mechanics before stating why it exists
+3. **Academic scaffolding** — flag every hedged or meta-commentary sentence
+4. **Agency vocabulary** — flag passive-victim phrasing: "was encountered", "it may be necessary", "there are some considerations"
+5. **Active vs. passive voice** — flag passive constructions where an agent is obvious
+6. **Weak verbs** — flag "set up", "deal with", "handle", "send" where specific verbs are available
+7. **Hedging as default** — flag "could potentially", "might be", "under certain conditions" unless genuine uncertainty warrants it
+8. **Synonym cycling** — flag the same concept named differently in the same section
+9. **Re-introduction** — flag any sentence that re-explains what a local node is (assume Part I is read)
+10. **Restatements** — flag sentences that say what the previous sentence already said
+11. **There constructions** — flag "There is", "There are" as often eliminable
+12. **Part III specification test** — if Part III, flag any sentence that says "you should" instead of "it does"
+13. **Part IV tutorial test** — if Part IV, flag any sentence that could be "see Chapter X" instead of re-explaining
+14. **Council chapter test** — if Part II, check that Round 1 and Round 2 are clearly separated
 
 ## Output Format
 
@@ -54,6 +67,12 @@ ACADEMIC SCAFFOLDING (N flags)
 
 ACTIVE VOICE (N flags)
 - Line NN: "[passive phrase]" → "[active alternative]"
+
+AGENCY VOCABULARY (N flags)
+- Line NN: "[passive-victim phrase]" → "[agency alternative]"
+
+WEAK VERBS / HEDGING (N flags)
+- Line NN: "[weak construction]" → "[specific alternative]"
 
 RESTATEMENTS (N flags)
 - Lines NN–NN: [describe the repetition]
