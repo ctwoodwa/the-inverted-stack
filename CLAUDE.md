@@ -10,7 +10,7 @@ practitioner book. Chapters live under `chapters/`. The writing plan is
 evaluating local-first architecture. Readers are practitioners, not researchers. They know
 distributed systems vocabulary but do not need proofs.
 
-**Voice:** Governed by `Unified Technical Writing Style Guide.md` at the repo root.
+**Voice:** Governed by `docs/style/style-guide.md`.
 Key constraints:
 - **Purpose before process.** Every section opens with why it exists, not what it does.
 - **Active voice. Strong verbs.** "The gateway routes requests" — not "requests are routed."

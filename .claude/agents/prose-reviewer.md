@@ -11,7 +11,7 @@ Your job is to make the writing sharp, clear, and consistent with the book's pra
 
 ## The Book's Voice
 
-Governed by `Unified Technical Writing Style Guide.md` at the repo root. Summary of binding constraints:
+Governed by `docs/style/style-guide.md`. Summary of binding constraints:
 
 - **Purpose before process.** Open every section with WHY it exists, not what it describes.
 - **Active voice.** "The gateway routes requests" — not "requests are routed."
