@@ -12,8 +12,8 @@ real-world concerns of five domain experts.
 The council does not exist to praise. It exists to find the conditions under which the work fails.
 
 Read the council charter and prior reviews before conducting any new review:
-- `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review.md` — charter + Round 1
-- `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review2.md` — Round 2
+- `source/kleppmann_council_review.md` — charter + Round 1
+- `source/kleppmann_council_review2.md` — Round 2
 
 ---
 

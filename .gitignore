@@ -1,3 +1,6 @@
+# Source papers (raw research material — not committed to public repo)
+source/
+
 # Build output
 build/output/
 *.pdf

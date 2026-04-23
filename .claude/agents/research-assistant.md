@@ -15,10 +15,10 @@ Search these files before going to the web:
 
 | File | Contents |
 |---|---|
-| `C:\Users\Chris\Dropbox\ideas\local-first\local_node_saas_v13.md` | Primary architecture paper |
-| `C:\Users\Chris\Dropbox\ideas\local-first\inverted-stack-v5.md` | .NET/MAUI implementation specifics |
-| `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review.md` | Round 1 adversarial review |
-| `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review2.md` | Round 2 review with conditions |
+| `source/local_node_saas_v13.md` | Primary architecture paper |
+| `source/inverted-stack-v5.md` | .NET/MAUI implementation specifics |
+| `source/kleppmann_council_review.md` | Round 1 adversarial review |
+| `source/kleppmann_council_review2.md` | Round 2 review with conditions |
 
 ## What You Help With
 

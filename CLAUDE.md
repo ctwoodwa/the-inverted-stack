@@ -17,14 +17,14 @@ distributed systems vocabulary but do not need proofs.
 
 ## Source Material
 
-All source files live in `C:\Users\Chris\Dropbox\ideas\local-first\`:
+All source files live in `source/` at the repo root (gitignored — not committed to the public repo):
 
 | Alias | File | Role |
 |---|---|---|
-| **v13** | `local_node_saas_v13.md` | Primary architecture paper — main source of truth |
-| **v5** | `inverted-stack-v5.md` | Companion paper — .NET/MAUI/Loro specifics |
-| **R1** | `kleppmann_council_review.md` | Round 1 adversarial review (6 blocks) |
-| **R2** | `kleppmann_council_review2.md` | Round 2 review (all blocks cleared, 15 conditions) |
+| **v13** | `source/local_node_saas_v13.md` | Primary architecture paper — main source of truth |
+| **v5** | `source/inverted-stack-v5.md` | Companion paper — .NET/MAUI/Loro specifics |
+| **R1** | `source/kleppmann_council_review.md` | Round 1 adversarial review (6 blocks) |
+| **R2** | `source/kleppmann_council_review2.md` | Round 2 review (all blocks cleared, 15 conditions) |
 
 **Reference implementation:** `C:\Projects\Sunfish\`
 - `accelerators/anchor/` — Zone A local-first desktop
@@ -170,5 +170,5 @@ make lint                # Check for broken cross-references
 
 - Branch naming: `draft/ch01`, `draft/prospectus`, `draft/appendix-a`
 - Commit message prefix: `draft:`, `outline:`, `review:`, `fix:`, `build:`
-- Do not commit source papers (`local_node_saas_v13.md` etc.) — they live in Dropbox
+- Do not commit source papers (`local_node_saas_v13.md` etc.) — they live in `source/` which is gitignored
 - Chapter files are committed even when incomplete — no dark drafts

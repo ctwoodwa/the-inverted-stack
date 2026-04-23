@@ -370,44 +370,50 @@ finished product.*
 ## File Structure
 
 ```
-C:\Users\Chris\Dropbox\ideas\local-first\
-└── inverted-stack-book\
-    ├── prospectus.md
-    ├── ASSEMBLY.md
-    ├── front-matter\
-    │   ├── foreword-placeholder.md
-    │   └── preface.md
-    ├── part-1-thesis-and-pain\
-    │   ├── ch01-when-saas-fights-reality.md
-    │   ├── ch02-local-first-serious-stack.md
-    │   ├── ch03-inverted-stack-one-diagram.md
-    │   └── ch04-choosing-your-architecture.md
-    ├── part-2-council-reads-the-paper\
-    │   ├── ch05-enterprise-lens.md
-    │   ├── ch06-distributed-systems-lens.md
-    │   ├── ch07-security-lens.md
-    │   ├── ch08-product-economic-lens.md
-    │   ├── ch09-local-first-practitioner-lens.md
-    │   └── ch10-synthesis.md
-    ├── part-3-reference-architecture\
-    │   ├── ch11-node-architecture.md
-    │   ├── ch12-crdt-engine-data-layer.md
-    │   ├── ch13-schema-migration-evolution.md
-    │   ├── ch14-sync-daemon-protocol.md
-    │   ├── ch15-security-architecture.md
-    │   └── ch16-persistence-beyond-the-node.md
-    ├── part-4-implementation-playbooks\
-    │   ├── ch17-building-first-node.md
-    │   ├── ch18-migrating-existing-saas.md
-    │   ├── ch19-shipping-to-enterprise.md
-    │   └── ch20-ux-sync-conflict.md
-    ├── epilogue\
-    │   └── epilogue-what-the-stack-owes-you.md
-    └── appendices\
-        ├── appendix-a-sync-daemon-wire-protocol.md
-        ├── appendix-b-threat-model-worksheets.md
-        ├── appendix-c-further-reading.md
-        └── appendix-d-testing-the-inverted-stack.md
+C:\Projects\the-inverted-stack\
+├── source\                        ← gitignored — raw source papers
+│   ├── local_node_saas_v13.md
+│   ├── inverted-stack-v5.md
+│   ├── kleppmann_council_review.md
+│   └── kleppmann_council_review2.md
+├── prospectus\
+│   └── prospectus.md
+├── ASSEMBLY.md
+├── chapters\
+│   ├── front-matter\
+│   │   ├── foreword-placeholder.md
+│   │   └── preface.md
+│   ├── part-1-thesis-and-pain\
+│   │   ├── ch01-when-saas-fights-reality.md
+│   │   ├── ch02-local-first-serious-stack.md
+│   │   ├── ch03-inverted-stack-one-diagram.md
+│   │   └── ch04-choosing-your-architecture.md
+│   ├── part-2-council-reads-the-paper\
+│   │   ├── ch05-enterprise-lens.md
+│   │   ├── ch06-distributed-systems-lens.md
+│   │   ├── ch07-security-lens.md
+│   │   ├── ch08-product-economic-lens.md
+│   │   ├── ch09-local-first-practitioner-lens.md
+│   │   └── ch10-synthesis.md
+│   ├── part-3-reference-architecture\
+│   │   ├── ch11-node-architecture.md
+│   │   ├── ch12-crdt-engine-data-layer.md
+│   │   ├── ch13-schema-migration-evolution.md
+│   │   ├── ch14-sync-daemon-protocol.md
+│   │   ├── ch15-security-architecture.md
+│   │   └── ch16-persistence-beyond-the-node.md
+│   ├── part-4-implementation-playbooks\
+│   │   ├── ch17-building-first-node.md
+│   │   ├── ch18-migrating-existing-saas.md
+│   │   ├── ch19-shipping-to-enterprise.md
+│   │   └── ch20-ux-sync-conflict.md
+│   ├── epilogue\
+│   │   └── epilogue-what-the-stack-owes-you.md
+│   └── appendices\
+│       ├── appendix-a-sync-daemon-wire-protocol.md
+│       ├── appendix-b-threat-model-worksheets.md
+│       ├── appendix-c-further-reading.md
+│       └── appendix-d-testing-the-inverted-stack.md
 ```
 
 ---

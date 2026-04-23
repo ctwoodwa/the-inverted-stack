@@ -17,10 +17,10 @@ Read these files first:
 - The chapter's current stub file (note the `<!-- Source: -->` comment for which papers to use)
 
 Read the relevant source sections:
-- `C:\Users\Chris\Dropbox\ideas\local-first\local_node_saas_v13.md`
-- `C:\Users\Chris\Dropbox\ideas\local-first\inverted-stack-v5.md`
-- `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review.md` (for Part II chapters)
-- `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review2.md` (for Part II chapters)
+- `source/local_node_saas_v13.md`
+- `source/inverted-stack-v5.md`
+- `source/kleppmann_council_review.md` (for Part II chapters)
+- `source/kleppmann_council_review2.md` (for Part II chapters)
 
 ## Drafting Rules
 

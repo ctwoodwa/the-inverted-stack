@@ -11,13 +11,13 @@ ready for final assembly.
 **Architecture:** 20 chapters + preface + epilogue + 4 appendices, written in dependency
 order (Part I → Part II → Part III → Part IV), with Part II council chapters parallelizable
 and Part III reference chapters largely parallelizable. Each deliverable is a standalone
-markdown file under `inverted-stack-book/`.
+markdown file under `chapters/`.
 
-**Source material (all in `C:\Users\Chris\Dropbox\ideas\local-first\`):**
-- `local_node_saas_v13.md` — primary architecture paper (referred to as **v13**)
-- `inverted-stack-v5.md` — companion paper with .NET specifics (referred to as **v5**)
-- `kleppmann_council_review.md` — Round 1 adversarial review (referred to as **R1**)
-- `kleppmann_council_review2.md` — Round 2 review (referred to as **R2**)
+**Source material (all in `source/` at the repo root — gitignored):**
+- `source/local_node_saas_v13.md` — primary architecture paper (referred to as **v13**)
+- `source/inverted-stack-v5.md` — companion paper with .NET specifics (referred to as **v5**)
+- `source/kleppmann_council_review.md` — Round 1 adversarial review (referred to as **R1**)
+- `source/kleppmann_council_review2.md` — Round 2 review (referred to as **R2**)
 - `book-structure.md` — approved structure with word count targets and writing rules
 
 **Reference implementation:** `C:\Projects\Sunfish\`
@@ -51,7 +51,7 @@ Run this checklist before each commit step. A chapter is not done until all item
 
 **Files to create:**
 ```
-C:\Users\Chris\Dropbox\ideas\local-first\inverted-stack-book\
+C:\Projects\the-inverted-stack\
   ASSEMBLY.md
   front-matter\
     foreword-placeholder.md
@@ -160,7 +160,7 @@ C:\Users\Chris\Dropbox\ideas\local-first\inverted-stack-book\
 
 ### Task 1: Prospectus
 
-**File:** `C:\Users\Chris\Dropbox\ideas\local-first\inverted-stack-book\prospectus.md`
+**File:** `prospectus/prospectus.md`
 **Target:** 2,500–3,500 words
 **Sources:** Both papers (abstracts + executive summaries), book-structure.md
 

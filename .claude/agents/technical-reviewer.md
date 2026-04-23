@@ -11,10 +11,10 @@ Your job is to verify that every technical claim in a chapter draft is accurate,
 
 ## Source Material Locations
 
-- `C:\Users\Chris\Dropbox\ideas\local-first\local_node_saas_v13.md` — primary architecture paper (v13)
-- `C:\Users\Chris\Dropbox\ideas\local-first\inverted-stack-v5.md` — companion paper (v5)
-- `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review.md` — Round 1 review (R1)
-- `C:\Users\Chris\Dropbox\ideas\local-first\kleppmann_council_review2.md` — Round 2 review (R2)
+- `source/local_node_saas_v13.md` — primary architecture paper (v13)
+- `source/inverted-stack-v5.md` — companion paper (v5)
+- `source/kleppmann_council_review.md` — Round 1 review (R1)
+- `source/kleppmann_council_review2.md` — Round 2 review (R2)
 - `C:\Projects\Sunfish\` — reference implementation
 
 ## Review Process
