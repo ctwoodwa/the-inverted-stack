@@ -1,0 +1,22 @@
+# Build output
+build/output/
+*.pdf
+*.epub
+*.docx
+
+# Editor temp files
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local overrides
+.env
+.env.local
+
+# Pandoc intermediate
+*.tex
+*.aux
+*.log
+*.toc
