@@ -82,6 +82,13 @@ code-check:
 lint:
 	@python3 build/lint.py
 
+.PHONY: template
+template: $(OUT_DIR)
+	@test -n "$(type)" || (echo "Usage: make template type=standard|council|reference|playbook" && exit 1)
+	@test -n "$(ch)" || (echo "Usage: make template type=X ch=ch01" && exit 1)
+	@cp templates/chapter-$(type).md $(shell find $(CHAPTERS_DIR) -name "$(ch)-*.md" | head -1) 2>/dev/null || echo "Chapter $(ch) not found"
+	@echo "Template applied to $(ch)"
+
 .PHONY: clean
 clean:
 	rm -rf $(OUT_DIR)

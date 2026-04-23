@@ -52,6 +52,31 @@ a chapter reaches `icm/technical-review`. Merge at `icm/approved`.
 
 ---
 
+## Specialized Agents
+
+Four subagents are defined in `.claude/agents/` (also installed at user scope `~/.claude/agents/`).
+Invoke them by name or @-mention:
+
+| Agent | When to use | Invoke as |
+|---|---|---|
+| `chapter-drafter` | Write a first draft from an outline (Stage 2) | `@chapter-drafter draft ch01` |
+| `technical-reviewer` | Verify claims against v13/v5, flag invented APIs (Stage 4) | `@technical-reviewer review ch12` |
+| `prose-reviewer` | Active voice, no scaffolding, paragraph length (Stage 5) | `@prose-reviewer review ch05` |
+| `research-assistant` | Find citations, source claims, brainstorm outlines (any stage) | `@research-assistant find sources for [claim]` |
+
+## Chapter Templates
+
+Templates in `templates/` match the voice requirements for each part:
+
+| Template | For | Apply with |
+|---|---|---|
+| `chapter-standard.md` | Part I (Ch 1–4) and epilogue | `make template type=standard ch=ch01` |
+| `chapter-council.md` | Part II (Ch 5–10) — two-act structure | `make template type=council ch=ch05` |
+| `chapter-reference.md` | Part III (Ch 11–16) — specification voice | `make template type=reference ch=ch11` |
+| `chapter-playbook.md` | Part IV (Ch 17–20) — tutorial voice | `make template type=playbook ch=ch17` |
+
+---
+
 ## Writing Workflow
 
 ### Outline (Stage 1)
