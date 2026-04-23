@@ -53,9 +53,9 @@ The three conditions raised alongside the block — diagram the key hierarchy, s
 
 ### The BLOCK Verdict
 
-Okonkwo issues a conditional block: PROCEED WITH CONDITIONS, with the condition that the key compromise incident response must be resolved before a security review sign-off can be issued. The domain average is 7.3 out of 10, which would normally support PROCEED WITH CONDITIONS outright. The key compromise gap pulls the verdict into conditional territory because no security review of a key-based system can ignore the compromise response.
+Okonkwo issues a BLOCK. The domain average of 7.3 out of 10 would normally support PROCEED WITH CONDITIONS. The key compromise gap pushes the verdict to a full block because no security review of a key-based system can sign off without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — is not a conditions matter. It is a prerequisite.
 
-The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. But the incident response gap is the kind of gap that causes real-world security reviews to fail. It must be resolved before implementation.
+The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. The attacker-mindset framing — that distributing data to endpoints distributes the attack surface — is rare in local-first literature. But the incident response gap is the kind of gap that causes real-world security reviews to fail. The block holds until it is resolved.
 
 ---
 
@@ -106,9 +106,9 @@ This is correct. The gap is one step earlier.
 
 The CID guarantees the integrity of the package relative to the CID. It does not guarantee that the CID itself came from the legitimate build process. An attacker who compromises the build system can produce a valid package, compute its correct CID, and sign that CID with a compromised release signing key. Clients verify the CID, confirm it matches, and install the attacker’s payload.
 
-Three things are missing. First, key custody specification for the release signing key: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, a reproducible build requirement: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore, which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
+Three things are missing. First, key custody specification for the release signing key: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, a reproducible build requirement: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore [1], which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
 
-<!-- CLAIM: Sigstore client-side transparency log verification as a rejection mechanism — verify against Sigstore documentation -->
+<!-- CLAIM: Sigstore client-side transparency log verification as a client-side rejection mechanism — verify against Sigstore docs and current cosign/rekor tooling -->
 
 Okonkwo scores this dimension 7 out of 10. The content-addressing model is the right foundation. The signing key custody and transparency layer are what complete it.
 
@@ -138,7 +138,7 @@ This is a hardening recommendation, not an architecture flaw. The base model is 
 
 This is the condition Okonkwo scores lowest in Round 2: compliance framework mapping, 5 out of 10. It surfaces a genuine conflict between the architecture’s design and a legal requirement affecting every organization operating in the European Union.
 
-Article 17 of the General Data Protection Regulation establishes the right to erasure [1]. A data subject can request that an organization delete their personal data. The organization must comply. For conventional databases, deletion is straightforward: delete the row, purge the backups, confirm. For a CRDT system with no-GC compliance records, deletion is not straightforward.
+Article 17 of the General Data Protection Regulation establishes the right to erasure [2]. A data subject can request that an organization delete their personal data. The organization must comply. For conventional databases, deletion is straightforward: delete the row, purge the backups, confirm. For a CRDT system with no-GC compliance records, deletion is not straightforward.
 
 The CRDT operation log for compliance-tier records is immutable by design. The immutability is not a bug — it is the feature. An append-only log with signed entries provides the tamper evidence that regulated industries require for audit trails. Breaking the log to delete an operation breaks the continuity property the compliance tier exists to provide.
 
@@ -196,4 +196,6 @@ Distribute the data to endpoints for resilience. Treat each endpoint as a potent
 
 ## References
 
-[1] European Parliament and Council, “General Data Protection Regulation (GDPR),” Regulation (EU) 2016/679, Art. 17 — Right to Erasure, Off. J. Eur. Union, Apr. 2016.
+[1] S. E. Bhatt et al., “Sigstore: Software Signing for Everybody,” in *Proc. 29th ACM Conf. Comput. Commun. Secur. (CCS ’22)*, Los Angeles, CA, USA, Nov. 2022, pp. 2353–2367, doi: 10.1145/3548606.3560596.
+
+[2] European Parliament and Council, “General Data Protection Regulation (GDPR),” Regulation (EU) 2016/679, Art. 17 — Right to Erasure, *Off. J. Eur. Union*, Apr. 2016.
