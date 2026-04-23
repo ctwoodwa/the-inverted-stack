@@ -169,4 +169,4 @@ Convergence is a property of data structures. Correctness is a property of appli
 
 ## References
 
-[1] M. Hupfeld and T. Cortes, "FastPaxos Made Easy: Theory and Implementation," in *DISC 2008*, Arcachon, France, 2008. *(Flease is derived from the lease-management protocol described in this work.)*
+[1] B. Kolbeck, M. Hogqvist, J. Stender, and F. Hupfeld, "Flease: Clash-free Lease Coordination without State Replication," in *ICDCS 2011*, Minneapolis, MN, 2011. <!-- CLAIM: verify full Flease citation — confirm it is Kolbeck et al. ICDCS 2011, not Hupfeld/Cortes FastPaxos -->
