@@ -31,6 +31,7 @@ TARGETS = {
     "appendix-b": 2000,
     "appendix-c": 2000,
     "appendix-d": 2000,
+    "appendix-e": 500,
 }
 
 CHAPTERS_DIR = os.path.join(os.path.dirname(__file__), "..", "chapters")
@@ -45,8 +46,9 @@ def count_words(path):
     return len(text.split())
 
 def chapter_key(filename):
-    m = re.search(r"(ch\d+|appendix-[a-d]|preface|epilogue)", filename)
+    m = re.search(r"(ch\d+|appendix-[a-z]|preface|epilogue)", filename)
     return m.group(1) if m else filename
+
 
 total_actual = 0
 total_target = 0

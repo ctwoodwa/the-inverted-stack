@@ -31,7 +31,8 @@ CHAPTER_FILES := \
 	$(CHAPTERS_DIR)/appendices/appendix-a-sync-daemon-wire-protocol.md \
 	$(CHAPTERS_DIR)/appendices/appendix-b-threat-model-worksheets.md \
 	$(CHAPTERS_DIR)/appendices/appendix-c-further-reading.md \
-	$(CHAPTERS_DIR)/appendices/appendix-d-testing-the-inverted-stack.md
+	$(CHAPTERS_DIR)/appendices/appendix-d-testing-the-inverted-stack.md \
+	$(CHAPTERS_DIR)/appendices/appendix-e-citation-style.md
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)

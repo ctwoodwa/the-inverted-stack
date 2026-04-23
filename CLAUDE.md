@@ -21,6 +21,10 @@ Key constraints:
 - **No academic scaffolding.** No "this paper argues", "as we have seen", "the author contends."
 - **Lead with the punchline.** Decision before reasoning. Constraint before implementation detail.
 
+**Diagrams:** Mermaid (fenced code blocks with `mermaid` language tag). Pandoc-compatible; renders natively on GitHub. Use for architecture diagrams, flow charts, and sequence diagrams. Do not use ASCII art or external image files for diagrams that can be expressed in Mermaid.
+
+**Citations:** IEEE numeric style. In-text: [1], [2], [3] in order of first appearance. Full reference list compiled at final assembly. Follow all rules in `chapters/appendices/appendix-e-citation-style.md` exactly.
+
 ---
 
 ## Source Material

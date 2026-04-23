@@ -44,6 +44,7 @@ EXPECTED_CHAPTERS = [
     ("appendices/appendix-b-threat-model-worksheets.md", "appendix-b"),
     ("appendices/appendix-c-further-reading.md", "appendix-c"),
     ("appendices/appendix-d-testing-the-inverted-stack.md", "appendix-d"),
+    ("appendices/appendix-e-citation-style.md", "appendix-e"),
 ]
 
 CHAPTER_NUMBER_MAP = {f"ch{i:02d}": i for i in range(1, 21)}

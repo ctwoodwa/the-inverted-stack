@@ -33,6 +33,7 @@
 | Appendix B | `chapters/appendices/appendix-b-threat-model-worksheets.md` | stub | — |
 | Appendix C | `chapters/appendices/appendix-c-further-reading.md` | stub | — |
 | Appendix D | `chapters/appendices/appendix-d-testing-the-inverted-stack.md` | stub | — |
+| Appendix E | `chapters/appendices/appendix-e-citation-style.md` | approved | ~500 |
 | Foreword | `chapters/front-matter/foreword-placeholder.md` | placeholder | — |
 
 ## Running Word Count

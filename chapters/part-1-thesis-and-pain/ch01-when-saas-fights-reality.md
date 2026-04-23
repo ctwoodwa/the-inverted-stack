@@ -24,6 +24,8 @@ The three desirable properties are real. Real-time collaboration is transformati
 
 The three conditions on the other side of the bundle get less attention. Your data lives on vendor infrastructure, which means the vendor can see it, lose it, sell the company that holds it, or turn the service off. Pricing is at the vendor's discretion — the rate when you adopted the software is not a commitment, it's a starting point. Service continuity is contingent on the vendor's survival: if the company gets acquired, runs out of money, or decides to sunset the product, your software stops working when theirs does.
 
+The acceptance was rational. Neither half of the bundle is fully visible at adoption time. The vendor's terms of service when a company signs up and the vendor's terms of service three acquisitions later are different documents. The pricing that wins a customer's business is designed to win it — not to represent what the platform costs after that customer has built their workflows, trained their staff, and transferred their data. The bundle reveals itself over time, after the switching costs have accumulated.
+
 Users accepted these conditions because the three desirable properties appeared to *require* them. Real-time collaboration required a central server both parties could talk to. Multi-device sync required a cloud that acted as the authoritative copy. Zero maintenance required that the vendor control the infrastructure. The package looked indivisible because, with the technology of 2010, it largely was.
 
 That's no longer true. The rest of this chapter is about what it costs before we reach that — and who pays the most.
@@ -74,6 +76,8 @@ Most SaaS platforms offer some form of "offline mode." What this means in practi
 
 The field operations manager who needs to log a safety inspection at 7 AM on a construction site before the crew starts work has a few options when the SaaS is unreachable: write it in a notebook and transcribe it later (with all the transcription errors that introduces), use the app's read-only offline mode and hope the form submission queues correctly, or skip the log and fill it in from memory when back in the office. All three options introduce risk. None of them should be necessary. The software should work on a construction site because that's where the work happens.
 
+The scale of this mismatch extends beyond any single vertical. Reliable internet access is not universal, even in developed economies. Hospital clinical environments restrict wireless devices near sensitive equipment. Manufacturing and warehouse floors often have RF environments hostile to Wi-Fi. Agricultural operations span hundreds of acres — the field where something needs to be logged is rarely next to the fiber drop. Emergency response personnel work in exactly the places infrastructure fails first. For all of these workers, SaaS software's connectivity assumption is not an occasional inconvenience. It is a systematic design error applied to environments the designers never worked in.
+
 ### The Data You Can't Get Back
 
 Your vendor's terms of service say your data is yours. They're often technically correct — the vendor does not claim ownership of the content you create. What the terms of service don't address is *accessibility*.
@@ -104,6 +108,8 @@ The per-seat model creates structural pressure as teams grow. A ten-person team'
 
 Mid-contract price changes are less common but not rare. Platform economics shift, investor pressure changes, the competitive landscape evolves. Users who committed workflows and data to a platform signed a contract of sorts — and then discovered the other party's interpretation of that contract differed from their own.
 
+The lock-in compounds when teams use multiple SaaS products that integrate with each other. A project management platform connected to a communication tool, a file storage service, a time tracker, and a billing system creates a dependency web where each integration raises the switching cost of every other platform. When one vendor raises prices, the team isn't evaluating that product in isolation — they're evaluating the cost of unwinding a set of integrations built over years. Integration ecosystems serve the vendor's retention objectives as reliably as they serve the user's productivity. The web of dependencies isn't a side effect of the SaaS model — it's a feature of it, from the vendor's perspective.
+
 ---
 
 ## Who Pays the Most
@@ -120,6 +126,8 @@ And these organizations are the primary addressable market for the products most
 
 This is not a coincidence. The SaaS bundle packages its desirable and undesirable properties together in a way that affects smaller buyers more severely, because smaller buyers have less ability to negotiate the undesirable half away.
 
+The regulatory dimension compounds this asymmetry. A legal practice storing confidential client communications in a vendor's cloud carries a professional duty to understand where that data lives and who can access it. A medical practice has HIPAA obligations. A construction firm with government contracts may have data residency requirements tied to those contracts. For large enterprises, these obligations get negotiated into vendor agreements with audit rights and data processing addenda. For the eight-attorney firm, the compliance answer is the vendor's standard privacy policy — a document written to protect the vendor, not the client.
+
 ---
 
 ## Why Users Have Accepted This
@@ -128,7 +136,7 @@ Until recently, they didn't have a choice.
 
 Real-time collaboration requires that all parties see consistent state when they make concurrent changes. In 2008, the most practical way to guarantee this was a central server both parties could read from and write to simultaneously. Every other approach — emailing files, shared drives, version control — introduced either merge conflicts requiring manual resolution or coordination overhead requiring explicit locking. Real-time collaboration solved both problems by making divergence impossible: one copy, everyone editing the same one.
 
-Multi-device sync requires an authoritative copy that all devices agree on. When the cloud holds the authoritative copy, sync is the cloud pushing updates to each device. Without a cloud authority, devices have to figure out among themselves which version is current — and the consumer-grade protocols for resolving concurrent edits across devices reliably, at scale, without requiring user intervention, didn't exist.
+Multi-device sync requires an authoritative copy that all devices agree on. When the cloud holds the authoritative copy, sync is the cloud pushing updates to each device. Without a cloud authority, devices have to figure out among themselves which version is current — and the consumer-grade protocols for resolving concurrent edits across devices reliably, at scale, without requiring user intervention, didn't exist. Merging concurrent edits deterministically, without a server to adjudicate conflicts, was an unsolved problem for end-user software.
 
 Zero maintenance requires that someone else manage the infrastructure. The alternative is the user managing it, which requires IT capability that most small organizations don't have and don't want to develop. The comparison to self-hosted software circa 2005 is instructive: a self-hosted email server, a self-hosted project tracker, a self-hosted document collaboration platform — all theoretically possible, all practically demanding enough that most organizations paid someone else to handle it.
 
@@ -137,6 +145,8 @@ The dependencies looked structural because they were structural. The technology 
 Users accepted the SaaS bundle not because they preferred the conditions on the second half but because the technology of the time made those conditions appear to be the cost of the first half. They weren't accepting a bargain so much as acknowledging a constraint.
 
 The constraint has been removed.
+
+The evidence is commercial, not theoretical. Actual Budget delivers full personal finance capability on local storage; its sync service is optional. Linear's sync engine runs on a local SQLite replica; the cloud is already demoted to a relay peer. Figma's multiplayer cursors run on CRDTs. These products demonstrate that the desirable half of the SaaS bundle — collaboration, sync, responsive UI — doesn't require vendor data custody to function. Users who have worked with software built on these foundations have a reference point: they know what it feels like when software keeps running after the internet goes out. The acceptance erodes when the alternative is observable, not theoretical.
 
 ---
 

@@ -350,6 +350,13 @@ finished product.*
 - Test strategy for the sync protocol: network partition simulation, clock skew injection,
   concurrent edit generation, GC boundary conditions, Byzantine operation injection
 
+### Appendix E — Citation Style
+- IEEE numeric citation style: in-text bracketed numbers [1], [2]; reference list ordered by
+  first appearance
+- Common reference formats: book, edited chapter, journal article, conference paper,
+  web/online source
+- Consistency rules for multi-source citations and capitalization
+
 ---
 
 ## Word Count Targets
@@ -413,7 +420,8 @@ C:\Projects\the-inverted-stack\
 │       ├── appendix-a-sync-daemon-wire-protocol.md
 │       ├── appendix-b-threat-model-worksheets.md
 │       ├── appendix-c-further-reading.md
-│       └── appendix-d-testing-the-inverted-stack.md
+│       ├── appendix-d-testing-the-inverted-stack.md
+│       └── appendix-e-citation-style.md
 ```
 
 ---
