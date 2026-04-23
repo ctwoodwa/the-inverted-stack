@@ -141,7 +141,7 @@ The missing step is not a better sync library, a more sophisticated CRDT, or a m
 
 ## The Missing Step: Full Node, Not Smart Cache
 
-The question that distinguishes this architecture from the approaches above is the one posed in v5 [2]:
+The question that distinguishes this architecture from the approaches above is this:
 
 > What if a user's workstation ran a full node of the system — including state, business logic, and sync — such that "the cloud" is merely another peer, not the source of truth?
 
@@ -157,7 +157,7 @@ The full node does more than the smart cache not because it is smarter, but beca
 
 This reframes what "offline support" means. Offline support in the smart-cache model means "some operations work offline, with degraded functionality." Offline support in the full-node model means "all operations work offline, identically." The distinction is not a feature comparison. It is a structural property that follows from where authority lives.
 
-The production analogues table in v13 [3] validates every component of this model separately. CRDTs are production-ready; Figma and Linear use them. Leaderless replication works at scale; Cassandra and DynamoDB rely on it. Desktop shell plus local server is a proven pattern; VS Code language servers and 1Password's local agent use it. Declarative partial sync is solved; PowerSync and ElectricSQL implement it. Silent background container services are normalized; Docker Desktop and Tailscale established the model. None of these components are speculative. What has not been done before is assembling them into a coherent, enterprise-deployable system with the governance model, security model, and business model that make it adoptable by real organizations.
+Every component of this model has a production analogue that validates it separately. CRDTs are production-ready; Figma and Linear use them. Leaderless replication works at scale; Cassandra and DynamoDB rely on it. Desktop shell plus local server is a proven pattern; VS Code language servers and 1Password's local agent use it. Declarative partial sync is solved; PowerSync and ElectricSQL implement it. Silent background container services are normalized; Docker Desktop and Tailscale established the model. None of these components are speculative. What has not been done before is assembling them into a coherent, enterprise-deployable system with the governance model, security model, and business model that make it adoptable by real organizations.
 
 ```mermaid
 graph TB
@@ -187,7 +187,7 @@ The seven Kleppmann ideals [1] tell you what to build. They do not tell you how 
 
 The existing implementations — Automerge, Actual Budget, Linear's sync engine, Obsidian's local storage — each solve one part of this problem correctly. CRDTs handle concurrent merge. Local storage handles offline reads. Plain-file formats handle long-term portability. Fast local replicas handle perceived performance. None of them addresses the full set, and none provides the composition.
 
-This book's contribution is the composition. Not new primitives — every component in this architecture has a production analogue [3]. The CRDT merge semantics come from the Automerge and Yjs lineage. The gossip anti-entropy protocol comes from Cassandra and DynamoDB. The desktop shell plus local server pattern comes from VS Code and 1Password. The declarative partial sync model comes from PowerSync and ElectricSQL. The container-as-background-service model comes from Docker Desktop and Tailscale. The bidirectional schema lenses come from Ink & Switch's Cambria work.
+This book's contribution is the composition. Not new primitives — every component in this architecture has a production analogue. The CRDT merge semantics come from the Automerge and Yjs lineage. The gossip anti-entropy protocol comes from Cassandra and DynamoDB. The desktop shell plus local server pattern comes from VS Code and 1Password. The declarative partial sync model comes from PowerSync and ElectricSQL. The container-as-background-service model comes from Docker Desktop and Tailscale. The bidirectional schema lenses come from Ink & Switch's Cambria work.
 
 What this book assembles from those proven components:
 
@@ -200,7 +200,7 @@ What this book assembles from those proven components:
 - A business model: AGPLv3 core, managed relay as the paid service, relay economics that become cash-flow positive before meaningful scale.
 - A governance model: foundation-backed structure, community contributor path, dual-license CLA for enterprise customers.
 
-The architecture stands on the local-first community's work. The paper that named the seven ideals [1] is the benchmark against which this book's design is measured throughout. The Ink & Switch essays on Automerge, Cambria, and collaborative document design are the intellectual foundation for the CRDT and schema evolution sections. Kleppmann's distributed systems work [4] provides the vocabulary that runs throughout Part III.
+The architecture stands on the local-first community's work. The paper that named the seven ideals [1] is the benchmark against which this book's design is measured throughout. The Ink & Switch essays on Automerge, Cambria, and collaborative document design are the intellectual foundation for the CRDT and schema evolution sections. Kleppmann's distributed systems work [2] provides the vocabulary that runs throughout Part III.
 
 The word "serious" in this chapter's title is not a claim about complexity. It is a claim about scope. A sync toy satisfies one or two of the seven properties and defers the hard ones. A serious stack satisfies all seven — and adds the requirements that the ideals paper did not address: the deployment model, the security model, the governance model, the migration story, and the path to commercial sustainability. The next chapter shows what the complete stack looks like in a single diagram. Chapter 4 provides the decision framework for determining when this architecture is the right choice and when it is not.
 
@@ -210,8 +210,4 @@ The word "serious" in this chapter's title is not a claim about complexity. It i
 
 [1] M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward!)*, Athens, Greece, 2019, pp. 154–178.
 
-[2] C. Wood, "The Inverted Stack: A Local-Node Architecture for Collaborative Software," unpublished white paper, v5.0, Apr. 2026.
-
-[3] C. Wood, "Inverting the SaaS Paradigm: A Local-Node Architecture for Collaborative Software," unpublished white paper, v13.0, Apr. 2026.
-
-[4] M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O'Reilly Media, 2017.
+[2] M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O'Reilly Media, 2017.
