@@ -47,7 +47,7 @@ For the multi-target MAUI build, add explicit build targets to your project file
 
 ```xml
 <PropertyGroup>
-  <TargetFrameworks>net9.0-windows10.0.19041.0;net9.0-maccatalyst</TargetFrameworks>
+  <TargetFrameworks>net11.0-windows10.0.19041.0;net11.0-maccatalyst</TargetFrameworks>
 </PropertyGroup>
 
 <Target Name="PublishMsi" AfterTargets="Publish" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
@@ -189,7 +189,7 @@ sequenceDiagram
         Relay-->>Node: Capability grant
         Node->>Relay: Sync operations
     else Non-compliant
-        Relay-->>Node: ERR_COMPLIANCE_REJECTED
+        Relay-->>Node: ERR_ATTESTATION_REQUIRED
         Node->>Node: Suspend sync, notify user
     end
 ```
@@ -234,6 +234,7 @@ The section of your deployment guide titled "Revoking User Access" cannot say "t
 The revocation command:
 
 ```bash
+# illustrative — CLI interface is pre-1.0; validate against your Sunfish milestone
 sunfish admin revoke --user <user-id> --team <team-id>
 ```
 

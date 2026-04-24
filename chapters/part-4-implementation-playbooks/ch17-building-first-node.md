@@ -22,13 +22,13 @@ Clone the repository and build for Windows:
 ```bash
 git clone https://github.com/your-org/sunfish.git
 cd sunfish/accelerators/anchor
-dotnet build Sunfish.Anchor.csproj -f net10.0-windows10.0.19041.0
+dotnet build Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0
 ```
 
 Run it:
 
 ```bash
-dotnet run --project Sunfish.Anchor.csproj -f net10.0-windows10.0.19041.0
+dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0
 ```
 
 The app opens. You see a three-step onboarding surface and a status bar with three indicators. No data, no peers, no reports — that is correct. The shell is intentionally empty. You fill it with your domain in later sections.
@@ -36,8 +36,8 @@ The app opens. You see a three-step onboarding surface and a status bar with thr
 If you are on macOS, build and run with the catalyst target:
 
 ```bash
-dotnet build Sunfish.Anchor.csproj -f net10.0-maccatalyst
-dotnet run --project Sunfish.Anchor.csproj -f net10.0-maccatalyst
+dotnet build Sunfish.Anchor.csproj -f net11.0-maccatalyst
+dotnet run --project Sunfish.Anchor.csproj -f net11.0-maccatalyst
 ```
 
 iOS and Android targets must also be built on macOS. Windows is the fastest path for first contact. Use it unless you have a specific reason not to.
@@ -97,7 +97,7 @@ Each call registers a distinct layer. Their order matters.
 
 `AddSunfishEncryptedStore()` — from `Sunfish.Foundation.LocalFirst` — opens the SQLCipher database. The database file is device-local and encrypted with a key derived from the device keypair. No data leaves storage unencrypted. This call must come first because both the runtime and the security layer depend on the store.
 
-`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Sync` — wires the sync daemon, the mDNS peer discovery service, and the gossip anti-entropy loop. It also registers the CRDT engine abstraction (`ICrdtEngine`). The current implementation uses YDotNet; the architecture is engine-agnostic and the interface accepts Loro when Sunfish reaches that milestone. This call must come before security registration because the runtime owns the session context that security decorates.
+`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — wires the sync daemon, the mDNS peer discovery service, and the gossip anti-entropy loop. It also registers the CRDT engine abstraction (`ICrdtEngine`). The current implementation uses YDotNet; the architecture is engine-agnostic and the interface accepts Loro when Sunfish reaches that milestone. This call must come before security registration because the runtime owns the session context that security decorates.
 
 `AddSunfishKernelSecurity()` — from `Sunfish.Kernel.Security` — registers the attestation verifier (`IAttestationVerifier`), the key management service, and the onboarding state machine. It loads the device keypair from the OS keystore on startup. If no keypair exists — first launch — it generates one and persists it before continuing.
 
@@ -157,7 +157,8 @@ The document persists in the encrypted store automatically. Close the app and re
 
 ```bash
 # Second instance on the same machine (Windows — different data path)
-dotnet run --project Sunfish.Anchor.csproj -f net10.0-windows10.0.19041.0 \
+# illustrative — exact CLI flags depend on your Sunfish milestone
+dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0 \
     --sunfish-data-dir "%LOCALAPPDATA%\SunfishAnchor2"
 ```
 
@@ -333,7 +334,7 @@ Every domain feature in a local-first node registers as a plugin. The plugin sys
 
 ### Registering Your First Plugin
 
-Implement `ILocalNodePlugin` from `Sunfish.Kernel.Sync`:
+Implement `ILocalNodePlugin` from `Sunfish.Kernel.Runtime`:
 
 ```csharp
 // illustrative — not runnable (pre-1.0 API)

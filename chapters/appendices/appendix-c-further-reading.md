@@ -52,7 +52,7 @@ The foundational CRDT theory paper. Dense and mathematical; not required for pra
 
 [9] H. Howard, M. Jelasity, and J. Crowcroft, "Flexible Paxos: Quorum intersection revisited," *arXiv:1608.06696*, Aug. 2016.
 
-The theoretical basis for Flease-style failure-aware lease coordination used for CP-class records in Chapter 14. The paper is accessible; the key insight is that lease coordination does not require a dedicated coordinator if the failure model is well-defined. Read this if you are implementing your own lease protocol or evaluating whether Flease's assumptions hold in your network topology.
+The theoretical basis for understanding quorum flexibility in distributed consensus. Flexible Paxos demonstrates that Paxos quorums do not need to be uniform across phases — read and write quorums need only intersect, not be identical — which informs the lease coordination tradeoffs in Flease. Read this alongside the Kolbeck et al. Flease paper if you are implementing or evaluating a custom lease protocol.
 
 ---
 

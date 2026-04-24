@@ -178,9 +178,9 @@ The daemon implements exponential backoff with jitter on reconnection. When the 
 backoff_interval = min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter_range)
 ```
 
-Where `base` is 1 second, `max_seconds` is 60, and `jitter_range` is 5 seconds. A node that has been offline for more than one hour uses the maximum backoff on its first reconnection attempt, regardless of its attempt count.
+Where `base`, `max_seconds`, and `jitter_range` are configurable per deployment, with the 60-second maximum enforced by the relay. A node that has been offline for an extended period — beyond a full gossip cycle — uses the maximum backoff on its first reconnection attempt regardless of its attempt count.
 
-The managed relay enforces a per-node rate limit on delta submissions. A node that submits deltas faster than the rate limit is queued, not rejected. The queue is bounded: if the queue depth for a node exceeds the configured limit, the relay drops the oldest queued submission and emits a THROTTLE notification to the node. The node treats a THROTTLE notification as a signal to increase its backoff interval for subsequent submissions.
+The managed relay enforces a per-node rate limit on delta submissions. A node that submits deltas faster than the rate limit is queued, not rejected. The queue is bounded: if the queue depth for a node exceeds the configured limit, the relay drops the oldest queued submission. The node receives a flow control indication within the ACK frame of the next handshake and increases its backoff interval for subsequent submissions.
 
 These two controls together spread a partition-healing reconnection event across a 60-second window rather than concentrating it at the moment network access returns.
 

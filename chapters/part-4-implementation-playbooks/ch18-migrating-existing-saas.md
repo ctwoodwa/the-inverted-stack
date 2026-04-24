@@ -103,10 +103,9 @@ The foundation layer populates a local SQLite replica from your existing Postgre
 Wire a feature flag before shipping to production:
 
 ```csharp
-builder.Services.AddSunfishFeatureManagement(options =>
-{
-    options.RegisterFlag("LocalFirst.ShadowMode", defaultEnabled: false);
-});
+// illustrative — not runnable (pre-1.0 API)
+// Feature flag "LocalFirst.ShadowMode" gates shadow mode; registration API is pre-1.0
+builder.Services.AddSunfishFeatureManagement();
 ```
 
 This flag is your instant rollback path. If shadow mode causes a performance regression or data inconsistency, flip it off without a deployment.
@@ -124,13 +123,10 @@ This flag is your instant rollback path. If shadow mode causes a performance reg
 **How.** Introduce `Sunfish.Kernel.Crdt` for your AP-class aggregates. Route AP-class block writes through the CRDT engine. The server transitions to a relay role for AP-class data: it propagates CRDT deltas between nodes but does not own them.
 
 ```csharp
-builder.Services.AddSunfishKernelCrdt(options =>
-{
-    options.Domains.Add("tasks", CrdtDomainMode.LocalAuthority);
-    options.Domains.Add("notes", CrdtDomainMode.LocalAuthority);
-    options.Domains.Add("attachments", CrdtDomainMode.LocalAuthority);
-    // billing and roles remain server-authoritative — omit them here
-});
+// illustrative — not runnable (pre-1.0 API)
+// Route AP-class domains (tasks, notes, attachments) through the CRDT engine;
+// billing and roles remain server-authoritative — omit them here
+builder.Services.AddSunfishCrdtEngine();
 ```
 
 Identify AP-class domains by asking: if two users edit this record concurrently and both edits are preserved via merge, is the result acceptable? Task body edits merge cleanly. Seat reservation conflicts do not.
