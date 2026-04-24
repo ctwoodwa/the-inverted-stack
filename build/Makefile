@@ -52,11 +52,27 @@ draft-pdf: $(OUT_DIR)
 epub: $(OUT_DIR)
 	$(PANDOC) $(CHAPTER_FILES) \
 		--from markdown \
-		--to epub \
+		--to epub3 \
+		--toc --toc-depth=2 \
+		--split-level=1 \
 		--metadata title="The Inverted Stack: Local-First Nodes in a SaaS World" \
+		--metadata subtitle="A Practitioner's Guide to Building for the Offline-First Era" \
 		--metadata author="Chris Woodward" \
+		--metadata lang=en-US \
+		--metadata publisher="Chris Woodward" \
+		--metadata date="2026-04-24" \
+		--metadata description="A practitioner's guide to local-first architecture for software architects, technical founders, and senior engineers." \
+		--metadata rights="Copyright (c) 2026 Chris Woodward. All rights reserved." \
 		--output $(OUT_DIR)/the-inverted-stack.epub
-	@echo "ePub written to $(OUT_DIR)/the-inverted-stack.epub"
+	@echo "EPUB 3 written to $(OUT_DIR)/the-inverted-stack.epub"
+
+.PHONY: audiobook
+audiobook:
+	python build/audiobook.py
+
+.PHONY: m4b
+m4b:
+	python build/m4b.py
 
 .PHONY: chapter-pdf
 chapter-pdf: $(OUT_DIR)

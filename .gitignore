@@ -23,3 +23,7 @@ Thumbs.db
 *.aux
 *.log
 *.toc
+
+# Python bytecode cache
+__pycache__/
+*.pyc
