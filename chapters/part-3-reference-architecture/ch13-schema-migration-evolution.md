@@ -87,11 +87,11 @@ Bidirectional lenses allow two nodes at different schema versions to exchange re
 
 Lenses form a directed graph. Each directed edge between two consecutive schema versions carries a lens pair. To translate between non-adjacent versions, the sync daemon traverses the shortest path through the graph, composing lens functions in order. Version distance is a performance concern, not a correctness concern: a node that is three versions behind applies three composed lenses on receipt and transmission. The kernel caches composed lens chains per peer schema version to avoid recomputing the path on every delta.
 
-The reference design for bidirectional schema lenses is Ink and Switch’s Cambria project [1]. Cambria demonstrated that lenses can be declared as a data structure rather than hand-written code — a lens schema specifying field renames, type coercions, and structural transforms — and that the bidirectionality constraint can be checked mechanically rather than by inspection. The architecture follows the Cambria model: lenses are registered through `ISchemaVersion` as implementations of `ISchemaLens`, and the kernel's `LensGraph` engine traverses and composes them. The current implementation requires lenses to be written as C# code rather than as pure declarative specifications — a pragmatic divergence from Cambria\'s data-driven approach that retains the bidirectionality and graph-composition properties.
+The reference design for bidirectional schema lenses is Ink and Switch’s Cambria project [1]. Cambria demonstrated that lenses can be declared as a data structure rather than hand-written code — a lens schema specifying field renames, type coercions, and structural transforms — and that the bidirectionality constraint can be checked mechanically rather than by inspection. The architecture follows the Cambria model: lenses are registered as `ISchemaLens` implementations via `LensGraph.AddLens()` in `Sunfish.Kernel.SchemaRegistry`, and the `LensGraph` engine traverses and composes them. The current implementation requires lenses to be written as C# code rather than as pure declarative specifications — a pragmatic divergence from Cambria's data-driven approach that retains the bidirectionality and graph-composition properties.
 
 ### Lens Registration
 
-Lenses are registered per schema version transition through `ISchemaVersion` in `Sunfish.Kernel.Runtime`. Each plugin that owns a CRDT document type registers the lenses for every version boundary it has published. The kernel discovers registered lenses at startup and constructs the version graph. A plugin that registers v1, v2, and v3 but omits the v1-to-v2 lens produces a startup error, not a runtime failure.
+Each plugin that owns a CRDT document type registers lenses for every version boundary it has published via `LensGraph.AddLens()` in `Sunfish.Kernel.SchemaRegistry`. The kernel discovers registered lenses at startup and constructs the version graph. A plugin that registers v1, v2, and v3 but omits the v1-to-v2 lens produces a startup error, not a runtime failure.
 
 `Sunfish.Kernel.Sync` uses the kernel’s lens registry when negotiating capability with a peer. During the HELLO handshake, the peer reports its schema version. The sync daemon checks whether a path exists through the version graph from the peer’s version to the local version. If no path exists, synchronization for the affected record type is suspended until either the peer upgrades or a lens for the missing edge is installed.
 
@@ -221,7 +221,8 @@ Not every schema change is migratable through expand-contract and lenses. Three 
 
 | Package | Responsibility |
 |---|---|
-| `Sunfish.Kernel.Runtime` | Schema version registry, `ISchemaVersion` interface, lens engine, expand-contract phase tracking, dual-write policy enforcement |
+| `Sunfish.Kernel.Runtime` | Schema version registry, `ISchemaVersion` interface, upcaster registration, expand-contract phase tracking |
+| `Sunfish.Kernel.SchemaRegistry` | Bidirectional lens engine (`ISchemaLens`, `LensGraph`), epoch coordinator, copy-transform migrator, compaction scheduler |
 | `Sunfish.Kernel.Sync` | Per-peer schema version negotiation via HELLO handshake, lens application on delta transmission and receipt, version-gate enforcement at contract phase |
 
 Both packages are pre-1.0. Interface signatures are illustrative; validate against the current Sunfish milestone before implementation.
