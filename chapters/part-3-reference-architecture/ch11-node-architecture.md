@@ -68,6 +68,8 @@ The kernel owns eight infrastructure concerns. Each is stable across plugin vers
 
 **Distributed lease coordination.** `Sunfish.Kernel.Lease` implements a Flease-inspired distributed lease coordinator for CP-class record writes. A write to a CP-class record — a financial posting, a period-close decision, any record where concurrent writes from different nodes produce conflicting domain state — requires a lease granted by a quorum of peers before the write proceeds. A node that cannot reach quorum blocks the write and surfaces a staleness indicator to the UI layer rather than proceeding with a write that will generate a conflict requiring manual resolution. Chapter 14 covers the lease wire messages and quorum arithmetic.
 
+A lease is granted when a strict majority of the node's configured peer set acknowledges the request. For a five-node deployment, three acknowledgments are required. The asymmetric partition failure mode follows from this requirement: if a network partition divides peers such that two subsets each independently believe they have quorum and both attempt to acquire a lease for the same CP-class resource, the Flease coordination protocol uses epoch-stamped lease tokens. A node that acquires a lease under a given epoch holds exclusive access until lease expiry. When the partition heals, the node with the lower epoch number has its lease superseded; its pending write is rejected and surfaced to the application as a lease conflict for the user to resolve — not as a silent overwrite. This is a deliberate design choice consistent with CP positioning: in an asymmetric partition, the system blocks the at-risk write rather than permitting a double-booking.
+
 **Event bus and durability.** `Sunfish.Kernel.EventBus` provides `IEventBus` for in-process event publication and `IEventLog` for durable, append-only event persistence. The event log is the authoritative record from which read-model projections are rebuilt. Both a file-backed implementation for production and an in-memory implementation for tests ship with the package.
 
 ## Plugin Contracts
@@ -148,6 +150,8 @@ CBOR encoding per RFC 8949 [1] applies to all IPC messages. Canonical mode — d
 
 The managed relay connects to the daemon over TCP, independent of the local socket channel. The local socket is strictly for host-to-daemon communication on the same machine. Relay connectivity, peer discovery beyond mDNS range, and cross-organization sync belong to the daemon and do not involve the host process directly. Chapter 14 specifies the full wire protocol for both the IPC channel and the relay connection.
 
+Relay transit is optional for nodes that can reach each other directly. Nodes on the same LAN discover peers via mDNS and sync without contacting the relay at all; the relay is required only when nodes are on different networks with no direct IP path between them. The relay observes and routes ciphertext only — it holds no decryption keys and cannot read payload content. A relay outage prevents cross-network peer discovery but does not affect local data: nodes on the same LAN continue syncing normally, and nodes on different networks queue CRDT deltas and catch up automatically once the relay recovers. For European enterprise procurement contexts: relay transit does not constitute a cross-border data transfer in the legal sense because the relay never holds decryptable content. Data never exists in plaintext outside the sending node.
+
 ## Sunfish Package Map
 
 The Sunfish package set maps directly to the architectural layers described in this chapter. The dependency direction is strictly from upper layers to lower: plugins depend on kernel packages, kernel packages depend on foundation packages, foundation packages have no Sunfish dependencies. No package in a lower layer imports from a higher layer.
@@ -195,6 +199,10 @@ The `Sunfish.Kernel` facade package exists for a specific structural reason. Fiv
 
 All Sunfish packages are pre-1.0. Package names are stable for reference in this specification; specific interface method signatures and registration-method options are subject to change before the 1.0 release. The Anchor accelerator in `accelerators/anchor/` assembles this full wiring in a working Zone A node. Chapter 17 provides the minimal implementation path using that accelerator as the starting point.
 
+The node architecture directly addresses the Schrems II constraint (Data Protection Commissioner v. Facebook Ireland Limited, Court of Justice of the EU, 2020 [2]), which limits cross-border transfer of EU personal data to US-hosted infrastructure. Because authoritative data never leaves the local node in decryptable form — the sync daemon applies subscription-level filtering before transmitting CRDT deltas, and the relay routes ciphertext produced by sender-held keys — no personal data transits foreign infrastructure in a form accessible to that infrastructure's operator. This maps to GDPR Chapter V transfer mechanism requirements: the architecture's encryption-at-transit design satisfies the standard contractual clauses' technical supplement requirements without additional legal instruments. European organizations operating under Schrems II constraints should treat this as a primary compliance argument for the architecture.
+
 ---
 
 [1] C. Bormann and P. Hoffman, "Concise Binary Object Representation (CBOR)," RFC 8949, Internet Engineering Task Force, December 2020.
+
+[2] Court of Justice of the European Union, Data Protection Commissioner v. Facebook Ireland Limited and Maximillian Schrems, Case C-311/18, Judgment of 16 July 2020.
