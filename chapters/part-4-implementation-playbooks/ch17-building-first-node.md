@@ -17,6 +17,8 @@ This chapter is a playbook, not a specification. When you need to understand *wh
 
 ## 1. Start with Sunfish Anchor
 
+Marcus lost his bid data not because it was destroyed but because someone else controlled the infrastructure it lived on. Everything you wire up in this chapter inverts that arrangement — the data stays on the device that needs it, and the infrastructure answers to you.
+
 Anchor is the canonical Zone-A local-first node. It is a .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell by design: the kernel is wired, the onboarding flow is real, and the CRDT engine is live. The report catalog, sync toggle, and platform packaging are deferred. That is not a deficit; it is the point. You get the hard parts — the security and sync infrastructure — without a pre-baked application domain baked on top.
 
 Clone the repository and build for Windows:
