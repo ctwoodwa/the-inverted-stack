@@ -121,6 +121,8 @@ Traffic analysis is sensitive. A relay operator who cannot read messages can sti
 
 The architecture is not broken. The limitation is real, and the paper must disclose it. Organizations for whom metadata privacy is a hard requirement should run a self-hosted relay on infrastructure they control, eliminating the third-party relay operator as a metadata observer. State this plainly rather than leaving security teams to discover it during deployment.
 
+The compromised-relay threat model has a cousin that deserves its own name: compelled access. In jurisdictions where cloud-hosted infrastructure is subject to mandatory government access requirements — a live procedural reality in several CIS markets, a constrained reality in the EU post-Schrems II, and a jurisdiction-specific reality across parts of Asia — the architecture's end-to-end encryption with keys that never leave the originating device addresses a threat model that cloud storage cannot satisfy architecturally. The relay operator cannot produce decryptable content under a compulsion order because the relay operator does not possess decryptable content. This is not a cryptographic subtlety; it is the structural reason the architecture is a Schrems II compliance answer for European organizations, a Federal Law 242-FZ compliance answer for Russian and CIS organizations, a DIFC 2020 answer for DIFC-licensed financial firms, an India DPDP/RBI answer for Indian BFSI, and a PIPL answer for China-resident data. The relay routes ciphertext; the keys stay with the user. For deployments where compelled access is a named threat, the self-hosted relay is the additional guarantee — the metadata itself stays on user-controlled infrastructure.
+
 ### Physical Access and the Memory Window
 
 The at-rest encryption story is correct. SQLCipher protects local databases. Keys are derived from user credentials using Argon2id and stored in OS-native keystores. Physical storage extraction without credentials produces no plaintext.
@@ -132,6 +134,16 @@ An attacker with thirty minutes of physical access to a live system can use cold
 The mitigation is a re-authentication interval. The application requests re-authentication from the OS keychain at configurable intervals — every four hours is the recommended default for high-security deployments. An attacker who gains physical access to an authenticated session can operate within that window. An attacker who encounters a session requiring re-authentication cannot proceed without the user’s credentials.
 
 This is a hardening recommendation, not an architecture flaw. The base model is correct; the recommendation narrows the exposure window for deployments where physical access is a realistic threat vector. Okonkwo scores physical access an 8 out of 10.
+
+### Credential Recovery and Account Continuity
+
+Okonkwo's fifth prompt asked what happens the day after the user loses their passphrase. The paper now specifies three recovery paths and names what is not supported.
+
+For passphrase loss: an optional recovery-key file generated at account setup unseals the local keystore without the passphrase; organizations requiring centralized recovery can enable administrator-held wrapped KEK copies under a defined escrow procedure. For OS keystore corruption: re-enrollment via the organization's MDM re-delivers the role attestation to a fresh keystore, and relay-assisted re-sync restores the node's data from peers. For legal hold on a departed employee's local device: the encrypted SQLCipher database is extractable by IT with the administrator's escrow KEK; decryption proceeds under applicable legal authority.
+
+What the architecture does not support: instant recovery without a recovery artifact. A user who lost their passphrase, declined recovery-key backup, declined organizational escrow, and whose device is the only copy of local-only records has lost them. End-to-end custody without recovery mechanisms makes permanent loss possible. Organizations must choose at least one recovery path and test it before production.
+
+Okonkwo scores credential recovery 7 out of 10.
 
 ### GDPR Article 17 in a CRDT System
 
@@ -149,6 +161,8 @@ This pattern satisfies Article 17 for content: the personal data is unrecoverabl
 
 The paper must document the crypto-shredding pattern and name the metadata residue as a known gap. Personal data in operation content is erasable via DEK destruction; operation metadata is not erasable without breaking the log. Organizations subject to Article 17 should obtain legal review of whether this satisfies their specific obligations.
 
+Parallel erasure and correction provisions apply under Brazil's LGPD Article 18, South Africa's POPIA Section 24, Nigeria's NDPR right to rectification and erasure, Kenya's Data Protection Act section 40, India's DPDP Act right to correction and erasure, Mexico's LFPDPPP ARCO rights, and South Korea's Personal Information Protection Act. The crypto-shredding pattern and its metadata limitation apply uniformly across these regimes. Each imposes its own procedural requirements for how the erasure is documented and confirmed — the cryptographic pattern is architectural; the compliance procedure is jurisdictional.
+
 ### Round 2 Verdict: PROCEED WITH CONDITIONS
 
 Okonkwo issues PROCEED WITH CONDITIONS. Domain average 7.0 out of 10. The blocking issue from Round 1 is fully resolved. The full condition list:
@@ -163,7 +177,9 @@ Okonkwo issues PROCEED WITH CONDITIONS. Domain average 7.0 out of 10. The blocki
 
 **C5 (Low):** Add cold boot and in-memory key hardening recommendation for high-security deployments, including the four-hour re-authentication interval guidance.
 
-C1 and C2 must be addressed before first external release. C3 through C5 are addressable in the companion document without blocking alpha implementation.
+**C6 (Medium):** Document the three supported credential recovery paths (recovery-key file, administrator-held wrapped KEK escrow, MDM re-enrollment plus relay-assisted re-sync) and explicitly name the unsupported no-artifact case.
+
+C1 and C2 must be addressed before first external release. C3 through C6 are addressable in the companion document without blocking alpha implementation.
 
 ---
 
@@ -175,7 +191,7 @@ This is a genuine improvement — and a displacement of the problem rather than 
 
 A fleet of workstations is a distributed attack surface. Each node is a potential target. The security posture of the weakest endpoint is the security posture of the data that endpoint holds. In an enterprise deployment with fifty nodes, an attacker does not target the strongest endpoint — they target the one belonging to the administrator with the broadest role access and the worst patch cadence.
 
-The architecture requires defense-in-depth across four layers. None is optional.
+The architecture requires defense-in-depth across four layers. None is optional. Each of these layers is built from cryptographic primitives that have been independently audited — libsodium, age, Argon2id reference, SQLCipher — composed against a specification a cryptographic engineer has reviewed. The crypto discipline established in Chapter 2 holds because the primitives are opaque and the composition is specified, not because the system is novel.
 
 Layer one is encryption at rest. SQLCipher on local databases. Argon2id key derivation. OS-native keystores. Physical storage extraction without credentials yields no plaintext. This layer is table stakes.
 
@@ -190,6 +206,20 @@ The data minimization invariant — send-tier filtering, enforced at the protoco
 Every practitioner building on this architecture should treat the send-tier filtering invariant as inviolable. The filter belongs in the sync daemon. It does not belong in the view layer, the API handler, or a permission check on a UI component. The moment it moves, the blast radius of any node compromise expands from role-scoped to total.
 
 Distribute the data to endpoints for resilience. Treat each endpoint as a potential breach. Four layers. No shortcuts.
+
+---
+
+## The Non-Negotiable Security Checklist
+
+What a practitioner carries forward from Okonkwo's review:
+
+- **DEK/KEK envelope encryption is enforced at the architecture level, not the application level.** The key hierarchy is audited, not invented; primitives are libsodium, age, Argon2id reference, SQLCipher; compositions require a cryptographic engineer's sign-off against a written specification.
+- **Send-tier filtering is an inviolable protocol invariant.** Subscription filtering lives in the sync daemon, not in the UI, not in an API handler, not in a permission check on a view component. If it moves, blast radius expands from role-scoped to total.
+- **Key compromise response is specified and tested before first production deployment.** Revocation procedure, administrator re-attestation flow, offline-node reconnection handling, and capability-rotation propagation are documented with timing commitments, not described as design intent.
+- **Supply-chain transparency is signed, reproducible, and attestable.** Release signing key custody is documented; reproducible builds are required for release artifacts; Sigstore or equivalent attestations ship with every release; SBOM accompanies the binary.
+- **Relay is ciphertext-only with a self-hosted path for metadata-sensitive deployments.** Compelled-access and traffic-analysis threat models are named explicitly; self-hosted relay operation is a supported configuration, not a fork.
+- **Credential recovery offers at least one artifact-based path.** Recovery-key file, administrator-held wrapped KEK escrow, or MDM re-enrollment plus relay-assisted re-sync — organizations must choose and test one before production. The no-artifact case (permanent loss possible) is disclosed to users at onboarding.
+- **Right-to-erasure is implemented via crypto-shredding with documented metadata residue.** DEK destruction makes operation content unrecoverable; operation metadata remains and must be disclosed to the data protection officer; the pattern applies uniformly to GDPR, LGPD, POPIA, NDPR, Kenya DPA, DPDP, and PIPA obligations.
 
 ---
 
