@@ -85,3 +85,109 @@ Ch11 is strong by US technical standards. Three gaps for European precision:
 2. **Flease quorum formula + asymmetric partition failure mode:** Current text describes the happy path. Add: the quorum formula (majority of reachable peers, or configurable threshold); what happens when an asymmetric partition means one node sees quorum and another does not and both attempt the same CP-class write before the partition heals.
 
 3. **Schrems II callout paragraph:** The architecture is a textbook Schrems II compliance answer. Name it. Data minimisation invariant (subscription filtering at send, not receive), local key hierarchy, send-tier filtering — these map directly to GDPR Chapter V transfer mechanism requirements. The managed relay routes ciphertext only. A paragraph making this explicit converts a technical description into a European procurement argument.
+
+---
+
+## Ch01 Second-Pass Review (post failure mode expansion)
+**Board score: 7.6/10 — POLISH**
+
+*Context: Ch01 expanded from five to six failure modes. The Third-Party Veto added as a new section; The Dependency Chain named explicitly within The Outage section.*
+
+| Critic | Score | Verdict |
+|--------|-------|---------|
+| Eleanor Chase (Acquisitions) | 8 | POLISH |
+| Marcus Webb (CTO/Target Reader) | 8 | READ |
+| Ingrid Halvorsen (Prose) | 7 | SERVICEABLE |
+| Jerome Nakamura (Technology Analyst) | 7 | ADEQUATE |
+| Dr. Amara Osei (Academic) | 7 | OVERSTATED |
+| Meera Krishnamurthy (Dubai/India) | 8 | NEEDS REGIONAL CONTEXT |
+| Prof. Raymond Hollis (Rhetoric) | 8 | COHESIVE |
+| Sofia Reyes (Accessibility/LATAM) | 7 | PARTIALLY ACCESSIBLE |
+| Yuki Tanaka (East Asia/APAC) | 6 | TRANSLATES WITH ADAPTATION |
+| Dr. Imogen Barker (European) | 8 | ADEQUATELY SUBSTANTIATED |
+| Amina Diallo (African Markets) | 7 | RELEVANT WITH EXPANSION |
+| Aleksei Volkov (CIS/Eastern Europe) | 9 | NEEDS CIS CONTEXT |
+
+### Priority Action Items
+
+1. **STRUCTURAL — Third-Party Veto needs a category-shift transition.** The first five failure modes share a vendor-user adversarial structure. The sixth doesn't — external authority, neither party controls. Add one sentence before the section: "The first five failure modes originate inside the service relationship. The sixth does not." Without it, readers may process The Third-Party Veto as another vendor failure rather than a categorically different class.
+
+2. **REGULATORY GEOGRAPHY — East Asian data sovereignty absent.** China PIPL (2021) — stricter than GDPR; Japan PIPA (revised 2022); South Korea PIPA. All absent from both the Third-Party Veto section and "Who Pays the Most." Federal Law 242-FZ should be named explicitly by citation in the Third-Party Veto, not gestured at. Flagged by Tanaka, Volkov, and Krishnamurthy independently.
+
+3. **OVERCLAIMS — Two phrases need qualification.** "Correct merged result" → "deterministically merged result" (CRDTs guarantee convergence, not semantic correctness). "The constraint has been removed" → "the constraint is removable under the assembly described in this book." Both are defensible claims stated at a precision level they can't support.
+
+4. **ACCESSIBILITY PLACEMENT — The AT paragraph is structurally orphaned.** Dropped two paragraphs before the close, it reads as a post-hoc addition. Elevate to a seventh failure mode within the taxonomy, or integrate into The Outage section as a specific consequence for AT users. Chase, Webb, Hollis, and Reyes all identified this independently.
+
+5. **PROOF POINT SCALE — Linear and Actual Budget need scale context.** "Production-proven" requires evidence beyond naming. Add one sentence per product giving scale (user count, deployment context). Flagged by Webb, Nakamura, and Osei.
+
+### Additional items (lower priority)
+
+- Add a bridge sentence between The Third-Party Veto close and "Who Pays the Most" — register shifts from regulatory example to SME vulnerability argument without a transition
+- "The Vendor That Disappears" needs a closing beat — the legal firm migration scenario exits without a landing line
+- The regulatory survey sentence in "Who Pays the Most" lists eight jurisdictions in one sentence — restructure as two sentences or cut to three most significant with a note
+- Break the semicolon chain in the Anthropic/DoD passage — three distinct outcomes deserve three sentences
+- Add the Anthropic passage a date anchor ("as of February 2026, the situation was as follows") since the legal sequence may evolve before publication
+- Add scale acknowledgment to the 2022 CIS terminations — "hundreds of thousands of organizations" is missing; the current description names the event without establishing its evidentiary weight
+
+### Strengths to preserve
+
+- The Marcus cold open. "100% of the users who matter right now" — do not touch.
+- The dependency chain paragraph: "not your vendor failing, but the infrastructure layer beneath your vendor" — precise, original, actionable.
+- The Third-Party Veto as a category. The category is the contribution; section needs strengthening, not replacement.
+- The global connectivity paragraph — Nigeria, India, rural Brazil, rural Mexico, Southeast Asia named specifically and framed as the global baseline. Praised by five critics independently.
+- The "Bundle Nobody Agreed To" structure — three desirable properties, three conditions, the rational acceptance argument.
+- Schrems II present and correctly cited in two places.
+
+---
+
+## Ch03 Full Board Review
+**Board score: 6.4/10 — REVISE**
+
+*Context: "How This Changes Failure Modes" section rebuilt with three explicit categories: What the inversion resolves (six named resolutions mirroring Ch01), What you may not have noticed you were exposed to (The Security Breach), What the architecture introduces honestly (unchanged).*
+
+| Critic | Score | Verdict |
+|--------|-------|---------|
+| Eleanor Chase (Acquisitions) | 8 | POLISH |
+| Marcus Webb (CTO/Target Reader) | 8 | READ |
+| Ingrid Halvorsen (Prose) | 7 | SERVICEABLE |
+| Jerome Nakamura (Technology Analyst) | 8 | COMPELLING |
+| Dr. Amara Osei (Academic) | 8 | SOUND |
+| Meera Krishnamurthy (Dubai/India) | 5 | NEEDS REGIONAL CONTEXT |
+| Prof. Raymond Hollis (Rhetoric) | 8 | COHESIVE |
+| Sofia Reyes (Accessibility/LATAM) | 4 | PARTIALLY ACCESSIBLE |
+| Yuki Tanaka (East Asia/APAC) | 5 | TRANSLATES WITH ADAPTATION |
+| Dr. Imogen Barker (European) | 7 | ADEQUATELY SUBSTANTIATED |
+| Amina Diallo (African Markets) | 3 | MISSES MAJOR MARKET |
+| Aleksei Volkov (CIS/Eastern Europe) | 4 | LARGEST CASE STUDY ABSENT |
+
+### Priority Action Items
+
+1. **Name the 2022 SaaS service terminations in the Third-Party Veto resolution.** The resolution section says "Government or regulatory action targeting a vendor can interrupt service to every customer downstream." It does not name the 2022 terminations as the most documented recent example. Ch01 names them. Ch03 does not. This is the asymmetry. Flagged by Volkov, Krishnamurthy, Barker, Diallo.
+
+2. **Expand regulatory naming beyond HIPAA/GDPR.** "Data sovereignty requirements" without names is empty. Add at minimum: Schrems II (strongest EU compliance argument — name it explicitly, not just "compliance framework"), DIFC Data Protection Law / UAE DPL 2022, POPIA / NDPR / Kenya DPA, Federal Law 242-FZ, Japan PIPA / China PIPL. A sidebar or list paragraph naming the key laws by jurisdiction resolves this without body rewrite.
+
+3. **SunfishNodeHealthBar accessibility specification.** The HealthBar's four states are described with no mention of MAUI SemanticProperties or live region announcements for state transitions. WCAG 2.1 requires that state information be available through more than color. For a chapter that names the HealthBar and its states by name, this creates an obligation. Add two sentences: one naming SemanticProperties.Description as the AT mechanism, one naming live region announcement for state transitions. Detail in Part III.
+
+4. **Cut four of the five layer-closing "when network is unavailable" refrains.** By Layer 5, this reads as authorial anxiety. Keep the Layer 1 instance as the governing statement; cut the rest. Flagged by Chase, Webb, and Halvorsen independently.
+
+5. **Anchor Security Breach paragraph in the DEK/KEK key architecture.** "Relay holds ciphertext only" needs its technical basis stated: the relay receives only post-encryption deltas sealed under keys it does not hold — reference the DEK/KEK/Argon2id hierarchy from Layer 4. One sentence makes the claim falsifiable rather than asserted. Flagged by Webb and Barker.
+
+### Additional items (lower priority)
+
+- Add bridge sentence between opening inversion and five-layer walkthrough framing the layer detail as proof-of-concept, not interruption: "The inversion is one sentence. The five-layer model is why that sentence is implementable."
+- Add explicit rhetorical purpose sentence to the Anchor/Bridge section explaining why two deployment shapes appear in the architectural chapter rather than Ch04
+- Reconcile the chapter title with its content — promises "one diagram," delivers five sections; candidate retitles: "The Inverted Stack: Architecture and Failure Modes" or "How the Stack Inverts"
+- Add at least one African fintech precedent (M-PESA, MTN MoMo) as proof of the architecture's real-world deployment at scale before this book
+- Add Japan PIPA, China PIPL to the Third-Party Veto resolution section
+- Name Nigeria NDPR, Kenya DPA, POPIA in the Data resolution section
+- Acknowledge that SIer-mediated procurement (Japan, Korea) and relationship-led procurement (India BFSI, GCC) differ from the product-led model embedded in the book's GTM assumptions
+
+### Strengths to preserve
+
+- The three-tier failure mode structure (resolves / hidden exposure / introduces honestly) — the chapter's structural achievement. Do not flatten.
+- "This is the inversion. Everything else is implementation." — Do not move or edit.
+- The Security Breach paragraph — best paragraph in the chapter. "Invisible until it has already happened; you cannot evaluate a vendor's internal security posture from outside it" is exactly right.
+- The CAP positioning table — correctly reasoned, every row defensible, "Why" column earns its place. Keep every row.
+- "The relay's failure is not the application's failure." — Keep as written.
+- "Part II is six rounds of adversarial review by people who were looking for exactly these problems." — Clean transition. Do not revise.
+- "What Changes for the Developer" section's three declarative subheadings — good paragraph architecture throughout.
