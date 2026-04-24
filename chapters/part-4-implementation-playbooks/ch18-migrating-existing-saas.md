@@ -1,6 +1,6 @@
 # Chapter 18 — Migrating an Existing SaaS
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~3,500 words -->
 <!-- Source: v5 §8, Sunfish accelerators/bridge/README.md, Sunfish docs/zone-b-migration-path.md -->
@@ -94,10 +94,10 @@ The migration runs in four phases. You can pause at the end of any phase indefin
 **How.** Add `Sunfish.Foundation.LocalFirst` to your service registration with shadow-read-only mode:
 
 ```csharp
-builder.Services.AddSunfishLocalFirst(options =>
-{
-    options.Mode = LocalFirstMode.ShadowReadOnly;
-});
+// illustrative — not runnable (pre-1.0 API)
+// AddSunfishLocalFirst() registers the local-first node in shadow read-only mode;
+// mode configuration API is pre-1.0 and subject to change before release
+builder.Services.AddSunfishLocalFirst();
 ```
 
 The foundation layer populates a local SQLite replica from your existing Postgres read model. Shift UI read paths to the local replica. Write paths stay on the server API unchanged.
@@ -148,18 +148,12 @@ This phase introduces the full local-node stack: gossip sync daemon, local SQLCi
 **How.** When a user creates a new workspace, provision the full kernel stack:
 
 ```csharp
-// New workspace provisioning
-services.AddSunfishKernelSync(options =>
-{
-    options.GossipInterval = TimeSpan.FromSeconds(30);
-    options.AntiEntropyEnabled = true;
-});
-
-services.AddSunfishKernelSecurity(options =>
-{
-    options.KeyStorage = KeyStorageLocation.LocalDevice;
-    options.RoleAttestationRequired = true;
-});
+// illustrative — not runnable (pre-1.0 API)
+// AddSunfishKernelSync() registers the sync daemon (30-second gossip round interval default);
+// AddSunfishKernelSecurity() issues device keypairs and configures role attestation;
+// configuration option API is pre-1.0 and subject to change before release
+services.AddSunfishKernelSync();
+services.AddSunfishKernelSecurity();
 ```
 
 `Sunfish.Kernel.Security` issues device keypairs at first launch. Role attestations govern what the hosted-node peer can access. The hosted-node peer holds ciphertext for catch-up-on-reconnect but cannot decrypt without a team-issued attestation. Configure BYOC backup for new workspaces at provisioning time. The hosted-node peer is not a backup; it is a relay cache. Teams that skip BYOC backup configuration discover this only during an incident.

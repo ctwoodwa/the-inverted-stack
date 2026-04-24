@@ -21,6 +21,9 @@
 - **SyncState component:** Lives in `Sunfish.UIAdapters.Blazor.Components.LocalFirst.SyncState`, not `Sunfish.Foundation`.
 - **TFMs:** `net11.0-windows10.0.19041.0` and `net11.0-maccatalyst`.
 - **DI registration for CRDT engine:** `AddSunfishCrdtEngine()`.
+- **Sunfish.Foundation.LocalFirst IS a valid package** — `packages/foundation-localfirst/` exists in the Sunfish repo; `AddSunfishLocalFirst()` is a real method (takes no parameters). `LocalFirstMode` enum does NOT exist. Earlier session notes incorrectly marked this package as invalid.
+- **AddSunfishKernelSync() and AddSunfishKernelSecurity()** take no parameters — do not invent options lambdas. GossipDaemonOptions uses `RoundIntervalSeconds` (int), not `GossipInterval` (TimeSpan). `AntiEntropyEnabled` does not exist.
+- **Package names: Sunfish.UICore and Sunfish.UIAdapters.Blazor** are correct per repo PackageId values. Not `Sunfish.UI.Core` or `Sunfish.UI.Adapters.Blazor`.
 
 ## Do-Not-Repeat
 
