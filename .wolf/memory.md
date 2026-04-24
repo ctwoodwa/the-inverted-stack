@@ -3,10 +3,18 @@
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
 | 20:19 | Drafted Chapter 13 Schema Migration and Evolution | chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | 4144 words, committed to main | ~8000 |
+| prose-review | Style enforcement pass on Part II (Ch05–Ch10) — fixed there-is openers, passive voice, weak verbs, throat-clearing, restatement duplicates; fixed one Edit-induced duplication in ch07 | ch05–ch10 enterprise/distributed/security/product/practitioner/synthesis | ~45 targeted edits across 6 files | ~12000 |
 | session | Resolved 40 technical-review markers in ch17 | chapters/part-4-implementation-playbooks/ch17-building-first-node.md | All CLAIM/SUNFISH-API/PACKAGE markers removed; ICM advanced to icm/technical-review | ~6000 |
 | 2026-04-24 | Prose review appendix-b + appendix-d | chapters/appendices/appendix-b*.md, appendix-d*.md | 20+ edits applied; both advanced to icm/prose-review; committed c84c2cc | ~4000 |
 | 2026-04-24 | Fixed citation errors appendix-c | chapters/appendices/appendix-c-further-reading.md | Flexible Paxos authors corrected; fabricated co-author removed; YDotNet/Loro language fixed; ICM to icm/technical-review | ~3000 |
 | 2026-04-24 | Prose review ch17, appendix-c, preface | ch17 + appendix-c + preface | Three prose review agents launched; awaiting completion | ~2000 |
+| 2026-04-24 | Style-guide compliance pass on preface + Ch01–Ch04 | preface.md, ch01–ch04 | 6 targeted edits: 1 ch01, 2 ch02, 1 ch03, 2 ch04; no changes to preface | ~6000 |
+| 2026-04-24 | Style-enforcer pass on Ch17–Ch20 | ch17, ch18, ch19, ch20 | 12 targeted edits across 4 files: passive voice, scaffolding, weak verbs, throat-clearing | ~8000 |
+| 2026-04-24 | Style enforcer prose pass: preface + Ch01–Ch04 | preface.md, ch01–ch04 | 3 style edits (ch01: contraction, passive voice); encoding repair on ch03 (43 double-encoded UTF-8 sequences fixed) | ~9000 |
+| 2026-04-24 | Style enforcement pass: epilogue + 5 appendices | epilogue, appendix-a through appendix-e | 3 edits total: 2 in epilogue (there-is + weak value-of construction), 1 in appendix-c (there-is); all other files clean | ~5000 |
+| 2026-04-24 | Style-guide compliance pass on Ch17–Ch20, Epilogue, Appendices A–D | 9 files | 9 edits total: ch17(2), ch18(3), ch19(0), ch20(2), epilogue(2), appendix-a(0), appendix-b(0), appendix-c(0), appendix-d(0) | ~7000 |
+| 2026-04-24 | Style-guide compliance pass on Ch05–Ch10 (Part 2) | ch05–ch10 | 9 targeted edits: 6 ch05, 1 ch06, 1 ch07, 0 ch08, 0 ch09, 1 ch10; there-is openers, passive voice, restatements | ~8000 |
+| 2026-04-24 | Style-guide compliance pass on Part III Ch11–Ch16 | ch11–ch16 (part-3-reference-architecture) | 7 targeted edits across 5 files; ch11 and ch12 needed no changes | ~9000 |
 | 23:45 | Drafted Appendix D — Testing the Inverted Stack | chapters/appendices/appendix-d-testing-the-inverted-stack.md | 2531 words, committed 2ba0d8c | ~5500 |
 | 23:45 | Wrote Appendix C — Further Reading | chapters/appendices/appendix-c-further-reading.md | 1248 words, 12 annotated entries, 5 sections, committed 18548fd | ~3500 |
 | 23:45 | Drafted Chapter 19 Shipping to Enterprise | chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md | 3229 words, committed ad3e030 | ~6500 |
@@ -50,3 +58,4 @@
 | 05:25 | Prose review pass on ch17 — 8 fixes applied (passive voice, paragraph splits, restatements, synonym cycling, There-constructions, re-introduction, weak verbs) | chapters/part-4-implementation-playbooks/ch17-building-first-node.md | ICM advanced to prose-review | ~3500 tok |
 | 2026-04-24 | QC-1 word count expansions: ch16, ch17, ch19, epilogue | ch16 (2949→3556), ch17 (3520→3910), ch19 (3148→3481), epilogue (2219→2488) | all four now PASS QC-1; corrected fabricated plugin lifecycle claims (OnUnloadAsync, no faulted-continue, no version validation) | ~12000 |
 | 2026-04-24 | Automated pipeline complete | All 27 chapters at icm/prose-review; 27/28 pass QC-1 (preface 926/1300 is human-only); running total ~81,900 words vs ~83,500 target | Pipeline blocked on icm/voice-check (human stage); preface expansion and foreword still needed | ~5000 |
+| 06:16 | prose-review style pass: Part III Ch11–Ch16, fixed there-is openers, hedges, weak verbs, passive, restatements | ch11-node-architecture.md ch12-crdt-engine-data-layer.md ch13-schema-migration-evolution.md ch14-sync-daemon-protocol.md ch15-security-architecture.md ch16-persistence-beyond-the-node.md | ~30 targeted edits applied | ~12000 |

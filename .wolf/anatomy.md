@@ -48,7 +48,7 @@
 
 ## chapters/epilogue/
 
-- `epilogue-what-the-stack-owes-you.md` — Epilogue — What the Stack Owes You (~2,203 words, icm/draft: 7 obligations, open questions, drift anti-patterns, what comes next, closing paragraph) (~2500 tok)
+- `epilogue-what-the-stack-owes-you.md` — Epilogue — What the Stack Owes You (~2488 words, icm/prose-review) — 7 obligations, open questions, drift anti-patterns, what comes next with deployment experience invite, closing with agency vs dependency framing
 
 ## chapters/front-matter/
 
@@ -78,13 +78,13 @@
 - `ch13-schema-migration-evolution.md` — Chapter 13 — Schema Migration and Evolution (~6500 tok) — icm/draft: expand-contract, lenses, epochs, runbook, failure modes
 - `ch14-sync-daemon-protocol.md` — Chapter 14 — Sync Daemon Protocol (~7000 tok) — icm/draft: process isolation, 3-tier discovery, 5-step handshake, gossip anti-entropy, data minimization, Flease/lease coordination, reconnection storms, stale peer recovery
 - `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~5000 tok) — icm/draft: threat model, 4 defensive layers, DEK/KEK key hierarchy, role attestation flow, key compromise IR, offline revocation, in-memory key handling, supply chain, crypto-shredding, relay trust model
-- `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~7000 tok) — icm/draft: five-layer storage, declarative sync buckets, lazy fetch/LRU eviction, snapshot rehydration, CRDT GC policy, three-state backup UX, disaster recovery, plain-file export
+- `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~3556 words, icm/prose-review) — five-layer storage, declarative sync buckets with BYOC backup, snapshot scheduling policy, CRDT GC policy, three-state backup UX, disaster recovery, plain-file export with versioned manifest
 
 ## chapters/part-4-implementation-playbooks/
 
-- `ch17-building-first-node.md` — Chapter 17 — Building Your First Node (~3500 words) — icm/prose-review: Anchor clone/build, kernel wiring, CRDT document + two-device sync, QR onboarding wire format, SunfishNodeHealthBar UX, plugin registration
+- `ch17-building-first-node.md` — Chapter 17 — Building Your First Node (~3936 words, icm/prose-review) — Anchor clone/build, kernel wiring, CRDT document + two-device sync, QR onboarding wire format, SunfishNodeHealthBar UX, staleness threshold guidance, plugin lifecycle + registration
 - `ch18-migrating-existing-saas.md` — Chapter 18 — Migrating an Existing SaaS (~3,500 words) — icm/draft: zone determination, Bridge Zone-C reference, 5 architectural decisions, 4 migration phases (shadow/local-writes/full-authority/backfill), phase gates, 5 failure modes, package availability table
-- `ch19-shipping-to-enterprise.md` — Chapter 19 — Shipping to Enterprise (~3,229 words) — icm/draft: dual-license/CLA, MSIX/MSI+PKG packaging, code signing (macOS notarytool + Windows Authenticode/WDAC), MDM pre-seeded node-config.json schema, MDM compliance at capability negotiation, SBOM CycloneDX/Syft/Grype, CVE SLA, revocation CLI, air-gap three-posture config, three required runbooks
+- `ch19-shipping-to-enterprise.md` — Chapter 19 — Shipping to Enterprise (~3481 words, icm/prose-review) — dual-license/CLA, MSIX/MSI+PKG packaging, code signing, MDM pre-seeded config, post-install health verification, compliance at capability negotiation, SBOM/Grype/CVE SLA, patch-rehearsal guidance, revocation CLI, air-gap config, three runbooks
 - `ch20-ux-sync-conflict.md` — Chapter 20 — UX, Sync, and Conflict (~3167 words) — icm/draft: complexity hiding standard, 3 status indicators, AP/CP table, optimistic write states, conflict inbox bulk resolution, 3 failure modes, first-run experience, non-technical trust gap
 
 ## docs/icm/
