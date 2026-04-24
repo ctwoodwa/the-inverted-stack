@@ -309,3 +309,96 @@ Ch11 is strong by US technical standards. Three gaps for European precision:
 - "Part II is six rounds of adversarial review by people who were looking for exactly these problems." Clean transition. Do not revise.
 - Third-Party Veto resolution leading with 2022 CIS terminations — editorially restrained, analytically precise. Do not elaborate further.
 - HealthBar accessibility spec (SemanticProperties.Description + live region + Ch20 forward ref). Correctly placed and scoped. Reyes noted this as the right treatment for Chapter 3.
+
+---
+
+## Ch01 Fourth-Pass Review (post top-5 resolution)
+**Board score: 8.6/10 — POLISH** (trajectory 6.2 → 7.6 → 8.3 → 8.6)
+
+*Context: Five priority fixes applied: 2022 CIS terminations scaled ("hundreds of thousands of organizations" over a decade); Anthropic/DoD split into four sentences; M-PESA/MTN MoMo added as earliest/most consequential proof positioned before Western examples; Mexico LFPDPPP and Kenya DPA added to regulatory survey.*
+
+| Critic | Score | Verdict | Individual PUBLISH? |
+|--------|-------|---------|---------------------|
+| Eleanor Chase (Acquisitions) | 9 | PUBLISH | YES |
+| Marcus Webb (CTO/Target Reader) | 9 | READ | YES |
+| Ingrid Halvorsen (Prose) | 9 | FLOWING | YES |
+| Jerome Nakamura (Technology Analyst) | 9 | COMPELLING | YES |
+| Dr. Amara Osei (Academic) | 8 | SOUND | no (242-FZ qualifier) |
+| Meera Krishnamurthy (Dubai/India) | 8 | NEEDS REGIONAL CONTEXT | no (DIFC 2020) |
+| Prof. Raymond Hollis (Rhetoric) | 9 | COHESIVE | YES |
+| Sofia Reyes (Accessibility/LATAM) | 8 | PARTIALLY ACCESSIBLE | no (Colombia/Argentina) |
+| Yuki Tanaka (East Asia/APAC) | 8 | TRANSLATES WITH ADAPTATION | no (translation note) |
+| Dr. Imogen Barker (European) | 8 | ADEQUATELY SUBSTANTIATED | no (SCC-contested) |
+| Amina Diallo (African Markets) | 9 | UNIVERSALLY RELEVANT | YES |
+| Aleksei Volkov (CIS/Eastern Europe) | 9 | GLOBALLY COMPLETE | YES |
+
+**7 of 12 individual PUBLISH votes.**
+
+### Priority Action Items
+
+1. **Swap 242-FZ "the first major" → "among the first general-purpose data localization laws globally"** — FIVE-CRITIC consensus (Chase, Nakamura, Osei, Barker, Volkov). Not optional. One-phrase fix.
+
+2. **Write bridge sentence between Third-Party Veto and "Who Pays the Most"** (Chase, Nakamura, Hollis — 3 critics). Register shift from geopolitical case study to SME vulnerability analysis — one sentence closes the seam.
+
+3. **Add SCC-adequacy-contested sentence in the Schrems II passage** (Barker, 2 passes). "The adequacy of Standard Contractual Clauses as supplemental safeguards remains subject to challenge before national Data Protection Authorities across EU member states."
+
+4. **Add Colombia Ley 1581 + Argentina Ley 25.326 to regulatory atlas** (Reyes, Krishnamurthy).
+
+5. **Add DIFC Data Protection Law 2020 parenthetical alongside UAE DPL 2022 entry** (Krishnamurthy, 3 passes).
+
+### Single-critic items (deferred; not in 2+-critic consensus bucket)
+
+- M-PESA/MTN MoMo citation in IEEE format (Diallo)
+- Relay self-hostability sentence in final section (Barker)
+- Import substitution framing in Third-Party Veto (Volkov)
+- Regulatory atlas paragraph break at Schrems II seam (Halvorsen)
+- Half-sentence on IPC mechanism in local service pattern (Webb)
+
+### Board recommendation
+
+"This chapter is publishable as-is" (Chase). One focused targeted pass on items 1-5 — estimated under 200 words of change — brings the chapter to PUBLISH with 10+ individual PUBLISH votes.
+
+---
+
+## Ch03 Third-Pass Review (post top-5 resolution)
+**Board score: 8.1/10 — POLISH** (trajectory 6.4 → 7.8 → 8.1)
+
+*Context: Five priority fixes applied: 2022 CIS terminations scaled; M-PESA/MTN MoMo added to Connectivity resolution; inversion-to-five-layers bridge sentence ("The inversion is one sentence. The five-layer model is why that sentence is implementable..."); CBOR/connectivity reframed from "field deployments" to global baseline; regulatory atlas completed with BSI, CNIL, South Korea PIPA, Brazil LGPD, Mexico LFPDPPP, import substitution.*
+
+| Critic | Score | Verdict | Individual PUBLISH? |
+|--------|-------|---------|---------------------|
+| Eleanor Chase (Acquisitions) | 8.5 | POLISH | borderline |
+| Marcus Webb (CTO/Target Reader) | 8 | READ | no (GC/Flease sourcing) |
+| Ingrid Halvorsen (Prose) | 7.5 | SERVICEABLE | no ("without flinching") |
+| Jerome Nakamura (Technology Analyst) | 7.5 | COMPELLING | no (steelman + Bridge complexity) |
+| Dr. Amara Osei (Academic) | 7 | SOUND | no (Flease/GC/convergence) |
+| Meera Krishnamurthy (Dubai/India) | 8.5 | GLOBALLY POSITIONED | borderline |
+| Prof. Raymond Hollis (Rhetoric) | 8 | COHESIVE | no (false-ending) |
+| Sofia Reyes (Accessibility/LATAM) | 8 | PARTIALLY ACCESSIBLE | no (Colombia/Argentina/diagram alt-text) |
+| Yuki Tanaka (East Asia/APAC) | 8 | TRANSLATES WITH ADAPTATION | no (MLPS 2.0/convergence) |
+| Dr. Imogen Barker (European) | 8.5 | ADEQUATELY SUBSTANTIATED | borderline |
+| Amina Diallo (African Markets) | 9 | UNIVERSALLY RELEVANT | YES |
+| Aleksei Volkov (CIS/Eastern Europe) | 9 | NEEDS CIS CONTEXT | borderline |
+
+### Priority Action Items
+
+1. **Resolve false-ending between Bridge section and "What Changes for the Developer"** (Chase, Hollis — 2 critics, high structural impact). Either move developer section before Anchor/Bridge, or revise Bridge's closing sentence so it doesn't function as a false chapter ending.
+
+2. **Delete "without flinching" from Security Breach paragraph** (Halvorsen — 3 passes, still present). Four-word delete. Most overdue item in the manuscript.
+
+3. **Restructure regulatory atlas for navigability** (Chase, Halvorsen, Krishnamurthy — 3 critics). Insert one organizing sentence clustering jurisdictions (European / CIS / Asia-Pacific / emerging markets), or convert to 2-column table. Add Colombia Ley 1581 + Argentina Ley 25.326.
+
+4. **Move relay self-hostability into Layer 5 as explicit architectural property** (Barker, 2 passes). Currently buried in Third-Party Veto parenthetical.
+
+5. **Add compelled-access threat model sentence to Security Breach** (Volkov, 2 passes). "In jurisdictions where cloud-hosted infrastructure is subject to mandatory government access requirements, end-to-end encryption with keys that never leave the originating device addresses a compliance constraint that cloud storage cannot satisfy architecturally."
+
+### Secondary cluster (to batch with priority items)
+
+- Source 90-day GC retention figure (Webb, Osei) — pointer to Ch6
+- Source Flease 30-second default (Webb, Osei, Tanaka) — pointer to Ch14
+- Add CRDT merge formal convergence property sentence (Osei, Tanaka)
+- Confirm power-interruption durability in write buffering (Diallo, 3 passes)
+
+### Board recommendation
+
+"This chapter does not need another full board pass. It needs one targeted editorial session addressing the five priority items above." A single focused pass on items 1-5 plus the secondary cluster brings the chapter to a clean PUBLISH verdict from 10 of 12 critics.

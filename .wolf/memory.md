@@ -127,3 +127,20 @@
 | 09:52 | Applied 15 priority board fixes to Ch01 and Ch03 (7+8 edits) | ch01, ch03 | committed c23dbe4 | ~800 |
 | 09:52 | Third-pass board review Ch01: 8.3/10 POLISH (was 7.6) — 5 priority items remain | ch01, reviews | complete | ~43k |
 | 09:52 | Second-pass board review Ch03: 7.8/10 POLISH (was 6.4) — 5 priority items remain | ch03, reviews | complete | ~39k |
+| 09:44 | Session end: 16 writes across 3 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md) | 4 reads | ~23322 tok |
+| 10:00 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | "s AI services a national " → "s AI services a national " | ~364 |
+| 10:00 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~325 |
+| 10:01 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | "s LGPD, South Africa" → "s LGPD, Mexico" | ~134 |
+| 10:01 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~93 |
+| 10:01 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~136 |
+| 10:01 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 3→3 lines | ~107 |
+| 10:01 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~63 |
+| 10:02 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | "s 2020 Schrems II ruling " → "s 2020 Schrems II ruling " | ~327 |
+| 10:02 | Applied top-5 board priority fixes to Ch01 and Ch03 | ch01, ch03 | committed 4522839 | ~900 |
+| 10:02 | Ch01 now 5,459 words (~5,200 target); Ch03 now 3,732 words (~3,500 target) | both | within relaxed budget | ~10 |
+| 10:03 | Session end: 24 writes across 3 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md) | 4 reads | ~24980 tok |
+| 10:11 | Created .claude/commands/review-cycle.md | — | ~2019 |
+| 10:12 | Edited reviews/2026-04-24-literary-board-reviews.md | modified as() | ~1768 |
+| 10:30 | Fourth-pass Ch01 board review: 8.6/10 POLISH, 7/12 PUBLISH votes | ch01 | trajectory 6.2→7.6→8.3→8.6 | ~39k |
+| 10:30 | Third-pass Ch03 board review: 8.1/10 POLISH, 1/12 clean PUBLISH + 4 borderline | ch03 | trajectory 6.4→7.8→8.1 | ~41k |
+| 10:34 | Created /review-cycle slash command with 8 escape hatches | .claude/commands/review-cycle.md | created | ~1500 |
