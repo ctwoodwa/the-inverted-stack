@@ -37,6 +37,25 @@ ACRONYM_FIXES = {
     r"\bI/O\b": "I-O",
     r"\bP2P\b": "peer to peer",
     r"\bK8s\b": "Kubernetes",
+    r"\bASP\.NET\b": "ASP dot NET",
+    r"\bCRDT\b": "C-R-D-T",
+    r"\bgRPC\b": "G-R-P-C",
+    r"\bWebAssembly\b": "Web Assembly",
+    r"\bSignalR\b": "Signal-R",
+    # Roman numerals after "Part" — espeak mispronounces these as
+    # "eye", "eye-eye", "triple-eye" etc. Spell them as Arabic digits.
+    # Word boundaries prevent shorter forms from matching inside longer
+    # ones (e.g. \bPart I\b does not match inside "Part II").
+    r"(?i)\bPart I\b":    "Part 1",
+    r"(?i)\bPart II\b":   "Part 2",
+    r"(?i)\bPart III\b":  "Part 3",
+    r"(?i)\bPart IV\b":   "Part 4",
+    r"(?i)\bPart V\b":    "Part 5",
+    r"(?i)\bPart VI\b":   "Part 6",
+    r"(?i)\bPart VII\b":  "Part 7",
+    r"(?i)\bPart VIII\b": "Part 8",
+    r"(?i)\bPart IX\b":   "Part 9",
+    r"(?i)\bPart X\b":    "Part 10",
 }
 
 # Named voice + speed presets. --preset selects one; --voice/--speed override.
@@ -56,6 +75,15 @@ PRESETS: dict[str, dict] = {
     # deliberate, emphatic cadence. Pauses already injected at section breaks.
     "sinek":       {"voice": "am_michael",           "speed": 0.88},
 
+    # Practitioner — am_michael at 0.95 (slightly faster than the male/sinek
+    # body cadences). Used for Ferreira (Ch09 — Lusophone practitioner). The
+    # speed shift differentiates Ferreira from the narrator (who uses sinek
+    # 0.88 and male 0.92) without changing the base voice — Kokoro has no
+    # Lusophone-accented English voice, so the prose carries the accent work
+    # via first-person register. If listening tests show narrator confusion,
+    # switch to bm_george for a clearer voice break.
+    "practitioner":{"voice": "am_michael",           "speed": 0.95},
+
     # British — bf_emma is the only B-grade UK voice. bm_george for male
     # British is C/MM — expect lower quality, use only if accent matters.
     "british":     {"voice": "bf_emma",              "speed": 0.92},
@@ -74,16 +102,22 @@ PRESETS: dict[str, dict] = {
 }
 
 # Per-chapter preset overrides. Key is matched as a substring against the
-# source path. Part II council chapters each get a distinct voice so the
-# "different expert per chapter" conceit is audible. Ch10 returns to the
-# main narrator because it's the book's synthesis of the council's output.
+# source path. Part II council chapters each get a voice that gender-matches
+# the named member; Ch10 returns to the main narrator because it's the
+# book's synthesis of the council's output. Council members and their
+# personas are: Voss (Ch05, F), Shevchenko (Ch06, M, Slavic), Okonkwo
+# (Ch07, F, Nigerian), Kelsey (Ch08, M), Ferreira (Ch09, M, Lusophone).
+# Kokoro lacks Slavic/Nigerian/Lusophone English accents, so prose register
+# carries the accent work; voices select for gender + persona register.
 CHAPTER_PRESET_MAP: dict[str, str] = {
-    "ch05-enterprise-lens":                "fenrir",       # corporate confident
-    "ch06-distributed-systems-lens":       "fry",          # British academic
-    "ch07-security-lens":                  "british-male", # analytical, dry
-    "ch08-product-economic-lens":          "female-solo",  # warm persuasive
-    "ch09-local-first-practitioner-lens":  "british",      # practitioner
+    "preface":                             "sinek",        # author's voice, deliberate cadence
+    "ch05-enterprise-lens":                "female-solo",  # Voss — F, professional/authoritative (af_bella)
+    "ch06-distributed-systems-lens":       "fry",          # Shevchenko — M, academic researcher (bm_fable)
+    "ch07-security-lens":                  "british",      # Okonkwo — F, international serious-security (bf_emma)
+    "ch08-product-economic-lens":          "fenrir",       # Kelsey — M, polished corporate confident (am_fenrir)
+    "ch09-local-first-practitioner-lens":  "practitioner", # Ferreira — M, am_michael at 0.95 (warm, faster than narrator)
     "ch10-synthesis":                      "sinek",        # main narrator returns
+    "epilogue":                            "sinek",        # closing, deliberate
 }
 
 CHAPTER_FILES = [
@@ -150,16 +184,21 @@ def narratable_text(md: str) -> str:
     t = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", t)
 
     # Headings: drop the hashes so they read as plain sentences.
-    # H1 (chapter titles) get a longer trailing beat than H2+.
-    # "# Chapter 1 — Foo" -> "\n\nChapter 1, Foo.\n\n...\n\n"
+    # H1 chapter titles get the longest trailing beat; H2 gets a medium
+    # beat; H3+ get no dot-pause (the period alone is enough). Kokoro's
+    # espeak backend treats consecutive `.` as additive silence — six
+    # dots is audibly longer than three, four is between the two.
+    # "# Chapter 1 — Foo" -> "\n\nChapter 1, Foo.\n\n......\n\n"
     def _heading_sub(match: re.Match) -> str:
         level = len(match.group(1))
         body = match.group(2).strip().rstrip(".")
         # Em-dash in titles reads cleaner as a comma pause for headings.
         body = body.replace("—", ",").replace("–", ",")
         if level == 1:
-            return f"\n\n{body}.\n\n...\n\n"
-        return f"\n\n{body}.\n\n...\n\n" if level == 2 else f"\n\n{body}.\n\n"
+            return f"\n\n{body}.\n\n......\n\n"  # long pause after chapter title
+        if level == 2:
+            return f"\n\n{body}.\n\n....\n\n"    # medium pause after section
+        return f"\n\n{body}.\n\n"                # subsection — no dot pause
 
     t = re.sub(r"(?m)^(#{1,6})\s+(.+?)\s*$", _heading_sub, t)
 
@@ -173,9 +212,17 @@ def narratable_text(md: str) -> str:
     t = re.sub(r"(?m)^\s*[-*+]\s+", "", t)
     t = re.sub(r"(?m)^\s*\d+\.\s+", "", t)
 
-    # Em-dash / en-dash -> comma pause. Kokoro's espeak backend handles these
-    # inconsistently; a comma gives a reliable micro-pause.
-    t = t.replace(" — ", ", ").replace("—", ", ").replace(" – ", ", ")
+    # Em-dash / en-dash handling. Spaced em-dashes are appositions and
+    # deserve a longer beat than a comma — `...` gives Kokoro a meaningful
+    # pause without the prosody-breaking effect of a period. Bare em-dashes
+    # (compound-word use) fall back to a comma for the micro-pause.
+    t = t.replace(" — ", " ... ").replace(" – ", " ... ")
+    t = t.replace("—", ", ").replace("–", ", ")
+
+    # Strip footnote-style reference markers before the acronym pass.
+    # Markdown footnote refs `[^1]` and stray carets read as garbage in TTS.
+    t = re.sub(r"\[\^[^\]]+\]", "", t)
+    t = re.sub(r"\^", "", t)
 
     # Acronym pre-processing for known-mangled terms (applied before
     # terminal-punctuation guarantee so word boundaries still match).
@@ -265,7 +312,13 @@ def strip_id3v2(mp3: bytes) -> bytes:
     return mp3[10 + size :]
 
 
+SYNTH_HARD_CAP = 1200  # Kokoro prosody degrades past ~900 chars per call;
+                       # 1200 is the safety net above CHUNK_CHAR_BUDGET's
+                       # 1400 soft target for paragraph grouping.
+
+
 def synth_chunk(client: OpenAI, voice: str, text: str, speed: float, retries: int = 3) -> bytes:
+    text = text[:SYNTH_HARD_CAP]
     last_err = None
     extra_body = {"speed": speed} if speed and abs(speed - 1.0) > 1e-3 else None
     for attempt in range(1, retries + 1):
@@ -347,9 +400,12 @@ def main() -> None:
             for name, cfg in PRESETS.items()
         ),
     )
-    ap.add_argument("--preset", choices=list(PRESETS.keys()), default="sinek",
-                    help="default voice preset. Default: sinek. Part II chapters "
-                         "override via CHAPTER_PRESET_MAP unless --no-chapter-map is set.")
+    ap.add_argument("--preset", choices=list(PRESETS.keys()), default="male",
+                    help="default voice preset. Default: male (am_michael+am_fenrir "
+                         "blend at 0.92 — less stylized than sinek, better for "
+                         "straight technical non-fiction across Parts I/III/IV). "
+                         "Part II chapters and ch10/preface override via "
+                         "CHAPTER_PRESET_MAP unless --no-chapter-map is set.")
     ap.add_argument("--no-chapter-map", action="store_true",
                     help="disable per-chapter preset overrides (use --preset for all)")
     ap.add_argument("--voice", default=None,
