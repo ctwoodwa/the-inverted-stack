@@ -206,3 +206,22 @@
 | 12:32 | Cerebrum updates: Sunfish CRDT is stub; GossipDaemon delta-apply-back pending; full dotnet build fails | .wolf/cerebrum.md | +4 Do-Not-Repeat entries | ~500 |
 | 12:38 | Ch02 polish: three feasibility disciplines added (integration, crypto, open-format) | ch02 | 4,617 words (17 over 4,600 threshold, accepted) | ~400 |
 | 12:42 | Created Sunfish/docs/ENGINEERING-PRINCIPLES.md — three principles codified as enforceable rules | Sunfish repo | file created, not committed (CLAUDE.md rule) | ~2k |
+| 11:44 | Session end: 60 writes across 6 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 26 reads | ~56416 tok |
+| 12:01 | Created ../Sunfish/docs/build-first-agent-prompt.md | — | ~4016 |
+| 12:55 | Created Sunfish/docs/build-first-agent-prompt.md — self-contained LLM prompt for 8-10 week sprint | Sunfish repo | file created, not committed | ~2.5k |
+| 12:01 | Session end: 61 writes across 7 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 26 reads | ~60719 tok |
+| 12:12 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~35 |
+| 12:13 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 1→3 lines | ~518 |
+| 12:13 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~148 |
+| 12:13 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | reduced (-8 lines) | ~263 |
+| 12:14 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~40 |
+| 12:14 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 3→3 lines | ~191 |
+| 12:20 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~119 |
+| 12:20 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 3→5 lines | ~187 |
+| 12:20 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~216 |
+| 12:21 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 1→3 lines | ~200 |
+| 12:22 | Edited reviews/2026-04-24-literary-board-reviews.md | modified cannot() | ~1128 |
+| 13:15 | Ch04 pass 1 board review: 6.3 REVISE (editorial-vs-regional split) | ch04 | pattern matches Ch01/02/03 | ~33k |
+| 13:20 | Ch04 pass 1 resolution: 4 of 5 items applied (structural deferred) | ch04 | committed aee8eca | ~700 |
+| 13:27 | Ch04 pass 2 verification: 7.92 POLISH (delta +1.62) | ch04 | board voted terminate | ~35k |
+| 13:32 | Ch04 final polish: 4 of 5 remaining items applied | ch04 | committed 29fb90b; Part I cycle complete | ~600 |

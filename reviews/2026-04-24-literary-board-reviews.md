@@ -577,3 +577,71 @@ All eight pass-3 items verified as correctly landed: "without flinching" deleted
 | Pass 2 verification | 8.0/10 POLISH | +1.8 delta, no kill criterion fired |
 
 **Single cycle, 7 edits, chapter advanced from REVISE to POLISH.** Board explicitly recommended cycle termination; 5 light-polish items flagged for optional final pass or voice-check stage.
+
+---
+
+## Ch04 First-Pass + Second-Pass + Final Polish (single cycle)
+
+### Ch04 Pass 1 — 6.3/10 REVISE
+*Same editorial-vs-regional split as Ch01/Ch02/Ch03 pass 1. Editorial + technical 7-8, regional 4-6.*
+
+| Critic | Pass 1 | Pass 2 |
+|--------|--------|--------|
+| Chase | 8 | 8 |
+| Webb | 8 | 8 |
+| Halvorsen | 7 | 8 |
+| Nakamura | 7 | 8 |
+| Osei | 7 | 8 |
+| Krishnamurthy | 5 | 8 |
+| Hollis | 8 | 8 |
+| Reyes | 5 | 7 |
+| Tanaka | 5 | 8 |
+| Barker | 6 | 8 |
+| Diallo | 4 | 7 |
+| Volkov | 5 | 9 |
+
+**Pass 1 priority items (5):**
+1. Filter 3 regulatory table global expansion — 6-critic consensus
+2. Vendor suspension as filter dimension — Volkov
+3. Practical Shortcut repositioning (Chase, Hollis — structural, DEFERRED)
+4. Final section register repair (Chase, Webb, Halvorsen — 3 critics)
+5. Filter 5 timeline disaggregation (Webb, Osei — 2 critics)
+
+**Pass 1 resolution applied** (items 1, 2, 4, 5 — item 3 deferred as structural):
+- Filter 3 atlas paragraph: global regulatory coverage (Schrems II + BSI/CNIL, UAE DPL 2022 + DIFC DPL 2020, India DPDP + RBI, China PIPL, Japan PIPA, South Korea PIPA, LGPD, LFPDPPP, Ley 1581, Ley 25.326, POPIA, NDPR, Kenya DPA, 242-FZ, import substitution). Closes with "in several (DIFC, RBI, 242-FZ, PIPL), it is closer to the architecture the law requires."
+- Practical Shortcut Q3: 2022 CIS SaaS terminations named as documented precedent
+- Final section: "Anchor Is Your Zone A. Bridge Is Your Zone C." (product-marketing) → "What You Have Earned" (genuine Part I close, 130 words)
+- Filter 5 timeline: 3-6 months CRDT/sync + 1-3 months key management design disaggregated
+
+### Ch04 Pass 2 — 7.92/10 POLISH (delta +1.62)
+**Board verdict: "THE CYCLE SHOULD TERMINATE THIS PASS."** No critic regressed. No factual errors. Word count under kill threshold.
+
+**Pass 2 remaining items (all non-blocking):**
+1. Practical Shortcut repositioning (deferred to user)
+2. Halvorsen atlas sentence split (single-critic, prose rhythm)
+3. Connectivity global-baseline framing (Reyes, Diallo — 2 critics)
+4. Filter 2 regulatory custodian specificity (Nakamura, Osei — 2 critics)
+5. Filter 4 relay dependency clarification (Barker)
+
+**Final polish applied** (items 2, 3, 4, 5 — item 1 still deferred):
+- Atlas third sentence split: Americas / African / CIS now separate sentences
+- Connectivity: new paragraph after scene-setting examples — intermittent connectivity as operational baseline for hundreds of millions of enterprise workers in SSA, South/Southeast Asia, rural Latin America
+- Filter 2 custodian specificity: HIPAA + BAA + 45 CFR §164.312 as accommodating; FINRA Rule 4511 + SEC Rule 17a-4 WORM as requiring scrutiny
+- Filter 4 relay: explicit sentence that relay failure degrades sync and collaboration but not local operation or data access; relay is replaceable infrastructure, not data custodian
+
+### Strengths locked in
+
+- Opening question ("Does the primary value of your software come from the user's own data?") before any heading — best Part I structural opener
+- Filter 1 CAP theorem handling — consequence-first, not acronym-first, with double-entry ledger scoping
+- Zone B self-validation: "Building financial trading infrastructure on a local-node architecture is not principled — it is wrong for the domain."
+- Dual-licensing paragraph in Filter 4 — best single explanation of local-first business model alignment
+- "Software that requires a vendor server to function cannot outlive the vendor's continued permission to serve you."
+- "What You Have Earned" section title and closing register
+
+### Ch04 cycle summary
+
+**Invocation:** manual execution of `/review-cycle ch04` workflow
+**Trajectory:** 6.3 REVISE → 7.92 POLISH → final polish
+**Edits:** 8 total across 2 waves (4 resolution + 4 final polish)
+**Deferred:** Practical Shortcut structural repositioning (awaits explicit user instruction)
+**Result:** Part I fully cycle-reviewed. All four chapters cleared REVISE; two unanimous PUBLISH (Ch01, Ch03); two board-approved exits at POLISH with deferred structural items (Ch02, Ch04).
