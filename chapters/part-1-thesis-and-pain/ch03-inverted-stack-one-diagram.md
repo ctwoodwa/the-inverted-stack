@@ -91,6 +91,8 @@ The presentation layer’s primary local-first responsibility is status indicati
 - **Offline:** No peers are reachable. The node is operating on its own authoritative copy.
 - **Conflict-pending:** One or more records have diverged from a peer version and require resolution.
 
+Each state must be communicated through more than color. The `SunfishNodeHealthBar` sets `SemanticProperties.Description` to a text equivalent for each state — screen readers announce the current sync status without requiring the user to inspect the color indicator. State transitions trigger a live region announcement, so an AT user receives the same notification a sighted user receives visually. The full accessibility specification appears in Chapter 20.
+
 When the network is unavailable, the presentation layer changes nothing about its behavior. It continues to render from the local store. The status indicator moves from sync-healthy to offline. The user can still create records, navigate, query, and run any domain workflow that does not require distributed lease coordination. They receive no error page, no spinner, no apology. The software works.
 
 ### Layer 2: Application Logic
@@ -110,8 +112,6 @@ The CAP positioning is per record class, not per application:
 | Resource reservations, scheduled slots | CP (distributed lease) | Double-booking is worse than unavailability |
 | Financial transactions | CP (distributed lease + ledger) | Audit integrity requires strict ordering |
 
-When the network is unavailable, AP-class records continue unimpeded. CP-class records that require a lease are unavailable for writes — this is the correct behavior, not a limitation.
-
 ### Layer 3: Sync Daemon
 
 The sync daemon is a separate long-running process. It is not a thread in the application. It is not a hosted service that stops when the application window closes. It registers with the OS service manager and runs continuously from login, communicating with the application shell through a Unix domain socket. When the application restarts after a crash, the sync daemon has already been collecting deltas from peers; the application reconnects to a daemon that has been working the whole time.
@@ -128,8 +128,6 @@ The daemon manages five concerns:
 
 **Write buffering.** When no peers are reachable, the daemon continues accepting writes from the application logic layer and buffering them to durable local storage. The moment a peer becomes reachable — on the LAN, via VPN, or via the managed relay — the daemon begins working through the buffer. The application never needs to know that writes were queued.
 
-When the network is unavailable, the sync daemon keeps running. It accumulates writes. It attempts peer discovery on its configured schedule. It surfaces link status to the presentation layer. It does not stop.
-
 ### Layer 4: Storage
 
 Layer 4 is the source of truth for this node. Everything the presentation layer renders, everything the application logic layer reads, comes from here. Nothing here depends on a remote service.
@@ -144,8 +142,6 @@ Three storage structures coexist:
 
 **Read-model projections** are materialized views derived from the event log — the tables, indexes, and calculated fields that make queries fast. If a projection becomes corrupted or stale, it is rebuilt from the event log. The event log is the ground truth; projections are a performance optimization.
 
-When the network is unavailable, Layer 4 changes nothing. It continues accepting reads and writes. It has no awareness of whether peers exist.
-
 ### Layer 5: Relay and Discovery
 
 Layer 5 is the only layer that touches infrastructure outside the local node, and it is optional.
@@ -157,7 +153,7 @@ The relay’s two default trust levels reflect this:
 - **Relay-only (default):** The relay receives and routes ciphertext. It cannot decrypt anything. This is the maximum-privacy configuration that satisfies data sovereignty requirements without exception.
 - **Attested hosted peer (opt-in):** An administrator explicitly issues the hosted relay node a role attestation, making it a full peer. This enables the relay to participate in quorum for CP-class lease coordination — useful for teams too small to form quorum from workstations alone.
 
-When the relay is unreachable, nodes fall back to direct peer-to-peer communication on the LAN. If that is also unavailable, they continue working offline. The relay’s failure is not the application’s failure.
+The relay’s failure is not the application’s failure.
 
 ---
 
@@ -177,11 +173,13 @@ Chapter 1 named six failure modes. The inversion addresses each of them specific
 
 *The Price.* Pricing leverage depends on switching costs that compound when data and workflows are entangled with vendor infrastructure. The relay — the one remaining billable dependency — is replaceable. The data custody that makes price changes coercive is removed from the equation.
 
-*The Third-Party Veto.* Government or regulatory action targeting a vendor can interrupt service to every customer downstream, regardless of both parties' preferences. The local-node architecture does not eliminate this vector entirely — a relay can be targeted, or the software vendor itself — but it disaggregates exposure: data is not reachable by acting on the relay operator, and the relay can be self-hosted or replaced for the highest-sensitivity deployments. Chapter 11 specifies relay governance; Chapter 15 covers the compliance framework for the customer-directed variant of this failure mode.
+*The Third-Party Veto.* In 2022, Western SaaS vendors suspended service across Russia and CIS markets under sanctions enforcement; organizations that had built workflows on those platforms found their operations interrupted not because their vendors failed them but because their vendors were directed to stop serving them. A local-node architecture does not eliminate this vector entirely — a relay can be targeted, or the software vendor itself — but it disaggregates exposure: data on user hardware is not reachable by acting on the relay operator, and the relay can be self-hosted or replaced for the highest-sensitivity deployments. Chapter 11 specifies relay governance; Chapter 15 covers the compliance framework for the customer-directed variant of this failure mode.
+
+The regulatory landscape this failure mode operates in is worth naming. The EU Court of Justice's 2020 Schrems II ruling constrained EU organizations from transferring personal data to US cloud providers without adequate supplemental safeguards — the strongest European legal argument for local-first data residency. Russia's Federal Law 242-FZ requires since 2015 that personal data of Russian citizens be stored on Russian territory. China's PIPL (2021) and Japan's PIPA impose comparable localization requirements in their respective jurisdictions. India's DPDP Act 2023, the UAE Data Protection Law 2022, South Africa's POPIA, Nigeria's NDPR, and Kenya's Data Protection Act each impose data residency and consent obligations that constrain where personal data may be processed. In each jurisdiction, an architecture where data lives on the user's own hardware is the architecture that makes compliance tractable.
 
 **What you may not have noticed you were exposed to:**
 
-*The Security Breach.* Every SaaS vendor holds decryptable copies of everything you have stored with them. A breach anywhere in their infrastructure stack — servers, sub-processors, privileged internal access — is a breach of your data, regardless of any action you took or failed to take. This failure mode is invisible until it has already happened; you cannot evaluate a vendor's internal security posture from outside it. In this architecture, the relay holds only ciphertext. A complete breach of the relay infrastructure exposes nothing — there is no decryptable content to exfiltrate. The attack surface moves to the endpoints, which this architecture addresses explicitly rather than hiding.
+*The Security Breach.* Every SaaS vendor holds decryptable copies of everything you have stored with them. A breach anywhere in their infrastructure stack — servers, sub-processors, privileged internal access — is a breach of your data, regardless of any action you took or failed to take. This failure mode is invisible until it has already happened; you cannot evaluate a vendor's internal security posture from outside it. In this architecture, the relay holds only ciphertext: it receives post-encryption deltas sealed under per-document DEKs wrapped by role KEKs, with keys that never leave the originating node. A complete breach of the relay infrastructure exposes nothing — there is no decryptable content to exfiltrate. The attack surface moves to the endpoints, which this architecture addresses explicitly rather than hiding.
 
 **What the architecture introduces honestly:**
 
