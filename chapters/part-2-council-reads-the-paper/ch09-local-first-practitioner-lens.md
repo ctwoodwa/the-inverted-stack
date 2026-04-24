@@ -88,7 +88,7 @@ The seven local-first ideals, checked against the revised architecture:
 
 **The network is optional.** The architecture is explicitly offline-first. The node operates at full fidelity without network connectivity. Degraded UX modes apply only to CP-class data requiring freshness guarantees. Checked.
 
-**Seamless collaboration with your colleagues.** CRDT merge handles concurrent edits without coordination. The conflict inbox and bulk resolution UX surfaces the edge cases that require human judgment. Checked.
+**Seamless collaboration with your colleagues.** CRDT merge handles concurrent edits without coordination. The conflict inbox and bulk resolution UX surfaces the edge cases that require human judgment. Checked architecturally — with a practitioner's honesty note: the reference implementation's CRDT backend integration (YDotNet replacing the current stub) is the open work that will let this check mark move from architectural commitment to field-proven behavior. Ferreira has written enough CRDT code to know that the distinction matters.
 
 **The long now.** The compliance CRDT tier with no garbage collection preserves the complete operation history. Records in this tier cannot be lost to compaction. Long-term archival formats are addressed. Checked.
 
@@ -124,17 +124,11 @@ The architecture's backup infrastructure is solid. The recovery UX needs the sam
 
 ### Production Analogues
 
-The architecture's analogues table in the revised paper cites Figma, Linear, Obsidian, and PowerSync. These are correct references — they demonstrate that each subsystem of the inverted stack has production validation somewhere. But they do not address the most relevant question for this chapter: has anyone shipped a complete local-first commercial application and made money doing it?
+The architecture's analogues table in the revised paper cites Figma, Linear, Obsidian, and PowerSync. These are correct references — they demonstrate that each subsystem of the inverted stack has production validation somewhere. But Ferreira, with Automerge and Ink & Switch adjacency, brings a practitioner's opinion on the CRDT library choice that the chapter should surface directly.
 
-The answer is yes. Ferreira named it: Actual Budget.
+The Yjs ecosystem (via YDotNet for .NET) is the pragmatic choice today: the broadest production adoption (Tiptap, Loom, Jupyter, hundreds of editors), battle-tested merge semantics, and a documented wire format that other Yjs-aware tools can read natively. Automerge is the more theoretically rigorous line, with stronger support for rich-text-specific operations and the clearer Ink & Switch research lineage; Automerge 3.0 (2025) cut memory usage ten-fold and is now production-viable where it previously was not. Loro is the aspirational target — native snapshot/delta APIs, Rust implementation — but the C# bindings remain bare-bones and multi-week integration is still required. Adjacent local-first frameworks (Jazz, Evolu, Replicache, TinyBase) each solve a slice of the problem: Jazz is the most architecturally complete framework but lacks a flagship production application; Replicache has production adoption but is source-available rather than open-source; Evolu and TinyBase operate at the library layer without addressing enterprise governance. The inverted stack's framework-agnostic `ICrdtEngine` abstraction keeps the choice reversible — Ferreira called this the single best architectural decision the paper makes, because it prevents lock-in to any CRDT ecosystem while the field continues to evolve.
 
-Actual is a personal finance application. No server required. Data lives on the user's device. Syncing is optional and user-controlled.
-
-It charges a one-time purchase price, with an optional sync service subscription for users who want it. No per-seat pricing. No subscription required to access core features. The data is the user's by design, not by contract.
-
-Actual validates two things simultaneously. First, the local-first model works at the product level — real users adopt it, pay for it, and use it daily. Second, the revenue model works without server-side data custody — one-time purchase plus optional convenience subscription produces enough revenue to sustain development. The closest commercial analogue to the inverted stack's business model is not a SaaS company. It is a desktop software company that added sync as a feature, not as a dependency.
-
-Explicitly citing Actual Budget closes the implicit objection that no one has made this model work commercially. Someone has. The paper should say so.
+The Actual Budget analysis in Chapter 2 already established that local-first works at the product level: real users adopt it, pay for it, use it daily. Ferreira's contribution extends that analysis into the commercial register. The one-time purchase plus optional sync subscription is not just a viable revenue model — it is the only commercial model in the survey that produces enough revenue to sustain development without re-introducing server-side data custody. Ch02 established what Actual Budget is architecturally. Ferreira establishes what Actual Budget is commercially: proof that desktop-software-with-optional-sync can fund a team indefinitely at a scale appropriate to a focused product. The closest commercial analogue to the inverted stack's business model is not a SaaS company. It is a desktop software company that added sync as a feature, not as a dependency.
 
 ### Implementation Drift Risk
 
@@ -157,6 +151,31 @@ His four observations — the zero-state first-run gap, the recovery UX, the Act
 This matters for two reasons. Practically: the architecture proceeds to alpha implementation without resolving these items. Structurally: Ferreira is the first council member, across both rounds, to issue an unconditional PROCEED. The enterprise architect issued PROCEED WITH CONDITIONS. The distributed systems researcher issued PROCEED WITH CONDITIONS. The security practitioner issued PROCEED WITH CONDITIONS. The product manager issued PROCEED WITH CONDITIONS. Ferreira, the practitioner who knows where the bodies are buried, looked at the revised architecture and found nothing that blocked it.
 
 That verdict is not a formality. It is the hardest one to earn.
+
+---
+
+## Global Deployment Context — Ferreira's Empirical Note
+
+Ferreira's unconditional PROCEED is defensible as an architectural verdict. It is also calibrated against empirical evidence the other council members had to assert. In 2022, Adobe, Autodesk, Microsoft, Figma, and dozens of other Western SaaS vendors suspended service across Russia and CIS markets under sanctions enforcement — hundreds of thousands of organizations lost access with days of notice. That event is the practitioner's evidence for why unconditional PROCEED is not a generosity: an architecture that survives vendor suspension is not a theoretical improvement; it is the architecture that already proved necessary once.
+
+The local-first-is-legally-required regulatory envelope extends further than GDPR. India's DPDP Act 2023 and RBI data localization circular make local-first compliance for financial data; UAE's DIFC Data Protection Law 2020 may legally prohibit foreign cloud storage for DIFC-licensed firms; Nigeria's NDPR, South Africa's POPIA, and Kenya's DPA impose comparable obligations; Russia's Federal Law 242-FZ predates GDPR by two years as general-purpose data localization. Intermittent connectivity is the operational baseline for hundreds of millions of enterprise workers across Sub-Saharan Africa, South and Southeast Asia, and rural Latin America — not a carrier-grade NAT edge case. The disaster recovery walkthrough must therefore address shared-device deployments, which are the norm in African and South Asian enterprise field operations — a single tablet rotated across a team of field workers, where recovery targets the role and the workspace, not the device and its sole user.
+
+The architecture answers these conditions. The practitioner's unconditional PROCEED is easier to issue because the markets where the architecture is most needed are also the markets where alternatives have already failed.
+
+---
+
+## The Non-Negotiable Practitioner Checklist
+
+What a practitioner carries forward from Ferreira's review:
+
+- **Export path is a first-class shipping requirement, not a future feature.** JSON, CSV, or Markdown — durable, application-independent formats. The export button is the proof that the ownership claim is real, not contractual.
+- **Disaster recovery walkthrough ships with the product.** A non-technical user, after complete device failure, must restore from backup in under thirty minutes. Specify for single-device and shared-device deployments. A backup that cannot be restored is not a backup.
+- **Telemetry model is decided before the first product-analytics request.** Opt-in telemetry, aggregate-through-relay privacy-preserving statistics, or no analytics at all. Naming the model is the control that prevents implementation drift toward server-side re-centralization.
+- **Zero-state first-run experience is specified as a product requirement.** What a new user sees at the blank screen, the first action the application guides them to, the path from empty state to first project, first backup, first invite. This is where most local-first products lose users.
+- **Recovery UX receives the same design attention as backup status.** Non-technical restore flow, progress indication, no rclone paths at the moment the user is already stressed about lost work.
+- **CRDT engine choice is kept reversible behind a stable abstraction.** `ICrdtEngine` or equivalent. The field is still evolving; Yjs today, Automerge or Loro tomorrow, without rewriting the application layer.
+- **Honesty about offline-only failure modes is a non-negotiable.** Symmetric NAT plus relay outage is one example; extended partition beyond the GC horizon is another. Name them, document the fallback, resist the temptation to pretend they cannot occur.
+- **Global deployment context is part of the product specification.** Load-shedding durability, shared-device recovery, non-GDPR regulatory envelopes, intermittent-connectivity as operational baseline — these are product requirements for the markets where local-first is most valuable, not features for a future release.
 
 ---
 
