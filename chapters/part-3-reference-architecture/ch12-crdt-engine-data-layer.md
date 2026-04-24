@@ -7,7 +7,7 @@
 
 ---
 
-Every CRDT-based system eventually faces the same two questions: which data structures get to diverge, and which ones cannot afford to? The data layer answers both. It defines the document primitives that merge automatically, the CP-class records that require a lease before any write proceeds, the engine that executes the merge, and the storage stack underneath it all. Get this layer right and the rest of the node runs on top of a predictable foundation. Get it wrong and no amount of sync protocol sophistication recovers correctness at the domain level.
+Every CRDT-based system eventually faces the same two questions: which data structures get to diverge, and which ones cannot afford to? The data layer answers both. It defines the document primitives that merge automatically, the CP-class records that require a lease before any write proceeds, the engine that executes the merge, and the storage stack underneath it all. Get this layer right and the rest of the node runs on a predictable foundation. Get it wrong and no amount of sync protocol sophistication recovers correctness at the domain level.
 
 The data layer has three structural concerns: the CRDT engine itself and the abstraction that keeps the engine choice reversible, a per-record positioning model that specifies whether each record class converges through merging or serializes through a lease, and a five-tier storage stack that places durability guarantees in the right layer for each concern. A fourth concern — the double-entry ledger — is not a separate subsystem but the canonical example of how CP-class records are modeled correctly in a local-first system.
 
@@ -73,9 +73,9 @@ The abstraction carries an engine name and version string that appear in diagnos
 
 **YDotNet** is the default production backend. YDotNet provides .NET bindings to `yrs`, the Rust rewrite of the Yjs core [3]. The bindings are well-maintained, the documentation is thorough, and the behavior under conflict conditions is extensively tested. YDotNet supports the snapshot, delta, and version-vector surfaces the sync protocol requires.
 
-**Loro** is the aspirational primary engine. It was designed with compaction as a first-class architectural concern from the outset, not bolted on afterward [4]. Loro’s compact encoding and shallow snapshot model reduce memory footprint for high-churn documents and align directly with the three-tier GC policy described below. The `loro-cs` bindings at `github.com/sensslen/loro-cs` exist as a NuGet package tracking `loro-core` but currently cover only the core CRDT surface; the snapshot restoration, version vector comparison, and delta production APIs required by the sync protocol are not yet exposed. Completing the binding layer is a multi-week engineering effort. Sunfish uses YDotNet as the default engine while the `loro-cs` surface matures; the `ICrdtEngine` abstraction keeps the transition reversible.
+**Loro** is the aspirational primary engine. Loro was designed with compaction as a first-class architectural concern from the outset, not bolted on afterward [4]. Its compact encoding and shallow snapshot model reduce memory footprint for high-churn documents and align directly with the three-tier GC policy described below. The `loro-cs` bindings at `github.com/sensslen/loro-cs` exist as a NuGet package tracking `loro-core` but currently cover only the core CRDT surface; the snapshot restoration, version vector comparison, and delta production APIs required by the sync protocol are not yet exposed. Completing the binding layer is a multi-week engineering effort. Sunfish uses YDotNet as the default engine while the `loro-cs` surface matures; the `ICrdtEngine` abstraction keeps the transition reversible.
 
-**Automerge** is excluded not because its design is inferior — the Rust core is an excellent reference implementation [5] — but because it lacks a first-class .NET binding covering the sync protocol surface.
+**Automerge** is excluded not because its design is inferior — the Rust core is a strong reference implementation [5] — but because it lacks a first-class .NET binding covering the sync protocol surface.
 
 The following example shows how a plugin consumes `ICrdtEngine`:
 
@@ -105,11 +105,11 @@ The plugin never references a YDotNet type directly. If the engine backend chang
 
 ## CRDT Growth and Garbage Collection
 
-CRDT documents grow monotonically. Tombstones for deleted elements, historical operation records for concurrent edits, and metadata for version vector entries all accumulate as the document is used. A text document in active daily use for six months carries operation history proportional to every character ever typed, not just the characters currently visible. This is not a flaw in the CRDT model; it is the mechanism that makes deterministic merge possible without a central coordinator. The design question is not how to eliminate growth but how to bound it.
+CRDT documents grow monotonically. Tombstones for deleted elements, historical operation records for concurrent edits, and metadata for version vector entries all accumulate as the document is used. A text document in active daily use for six months carries operation history proportional to every character ever typed, not just the characters currently visible. This is not a flaw in the CRDT model — it is the mechanism that makes deterministic merge possible without a central coordinator. The design question is not how to eliminate growth but how to bound it.
 
 Three mitigation strategies apply at different levels of the stack. They are not alternatives — a production deployment uses all three, applied selectively by document type.
 
-**Library-level compaction** treats the engine’s compaction behavior as a primary evaluation criterion. This is the reason Loro is the aspirational primary: its compact encoding and shallow snapshot model are designed to produce significantly smaller documents for equivalent operation histories compared to engines with emergent GC approaches. For an engine with emergent GC — YDotNet — compaction still applies, but it requires that all peers have acknowledged operations before they are eligible for pruning, creating a dependency on peer acknowledgment state that shallow snapshots avoid.
+**Library-level compaction** treats the engine’s compaction behavior as a primary evaluation criterion. Loro is the aspirational primary for this reason: its compact encoding and shallow snapshot model produce significantly smaller documents for equivalent operation histories compared to engines with emergent GC approaches. For an engine with emergent GC — YDotNet — compaction still applies, but it requires that all peers have acknowledged operations before they are eligible for pruning, creating a dependency on peer acknowledgment state that shallow snapshots avoid.
 
 **Application-level document sharding** splits large logical documents into sub-documents under named map keys. A construction project document that accumulates high-churn activity in its daily log entries is split so that each week’s log is a separate CRDT document under the project map. Archiving a week’s log means deleting the map key that references it; the engine garbage-collects the sub-document independently of the rest of the project. Sharding belongs to the semantic layer: the plugin declares which domains use sharded sub-documents and what the sharding key is. The data layer executes the sharding transparently. Sharding is appropriate for high-churn domains — log entries, presence annotations, ephemeral comments — where the growth rate from accumulated operations would otherwise dominate document size over time.
 
@@ -173,9 +173,9 @@ The handler does not check whether the posting already exists. The engine’s id
 
 The ledger uses CQRS. The write side is the immutable posting event stream. The read side is a set of materialized projections: balance tables, statements, aging reports, period summaries. The projections are derived views — they hold no data that cannot be rebuilt by replaying the event stream from the beginning.
 
-Business rule aggregates — credit limit checks, payment allocation decisions, overdue detection — never depend on projections for authoritative data. They read from the event stream directly or from the current lease-protected CP record state — never from a projection that may lag behind an asynchronous update cycle.
+Business rule aggregates — credit limit checks, payment allocation decisions, overdue detection — read from the event stream directly or from the current lease-protected CP record state, never from a projection that may lag behind an asynchronous update cycle.
 
-When a node recovers from a crash or resumes after a long offline period, projections rebuild from the event log automatically. No separate recovery procedure exists; the event log is the recovery procedure.
+When a node recovers from a crash or resumes after a long offline period, projections rebuild from the event log automatically. The event log is the recovery procedure.
 
 ### Period Close and Rollup Snapshots
 

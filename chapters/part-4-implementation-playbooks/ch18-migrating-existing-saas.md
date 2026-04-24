@@ -254,7 +254,7 @@ Know which packages become available as you advance through phases. Do not reach
 
 ## The Greenfield Case
 
-If your product is greenfield — no existing data, no existing tenants, no migration debt — and the five-filter framework from Chapter 4 returns Zone C, clone `accelerators/bridge/`. It ships Zone C out of the box. The control plane, relay tier, and per-tenant data plane are already separated. The hosted-node peer is already configured ciphertext-only. Your work is product configuration, not architecture construction.
+If your product is greenfield — no existing data, no existing tenants, no migration debt — and the five-filter framework from Chapter 4 returns Zone C, clone `accelerators/bridge/`. It ships Zone C out of the box. The control plane, relay tier, and per-tenant data plane are already separated. The hosted-node peer ships ciphertext-only. Your work is product configuration, not architecture construction.
 
 The migration path in this chapter exists for teams with production workloads, existing schemas, and customers who cannot tolerate a flag-day cutover. Every phase delivers value independently. Phase 1 is deployable in a sprint. Phase 2 is deployable in a quarter. Phases 3 and 4 are available when the business case justifies them.
 

@@ -51,7 +51,7 @@ The analytics problem has no answer here. How do you run product analytics on lo
 
 The mobile platform question is unresolved. iOS and Android impose constraints on background processing, keystore behavior, and filesystem access that the local-node architecture has not yet solved for. A sync daemon that needs to run continuously encounters App Store restrictions on background execution. A local encrypted database that must survive across app launches faces platform-specific keystore semantics that differ materially from the desktop model. The architecture is designed desktop-first. The path to mobile as a first-class deployment target requires platform-specific engineering that has not been done, and the tradeoffs — battery, background execution limits, user-facing permission prompts — have not been specified. A field operations crew whose primary computing surface is an iPhone does not yet have a complete answer here.
 
-Every architecture has a horizon. The value of honesty about the horizon is that you know where the map ends before you need it.
+Every architecture has a horizon. Honesty about the horizon means you know where the map ends before you need it.
 
 ---
 
@@ -65,7 +65,7 @@ At the end of this sequence, the server is load-bearing again. The local node ha
 
 The anti-patterns are specific enough to name. Server-side feature gates after Phase 2 must be replaced with `Sunfish.Foundation.FeatureManagement` evaluated locally — the capability is there, and the decision to use it must be made before the first sprint in which someone asks for a feature flag. Telemetry that requires shipping event data to a server cannot be bolted on after the architecture is established; it must be decided before the first product analytics request, because once the pattern exists it becomes the default. Compliance logging routed to a central server breaks the data sovereignty claim at the exact moment the enterprise customer is likely to audit it. Using the relay as a data store rather than a relay cache turns a transit layer into a dependency, and the relay will eventually exhibit the same failure modes as any database. Server-side permission checks at write time are not a fallback — the permission check belongs in the role attestation at capability negotiation, where it was designed to live.
 
-None of these drift patterns requires a bad actor. They require ordinary engineering teams under ordinary schedule pressure making ordinary pragmatic decisions. The antidote is not a technology choice. It is a set of architectural decisions made before the pressure arrives, recorded in ADRs that future engineers can read, so that when the analytics request lands there is a written answer that predates the request and does not require relitigating the architecture.
+None of these drift patterns requires a bad actor. They require ordinary engineering teams under ordinary schedule pressure making ordinary pragmatic decisions. The antidote is not a technology choice. It is a set of architectural decisions made before the pressure arrives, recorded in ADRs that future engineers can read, so that when the analytics request lands, a written answer already exists — one that predates the request and does not require relitigating the architecture.
 
 Once established, the pattern is not reversible without rearchitecting: server-side paths accumulate dependencies that become load-bearing before anyone notices.
 

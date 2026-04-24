@@ -36,7 +36,7 @@ SBOM plus signed installer plus MDM integration is a coherent governance story. 
 
 Voss scored incident response and forensic capability at a six. That score came with a blocking issue.
 
-The paper describes a CRDT audit trail. Every write operation is recorded in a tamper-evident append-only log; the sync daemon can reconstruct the full history of any record from its operation log. For an incident response procedure, it is not a substitute.
+The paper describes a CRDT audit trail. Every write operation is recorded in a tamper-evident append-only log; the sync daemon can reconstruct the full history of any record from its operation log. An incident response procedure it does not replace.
 
 The specific problem Voss raised: when an endpoint is compromised in an enterprise environment, the incident response process is not look at the audit trail. It is a defined sequence of steps: who is notified first, what artifacts are collected and from where, how the chain of custody is established for those artifacts, what the communication protocol is between IT, legal, and affected users, and who files the formal incident report with what regulators if required.
 
@@ -46,15 +46,15 @@ The paper specified the audit trail and omitted the procedure. A CISO cannot han
 
 Without that document, the architecture cannot pass a security review in any enterprise that takes its compliance obligations seriously. A financial institution, a healthcare organization, a federal contractor, a law firm handling client confidential data — all of these require incident response procedures as a condition of deploying new software. The CRDT audit trail is a forensic asset. It is not a procedure.
 
-Container update governance failed to answer three questions IT departments always ask. The paper describes container images delivered through a registry — a standard and appropriate update mechanism. What it does not describe is how those updates are applied to a running production stack without downtime. Enterprise IT departments need to know whether updates require a maintenance window, whether they are applied automatically or manually triggered, and what the rollback procedure is if an update introduces a regression. None of those questions had answers.
+Container update governance left three questions IT departments always ask unanswered. The paper describes container images delivered through a registry — a standard and appropriate update mechanism — but does not describe how those updates apply to a running production stack without downtime. Enterprise IT departments need to know whether updates require a maintenance window, whether they are applied automatically or manually triggered, and what the rollback procedure is if an update introduces a regression. None of those questions had answers.
 
 Network policy compatibility scored a seven rather than the eight it could have earned. The architecture implies relay traffic over port 443 — the relay is an HTTPS service — but the paper does not state it explicitly. More importantly, the paper addresses neither PAC file compatibility nor behavior behind corporate proxies that perform TLS inspection. Many enterprises route all outbound traffic through a proxy that terminates and re-establishes TLS connections. Software that does not respect proxy configuration fails invisibly in these environments. The paper needed to confirm that the sync daemon respects system proxy configuration and that relay connections route cleanly through PAC-file-configured proxies.
 
-Compliance certification pathway was a six. The paper mentions SOC 2 Type II and ISO 27001 nowhere. For enterprise procurement, the absence of any mention of a compliance certification path — even a statement that the architecture is designed with SOC 2 controls in mind — is a gap that a security questionnaire will surface immediately.
+Compliance certification pathway scored a six. The paper mentions SOC 2 Type II and ISO 27001 nowhere. For enterprise procurement, the absence of any mention of a compliance certification path — even a statement that the architecture is designed with SOC 2 controls in mind — is a gap that a security questionnaire will surface immediately.
 
 ### Round 1 Verdict: PROCEED — With One Hard Prerequisite
 
-Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. The absent incident response runbook blocked any enterprise security review until resolved. The three conditions she attached were lower-priority additions: explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain. None would individually block the architecture; all would surface in any security questionnaire.
+Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. The absent incident response runbook blocks any enterprise security review until resolved. The three conditions she attached were lower-priority additions: explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain. None would individually block the architecture; all would surface in any security questionnaire.
 
 ---
 
@@ -82,7 +82,7 @@ Round 2 opened with the question Voss applies to every enterprise software revie
 
 The answer had improved substantially. The SBOM in CycloneDX format satisfies the current NTIA minimum elements and CISA guidance — the specific format that federal agencies and large enterprise security teams request. Rootless Podman addresses the most common enterprise container objection: the architecture does not run its container runtime as root, which eliminates an entire class of privilege escalation concerns that InfoSec teams raise automatically when they see the word container. The network footprint is clean — no inbound ports on any external interface, relay traffic on port 443 only. That is a strong story for corporate firewall approval.
 
-Voss scored the security audit story at an eight. Her remaining note was a process detail, not an architecture concern: the paper specifies what goes in the SBOM but not when and how it is generated. Security teams want to know that the SBOM is produced at build time from source code — meaning it reflects what was actually compiled into the binary — rather than assembled post-install from whatever packages happen to be present on the system. Build-time generation is the stronger claim. The paper should state it explicitly.
+Voss scored the security audit story at an eight. Her remaining note was a process detail, not an architecture concern: the paper specifies what goes in the SBOM but not when and how it is generated. Security teams need the SBOM produced at build time from source code — meaning it reflects what was actually compiled into the binary — rather than assembled post-install from whatever packages happen to be present on the system. Build-time generation is the stronger claim. The paper should state it explicitly.
 
 This became condition C1 in Round 2: specify SBOM generation timing in the CI/CD pipeline, confirming build-time generation from source.
 
@@ -100,13 +100,13 @@ Condition C2: document Podman Windows substrate options with recommended default
 
 When a developer leaves an organization, IT needs to revoke their access. The architecture handles this cryptographically: the capability rotation cycle removes the departing user role attestation, the relay propagates the revocation to active peers, and the next capability negotiation cycle confirms the revocation across the mesh.
 
-What the paper does not describe is how an IT administrator actually triggers this process.
+The paper does not describe how an IT administrator actually triggers this process.
 
 The cryptographic description is correct. The administrative interface is absent. An IT administrator sitting at a helpdesk console needs to know: do they open a web dashboard, run a CLI command, or call a REST endpoint? And when they take that action, what do they see — a confirmation that the revocation has been queued, a status indicator showing propagation progress, an alert when all active peers have acknowledged?
 
 Voss scored deprovisioning at a seven and attached condition C3: add an admin tooling sketch for the revocation workflow. Not a full implementation specification — even a sketch is sufficient at this stage. IT admin opens the Admin Console, selects the user account, clicks Revoke Access, and the relay broadcasts a key rotation to all active peers within one capability cycle — that is an action. That level of specificity transforms a cryptographic guarantee into an operational procedure.
 
-This gap is common in security-conscious architecture documents. The cryptographic properties are well-specified; the administrative interface is assumed to exist. For enterprise procurement, the administrative interface is not an implementation detail. It is part of the product.
+Security-conscious architecture documents make this gap regularly. The cryptographic properties are well-specified; the administrative interface is assumed to exist. For enterprise procurement, the administrative interface is not an implementation detail. It is part of the product.
 
 ### The Migration Path
 
@@ -122,7 +122,7 @@ Voss scored this at an eight and described the four-phase reversible model as ex
 
 The procurement story — AGPLv3 plus a managed relay subscription — is structurally clean. There is no per-seat licensing negotiation, no enterprise edition with gated features, no contract renewal conversation tied to user count. IT departments understand SaaS subscriptions. They have procurement workflows for them. The open-source core removes the vendor lock-in objection that derails many procurement conversations before they start.
 
-But the AGPLv3 copyleft clause creates a specific problem for enterprise customers who customize the software.
+The AGPLv3 copyleft clause creates a specific problem for enterprise customers who customize the software.
 
 The AGPL network use clause requires that any organization that modifies the software and uses it to provide a service over a network must publish their modifications under the same license. Most enterprise software deployments involve customization — at minimum, UI modifications to match brand guidelines, workflow adjustments to fit organizational processes, integrations with internal systems. An organization that makes these modifications is arguably required to publish them under AGPLv3. Corporate legal teams at large enterprises frequently have categorical policies against deploying AGPLv3 software in production environments for exactly this reason.
 

@@ -126,7 +126,7 @@ sequenceDiagram
 
 If `AnchorSessionService.IsOnboarded` is false, the UI shell renders `Onboarding.razor`. If it is true, the shell renders the main workspace. You cannot reach the workspace without a valid attestation. The kernel enforces this; the UI reflects it.
 
-No other bootstrapping is required for the kernel itself. Plugin registration — your domain code — comes after these three calls and is covered in section 7.
+The kernel needs no other bootstrapping. Plugin registration — your domain code — comes after these three calls and is covered in section 7.
 
 ---
 
@@ -176,7 +176,7 @@ This is the core primitive. Everything else in the platform — stream subscript
 
 ## 5. The QR-Code Onboarding Flow
 
-The onboarding flow establishes trust before the first document sync. Two devices cannot exchange data until both hold compatible attestations. This section walks the wire format and both code paths.
+The onboarding flow establishes trust before the first document sync. Two devices cannot exchange data until both hold compatible attestations. The wire format and both code paths follow.
 
 ### Wire Format
 
@@ -425,7 +425,7 @@ The kernel rebuilds projections from the event log on startup. After rebuild, it
 
 ### The Full Extension-Point Map
 
-Five extension points define the complete plugin surface. You have seen three here:
+Five extension points define the complete plugin surface. The three covered in this chapter:
 
 | Extension Point | What it does | When you need it |
 |----------------|-------------|-----------------|
@@ -441,7 +441,7 @@ Chapter 12 covers CRDT document modeling in depth — how to choose the right CR
 
 ### What You Are Not Building Yet
 
-Three topics are intentionally deferred from this chapter.
+Three topics are deferred.
 
 **Bridge integration.** Anchor is a Zone-A node. If your architecture includes a Zone-C cloud relay, see Chapter 18, which covers the sync boundary between the local node and the cloud. Do not add Bridge calls to Anchor until you have read the relay trust model in Chapter 15.
 

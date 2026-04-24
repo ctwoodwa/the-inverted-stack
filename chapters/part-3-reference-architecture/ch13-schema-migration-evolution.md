@@ -31,7 +31,7 @@ The expand-contract pattern — sometimes called parallel change — divides eve
 
 In the expand phase, the new version adds fields while keeping the old ones. The application dual-writes: when creating or updating a record, it writes to both the old field and the new field simultaneously. Nodes running the old schema see only the old field and ignore the new one as an unknown key — CRDT maps are designed to tolerate unknown keys. Nodes running the new schema prefer the new field and fall back to the old field when the new one is absent, which happens when the record was last written by an old-schema node.
 
-No coordination is required to begin the expand phase. Any node can upgrade, and the expand-phase behavior is immediately correct for mixed-version operation.
+No coordination is required to begin the expand phase. Any node can upgrade; the expand-phase behavior is immediately correct for mixed-version operation.
 
 The expand phase has one hard constraint: it must remain active for at least one full major version release cycle. The compatibility window must be long enough that all nodes in any realistic deployment have had the opportunity to upgrade. Teams with nodes that are infrequently connected — a laptop that travels, an air-gapped workstation, a device that a team member left on a shelf — dictate how long the compatibility window must stay open. The kernel tracks the oldest schema version seen from each peer in the current sync session. The epoch coordinator uses this tracking data to determine when the contract phase is safe to initiate.
 
@@ -41,7 +41,7 @@ The contract phase removes the old field. It is a breaking change. A node runnin
 
 This is why the contract phase requires a schema epoch bump. The epoch bump is a version gate: the sync daemon on a v3 node rejects synchronization with any peer still running a schema below the minimum supported epoch. The peer receives a clear error — it cannot sync until it upgrades — rather than silently receiving partial data.
 
-The contract phase does not begin automatically when the compatibility window expires. It requires explicit initiation by the epoch coordinator, covered below. The decision to enter the contract phase is a deliberate operational act, not a timer.
+The contract phase does not begin automatically when the compatibility window expires. It requires explicit initiation by the epoch coordinator, covered below. Entering the contract phase is a deliberate operational act, not a timer.
 
 ### Dual-Write Safety
 
@@ -55,13 +55,13 @@ CRDT operations travel between nodes as immutable deltas. The events that result
 
 Upcasters are that read-path layer. An upcaster is a pure function: it takes an event of type `RecordUpdatedV1` and returns the equivalent `RecordUpdatedV2`. The semantic layer applies upcasters on read, before domain logic sees the event. Domain logic always operates on the current-version event shape regardless of what is stored in the log.
 
-Two classes of additive change do not require upcasters: adding a new optional field to an existing event type, and adding a new event variant. Old nodes receiving an event with an unknown optional field store it as an unknown key and ignore it. New nodes receiving an event missing the optional field treat absence as the field’s default value. New event variants that old nodes cannot interpret are quarantined, not silently dropped — the circuit breaker queue holds them pending an upgrade acknowledgment.
+Two classes of additive change do not require upcasters: adding a new optional field to an existing event type, and adding a new event variant. Old nodes receiving an event with an unknown optional field store it as an unknown key and ignore it. New nodes receiving an event missing the optional field treat absence as the field’s default value. New event variants that old nodes cannot interpret are quarantined, not silently dropped — the circuit breaker queue holds them pending upgrade acknowledgment.
 
 Non-additive changes require a new event type. Renaming a field in an existing event type is not additive: old nodes reading the old field name get an absent value, not the renamed one. The correct approach is to introduce `RecordUpdatedV2` with the renamed field, leave `RecordUpdatedV1` intact, and register an upcaster that promotes V1 events to V2 on read. The V1 event type is never modified.
 
 ### The Accumulation Problem
 
-Upcaster chains accumulate over time. A system with three major versions of a record type has upcasters from V1 to V2 and V2 to V3. A system with ten major versions has nine upcasters composed in sequence for every event read. Each upcaster is individually simple; the chain introduces maintenance risk as developers must trace the full sequence to understand what any stored event means.
+Upcaster chains accumulate over time. A system with three major versions of a record type has upcasters from V1 to V2 and V2 to V3. A system with ten major versions has nine upcasters composed in sequence for every event read. Each upcaster is individually simple; the chain introduces maintenance risk because developers must trace the full sequence to understand what any stored event means.
 
 Mandatory stream compaction bounds the accumulation problem. Compaction is a background copy-transform job: it replays the original event stream, applies all current upcasters in sequence, and writes a new compacted stream where every event is already in the current-version shape. Once compaction completes and the compacted stream is verified, the old upcasters for compacted events are retired. The old stream is archived rather than deleted — it is the audit record of original history — but the read path no longer traverses it for operational queries.
 
@@ -126,7 +126,7 @@ sequenceDiagram
 
 The node initiating the migration acts as epoch coordinator — typically the team administrator’s node. The coordinator announces the new epoch to the relay and all directly reachable peers. Each peer acknowledges. The coordinator waits for quorum acknowledgment — the same quorum threshold used for CP-class lease coordination — before declaring the epoch active.
 
-Quorum requires that a majority of currently reachable peers have acknowledged the epoch announcement — not that every peer has upgraded. Peers offline at announcement time receive the epoch event on reconnect. An offline peer that reconnects after the epoch becomes active but before upgrading receives a clear message from its first peer contact: the epoch has advanced and the peer must upgrade before synchronization resumes for the affected record types. The offline peer’s unaffected record types continue to sync normally; only the record types governed by the new epoch are gated.
+A majority of currently reachable peers must acknowledge the epoch announcement — not every peer must have upgraded. Peers offline at announcement time receive the epoch event on reconnect. An offline peer that reconnects after the epoch becomes active but before upgrading receives a clear message from its first peer contact: the epoch has advanced and the peer must upgrade before synchronization resumes for the affected record types. Unaffected record types continue to sync normally; only the record types governed by the new epoch are gated.
 
 ### The Couch Device Problem
 
@@ -134,7 +134,7 @@ The pathological case is a peer that has been offline for three or more major ve
 
 The resolution is a full snapshot download. During capability negotiation, the sync daemon detects that the peer’s vector clock predates the current GC horizon — the point before which the system has compacted its event history and retired old lenses. The daemon reports a snapshot-required condition. The couch device discards its local event log for the affected record types and downloads a current-version snapshot from the nearest available peer. After the snapshot download completes, the device resumes normal incremental sync from the current epoch.
 
-The couch device’s own offline edits during the absence — changes made while disconnected — present a separate problem. Changes that touch record types governed by the new epoch cannot be merged directly because the peer’s event log is in a schema the current epoch no longer supports. Those changes are quarantined in the circuit breaker queue and presented to the user for review. The user can choose to discard them, accepting that the locally-made changes are lost, or the team administrator can apply them manually by translating their intent into current-schema operations. Automatic merging of arbitrarily old operations across an epoch boundary is not safe, and the architecture does not attempt it.
+The couch device’s offline edits during the absence present a separate problem. Changes that touch record types governed by the new epoch cannot be merged directly because the peer’s event log is in a schema the current epoch no longer supports. Those changes are quarantined in the circuit breaker queue and presented to the user for review. The user can discard them, accepting that the locally-made changes are lost, or the team administrator can apply them manually by translating their intent into current-schema operations. Automatic merging of arbitrarily old operations across an epoch boundary is not safe, and the architecture does not attempt it.
 
 ### Copy-Transform Migration
 
@@ -142,7 +142,7 @@ When the epoch becomes active, the coordinator initiates the copy-transform back
 
 The copy-transform job is idempotent. If it is interrupted, it resumes from the last checkpointed position. It does not block synchronization: nodes continue to receive and process new operations while the job runs in the background. New operations written during the copy-transform are written directly to the new epoch stream; the job does not re-process them.
 
-Once all active nodes have acknowledged the new epoch and the copy-transform is complete, the old epoch stream is marked retired. The old stream is not deleted — it remains in archival storage — but the read path no longer traverses it. Upcasters and lenses for retired epoch edges are removed from the version graph after a configurable retention window.
+Once all active nodes have acknowledged the new epoch and the copy-transform completes, the old epoch stream is marked retired. The old stream is not deleted — it remains in archival storage — but the read path no longer traverses it. Upcasters and lenses for retired epoch edges are removed from the version graph after a configurable retention window.
 
 ---
 
@@ -184,7 +184,7 @@ flowchart TD
 
 **Step 8 — Copy-transform.** The background copy-transform job runs and completes. The old epoch stream is retired. Old lens edges are scheduled for removal after the retention window.
 
-Each step from 1 through 6 is fully reversible: the epoch announcement can be withdrawn, the lens package update can be rolled back, and the expand phase can be closed without entering the contract phase. Once Step 7 commits, rollback requires issuing a new epoch that restores the old minimum version — which is operationally equivalent to a forward migration, not a true rollback.
+Each step from 1 through 6 is fully reversible: the epoch announcement can be withdrawn, the lens package update can be rolled back, and the expand phase can be closed without entering the contract phase. Once Step 7 commits, rolling back requires issuing a new epoch that restores the old minimum version — operationally equivalent to a forward migration, not a true rollback.
 
 ---
 
@@ -194,7 +194,7 @@ Not every schema change is migratable through expand-contract and lenses. Three 
 
 **Removing a field with no semantic equivalent.** A field that exists in v1 and is removed in v2 without being replaced or renamed has no value that a backward lens can produce. The backward lens from v2 to v1 must populate the v1 field with something, but no value exists to put there. The lens would produce a default or null value — a read-write round-trip destroys information. The change requires a new document type, not a migration.
 
-**Changing a CRDT type.** A field that is a CRDT text type in v1 and a CRDT counter in v2 cannot be migrated through a lens. The merge semantics of the two types are incompatible: the text type resolves concurrent edits by preserving character-level insertions in their original positions; the counter type resolves concurrent increments by summing deltas. No transformation makes a history of text operations valid as a history of counter operations. Any attempt to convert the type silently discards the operational history, which breaks the CRDT convergence guarantee. Changing a CRDT type requires treating the new field as a new field (the expand-contract pattern applies), then migrating values through an explicit application-level conversion, then retiring the old field through the contract phase.
+**Changing a CRDT type.** A field that is a CRDT text type in v1 and a CRDT counter in v2 cannot be migrated through a lens. The merge semantics of the two types are incompatible: the text type resolves concurrent edits by preserving character-level insertions in their original positions; the counter type resolves concurrent increments by summing deltas. No transformation makes a history of text operations valid as a history of counter operations. Any attempt to convert the type silently discards the operational history and breaks the CRDT convergence guarantee. Changing a CRDT type requires treating the new field as a new field — the expand-contract pattern applies — then migrating values through an explicit application-level conversion, then retiring the old field through the contract phase.
 
 **Splitting a field with no deterministic inverse merge.** A single field `full_name` split into `first_name` and `last_name` has a deterministic forward transform: split on the first space. It does not have a deterministic backward transform: no universal rule for merging `first_name` and `last_name` back into `full_name` handles all cultural naming conventions correctly. The architecture treats any field split where the backward transform is an approximation as a new document type, not a migration.
 

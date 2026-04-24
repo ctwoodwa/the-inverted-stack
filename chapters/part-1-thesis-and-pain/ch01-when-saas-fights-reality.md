@@ -28,7 +28,7 @@ The acceptance was rational. Neither half of the bundle is fully visible at adop
 
 Users accepted these conditions because the three desirable properties appeared to *require* them. Real-time collaboration required a central server both parties could talk to. Multi-device sync required a cloud that acted as the authoritative copy. Zero maintenance required that the vendor control the infrastructure. The package looked indivisible because, with the technology of 2010, it largely was.
 
-That's no longer true. The rest of this chapter is about what it costs before we reach that — and who pays the most.
+That is no longer true. The rest of this chapter is about what it costs before we reach that — and who pays the most.
 
 ---
 
@@ -54,7 +54,7 @@ Sunrise wasn't exceptional. It was typical of how software products end.
 
 The mechanism changes — acquisition, runway exhaustion, a strategic pivot, the founder taking a job somewhere larger — but the pattern is consistent. The product goes dark. Users who built their workflows around it are left with whatever they managed to export before the deadline.
 
-Quip, the collaborative document tool acquired by Salesforce, was folded into the Salesforce platform and ultimately deprioritized. Groups that used it for internal documentation found their investment in the tool's specific organizational structure — the way Quip handled threaded comments, the sidebar navigation model, the direct link between documents and spreadsheets — essentially worthless on migration, because no competing tool was designed to import and replicate it.
+Salesforce acquired Quip, folded it into the Salesforce platform, and ultimately deprioritized it. Groups that used it for internal documentation found their investment in the tool's specific organizational structure — the way Quip handled threaded comments, the sidebar navigation model, the direct link between documents and spreadsheets — essentially worthless on migration, because no competing tool was designed to import and replicate it.
 
 The data export problem deserves specific attention. When a vendor announces shutdown, it typically offers an export function. What that export contains, what format it uses, and whether any other software can actually consume it are highly variable. For calendar data, iCal is reasonably standard. For project management data, vendors typically export a CSV of the task list — without the comments, without the attachment history, without the relationship structure that made the tool useful. For document collaboration, most platforms offer a PDF export, which preserves the appearance but none of the editability.
 

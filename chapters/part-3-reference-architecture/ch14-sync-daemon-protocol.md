@@ -16,9 +16,9 @@ The sync daemon runs as a separate OS-level process from the application contain
 
 When the application restarts after an update, active peer connections survive. When the application crashes during a write, the daemon continues to accept incoming deltas and queue them for the application's next startup. When the host machine wakes from sleep, the daemon reconnects to peers before the application has finished loading its UI.
 
-The application communicates with the daemon over a Unix domain socket on Linux and macOS, and over a named pipe on Windows using `System.Net.Sockets.UnixDomainSocketEndPoint` as the transport abstraction. This transport is available on Windows 10 and Windows Server 2019 and later. File-permission controls on the socket path ensure that only processes running as the same user — or with explicit ACL grants — can connect to the daemon.
+The application communicates with the daemon over a Unix domain socket on Linux and macOS, and over a named pipe on Windows, using `System.Net.Sockets.UnixDomainSocketEndPoint` as the transport abstraction. This transport is available on Windows 10 and Windows Server 2019 and later. File-permission controls on the socket path ensure that only processes running as the same user — or with explicit ACL grants — can connect to the daemon.
 
-All messages on the IPC channel are authenticated with device keys. A process that cannot present a valid device key cannot open a session with the daemon, regardless of whether it can reach the socket path. This prevents local privilege escalation attacks from injecting operations into the CRDT document store through the daemon's command channel.
+All messages on the IPC channel are authenticated with device keys. A process that cannot present a valid device key cannot open a session with the daemon, regardless of whether it can reach the socket path. This closes the local privilege escalation path where an unauthorized process injects operations into the CRDT document store through the daemon's command channel.
 
 The daemon owns four responsibilities that do not belong to the application layer: maintaining the local CRDT document store, managing peer and relay connections, enforcing per-peer capability and subscription rules, and running background tasks such as compaction and archival. The application layer reads and writes through the daemon; it does not touch the document store directly.
 
@@ -39,7 +39,7 @@ flowchart TD
     Relay -->|proxied| Peer3[Relay Peer]
 ```
 
-**Tier 1 — mDNS.** On a local network segment, the daemon announces its node ID, schema version, and IPC endpoint via multicast DNS. Peers on the same segment discover each other automatically with no configuration and no central coordinator. mDNS discovery is ephemeral: a peer that stops announcing is removed from the candidate list after three missed heartbeat intervals. The LAN constraint is not a limitation — it is the tier's defining property. mDNS traffic does not cross router boundaries, so nodes in different locations do not collide with each other's announcements.
+**Tier 1 — mDNS.** On a local network segment, the daemon announces its node ID, schema version, and IPC endpoint via multicast DNS. Peers on the same segment discover each other automatically with no configuration and no central coordinator. mDNS discovery is ephemeral: a peer that stops announcing is removed from the candidate list after three missed heartbeat intervals. The LAN constraint is the tier's defining property, not a limitation. mDNS traffic does not cross router boundaries, so nodes in different locations do not collide with each other's announcements.
 
 **Tier 2 — Mesh VPN.** Peers on different networks connect through a WireGuard-based mesh VPN layer. The mesh handles NAT traversal automatically; no port forwarding is required on either side. The daemon treats mesh VPN peers identically to LAN peers once the VPN tunnel is established — the same handshake sequence, the same subscription model, the same gossip protocol. The mesh VPN layer also provides in-transit encryption independent of the sync protocol's own message authentication. The two layers are complementary: the mesh secures the transport, the protocol authenticates the operations.
 
@@ -51,7 +51,7 @@ The daemon selects the lowest-latency path to each known peer. If a peer is reac
 
 ## Five-Step Handshake
 
-Every peer connection begins with a structured handshake that establishes identity, negotiates capabilities, and confirms subscription grants before any CRDT operations flow. The handshake is synchronous from the initiating node's perspective: the daemon does not emit a DELTA_STREAM until it has received an ACK from the remote peer.
+Every peer connection begins with a structured handshake that establishes identity, negotiates capabilities, and confirms subscription grants before any CRDT operations flow. The handshake is synchronous from the initiating node's perspective: the daemon holds the DELTA_STREAM until it receives an ACK from the remote peer.
 
 ```mermaid
 sequenceDiagram
@@ -159,7 +159,7 @@ sequenceDiagram
     D->>Q: Lease released
 ```
 
-If quorum is unreachable — because peers are offline, partitioned, or slow — the daemon blocks the write. It does not fall back to a best-effort write. The application layer receives a clear signal: the write cannot proceed, and the UI must reflect this with a definitive indicator. A blocked write is never silently queued as though it will eventually succeed.
+If quorum is unreachable — because peers are offline, partitioned, or slow — the daemon blocks the write. The daemon does not fall back to a best-effort write. The application layer receives a clear signal: the write cannot proceed, and the UI must reflect this with a definitive indicator. A blocked write is never silently queued as though it will eventually succeed.
 
 Leases expire automatically at the configured duration. A node that goes offline without explicitly releasing its lease loses the lease at expiry. Other nodes detect the expiry through the absence of a lease renewal GOSSIP_PING. After expiry, the next node to request the lease acquires it through quorum acknowledgement.
 
@@ -173,7 +173,7 @@ The daemon tracks active leases in the CAPABILITY_NEG `cp_leases[]` field. When 
 
 When a network partition heals, all previously isolated nodes attempt to reconnect simultaneously. Each node's delta represents the full operation set it accumulated during the partition. Without coordination, this produces a traffic spike that overwhelms both the relay and any peer nodes that serve as gossip anchors.
 
-The daemon implements exponential backoff with jitter on reconnection. When the daemon detects that a previously unavailable network path has become reachable, it does not immediately initiate sync. It waits a random interval drawn from an exponential distribution, bounded by a maximum of 60 seconds, before beginning the handshake sequence. The jitter ensures that nodes that disconnected at the same time do not reconnect at the same time.
+The daemon implements exponential backoff with jitter on reconnection. When the daemon detects that a previously unavailable network path has become reachable, it waits a random interval drawn from an exponential distribution, bounded by a maximum of 60 seconds, before beginning the handshake sequence. The jitter ensures that nodes that disconnected at the same time do not reconnect at the same time.
 
 ```
 backoff_interval = min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter_range)
@@ -181,7 +181,7 @@ backoff_interval = min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter
 
 Where `base`, `max_seconds`, and `jitter_range` are configurable per deployment, with the 60-second maximum enforced by the relay. A node that has been offline for an extended period — beyond a full gossip cycle — uses the maximum backoff on its first reconnection attempt regardless of its attempt count.
 
-The managed relay enforces a per-node rate limit on delta submissions. The relay queues nodes that submit deltas faster than the rate limit rather than rejecting them. The queue is bounded: if the queue depth for a node exceeds the configured limit, the relay drops the oldest queued submission. The node receives a flow control indication within the ACK frame of the next handshake and increases its backoff interval for subsequent submissions.
+The managed relay enforces a per-node rate limit on delta submissions. The relay queues nodes that submit deltas faster than the rate limit rather than rejecting them. The queue is bounded: when the queue depth for a node exceeds the configured limit, the relay drops the oldest queued submission. The node receives a flow control indication within the ACK frame of the next handshake and increases its backoff interval for subsequent submissions.
 
 These two controls together spread a partition-healing reconnection event across a 60-second window rather than concentrating it at the moment network access returns.
 
@@ -205,7 +205,7 @@ stateDiagram-v2
 
 The three-to-five interval progression is intentional. A peer that misses three pings may be temporarily unreachable due to a transient network event; marking it suspected without removing it preserves the address for reconnection. A peer that misses five consecutive intervals has either left the network or changed address; removing it cleans the membership list and stops gossip energy from being spent on unreachable addresses.
 
-A suspected peer is not excluded from delta exchange. The daemon continues to send GOSSIP_PING to suspected peers at each gossip interval. If a suspected peer responds, it transitions immediately back to active. Its accumulated deltas are exchanged normally. No re-handshake is required for a peer that recovers from suspected state — the existing session remains valid.
+A suspected peer is not excluded from delta exchange. The daemon continues to send GOSSIP_PING to suspected peers at each gossip interval. A suspected peer that responds transitions immediately back to active; its accumulated deltas are exchanged normally. No re-handshake is required for a peer that recovers from suspected state — the existing session remains valid.
 
 A new peer with the same node ID as a previously failed peer is treated as a reconnect. The daemon initiates a fresh handshake, including a full CAPABILITY_NEG, and resets the failure counter for that node ID. This handles the common case of a node that changed its network address — a laptop that moved from one network to another, or a mobile device that switched from Wi-Fi to cellular.
 

@@ -38,7 +38,7 @@ Loro is the aspirational primary CRDT engine for Sunfish (see ADR 0028 in the re
 
 [6] Automerge Contributors, "Automerge: A JSON-like data structure which can be modified concurrently," GitHub. [Online]. Available: https://github.com/automerge/automerge
 
-Automerge is an excellent design reference with a clean, well-documented API and a substantial body of supporting research. The Automerge WASM build and JavaScript SDK are production-grade. As of this writing, there is no first-class .NET binding for Automerge. If your target platform is JavaScript or TypeScript, evaluate Automerge alongside Yjs.
+Automerge is an excellent design reference with a clean, well-documented API and a substantial body of supporting research. The Automerge WASM build and JavaScript SDK are production-grade. As of this writing, Automerge has no first-class .NET binding. If your target platform is JavaScript or TypeScript, evaluate Automerge alongside Yjs.
 
 ---
 

@@ -9,13 +9,13 @@
 
 ## Threat Model
 
-Distributing data to endpoints does not eliminate the honeypot problem — it distributes it. A cloud database presents a single high-value target behind enterprise-grade perimeter controls. A fleet of workstations presents a larger attack surface with heterogeneous security posture. Every endpoint that holds plaintext is a potential breach point, and the weakest device in the organization determines the attacker's minimum viable entry cost.
+Distributing data to endpoints does not eliminate the honeypot problem — it distributes it. A cloud database presents a single high-value target behind enterprise-grade perimeter controls. A fleet of workstations presents a larger attack surface with heterogeneous security posture. Every endpoint that holds plaintext is a potential breach point; the weakest device in the organization sets the attacker's minimum viable entry cost.
 
 The threat model accepts this reality and bounds the blast radius rather than denying it. Three properties constrain the damage a successful endpoint compromise can cause: each node holds only the data its role subscriptions permit; per-role encryption keys are never present on nodes that do not hold the corresponding role; key compromise does not expose historical data encrypted under previously rotated keys. These properties mean that compromising one sales representative's laptop exposes sales data — not the finance ledger — and only data encrypted under keys the laptop currently holds.
 
 The system treats the relay as an untrusted intermediary. The relay routes ciphertext; it cannot read payload. The relay can observe communication patterns: which nodes connect to which, at what times, at what volume. For regulated industries where communication metadata is itself sensitive, the appropriate mitigation is a self-hosted relay on infrastructure the organization controls. A third-party relay operator never sees plaintext under any circumstance.
 
-Administrative events — key distribution, role attestations, revocation broadcasts — travel through the same encrypted log as application data. The administrator's device is the highest-value target in the system. Compromise of the administrator's device enables fraudulent key generation and distribution of rogue role bundles. `Sunfish.Kernel.Security` provides hardware-backed key storage where the platform supports it; organizations with elevated threat models require administrator operations only on managed devices with hardware security modules.
+Administrative events — key distribution, role attestations, revocation broadcasts — travel through the same encrypted log as application data. The administrator's device is the highest-value target in the system. Compromising the administrator's device enables fraudulent key generation and distribution of rogue role bundles. `Sunfish.Kernel.Security` provides hardware-backed key storage where the platform supports it; organizations with elevated threat models require administrator operations only on managed devices with hardware security modules.
 
 ---
 
@@ -132,7 +132,7 @@ Keys in memory are exposed to cold boot attacks, hypervisor memory inspection, a
 
 **Locked memory pages.** Key material is allocated in pages marked non-swappable using the platform's memory locking API — `mlock` on POSIX systems, `VirtualLock` on Windows. The OS cannot page this memory to disk during normal operation or under memory pressure. A hibernation event remains a risk; the mitigation is a short re-authentication interval that limits how long key material persists in any session.
 
-**Zeroing on exit.** The process zeros all key material before exit, including on abnormal exit via registered signal handlers. `Sunfish.Kernel.Security` performs zeroing using a function that the compiler cannot optimize away — dead-store elimination is a known failure mode where the optimizer removes zeroing code it considers unreachable because no subsequent read exists [1]. The package uses platform-provided secure zeroing where available.
+**Zeroing on exit.** The process zeros all key material before exit, including on abnormal exit via registered signal handlers. `Sunfish.Kernel.Security` zeros using a function the compiler cannot optimize away — dead-store elimination removes zeroing code the optimizer considers unreachable because no subsequent read exists [1]. The package uses platform-provided secure zeroing where available.
 
 **Re-authentication interval.** For high-security deployments, the system enforces a re-authentication interval of four hours. After four hours of continuous session time, the process evicts key material from the in-memory keystore and prompts the user to authenticate again. The four-hour window narrows the cold boot and memory forensics exposure: an attacker gaining physical access to a running machine more than four hours after the last authentication cannot extract key material that has already been evicted.
 
@@ -144,11 +144,11 @@ The four-hour default is configurable. Deployments with lower sensitivity requir
 
 A local-first system that distributes application updates through a CDN has an update-pipeline attack surface. A compromised CDN can serve modified binaries. The architecture closes this gap through content addressing, signing, and transparency logging.
 
-**Content-addressed updates.** Each update package is identified by a content identifier (CID) computed from the package contents. The CID is distributed alongside the update through a channel separate from the CDN — embedded in a signed release manifest published to the Sigstore transparency log. The client downloads the package from the CDN and verifies that the computed CID matches the manifest before installation. A compromised CDN cannot serve a corrupt package without the CID mismatch being detected at the client.
+**Content-addressed updates.** Each update package is identified by a content identifier (CID) computed from the package contents. The CID is distributed alongside the update through a channel separate from the CDN — embedded in a signed release manifest published to the Sigstore transparency log. The client downloads the package from the CDN and verifies the computed CID against the manifest before installation. A compromised CDN cannot serve a corrupt package without the CID mismatch being detected at the client.
 
 **Release signing key custody.** The CID must itself be signed by a legitimate release signing key. The integrity of the CID verification scheme depends entirely on the integrity of that key. The signing key is held in a hardware security module under multi-party authorization; signing operations require quorum approval. The key is never present in a CI/CD environment where build automation could extract it.
 
-**Sigstore transparency log.** All signing events are logged to Rekor, Sigstore's public transparency log [2]. A client that encounters a signed package whose signing event is absent from the transparency log rejects the package. Absence indicates either a very recent signing event that has not yet propagated — acceptable with a short hold period — or a signing event that was deliberately withheld, which indicates a rogue signing operation.
+**Sigstore transparency log.** All signing events are logged to Rekor, Sigstore's public transparency log [2]. A client that encounters a signed package whose signing event is absent from the transparency log rejects the package. Absence indicates either a very recent signing event that has not yet propagated — acceptable with a short hold period — or a signing event that was deliberately withheld, indicating a rogue signing operation.
 
 **Reproducible builds.** Independent parties can reproduce the published binary from the published source and verify that the computed CID matches. Reproducible builds transform the signing key from the sole trust anchor into one of two independent verification paths. A compromise that modifies the binary but cannot also modify the published source is detectable by any party that performs the reproducibility check.
 
@@ -158,11 +158,11 @@ A local-first system that distributes application updates through a CDN has an u
 
 GDPR Article 17 grants data subjects the right to erasure [3]. The compliance-tier CRDT operation log is immutable by design — tamper evidence for regulated industries depends on DAG continuity. Conventional deletion breaks the DAG. This creates a direct conflict between the architecture's integrity guarantees and Article 17's deletion obligation.
 
-The architecture resolves the tension through crypto-shredding. When an erasure request targets an operation record, the system destroys the DEK for that specific record. The operation entry remains in the log. Its content — the ciphertext — is permanently unreadable. The ciphertext becomes an unrecoverable stub: the bytes exist, but no key exists or ever will exist that can decrypt them.
+The architecture resolves the tension through crypto-shredding. When an erasure request targets an operation record, the system destroys the DEK for that specific record. The operation entry remains in the log; its content — the ciphertext — is permanently unreadable. The ciphertext becomes an unrecoverable stub: the bytes exist, but no key exists or ever will exist that can decrypt them.
 
 This approach satisfies Article 17 for the content of the targeted record. The operation identifier, timestamp, and DAG position are not erasable without breaking the log structure. These constitute residual metadata. Under Article 17(3)(b)'s exemption for legal obligations and public interest, the log structure is a legitimate interest that overrides erasure of structural metadata — but that legal conclusion is jurisdiction-dependent and fact-specific.
 
-Organizations subject to Article 17 must obtain legal review before relying on crypto-shredding as their erasure mechanism. The architecture makes erasure of content technically possible; legal counsel determines whether residual metadata satisfies the specific data subject's request and the applicable national implementation of the GDPR.
+Organizations subject to Article 17 must obtain legal review before relying on crypto-shredding as their erasure mechanism. The architecture makes content erasure technically possible; legal counsel determines whether residual metadata satisfies the specific data subject's request under the applicable national implementation of the GDPR.
 
 **Practical implementation.** The DEK for a targeted record is zeroed from all node keystores through the same broadcast mechanism used for compromised key discard. The operation stub in the log carries a marker indicating the DEK has been destroyed. Audit tools identify destroyed records without reading their content. The erasure event itself is logged with the data subject identifier, the targeted operation identifier, and the timestamp — the log records that an erasure occurred, even though the erased content is unrecoverable.
 
@@ -184,7 +184,7 @@ The relay is a ciphertext router. It receives encrypted event payloads from sour
 
 ## Security Properties Summary
 
-The four defensive layers, key hierarchy, and operational procedures together provide four guarantees.
+The four defensive layers, key hierarchy, and operational procedures provide four guarantees.
 
 | Property | Guarantee | Mechanism |
 |---|---|---|

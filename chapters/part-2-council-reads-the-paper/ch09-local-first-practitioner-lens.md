@@ -12,9 +12,9 @@ Tomás Ferreira has shipped code to the Automerge repository for three years. Be
 
 He is not idealistic about local-first software. He is familiar with where it breaks.
 
-His lens on any local-first architecture proposal is not whether it upholds the principles — the principles are table stakes. His questions are operational: What happens when the user's only device dies? What happens when both peers are behind carrier-grade NAT and the relay is down? What happens when a user wants to leave and take their data somewhere else? He has sat across from non-technical users who encountered all three of these scenarios. He knows what their faces look like.
+His lens on any local-first architecture proposal is not whether it upholds the principles — the principles are table stakes. His questions are operational: What happens when the user's only device dies? What happens when both peers are behind carrier-grade NAT and the relay is down? What happens when a user wants to leave and take their data somewhere else? Ferreira has sat across from non-technical users who encountered all three of these scenarios. He knows what their faces look like.
 
-When Ferreira reviewed the architecture paper in Round 1, he brought that operational history with him. He commended the places the paper got right. He blocked it on the place the paper got exactly wrong.
+When Ferreira reviewed the architecture paper in Round 1, he brought that operational history with him. He commended the places the paper got right and blocked it on the place the paper got exactly wrong.
 
 ---
 
@@ -28,7 +28,7 @@ The multi-device onboarding flow — install, scan a QR code, sync in the backgr
 
 He also commended the container cold-start solution. One of the places local-first desktop applications fall apart is the delay between launch and ready for data. A Podman container starting from scratch on first open creates a pause that signals to users that something is wrong — that the software is not, in fact, running locally, but is somehow waiting for something remote. The architecture's answer — a persistent background service that keeps the container running, fronted by a health-check gate that holds the UI until the daemon is ready — is the right call: it hides the implementation detail without deceiving the user.
 
-Alignment with the Kleppmann et al. local-first ideals [1] scored an 8 out of 10. The paper understood the ideals and implemented most of them faithfully. The Ink and Switch essays on Pushpin and Backchat were not cited, which left the paper vulnerable to community criticism — the local-first community notices when practitioners ignore prior art. But that is a condition, not a block.
+Alignment with the Kleppmann et al. local-first ideals [1] scored an 8 out of 10. The paper understood the ideals and implemented most of them faithfully. The Ink and Switch essays on Pushpin and Backchat were not cited, which left the paper vulnerable to community criticism — the local-first community notices when practitioners ignore prior art. That is a condition, not a block.
 
 Community governance scored a 5 out of 10. An MIT or Apache 2 license is stated; who controls the roadmap, who approves breaking changes, what the contribution model looks like — none of that is specified. The local-first community has watched too many promising projects fork or stall because governance was not designed before it was needed. That is a condition too.
 
@@ -38,25 +38,25 @@ Then Ferreira got to data portability.
 
 The paper's thesis is data ownership. The paper's proof is the local node: because the data lives on the user's machine, in a local encrypted database, the user owns it in a structural sense. The vendor cannot take it away. The SaaS subscription cannot gate access to it. The architecture enforces the ownership as a design invariant, not a contractual promise.
 
-Ferreira agreed with the thesis. He blocked on the execution.
+Ferreira agreed with the thesis and blocked on the execution.
 
-If a user wants to leave the application — switch to a different tool, transfer their data to a new platform, or simply preserve their records in a format that will still be readable in twenty years — how do they do it? The paper specified the backup target: rclone with a user-controlled object storage account. But rclone backup preserves the internal data format. It does not export the data in a form any other application can read. It does not give the user a JSON file of their records, a CSV of their tabular data, or a folder of Markdown documents. It gives them a copy of the encrypted local database, readable only by the application that created it.
+If a user wants to leave the application — switch to a different tool, transfer their data to a new platform, or simply preserve their records in a format still readable in twenty years — how do they do it? The paper specified the backup target: rclone with a user-controlled object storage account. But rclone backup preserves the internal data format. It does not export the data in a form any other application can read. It gives no JSON file of their records, no CSV of their tabular data, no folder of Markdown documents. It gives them a copy of the encrypted local database, readable only by the application that created it.
 
 This is a philosophical contradiction that Ferreira named precisely: a paper arguing for data ownership that does not specify how a user exports their data in a durable, application-independent format does not actually deliver data ownership. It delivers data custody under slightly better conditions.
 
 The difference matters. A user who wants to move from this architecture to a different tool needs access to their data in a form the new tool can ingest. An application-independent export format — JSON for structured records, CSV for tabular data, Markdown for documents — satisfies that requirement. An internal backup format does not.
 
-He also flagged the non-technical disaster recovery path as a condition rather than a second block. The architecture specified rclone backup to user-controlled object storage, which is correct. But the paper never walked through what a non-technical user actually does when their laptop dies and they need to restore. Step one: buy a new laptop. Step two: install the application. Step three: what? The architecture knew the answer but never wrote it down.
+He also flagged the non-technical disaster recovery path as a condition rather than a second block. The architecture specified rclone backup to user-controlled object storage — correct — but never walked through what a non-technical user actually does when their laptop dies and they need to restore. Step one: buy a new laptop. Step two: install the application. Step three: what? The architecture knew the answer but never wrote it down.
 
 The symmetric NAT scenario was a third condition: when two peers are both behind carrier-grade NAT and the relay is unavailable, direct communication is impossible. The paper's peer discovery section described mDNS for LAN discovery and relay for WAN — but it did not acknowledge that carrier-grade NAT can defeat both if the relay is down. The failure mode exists. The paper did not document it.
 
 ### The BLOCK Verdict
 
-Ferreira's domain average for Round 1 was 7.0 out of 10 — the scoring rubric would normally warrant a PROCEED WITH CONDITIONS. He issued PROCEED WITH CONDITIONS in his formal verdict, but with one item classified as a philosophical and practical blocker: the absent export path.
+Ferreira's domain average for Round 1 was 7.0 out of 10 — the scoring rubric would normally warrant a PROCEED WITH CONDITIONS. He issued that verdict formally, but with one item classified as a philosophical and practical blocker: the absent export path.
 
 His verdict rationale was direct. The paper cannot argue for data ownership and omit the export button. Until the architecture specifies how a user retrieves their data in a form that does not require the original application to read it, the ownership claim is hollow. The underlying architecture is better than most. The specific gap is the most important one.
 
-The paper returned to the author with the data portability issue as a blocking item alongside five other blocking items: two from Shevchenko (CRDT GC and Flease split-write), two from Kelsey (no customer archetype and no conversion mechanism), and one from Okonkwo (key compromise response). Shevchenko and Kelsey issued formal BLOCK verdicts. Voss and Okonkwo issued PROCEED WITH CONDITIONS while naming prerequisite items. The revision would need to address all six blocking items before any member would begin a second review.
+The paper returned to the author with the data portability issue as a blocking item alongside five others: two from Shevchenko (CRDT GC and Flease split-write), two from Kelsey (no customer archetype and no conversion mechanism), and one from Okonkwo (key compromise response). Shevchenko and Kelsey issued formal BLOCK verdicts. Voss and Okonkwo issued PROCEED WITH CONDITIONS while naming prerequisite items. The revision had to address all six blocking items before any member would begin a second review.
 
 ---
 
@@ -142,17 +142,17 @@ Ferreira's final Round 2 observation is the one that will matter most in year tw
 
 The Kleppmann et al. paper [1] warns about this directly. Local-first architecture erodes under pressure. The erosion does not happen all at once — it happens one reasonable-sounding decision at a time. A team adds a server-side feature flag check. Then a server-side A/B test. Then product analytics to understand which features users use. Then a server-side model for something the local CRDT cannot handle efficiently. Each decision is defensible in isolation. Collectively, they re-centralize the architecture until the local node is a thick client again and the server is load-bearing.
 
-The paper addresses this for business logic — it explicitly prohibits feature gating via server-side checks. What it does not address is the analytics and observability layer.
+The paper addresses this for business logic — it explicitly prohibits feature gating via server-side checks — but leaves the analytics and observability layer unaddressed.
 
 Modern product teams expect product analytics. They need to understand where users drop off, which features get used, what errors occur. In a local-first architecture, these signals cannot be collected server-side because there is no server-side session. The options are: opt-in telemetry that users explicitly enable; aggregate statistics piped through the relay, privacy-preserving and metadata-only; or no analytics at all.
 
-The paper needs to specify which model it adopts and why. Not because the choice is architecturally complex — it is not — but because leaving it unspecified guarantees that the first product manager who wants a funnel report will add a server-side analytics endpoint as a quick addition. That quick addition is the first stone on the re-centralization path. Name the telemetry model now, before the first product analytics request arrives, and hold the line explicitly.
+The paper must specify which model it adopts and why. The choice is not architecturally complex. Leaving it unspecified guarantees that the first product manager who wants a funnel report will add a server-side analytics endpoint as a quick addition — the first stone on the re-centralization path. Name the telemetry model now, before the first product analytics request arrives, and hold the line explicitly.
 
 ### Round 2 Verdict: PROCEED
 
 Ferreira issued PROCEED in Round 2. No conditions required. No blocking issues.
 
-His four observations — the zero-state first-run gap, the recovery UX, the Actual Budget omission, and the telemetry model — came with specific recommendations, not conditions. He filed them as non-blocking guidance, not as gates on implementation.
+His four observations — the zero-state first-run gap, the recovery UX, the Actual Budget omission, and the telemetry model — carried specific recommendations, not conditions. He filed them as non-blocking guidance, not as gates on implementation.
 
 This matters for two reasons. Practically: the architecture proceeds to alpha implementation without resolving these items. Structurally: Ferreira is the first council member, across both rounds, to issue an unconditional PROCEED. The enterprise architect issued PROCEED WITH CONDITIONS. The distributed systems researcher issued PROCEED WITH CONDITIONS. The security practitioner issued PROCEED WITH CONDITIONS. The product manager issued PROCEED WITH CONDITIONS. Ferreira, the practitioner who knows where the bodies are buried, looked at the revised architecture and found nothing that blocked it.
 
@@ -168,11 +168,11 @@ The local node solves the access problem. Data on the user's machine is accessib
 
 But access is not portability. A user who wants to move to a different application, or preserve their data in a format that does not require this specific software to read, needs more than local storage. They need an export. JSON, CSV, Markdown — durable, application-independent formats that any competent software can ingest.
 
-The export button is not a nice-to-have. It is the proof of the claim.
+The export button is not a nice-to-have — it is the proof of the claim.
 
 The same logic extends to disaster recovery. Your data is backed up is not sufficient. Your data can be restored by a non-technical user in under thirty minutes after a complete device failure is the claim that actually serves users. The architecture must describe the recovery path with the same care it describes the backup configuration — because a backup that cannot be restored is not a backup. It is a simulation of safety.
 
-And the symmetric NAT failure mode is a concrete example of the honesty standard that separates production local-first software from demos. Every architecture has connectivity scenarios it cannot handle. The question is whether it names them or hides them. Carrier-grade NAT plus relay outage produces a failure mode where two peers cannot communicate. Claiming the relay is so reliable this scenario never occurs is wrong. Document the failure mode and describe the fallback: a self-hosted relay on a machine with a public IP removes the symmetric NAT problem entirely, at the cost of the infrastructure burden the managed relay was designed to eliminate.
+The symmetric NAT failure mode is a concrete example of the honesty standard that separates production local-first software from demos. Every architecture has connectivity scenarios it cannot handle. The question is whether it names them or hides them. Carrier-grade NAT plus relay outage produces a failure mode where two peers cannot communicate. Claiming the relay is so reliable this scenario never occurs is wrong. Document the failure mode and describe the fallback: a self-hosted relay on a machine with a public IP removes the symmetric NAT problem entirely, at the cost of the infrastructure burden the managed relay was designed to eliminate.
 
 Honesty about failure modes is what distinguishes production local-first software from a persuasive demo. Ferreira has shipped production local-first software. He recognized the difference. He PROCEED'd when he saw it.
 

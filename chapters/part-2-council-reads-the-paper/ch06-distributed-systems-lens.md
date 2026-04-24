@@ -13,7 +13,7 @@ Prof. Dmitri Shevchenko has published fourteen papers on CRDT correctness, conse
 
 His lens for evaluating this architecture is correspondingly narrow. He does not object to complexity. He objects to hidden complexity — places where the architecture says that CRDT handles it and expects the reader to assume that means the user sees correct data. CRDT convergence and application correctness are not the same property, and he will find every place the paper conflates them.
 
-He reviewed the architecture with zero tolerance for optimism about network partitions. That posture produced two blocking issues.
+He reviewed the architecture with zero tolerance for optimism about network partitions — a posture that produced two blocking issues.
 
 ---
 
@@ -29,7 +29,7 @@ This is not a bug in CRDT implementations — it is a structural property of the
 
 The practical consequence: a document that has been actively edited for twelve months has accumulated twelve months of operation history. For most documents in most applications, library-level compaction keeps this bounded — modern CRDT libraries perform internal GC on operations that all known peers have already seen. But the claim that all known peers have acknowledged these operations is a synchronized global statement that requires every peer to have been online and to have synchronized. A node offline for several months breaks this assumption.
 
-The architecture's initial treatment of CRDT growth identified three mitigation strategies — library-level compaction, application-level document sharding, and periodic shallow snapshots — but it did not specify when any of these strategies applied, on what timeline, or what the consequences were when a compacted document encountered a peer whose vector clock predated the compaction boundary. Shevchenko's objection was precise: without a checkpoint or retention window, long-running nodes accumulate unbounded op log history, and the GC gap causes production failures in any deployment running longer than twelve months.
+The architecture's initial treatment of CRDT growth named three mitigation strategies — library-level compaction, application-level document sharding, and periodic shallow snapshots — without specifying when any strategy applied, on what timeline, or what happened when a compacted document encountered a peer whose vector clock predated the compaction boundary. Shevchenko's objection was precise: without a checkpoint or retention window, long-running nodes accumulate unbounded op log history, and the GC gap causes production failures in any deployment running longer than twelve months.
 
 He was right. The failure mode is not immediate. It manifests only when the combination of active editing, extended offline periods, and library GC thresholds align to produce a sync attempt that the receiving node cannot complete incrementally. The error is silent unless the sync daemon explicitly detects the incompatibility and surfaces it. An architecture without a GC policy is an architecture that defers this failure to its first long-lived deployment.
 
@@ -39,7 +39,7 @@ Flease is a lease protocol for distributed systems that provides distributed mut
 
 The architecture cited Flease correctly for this purpose. What it did not address was what happens at the boundary of a lease term when the network fails.
 
-Consider the scenario: a lease holder starts a write. Before it completes, the lease holder loses connectivity. Peers cannot contact the lease holder to confirm the write. Eventually the lease expires. A new lease is negotiated by a peer that has quorum among the remaining nodes. At this point, two states exist simultaneously: the original node may believe it successfully completed its write — if it processed the operation locally before losing connectivity — and the new lease holder proceeds to accept writes from the remainder of the team.
+Consider the scenario: a lease holder starts a write, then loses connectivity before it completes. Peers cannot contact the lease holder to confirm the write. The lease expires. A new lease is negotiated by a peer that has quorum among the remaining nodes. At this point, two states exist simultaneously: the original node may believe it successfully completed its write — if it processed the operation locally before losing connectivity — and the new lease holder proceeds to accept writes from the remainder of the team.
 
 This is the split-write window. Whether it produces incorrect results depends on what happens when both nodes eventually reconnect. For AP-class records, CRDT merge semantics resolve this deterministically — the CRDT handles the concurrent writes, and the result, while possibly surprising to the user, is at least consistent. For CP-class records under Flease, the whole point is that CRDT merge is insufficient — these are the records where concurrent writes produce double-bookings, oversold inventory, or duplicate sequential IDs.
 
@@ -49,13 +49,13 @@ Shevchenko's objection was that the architecture had not proved this window was 
 
 Shevchenko's BLOCK verdict rested on both failures together. The GC problem will cause production failures for any deployment running longer than twelve months. The Flease split-write window is a potential data corruption scenario. Both must be resolved before implementation.
 
-He also raised three conditions — not blocking, but required for a full PROCEED — around constraint validator consistency, sync daemon message format specification, and reconnection storm behavior when many nodes reconnect simultaneously after a relay outage. These were completeness gaps rather than correctness failures, and they waited for Round 2.
+He also raised three conditions — not blocking, but required for a full PROCEED — around constraint validator consistency, sync daemon message format specification, and reconnection storm behavior when many nodes reconnect simultaneously after a relay outage. These were completeness gaps rather than correctness failures; they waited for Round 2.
 
 ---
 
 ## What Changed Between Rounds
 
-The revision addressed both blocks by moving from a general posture of CRDT handles it to a specific, testable policy for each failure mode.
+The revision addressed both blocks by replacing the general posture of CRDT handles it with a specific, testable policy for each failure mode.
 
 **Three-tier GC policy.** The architecture adopted a differentiated approach based on data class. Ephemeral data — cursor positions, presence indicators, live-collaboration signals — uses aggressive library-level GC. These records have no durability requirement; losing a cursor position is not a correctness failure. Business records use a 90-day retention window: the architecture commits to retaining at least 90 days of operation history before compaction, which means a peer offline for fewer than 90 days can always reconnect and merge incrementally. Compliance records use no GC at all — full operation history, retained indefinitely, required for the immutability guarantees that regulated industries need.
 
@@ -91,13 +91,13 @@ This policy is specific and falsifiable. A deployment can test whether the GC bo
 
 ## Act 2: Round 2 — Surviving the Correctness Audit
 
-Shevchenko's Round 2 average was 6.8 — slightly below his Round 1 average of 7.1 — with a PROCEED WITH CONDITIONS verdict. The lower average reflects that he examined the revised architecture more deeply and found second-order concerns where the Round 1 architecture had not provided enough surface area to critique. A reviewer who finds a Round 2 architecture more objectionable than Round 1 is not saying it got worse — he is saying it got precise enough to critique at a deeper level.
+Shevchenko's Round 2 average was 6.8 — slightly below his Round 1 average of 7.1 — with a PROCEED WITH CONDITIONS verdict. The lower average reflects that he examined the revised architecture more deeply and found second-order concerns where the Round 1 architecture had not provided enough surface area to critique. A reviewer who finds a Round 2 architecture more objectionable than Round 1 is not saying it got worse — he is saying it became precise enough to critique at a deeper level.
 
 ### Correctness Under Partition
 
 His first Round 2 prompt received a satisfactory answer on the Flease question for the first time. The two-node degraded mode was, in his assessment, correct and honest. The quorum arithmetic was accurate. A managed relay serves as a Flease quorum participant for two-person teams — giving them CP-class write guarantees without requiring a third physical node — he called architecturally elegant and practically significant. It eliminates the threshold problem that affects small teams in most consensus systems: below a certain team size, the quorum requirement cannot be met without additional infrastructure, and most systems either ignore this or handle it poorly.
 
-His remaining concern on correctness was about scope. The architecture identified three operations as requiring Flease linearizability: sequential ID generation, global unique constraint enforcement, and financial transaction totals. Shevchenko's objection was not that this list was wrong — it is not — but that it reads as exhaustive when it is illustrative. Implementers building applications on this architecture need to identify every operation in their domain model that requires linearizable semantics before committing to an implementation strategy. An inventory quantity field can oversell. An appointment slot can be double-booked. A resource allocation can be overcommitted. All three are CP-class operations that belong under Flease, and none are obvious from the examples the architecture named.
+His remaining concern on correctness was about scope. The architecture identified three operations as requiring Flease linearizability: sequential ID generation, global unique constraint enforcement, and financial transaction totals. Shevchenko's objection was not that this list was wrong — it is not — but that it reads as exhaustive when it is only illustrative. Implementers building applications on this architecture need to identify every operation in their domain model that requires linearizable semantics before committing to an implementation strategy. An inventory quantity field can oversell. An appointment slot can be double-booked. A resource allocation can be overcommitted. All three are CP-class operations that belong under Flease, and none are obvious from the examples the architecture named.
 
 ### GC Safety and the Stale Peer Gap
 
@@ -121,7 +121,7 @@ Shevchenko's fourth prompt identified what he considered the most likely failure
 
 A CRDT operation produced by a buggy client version may be structurally valid — well-formed CBOR, correct causal dependencies, valid operation type — while being semantically incorrect. A character insertion at the wrong position. A counter increment that wraps incorrectly. A field value set to an impossible state by a client-side validation bug. The CRDT accepts this operation, merges it faithfully, and propagates it to every peer in the mesh. Every node converges on the same incorrect state. The correctness guarantee the CRDT provides is exactly the property that makes this failure mode difficult to remediate: convergence is consistent, deterministic, and durable.
 
-Production CRDT-based systems have encountered exactly this failure mode — ghost operations from software defects that required targeted remediation rather than a clean rollback. The architecture had no section addressing operation validation before insertion into the CRDT store, no schema-level check for structural validity of incoming operations, and no break-glass recovery procedure for corrupt operation sequences already replicated to peers.
+Production CRDT-based systems have encountered exactly this failure mode — ghost operations from software defects that required targeted remediation rather than a clean rollback. The architecture provided no section addressing operation validation before insertion into the CRDT store, no schema-level check for structural validity of incoming operations, and no break-glass recovery procedure for corrupt operation sequences already replicated to peers.
 
 His medium-priority condition is to add a brief section on CRDT operation validation and corrupt-sequence recovery. Operation validation gates insertion into the CRDT store: before an operation is applied locally and queued for gossip, the sync daemon checks it against the current schema definition for the operation's record type. An operation that fails this check is quarantined rather than applied. The quarantine queue — already part of the architecture for handling offline writes that need post-reconnect validation — serves this purpose without additional infrastructure. Corrupt-sequence recovery requires human judgment about what the correct domain state should have been; that process needs to be documented and the tooling needs to exist before it is needed under production pressure.
 
@@ -141,7 +141,7 @@ His commendation was unequivocal: the Flease treatment in Round 2 was correct. T
 
 ## The Principle: Convergence Is Not Correctness
 
-Practitioners building on CRDT foundations will be tempted to treat convergence as settled once they have understood the data structures. It is not.
+Practitioners building on CRDT foundations will be tempted to treat convergence as settled once they have understood the data structures — it is not.
 
 A CRDT guarantees that all peers converge to the same state. It does not guarantee that the state they converge to is the state the user intended. A buggy operation propagates faithfully. An operation that was valid when generated but violates a domain invariant added three months later is still applied correctly. Two concurrent writes that individually satisfy every constraint can produce a merged state that violates a constraint neither write would have violated alone — because constraints are evaluated per-write, not per-merge.
 

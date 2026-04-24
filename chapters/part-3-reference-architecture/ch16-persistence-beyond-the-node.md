@@ -9,7 +9,7 @@
 
 ## The Problem Single-Node Storage Cannot Solve
 
-A node that stores data only on the device it runs on fails in three ways. Devices fail — drives fail, phones are lost, laptops are stolen. Storage budgets fill — multi-gigabyte local databases are reasonable for primary work data, not for every archive, every team member's history, every binary asset ever uploaded. Users move to new devices without expecting to lose their work. Local-first architecture does not mean data lives only on one machine. It means the node is the authority over the data it holds; the architecture must then specify how that data survives beyond it.
+A node that stores data only on its local device fails in three ways. Drives fail, phones are lost, laptops are stolen. Multi-gigabyte local databases are reasonable for primary work data, not for every archive, every team member's history, every binary asset ever uploaded. Users move to new devices without expecting to lose their work. Local-first architecture does not mean data lives only on one machine. It means the node is the authority over the data it holds; the architecture must then specify how that data survives beyond it.
 
 ---
 
@@ -47,7 +47,7 @@ graph TD
 
 Full replication to every node breaks at scale in two ways: as a storage problem and as a security problem. Multi-gigabyte local databases are impractical for devices with constrained storage. Nodes holding data they are not authorized to use — protected only by application-layer access control — create a security boundary that is one application bug wide.
 
-The architecture solves both problems with declarative sync buckets. A bucket is a named, declaratively specified subset of the team dataset. Bucket membership is tied to role attestations, not to application-layer decisions made after data arrives at the node. Non-eligible nodes never receive bucket events — not because the application filters them, but because the sync daemon excludes them at capability negotiation.
+The architecture solves both problems with declarative sync buckets. A bucket is a named, declaratively specified subset of the team dataset. Bucket membership is tied to role attestations, not to application-layer decisions made after data arrives at the node. Non-eligible nodes never receive bucket events because the sync daemon excludes them at capability negotiation, not because the application filters them afterward.
 
 Buckets are declared in YAML:
 
@@ -121,7 +121,7 @@ sequenceDiagram
     LocalDB-->>App: full record
 ```
 
-Content hash verification on re-fetch is non-optional. A fetched record whose hash does not match the stub's stored hash is rejected and re-requested from an alternate peer. This protects against both corruption and deliberate tampering by a compromised peer.
+Content hash verification on re-fetch is mandatory. A fetched record whose hash does not match the stub's stored hash is rejected and re-requested from an alternate peer. This protects against both corruption and deliberate tampering by a compromised peer.
 
 The storage budget, eviction policy, and minimum stub retention period are configurable via `Sunfish.Kernel.Buckets`. The defaults suit most deployments; teams with specialized storage constraints adjust them at the workspace level.
 
@@ -149,7 +149,7 @@ Snapshots are stored separately from the event log. They can be deleted and rege
 **Rehydration follows four steps:**
 
 1. Load the most recent snapshot for the aggregate.
-2. Verify that the snapshot matches the current epoch and schema version. If it does not match, discard the snapshot.
+2. Verify that the snapshot matches the current epoch and schema version. Discard it if it does not match.
 3. Replay events from the log after `last_event_seq`.
 4. Apply any pending upcasters to events from older schema versions.
 
@@ -171,7 +171,7 @@ CRDT documents grow monotonically under naive storage. Every insert, every delet
 
 **Strategy 3 — Periodic shallow snapshots.** For document types with extreme write rates — programmatically generated logs, real-time sensor feeds, high-churn audit trails — the system periodically creates a shallow snapshot and discards old operation history. A shallow snapshot captures the current document state without the history required to merge with older versions. This strategy is reserved for document types where bounded storage takes priority over long-term mergeability. It is not a default.
 
-The default policy is conservative: full history is retained, relying on library-level compaction. Application-level purging and shallow snapshots are opt-in per document type, configured in the document schema. Teams that enable them for a document type accept the constraint that nodes holding history older than the shallow snapshot cannot merge with nodes that have discarded that history — the tradeoff is explicit and schema-bound.
+The default policy is conservative: full history is retained, relying on library-level compaction. Application-level purging and shallow snapshots are opt-in per document type, configured in the document schema. Teams that enable them for a document type accept that nodes holding history older than the shallow snapshot cannot merge with nodes that have discarded that history — the tradeoff is explicit and schema-bound.
 
 ---
 
@@ -181,9 +181,9 @@ The backup system exposes three states to the user. Internal replication factors
 
 **Protected.** All nodes have synchronized within the configured backup policy window. The policy window is operator-defined per deployment. A green indicator confirms protection. No action is required.
 
-**Attention.** Backup lag has exceeded the policy window on one or more nodes, but no data has been lost. The UI surfaces a single actionable prompt: "Back up now." The prompt is dismissible once acknowledged.
+**Attention.** Backup lag has exceeded the policy window on one or more nodes, but no data has been lost. The UI surfaces one actionable prompt: "Back up now." The prompt is dismissible once acknowledged.
 
-**At Risk.** No successful backup has completed within the escalation threshold — a configurable multiple of the policy window. The UI displays a persistent warning — not a dismissible notification, not a banner that fades. The user must explicitly acknowledge the risk before the warning clears. Acknowledging does not resolve the risk; it records that the user is aware of it. The warning returns the next session until backup completes.
+**At Risk.** No successful backup has completed within the escalation threshold — a configurable multiple of the policy window. The UI displays a persistent warning — not a dismissible notification, not a banner that fades. The user must explicitly acknowledge the risk before the warning clears. Acknowledging records awareness; it does not resolve the risk. The warning returns each session until backup completes.
 
 ```mermaid
 stateDiagram-v2
@@ -245,7 +245,7 @@ Both recovery paths produce the same end state: a node with full local authority
 
 ## Plain-File Export
 
-All user data must be exportable as standard formats without running the application. This requirement is architectural, not aspirational. Export is a first-class feature, not an afterthought added to satisfy a compliance checkbox.
+All user data must be exportable as standard formats without running the application. This requirement is architectural, not aspirational. Export is a first-class feature, not an afterthought added to a compliance checkbox.
 
 The export formats:
 
@@ -280,7 +280,7 @@ export-2026-04-23/
     └── architecture-diagram.pdf
 ```
 
-The export directory is the user's data in a form that outlasts the application. If the application ceases to exist, the data remains in formats that any competent developer can parse. This is the architectural commitment that distinguishes local-first from vendor-managed storage: the user's data belongs to them in a form they can actually use.
+The export directory is the user's data in a form that outlasts the application. If the application ceases to exist, the data remains in formats that any competent developer can parse. That distinguishes local-first from vendor-managed storage: the user's data belongs to them in a form they can actually use.
 
 `Sunfish.Foundation` exposes the export pipeline as a background task. The host application provides a destination path and receives progress events; the package handles serialization, format selection, and README generation. The export format specification is versioned separately from the application — a document exported today must be parseable by any future export reader that supports the same format version.
 

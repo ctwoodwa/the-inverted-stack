@@ -7,7 +7,7 @@
 
 ---
 
-You have a working local-first node. Now you need to ship it to an organization with managed endpoints, a security team, and a procurement team that has seen vendor lock-in before. Enterprise IT evaluates software through a procurement checklist, a security review, and a legal sign-off — each gate has a specific requirement, and each requirement has a concrete resolution. This chapter walks you through all of them in the order they will hit you.
+You have a working local-first node. Now you need to ship it to an organization with managed endpoints, a security team, and a procurement team that has seen vendor lock-in before. Enterprise IT evaluates software through a procurement checklist, a security review, and a legal sign-off — each gate has a specific requirement, and each requirement has a concrete resolution.
 
 ---
 
@@ -235,7 +235,7 @@ Publish the SBOM alongside the release artifact. The internal update server serv
 
 Enterprise security teams do not negotiate the SLA. They compare it to their internal policy. If your critical SLA is longer than 24 hours, some organizations will not sign. Publish the SLA before anyone asks.
 
-When a critical CVE lands between releases, the patch-release process must be rehearsed before it is needed. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, and IT operations. If the first time you run it is during a live incident, you will miss the 24-hour window. Run a dry-fire drill during your first sprint after GA: create a test release, promote it through the entire pipeline, and measure the elapsed time. Shorten every step that takes longer than it should.
+When a critical CVE lands between releases, rehearse the patch-release process before you need it. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, and IT operations. If the first time you run it is during a live incident, you will miss the 24-hour window. Run a dry-fire drill during your first sprint after GA: create a test release, promote it through the entire pipeline, and measure the elapsed time. Shorten every step that takes longer than it should.
 
 ---
 
@@ -257,7 +257,7 @@ What the command does on execution:
 3. Broadcasts the revocation through the relay as a signed revocation message.
 4. Writes a revocation record to the audit log with timestamp and operator identity.
 
-The affected node receives `ERR_KEY_REVOKED` on its next handshake with the relay. At that point, the node can no longer decrypt existing data or participate in sync. The local data directory remains on disk — MDM handles the wipe of the `dataDirectory` path specified in `node-config.json`.
+The affected node receives `ERR_KEY_REVOKED` on its next handshake with the relay. The node can no longer decrypt existing data or participate in sync. The local data directory remains on disk — MDM handles the wipe of the `dataDirectory` path specified in `node-config.json`.
 
 On revocation, the relay propagates the new KEK to all remaining nodes on the next sync cycle and permanently rejects the revoked node's attestation token. The relay does not need to reach the revoked node proactively; it simply stops accepting connections from that node's identity.
 
@@ -287,7 +287,7 @@ Some enterprise customers have endpoints that cannot reach the public internet. 
 | Proxied | Through proxy | Optional | Optional |
 | Air-gap (strict) | Denied | Required | Required |
 
-Strict posture is produced by four configuration steps, all in `node-config.json` and the surrounding infrastructure:
+Four configuration steps produce strict posture, all in `node-config.json` and the surrounding infrastructure:
 
 1. Set `updateServerUrl` to the internal mirror URL.
 2. Set `relayEndpoint` to the self-hosted Bridge relay.
@@ -341,7 +341,7 @@ The safe-to-block list for air-gap environments:
 
 ## The Operational Runbook Minimum
 
-Enterprise customers require runbooks before they sign. Three runbooks are required before enterprise GA. Without them, the security review blocks on each undocumented procedure.
+Enterprise customers require runbooks before they sign. Deliver three runbooks before enterprise GA. Without them, the security review blocks on each undocumented procedure.
 
 ### Runbook 1: Node Deprovisioning
 

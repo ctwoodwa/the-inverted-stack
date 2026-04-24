@@ -19,7 +19,7 @@ Okonkwo read the first version of this paper with that question in front of her:
 
 ### What Earned a 9/10
 
-The first version of the architecture paper gets one dimension nearly right: data minimization at the protocol layer. Subscription filtering enforced at the sync daemon’s send tier — not at the application layer, not at the UI — is the correct control placement, and it is specified clearly. A node that lacks the required role attestation never receives the operations. There is no receive-and-hide, no “we filter it before displaying,” no trust placed in the application to discard what it should not have. The daemon does not send it.
+The first version of the architecture paper gets one dimension nearly right — data minimization at the protocol layer. Subscription filtering enforced at the sync daemon’s send tier — not at the application layer, not at the UI — is the correct control placement, and it is specified clearly. A node that lacks the required role attestation never receives the operations. There is no receive-and-hide, no “we filter it before displaying,” no trust placed in the application to discard what it should not have. The daemon does not send it.
 
 Okonkwo scored this dimension a 9 out of 10. In her experience, this is the dimension most commonly implemented backwards. Teams build an application that receives all data and enforces visibility rules in UI components — which means the data crossed the network, landed in local storage, and is accessible to anyone who knows where to look. Send-tier filtering is the architectural achievement that makes the rest of the security story coherent. If it had been application-layer filtering, no amount of key management would have compensated.
 
@@ -37,7 +37,7 @@ The first version of the paper scores a 5 out of 10 on incident response for key
 
 Consider the failure scenario concretely. A senior administrator’s workstation is physically stolen. The attacker recovers the device, breaks the full-disk encryption — a realistic attack if the device is powered on — and extracts the OS keychain. The keychain contains the current role KEK for every role this administrator manages. With the KEK, the attacker can decrypt every wrapped DEK in the sync log. Every document those roles ever had access to is now readable.
 
-The paper describes the key hierarchy. It does not describe what happens next.
+The paper describes the key hierarchy and stops there.
 
 For Okonkwo, this is not a documentation gap. An architecture that specifies a key hierarchy without specifying what to do when the hierarchy is violated has not specified a security model — it has specified a pleasant normal-path story. Security architectures are evaluated on their failure modes. The normal path is never the problem.
 
@@ -55,15 +55,15 @@ The three conditions raised alongside the block — diagram the key hierarchy, s
 
 ### Round 1 Verdict: PROCEED WITH CONDITIONS
 
-Okonkwo issues PROCEED WITH CONDITIONS. The domain average of 7.3 out of 10 supports that verdict. But one condition is not a condition in the normal sense — it is a prerequisite. A security review cannot clear a key-based system without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — means the architecture cannot advance past a security review until that dimension is resolved.
+Okonkwo issues PROCEED WITH CONDITIONS. The domain average of 7.3 out of 10 supports that verdict. But one condition is not a condition in the normal sense — it is a prerequisite. A security review cannot clear a key-based system without a specified compromise response. A score of 5 out of 10 on the weakest dimension — one that governs every other security property in the architecture — means the architecture cannot advance past a security review until that dimension is resolved.
 
-The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. The attacker-mindset framing — that distributing data to endpoints distributes the attack surface — is rare in local-first literature. But the incident response gap is the kind of gap that causes real-world security reviews to fail. The condition holds until it is resolved.
+The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. The attacker-mindset framing — that distributing data to endpoints distributes the attack surface — is rare in local-first literature. The incident response gap is exactly the kind of gap that fails real-world security reviews. The condition holds until resolved.
 
 ---
 
 ## What Changed Between Rounds
 
-The compromise response procedure — the condition with blocking weight — was specified fully between rounds. The key hierarchy is diagrammed. The diagram runs from the root organization key down through role KEKs, then per-node wrapped copies of those KEKs, then per-record DEKs, then ciphertext. The relationship between each layer is explicit: role KEKs are wrapped with each authorized node’s public key, DEKs are wrapped with the role KEK, and ciphertext is produced by the DEK using a symmetric cipher. No level of the hierarchy is implicit.
+Between rounds, the revision fully specified the compromise response procedure — the condition with blocking weight. The key hierarchy is diagrammed. The diagram runs from the root organization key down through role KEKs, then per-node wrapped copies of those KEKs, then per-record DEKs, then ciphertext. The relationship between each layer is explicit: role KEKs are wrapped with each authorized node’s public key, DEKs are wrapped with the role KEK, and ciphertext is produced by the DEK using a symmetric cipher. No level of the hierarchy is implicit.
 
 This is the hierarchy Okonkwo asked for in Round 1:
 
@@ -106,7 +106,7 @@ This is correct. The gap is one step earlier.
 
 The CID guarantees the integrity of the package relative to the CID. It does not guarantee that the CID itself came from the legitimate build process. An attacker who compromises the build system can produce a valid package, compute its correct CID, and sign that CID with a compromised release signing key. Clients verify the CID, confirm it matches, and install the attacker’s payload.
 
-Three gaps remain. First, key custody specification for the release signing key: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, a reproducible build requirement: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore [1], which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
+Three gaps remain. First, the release signing key needs a custody specification: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, reproducible builds: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore [1], which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
 
 
 Okonkwo scores this dimension 7 out of 10. The content-addressing model is the right foundation. The signing key custody and transparency layer are what complete it.
@@ -119,7 +119,7 @@ This is the right architecture. The condition is about what the relay can see ev
 
 Traffic analysis is sensitive. A relay operator who cannot read messages can still observe which nodes communicate with which, at what times, and at what volume. For a legal firm, the communication pattern between two nodes during a specific time window can reveal which matters are active and which team members are collaborating — without any payload access at all. For healthcare deployments, communication frequency between specific nodes can reveal patient activity patterns.
 
-The architecture is not broken. The limitation is real. The paper must disclose it. Organizations for whom metadata privacy is a hard requirement should run a self-hosted relay on infrastructure they control, eliminating the third-party relay operator as a metadata observer. The paper should state this plainly rather than leaving security teams to discover it during deployment.
+The architecture is not broken. The limitation is real, and the paper must disclose it. Organizations for whom metadata privacy is a hard requirement should run a self-hosted relay on infrastructure they control, eliminating the third-party relay operator as a metadata observer. State this plainly rather than leaving security teams to discover it during deployment.
 
 ### Physical Access and the Memory Window
 
@@ -131,7 +131,7 @@ An attacker with thirty minutes of physical access to a live system can use cold
 
 The mitigation is a re-authentication interval. The application requests re-authentication from the OS keychain at configurable intervals — every four hours is the recommended default for high-security deployments. An attacker who gains physical access to an authenticated session can operate within that window. An attacker who encounters a session requiring re-authentication cannot proceed without the user’s credentials.
 
-This is a hardening recommendation, not an architecture flaw. The base model is correct. The recommendation narrows the exposure window for deployments where physical access is a realistic threat vector. Okonkwo scores physical access an 8 out of 10.
+This is a hardening recommendation, not an architecture flaw. The base model is correct; the recommendation narrows the exposure window for deployments where physical access is a realistic threat vector. Okonkwo scores physical access an 8 out of 10.
 
 ### GDPR Article 17 in a CRDT System
 
@@ -147,7 +147,7 @@ The resolution is crypto-shredding. Rather than deleting the operation from the 
 
 This pattern satisfies Article 17 for content: the personal data is unrecoverable and therefore effectively erased. It does not satisfy Article 17 for metadata: the operation identifier, timestamp, and structural position in the DAG remain. Whether operation metadata constitutes personal data under Article 17 depends on whether it is linkable to an identified or identifiable natural person — a legal question the architecture cannot answer, but which must be disclosed.
 
-The paper must document the crypto-shredding pattern and name the metadata residue as a known gap: personal data in operation content is erasable via DEK destruction; operation metadata is not erasable without breaking the log. Organizations subject to Article 17 should obtain legal review of whether this satisfies their specific obligations.
+The paper must document the crypto-shredding pattern and name the metadata residue as a known gap. Personal data in operation content is erasable via DEK destruction; operation metadata is not erasable without breaking the log. Organizations subject to Article 17 should obtain legal review of whether this satisfies their specific obligations.
 
 ### Round 2 Verdict: PROCEED WITH CONDITIONS
 
@@ -171,7 +171,7 @@ C1 and C2 must be addressed before first external release. C3 through C5 are add
 
 The council’s security review surfaces the central tension in distributed endpoint architectures. The inverted stack solves the central honeypot problem: a fleet of workstations is a harder target than a single cloud database, because there is no single high-value target and no single breach that exposes all data for all users. A compromised node exposes only what that node is authorized to access.
 
-This is a genuine improvement. It is also a displacement of the problem rather than an elimination of it.
+This is a genuine improvement — and a displacement of the problem rather than an elimination of it.
 
 A fleet of workstations is a distributed attack surface. Each node is a potential target. The security posture of the weakest endpoint is the security posture of the data that endpoint holds. In an enterprise deployment with fifty nodes, an attacker does not target the strongest endpoint — they target the one belonging to the administrator with the broadest role access and the worst patch cadence.
 

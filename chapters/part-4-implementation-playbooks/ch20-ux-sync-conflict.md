@@ -80,14 +80,13 @@ graph LR
 ```
 
 Place `SunfishNodeHealthBar` at the bottom of the application shell. Keep it compact — a
-single row, 24px high. The goal is ambient awareness, not a dashboard.
+single row, 24px high. Aim for ambient awareness, not a dashboard.
 
 ## AP/CP Visibility by Data Class
 
 Not all data in a local-first application has the same consistency requirements. Chapter 12
 classifies data as AP (available, partition-tolerant) or CP (consistent, partition-tolerant).
-The table below defines the staleness thresholds and the
-corresponding UX treatment for the four standard data classes:
+Staleness thresholds and UX treatment for the four standard data classes:
 
 | Data class | Staleness threshold | UX treatment |
 |---|---|---|
@@ -132,7 +131,7 @@ use a visual indicator only.
 The record now shows its normal state. Most writes transition from pending to confirmed within
 seconds under normal connectivity.
 
-**Failed** — the write was rejected by the circuit breaker on reconnect. This is not a sync
+**Failed** — the circuit breaker rejected the write on reconnect. This is not a sync
 delay. A failed write means the offline edit conflicted with team state in a way the
 auto-resolution rules could not handle, and the circuit breaker rejected the merge. Show a
 red state on the record with a "Review" action that opens the conflict inbox. The user must
@@ -166,7 +165,7 @@ switch (writeResult.Status)
 
 ## The Conflict Inbox and Bulk Resolution
 
-Conflicts are inevitable in a collaborative system. The design goal is not to prevent them
+Conflicts are inevitable in a collaborative system. The goal is not to prevent them
 but to make them manageable. The conflict inbox is the single place in the application where
 the user resolves conflicts. It is not a modal dialog. It is not an interstitial. It is a
 dedicated panel, accessible from the status bar and from any failed-write indicator.
@@ -177,7 +176,7 @@ Review". They do not see a raw CRDT diff. The grouping turns an undifferentiated
 merge failures into a structured review queue that a non-technical user can navigate.
 
 For each conflict group, the inbox offers three resolution options: prefer my version, prefer
-the remote version, or merge using a configurable rule. Merge rules are defined per record
+the remote version, or merge using a configurable rule. You define merge rules per record
 type in the application configuration. A numeric field offers "keep the higher value";
 a set field offers "combine both". The data model determines the available rules, not the user.
 
@@ -298,7 +297,7 @@ Four elements close the non-technical trust gap:
 
 **A champion.** One technically-inclined team member who understands the model and can explain
 it to colleagues in terms they trust. Design the product onboarding to identify and cultivate
-the champion early. The first-run experience is designed for the champion, not for every team
+the champion early. Design the first-run experience for the champion, not for every team
 member — the champion sets up the team and then invites the others.
 
 **A comparison.** The champion needs one sentence: "It's like a cloud app, but it runs on
