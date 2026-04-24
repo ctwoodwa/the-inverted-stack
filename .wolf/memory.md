@@ -2,6 +2,8 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 2026-04-24 | Epilogue pass-1 resolution (6.1 REVISE → 5 priority items) | chapters/epilogue/epilogue-what-the-stack-owes-you.md | Preface-promise loop closed (4 commitments named as delivered), "What Comes Next" replaced with Week 1/Month 1/First enterprise pitch reader-action sequence, regulatory geography expanded (GDPR/Schrems II/DPDP/UAE DPL/PIPL/Japan PIPA/Korea PIPA/POPIA/NDPR/242-FZ/LGPD in Article 17 paragraph), 2022 CIS terminations added as evidentiary anchor, GDPR Article 17 crypto-shredding qualified (CNIL/German DPAs pending), drift irreversibility softened to empirical pattern; "dependency for agency" moved closer to final beat; 3,014 words | ~5000 |
+| 2026-04-24 | Preface pass-1 resolution (5.6 REVISE → 5 priority items) | chapters/front-matter/preface.md | "Why I Wrote This" expanded with personal texture + concrete Round 1 redesign example + 15 conditions framing; regulatory signal broadened (GDPR/Schrems II/UAE DPL/DIFC DPL/DPDP/POPIA/NDPR/Japan PIPA/Korea PIPA); offline reframed as baseline for Sub-Saharan Africa/rural India/LatAm/SE Asia; three closing notes consolidated to one "Note on the Reference Implementation"; Kleppmann Council methodology note removed; new closing paragraph names four deliverables; 2022 CIS terminations added to opening; 1,217 words | ~5000 |
 | 2026-04-24 | Ch20 final polish — 5 priority items from pass-1 board review (5.9 REVISE) | chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | Accessibility section added (ARIA contracts, IUiBlockManifest, ISunfishIconProvider), Ch15 revocation UX message, SunfishOptimisticButton/SunfishConflictList/SunfishFreshnessBadge named, Non-Technical Trust Gap reframed as "UX for the Non-Technical Adopter", full-offline reframed for rural deployments, Unexpected Shutdown failure mode added, regulated-market backup target validation (242-FZ, DPDP, DPL 2022); 3,966 words | ~5000 |
 | 20:19 | Drafted Chapter 13 Schema Migration and Evolution | chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | 4144 words, committed to main | ~8000 |
 | 06:58 | Applied 8 literary board priority edits to Ch01 | chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | all 8 edits applied, 4702 words (within ±10% of 4500 target), committed | ~4500 |
@@ -413,3 +415,12 @@
 | 16:43 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+11 lines) | ~369 |
 | 16:44 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+43 lines) | ~932 |
 | 16:44 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | 15→18 lines | ~278 |
+| 16:45 | Session end: 7 writes across 1 files (ch20-ux-sync-conflict.md) | 0 reads | ~2777 tok |
+| 16:55 | Edited chapters/front-matter/preface.md | 3→3 lines | ~397 |
+| 16:55 | Edited chapters/front-matter/preface.md | 7→9 lines | ~461 |
+| 16:56 | Edited chapters/front-matter/preface.md | inline fix | ~211 |
+| 16:56 | Edited chapters/front-matter/preface.md | YDotNet() → name() | ~551 |
+| 17:02 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | inline fix | ~340 |
+| 17:02 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | inline fix | ~124 |
+| 17:03 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | 13→15 lines | ~1123 |
+| 17:04 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | expanded (+12 lines) | ~884 |
