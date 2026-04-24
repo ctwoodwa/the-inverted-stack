@@ -1,5 +1,6 @@
 # Chapter 14 — Sync Daemon Protocol
 
+<!-- icm/prose-review -->
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §6, v5 §3.4-3.5 -->
 
@@ -67,11 +68,11 @@ sequenceDiagram
     B->>A: GOSSIP_PING (every 30s)
 ```
 
-**HELLO.** Both peers identify themselves simultaneously. The HELLO message carries the sending node's node ID — a stable identifier derived from its device key — the current schema epoch, and the list of protocol versions the node supports. The session proceeds on the highest version supported by both nodes. A peer that supports no version in the other's list sends a PROTOCOL_ERROR and closes the connection. The schema epoch in HELLO tells the receiving node whether the sender is ahead, behind, or at parity. A node that receives a HELLO announcing an unrecognized schema epoch enters read-only receive mode for that peer and surfaces a schema update notification to the application; incompatible nodes do not exchange writes until both are on the same epoch.
+**HELLO.** Both peers identify themselves simultaneously. The HELLO message carries the sending node's node ID — a stable identifier derived from its device key — the current schema epoch, and the list of protocol versions the node supports. The session proceeds on the highest version supported by both nodes. A peer that supports no version in the other's list sends `SCHEMA_VERSION_INCOMPATIBLE` and closes the session. The schema epoch in HELLO tells the receiving node whether the sender is ahead, behind, or at parity. If the epochs are incompatible — the remote node is below the minimum supported epoch — the accepting node sends `SCHEMA_VERSION_INCOMPATIBLE` and closes the session; there is no partial or read-only mode. The application surfaces a schema update notification when the daemon closes a session on version grounds.
 
 **CAPABILITY_NEG.** The requesting node declares what it participates in. The CAPABILITY_NEG message carries three arrays: the CRDT stream types the node holds and contributes to, the CP leases it currently holds, and the bucket subscriptions it requests. Each requested subscription includes a role attestation token signed by the node's device key. The receiving node verifies the attestation before granting any subscription. This is the phase where data minimization is enforced at the send boundary, not at the receiving application.
 
-**ACK.** The accepting node evaluates the capability declaration against its subscription eligibility rules and responds with `granted_subscriptions[]` — the subset of the requested streams it will actually emit. Streams denied due to missing or invalid role attestation are omitted silently; the requesting node does not receive an error for streams it cannot access. This design prevents enumeration: a node cannot learn which streams exist by probing for access-denied responses.
+**ACK.** The accepting node evaluates the capability declaration against its subscription eligibility rules and responds with two arrays: `granted_subscriptions[]` — the subset it will emit — and `rejected[]` — subscriptions denied with typed reason codes (`MISSING_ATTESTATION`, `EXPIRED_ATTESTATION`, `INVALID_SIGNATURE`). The reason codes allow the requesting node to distinguish an attestation problem from a protocol failure. Streams the accepting node does not publish are absent from both arrays, preventing enumeration of streams the requester has no attestation for.
 
 **DELTA_STREAM.** After ACK, both nodes begin emitting a continuous stream of CRDT operations for the granted subscriptions. Each delta is a compact binary representation of the operations the sender holds that the receiver's vector clock indicates it has not yet seen. Delta calculation is performed by `Sunfish.Kernel.Sync`. The stream is append-only from the sender's perspective; the receiver applies operations to its local document store and updates its vector clock accordingly. Operations that fall outside the recipient's granted subscriptions are dropped at the send tier without error.
 
@@ -130,7 +131,7 @@ flowchart TD
 
 Subscription eligibility is determined during CAPABILITY_NEG. Each stream entry in the `crdt_streams[]` list carries a role attestation — a signed claim that the requesting node's user holds the role required to access that stream. The attestation is verified against the node's device key. If the attestation is absent, expired, or invalid, the stream is excluded from `granted_subscriptions[]`.
 
-Document schemas define subscription scopes through `Sunfish.Foundation.LocalFirst`. Each schema entry specifies the minimum set of fields required for each role. The daemon uses these scope definitions when constructing outbound deltas: it strips operations for out-of-scope fields before transmitting, even within a stream the receiving node is authorized to receive. A field-level exclusion is invisible to the receiver — the delta simply does not contain operations for that field.
+Document schemas define subscription scopes within stream definitions registered with `Sunfish.Kernel.Sync`. Each stream definition specifies the minimum set of fields required for each role. The daemon uses these scope definitions when constructing outbound deltas: it strips operations for out-of-scope fields before transmitting, even within a stream the receiving node is authorized to receive. A field-level exclusion is invisible to the receiver — the delta simply does not contain operations for that field.
 
 This design has a concrete security consequence: compromising an endpoint does not grant access to data that endpoint was never authorized to receive. An attacker who gains full control of a node can read everything on that node. They cannot read fields that were stripped at the source before the delta was transmitted.
 
@@ -214,7 +215,7 @@ Stale addresses in the membership list are cleaned up through two mechanisms: ex
 
 ## Integration with Sunfish
 
-The sync daemon's capabilities are exposed to the application layer through `Sunfish.Kernel.Sync`. This package manages the full protocol lifecycle: peer discovery across all three tiers, handshake sequencing, delta computation, gossip scheduling, lease coordination, and reconnection backoff. `Sunfish.Foundation.LocalFirst` handles schema-level subscription scope definitions that the daemon enforces during capability negotiation.
+The sync daemon's capabilities are exposed to the application layer through `Sunfish.Kernel.Sync`. This package manages the full protocol lifecycle: peer discovery across all three tiers, handshake sequencing, delta computation, gossip scheduling, lease coordination, and reconnection backoff. Stream definitions registered with `Sunfish.Kernel.Sync` declare the field-level access rules the daemon enforces during capability negotiation.
 
 Applications interact with the daemon through the command channel on the Unix domain socket or named pipe. The command channel accepts write intents, subscription updates, and lease requests. It emits change notifications, lease status updates, and membership events. The application layer does not implement any part of the sync protocol — it declares what it needs and reacts to what the daemon delivers.
 
