@@ -183,3 +183,26 @@
 | 11:32 | Ch02 pass 1 resolution: 7 edits applied per UPF Option-C+ plan | ch02 | committed 99915f3 | ~900 |
 | 11:38 | Ch02 pass 2 verification: 8.0/10 POLISH (delta +1.8 from 6.2) | ch02 | all kill criteria passed | ~38k |
 | 11:38 | Board voted to terminate cycle; 5 light-polish items remain for user decision | ch02 | user-triage checkpoint | ~2k |
+| 10:58 | Session end: 50 writes across 5 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 8 reads | ~52366 tok |
+| 11:02 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~379 |
+| 11:02 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 3→5 lines | ~179 |
+| 11:03 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 3→1 lines | ~160 |
+| 11:03 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~142 |
+| 11:03 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~63 |
+| 11:45 | Ch02 final polish: 5 board-recommended items applied | ch02 | committed; cycle exit | ~1k |
+| 11:45 | /review-cycle Ch02 COMPLETE: 6.2 REVISE -> 8.0 POLISH -> final polish | ch02 | icm/approved candidate | ~100 |
+| 11:04 | Session end: 55 writes across 5 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 8 reads | ~53354 tok |
+| 11:10 | Session end: 55 writes across 5 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 8 reads | ~53354 tok |
+| 11:18 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~262 |
+| 11:18 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→3 lines | ~86 |
+| 12:05 | Research: no production app satisfies all 7 Kleppmann properties; Anytype closest at 5.5/7 | research findings | strengthened hedge | ~32k |
+| 12:07 | Ch02 polish: Anytype near-miss analysis + Kleppmann 2024 gradient citation [3] | ch02 | committed 57478af | ~500 |
+| 11:19 | Session end: 57 writes across 5 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 8 reads | ~53726 tok |
+| 11:23 | Session end: 57 writes across 5 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 8 reads | ~53726 tok |
+| 11:31 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→3 lines | ~236 |
+| 11:42 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→3 lines | ~360 |
+| 11:43 | Created ../Sunfish/docs/ENGINEERING-PRINCIPLES.md | — | ~1915 |
+| 12:30 | Research: Sunfish reality check vs Kleppmann 7 — 4/7 IMPLEMENTED, 1 PARTIAL, 1 BLOCKED, 1 SPECIFIED | Sunfish repo audit | 8-10 weeks to all-seven | ~30k |
+| 12:32 | Cerebrum updates: Sunfish CRDT is stub; GossipDaemon delta-apply-back pending; full dotnet build fails | .wolf/cerebrum.md | +4 Do-Not-Repeat entries | ~500 |
+| 12:38 | Ch02 polish: three feasibility disciplines added (integration, crypto, open-format) | ch02 | 4,617 words (17 over 4,600 threshold, accepted) | ~400 |
+| 12:42 | Created Sunfish/docs/ENGINEERING-PRINCIPLES.md — three principles codified as enforceable rules | Sunfish repo | file created, not committed (CLAUDE.md rule) | ~2k |

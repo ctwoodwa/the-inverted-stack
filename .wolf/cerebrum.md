@@ -49,6 +49,9 @@
 - [2026-04-24] Do NOT reference OnboardingState enum — use AnchorSessionService.IsOnboarded (bool) instead.
 - [2026-04-24] Do NOT claim AddSunfishKernelRuntime() wires sync daemon, mDNS, gossip, or ICrdtEngine — it only registers INodeHost and IPluginRegistry.
 - [2026-04-24] Do NOT claim AddSunfishKernelSecurity() loads/generates keypair or registers onboarding state machine — cryptographic services only.
+- [2026-04-24] Do NOT describe Sunfish's CRDT as "working CRDT merge." Current StubCrdtEngine uses total-order replay, not CRDT semantics; real engine (YDotNet) validated in spike 2026-04-22 but not yet integrated into kernel-crdt. Stub file self-marks "DO NOT SHIP TO PRODUCTION."
+- [2026-04-24] Do NOT claim GossipDaemon applies deltas back into ICrdtDocument — code comment confirms apply-back "still lands in Wave 2.6." Two nodes can exchange state vectors today, but concurrent edits don't converge without manual intervention.
+- [2026-04-24] Do NOT claim full `dotnet build` passes on Sunfish repo — test projects (kernel-lease/tests, local-node-host/tests, blocks-forms/tests) have interface mismatches. Only apps/local-node-host builds cleanly as of 2026-04-24.
 - [2026-04-24] Do NOT claim OnboardAsync persists attestation or applies snapshot in Wave 3.x — both are deferred to Wave 4.
 - [2026-04-24] SunfishNodeHealthBar lives in Sunfish.UIAdapters.Blazor, NOT Sunfish.Foundation.LocalFirst.
 - [2026-04-24] Razor illustrative marker syntax: use @* illustrative — not runnable (pre-1.0 API) *@ not HTML comment syntax inside fenced razor blocks.
