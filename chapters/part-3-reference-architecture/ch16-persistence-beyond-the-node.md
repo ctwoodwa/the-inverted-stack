@@ -1,6 +1,6 @@
 # Chapter 16 — Persistence Beyond the Node
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §2.4, §8, §9, §10, v5 §3.5 -->
@@ -24,7 +24,7 @@ The architecture composes five specialized storage tiers rather than relying on 
 
 **Tier 2 — CRDT and event log.** An append-only log of all CRDT operations and domain events. The event log is the source of truth for sync and for audit. The local database is derived from it; the log survives the database.
 
-**Tier 3 — User-controlled cloud backup.** A configurable object storage adapter (S3-compatible, Azure Blob, user-hosted) provides disaster recovery. The user controls the backup destination. The system does not assume any particular cloud provider.
+**Tier 3 — User-controlled cloud backup.** A configurable object storage adapter provides disaster recovery. The user controls the backup destination. The system does not assume any particular cloud provider.
 
 **Tier 4 — Content-addressed distribution (opt-in).** Integrity-verified asset distribution and deduplication. Enabled when nodes need to share large binary assets with verified integrity without duplicating storage.
 
@@ -166,7 +166,7 @@ When no valid snapshot exists — on a fresh install, after a breaking schema mi
 
 CRDT documents grow monotonically under naive storage. Every insert, every delete, and every concurrent edit leaves a trace in the internal structure — tombstones, historical vector clock entries, and retired operation identifiers accumulate without bound. The architecture acknowledges this directly and provides three mitigation strategies rather than hiding the problem.
 
-**Strategy 1 — Library-level compaction.** Modern CRDT libraries perform internal garbage collection and use compact binary encodings that amortize historical state. Library selection treats compaction behavior as a first-class evaluation criterion alongside merge semantics and conflict resolution. `Sunfish.Kernel.Sync` uses YDotNet as its current CRDT engine, with Loro as the target for a future engine-agnostic transition via `ICrdtEngine`. Both libraries expose compaction controls; the architecture leaves compaction scheduling to the engine.
+**Strategy 1 — Library-level compaction.** Modern CRDT libraries perform internal garbage collection and use compact binary encodings that amortize historical state. Library selection treats compaction behavior as a first-class evaluation criterion alongside merge semantics and conflict resolution. `Sunfish.Kernel.Crdt` provides YDotNet as the current CRDT engine via `ICrdtEngine`, with Loro as the target for a future engine-agnostic transition. Both libraries expose compaction controls; the architecture leaves compaction scheduling to the engine.
 
 **Strategy 2 — Application-level document sharding.** Large logical documents are split into sub-documents keyed under a parent map. When a section is archived or retired, its key is deleted from the parent map. The CRDT engine garbage-collects the sub-document without touching the rest of the document. This strategy applies to large structured documents — boards, wikis, large project hierarchies — where sections have well-defined lifecycles.
 
@@ -198,7 +198,7 @@ stateDiagram-v2
 
 This model is intentionally non-technical. "Your data is protected" requires no understanding of sync daemons or replication factors. "You are at risk" requires only the user's attention. The three states map directly to the three things a user can do: nothing, back up now, or acknowledge an emergency.
 
-The backup status is surfaced in `Sunfish.Foundation.LocalFirst` as a typed state that the host application renders. The package provides the state machine; the application provides the UI. No backup UI is prescribed — the state model is the contract, not the presentation.
+The backup status is surfaced in `Sunfish.Foundation` as a typed state that the host application renders. The package provides the state machine; the application provides the UI. No backup UI is prescribed — the state model is the contract, not the presentation.
 
 ---
 
@@ -281,7 +281,7 @@ export-2026-04-23/
 
 The export directory is the user's data in a form that outlasts the application. If the application ceases to exist, the data remains in formats that any competent developer can parse. This is the architectural commitment that distinguishes local-first from vendor-managed storage: the user's data belongs to them in a form they can actually use.
 
-`Sunfish.Foundation.LocalFirst` exposes the export pipeline as a background task. The host application provides a destination path and receives progress events; the package handles serialization, format selection, and README generation. The export format specification is versioned separately from the application — a document exported today must be parseable by any future export reader that supports the same format version.
+`Sunfish.Foundation` exposes the export pipeline as a background task. The host application provides a destination path and receives progress events; the package handles serialization, format selection, and README generation. The export format specification is versioned separately from the application — a document exported today must be parseable by any future export reader that supports the same format version.
 
 ---
 

@@ -1,6 +1,6 @@
 # Chapter 15 — Security Architecture
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §11, v5 §4 -->
@@ -25,9 +25,9 @@ The architecture applies defense in depth across four independent layers. Each l
 
 ### Layer 1 — Encryption at Rest
 
-All local databases use SQLCipher. The database key is derived from user credentials using Argon2id — a memory-hard key derivation function that raises the cost of offline dictionary attacks against a captured device. The derived key is stored in the OS-native keystore: Keychain on macOS and iOS, the Windows Data Protection API on Windows, the Linux Secret Service on Linux. Physical extraction of storage media without the user's credentials yields no plaintext data.
+All local databases use SQLCipher. The database key is derived from a cryptographically random 256-bit root seed stored in the OS-native keystore — Keychain on macOS and iOS, the Windows Data Protection API on Windows, the Linux Secret Service on Linux — using HKDF-SHA256. The 256-bit root seed carries sufficient entropy that password-based key stretching is unnecessary; physical extraction of storage media without access to the OS keystore yields no plaintext data.
 
-The database key is never written to disk in an unprotected form. It lives in OS-managed keystore storage for the duration of the authenticated session and is zeroed from the process's address space on logout or process exit. The Argon2id derivation parameters — memory cost, iteration count, parallelism — are configurable per deployment; the `Sunfish.Kernel.Security` defaults meet the OWASP recommended minimums for interactive authentication [1].
+The database key is never written to disk. The root seed lives in OS-managed keystore storage; the derived key is loaded into the process address space on demand and zeroed from memory after each database session closes.
 
 ### Layer 2 — Field-Level Encryption
 
@@ -132,7 +132,7 @@ Keys in memory are exposed to cold boot attacks, hypervisor memory inspection, a
 
 **Locked memory pages.** Key material is allocated in pages marked non-swappable using the platform's memory locking API — `mlock` on POSIX systems, `VirtualLock` on Windows. The OS cannot page this memory to disk during normal operation or under memory pressure. A hibernation event remains a risk; the mitigation is a short re-authentication interval that limits how long key material persists in any session.
 
-**Zeroing on exit.** The process zeros all key material before exit, including on abnormal exit via registered signal handlers. Zeroing is performed using a function that the compiler cannot optimize away — dead-store elimination is a known failure mode where the optimizer removes zeroing code it considers unreachable because no subsequent read exists [2]. `Sunfish.Kernel.Security` uses platform-provided secure zeroing where available.
+**Zeroing on exit.** The process zeros all key material before exit, including on abnormal exit via registered signal handlers. Zeroing is performed using a function that the compiler cannot optimize away — dead-store elimination is a known failure mode where the optimizer removes zeroing code it considers unreachable because no subsequent read exists [1]. `Sunfish.Kernel.Security` uses platform-provided secure zeroing where available.
 
 **Re-authentication interval.** For high-security deployments, the system enforces a re-authentication interval of four hours. After four hours of continuous session time, the process evicts key material from the in-memory keystore and prompts the user to authenticate again. The four-hour window narrows the cold boot and memory forensics exposure: an attacker gaining physical access to a running machine more than four hours after the last authentication cannot extract key material that has already been evicted.
 
@@ -148,7 +148,7 @@ A local-first system that distributes application updates through a CDN has an u
 
 **Release signing key custody.** The CID must itself be signed by a legitimate release signing key. The integrity of the CID verification scheme depends entirely on the integrity of that key. The signing key is held in a hardware security module under multi-party authorization; signing operations require quorum approval. The key is never present in a CI/CD environment where build automation could extract it.
 
-**Sigstore transparency log.** All signing events are logged to Rekor, Sigstore's public transparency log [3]. A client that encounters a signed package whose signing event is absent from the transparency log rejects the package. Absence indicates either a very recent signing event that has not yet propagated — acceptable with a short hold period — or a signing event that was deliberately withheld, which indicates a rogue signing operation.
+**Sigstore transparency log.** All signing events are logged to Rekor, Sigstore's public transparency log [1]. A client that encounters a signed package whose signing event is absent from the transparency log rejects the package. Absence indicates either a very recent signing event that has not yet propagated — acceptable with a short hold period — or a signing event that was deliberately withheld, which indicates a rogue signing operation.
 
 **Reproducible builds.** Independent parties can reproduce the published binary from the published source and verify that the computed CID matches. Reproducible builds transform the signing key from the sole trust anchor into one of two independent verification paths. A compromise that modifies the binary but cannot also modify the published source is detectable by any party that performs the reproducibility check.
 
@@ -156,7 +156,7 @@ A local-first system that distributes application updates through a CDN has an u
 
 ## GDPR Article 17 and Crypto-Shredding
 
-GDPR Article 17 grants data subjects the right to erasure [4]. The compliance-tier CRDT operation log is immutable by design — tamper evidence for regulated industries depends on DAG continuity. Conventional deletion breaks the DAG. This creates a direct conflict between the architecture's integrity guarantees and Article 17's deletion obligation.
+GDPR Article 17 grants data subjects the right to erasure [1]. The compliance-tier CRDT operation log is immutable by design — tamper evidence for regulated industries depends on DAG continuity. Conventional deletion breaks the DAG. This creates a direct conflict between the architecture's integrity guarantees and Article 17's deletion obligation.
 
 The architecture resolves the tension through crypto-shredding. When an erasure request targets an operation record, the system destroys the DEK for that specific record. The operation entry remains in the log. Its content — the ciphertext — is permanently unreadable. The ciphertext becomes an unrecoverable stub: the bytes exist, but no key exists or ever will exist that can decrypt them.
 
@@ -174,7 +174,7 @@ The relay is a ciphertext router. It receives encrypted event payloads from sour
 
 **What the relay sees.** The relay observes which node identifiers communicate with which, at what times, at what message volume, and with what pattern of burst and quiescence. For most enterprise deployments, this communication graph is not sensitive. For legal services, healthcare, or other deployments where client-attorney privilege or patient confidentiality extends to the fact of communication — not only its content — the communication graph is sensitive metadata.
 
-**Self-hosted relay.** The mitigation for metadata-sensitive deployments is a self-hosted relay on infrastructure the organization controls. A self-hosted relay eliminates the third-party relay operator as a metadata observer. The relay software is the same codebase as the managed relay; the difference is operational custody. `Sunfish.Kernel.Security` provides relay deployment tooling for containerized and bare-metal environments.
+**Self-hosted relay.** The mitigation for metadata-sensitive deployments is a self-hosted relay on infrastructure the organization controls. A self-hosted relay eliminates the third-party relay operator as a metadata observer. The relay software is the same codebase as the managed relay; the difference is operational custody. Chapter 19 covers relay deployment configuration for enterprise environments.
 
 **Relay and legal process.** A relay operator served with legal process can produce connection logs and message metadata. Content is not producible — the operator does not hold decryption keys. Organizations whose threat model includes legal process directed at the relay operator deploy a self-hosted relay and ensure that connection logs are subject to their own retention policies.
 
@@ -199,10 +199,8 @@ These properties hold under the threat model stated at the opening of this chapt
 
 ## References
 
-[1] OWASP, "Password Storage Cheat Sheet," OWASP Foundation, 2024. [Online]. Available: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+[1] D. Wheeler, "Secure Programming HOWTO," ver. 3.72, 2015. [Online]. Available: https://dwheeler.com/secure-programs/
 
-[2] D. Wheeler, "Secure Programming HOWTO," ver. 3.72, 2015. [Online]. Available: https://dwheeler.com/secure-programs/
+[1] Sigstore Project, "Rekor: Transparency Log for Software Supply Chains," Linux Foundation, 2023. [Online]. Available: https://docs.sigstore.dev/logging/overview/
 
-[3] Sigstore Project, "Rekor: Transparency Log for Software Supply Chains," Linux Foundation, 2023. [Online]. Available: https://docs.sigstore.dev/logging/overview/
-
-[4] European Parliament, "Regulation (EU) 2016/679 (General Data Protection Regulation)," Official Journal of the European Union, Apr. 2016, Art. 17.
+[1] European Parliament, "Regulation (EU) 2016/679 (General Data Protection Regulation)," Official Journal of the European Union, Apr. 2016, Art. 17.
