@@ -82,12 +82,22 @@ audio-copy:
 audio-copy-all:
 	python build/copy-to-dropbox.py --include-m4b --include-scripts
 
+# audiobook-deploy is the full pipeline: regen MP3s, bundle .m4b, copy
+# everything to Dropbox. This is the canonical "ship the audiobook" target.
 .PHONY: audiobook-deploy
-audiobook-deploy: audiobook audio-copy
+audiobook-deploy: audiobook m4b-deploy
 
+# m4b-deploy bundles the existing MP3s into a .m4b and copies both MP3s
+# and the .m4b to Dropbox. Use this when MP3s are already current and only
+# the bundle needs (re)generation + deploy.
 .PHONY: m4b-deploy
 m4b-deploy: m4b
 	python build/copy-to-dropbox.py --include-m4b
+
+# audiobook-deploy-mp3 is the lighter variant: regen MP3s and copy them
+# without rebuilding the .m4b. Useful for iteration on individual chapters.
+.PHONY: audiobook-deploy-mp3
+audiobook-deploy-mp3: audiobook audio-copy
 
 .PHONY: chapter-pdf
 chapter-pdf: $(OUT_DIR)
