@@ -5,7 +5,7 @@
 <!-- Target: ~2,500 words -->
 <!-- Source: R1, R2 -->
 
-The council approved the architecture. Round 1 ended with two hard blocks and a 6.8 average. Round 2 cleared every block, raised the average to 7.1, and issued fifteen conditions — none individually blocking, all addressable during alpha implementation. The result is a green light with a specific list of things to get right.
+The council approved the architecture. Round 1 ended with two hard blocks and a 6.8 average. Round 2 cleared every block, raised the average to 7.1, and issued fifteen conditions — none individually blocking, all resolvable during alpha implementation. The result is a green light with a specific list of things to get right.
 
 
 ---
@@ -40,7 +40,7 @@ The Round 1 commendations defined what the revision had to preserve: the three-t
 
 ## Round 2: The Architecture Survives (with Conditions)
 
-The revision cleared every block. After revision, no council member found a condition that halted the process; every BLOCK verdict was resolved.
+The revision cleared every block. The revision cleared every BLOCK verdict.
 
 | Member | R1 Avg | R2 Avg | Delta | Verdict |
 |--------|--------|--------|-------|---------|
@@ -79,13 +79,13 @@ Five reviewers across two rounds produced hundreds of individual observations. M
 
 **7. Plain-file export with no vendor cooperation required.** Users can export all their data to a standard file format — plain files, CSV, JSON — without contacting the vendor, without the vendor's cooperation, and without any special tooling beyond a standard file manager. A user who can export their data can leave. A user who cannot is not in control, regardless of what the marketing copy says.
 
-These seven properties function as architectural invariants. No Part III chapter is complete unless it accounts for all seven.
+These seven properties function as architectural invariants.
 
 ---
 
 ## The Open Questions
 
-The council cleared the architecture for alpha implementation. Five questions remain genuinely open — not because the council avoided them, but because they represent constraints the implementation must navigate without a clean answer yet available.
+The council cleared the architecture for alpha implementation. Five questions remain genuinely open — not because the council avoided them, but because they represent constraints the implementation must navigate without a clean answer.
 
 **GDPR Article 17 and CRDT systems.** The Right to Erasure requires personal data be deleted on request. A CRDT operation log that retains every mutation for correctness creates a structural tension: deleting an operation may break the DAG that establishes document history. The crypto-shredding pattern offers a partial resolution — delete the DEK for the affected document, rendering the data cryptographically inaccessible. But cryptographically inaccessible is not the same as erased, and whether regulators treat DEK deletion as fulfilling Article 17 is a question of interpretation. Okonkwo flagged this as high priority. The architecture must document the limitation honestly and specify the crypto-shredding path for implementations that choose it.
 
@@ -95,9 +95,9 @@ The council cleared the architecture for alpha implementation. Five questions re
 
 **KEK compromise incident response under realistic enterprise conditions.** The procedure exists in the revised architecture. The open question is not whether it is specified — it is whether it is executable: an IT administrator who is not a cryptographer, a node offline for an unknown duration, a role KEK in use for months. The procedure needs operational testing. Alpha implementation is the right time to find the gaps.
 
-**Analytics and telemetry without re-centralizing.** Ferreira's observation about implementation drift is the most likely long-term architectural risk. In a local-first architecture, a server-side analytics endpoint is not available by default. Teams that add one, for valid product development reasons, begin re-centralizing the architecture in exactly the way the original local-first ideals warn against. [1] The architecture must specify an analytics model before implementation teams face the pressure: opt-in telemetry only, aggregate statistics through relay metadata, or no analytics at all. Not choosing is also a choice — it just gets made under pressure.
+**Analytics and telemetry without re-centralizing.** Ferreira's observation about implementation drift is the most likely long-term architectural risk. In a local-first architecture, a server-side analytics endpoint is not available by default. Teams that add one, for valid product development reasons, begin re-centralizing the architecture in exactly the way the original local-first ideals warn against. [1] The architecture must specify an analytics model before implementation teams face the pressure: opt-in telemetry only, aggregate statistics through relay metadata, or no analytics at all. Not choosing is also a choice — made under pressure, not deliberation.
 
-These five questions are not architectural flaws. They are known constraints, honestly identified by the council, that the implementation must navigate. Part III specifies each component within these constraints rather than after them.
+These five questions are not architectural flaws. They are known constraints the implementation must navigate. Part III specifies each component with these constraints in view.
 
 ---
 

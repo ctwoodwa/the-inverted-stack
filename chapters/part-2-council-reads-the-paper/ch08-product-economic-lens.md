@@ -11,7 +11,7 @@
 
 Jordan Kelsey has been on both sides of the pitch. His first company was a B2C privacy-first notes app — the kind of product where the slide deck led with your data stays yours and the demo wowed everyone who saw it. It ran out of runway eighteen months in. Not because the technology failed. Because privacy-first turned out to be a value proposition that users endorsed enthusiastically in surveys and declined to pay for at checkout. He knows what it feels like to watch conversion data tell you a story your product strategy refuses to believe.
 
-His second company was developer tooling. It got acquired for 22 million dollars. That one worked because he had learned to answer a different set of questions first: who is in pain, what does the pain cost them, and what is the smallest intervention that makes it stop. He angel-invests now and advises early-stage teams. He has sat through more than two hundred pitches that said we will monetize with services and support. He has watched most of them fail at the same place: a business model that is theoretically correct and operationally impossible.
+His second company was developer tooling. It got acquired for 22 million dollars. That one worked because he had learned to answer a different set of questions first: who is in pain, what does the pain cost them, and what is the smallest intervention that makes it stop. He angel-invests now and advises early-stage teams. He has reviewed more than two hundred pitches that said we will monetize with services and support. He has watched most of them fail at the same place: a business model that is theoretically correct and operationally impossible.
 
 When Kelsey read the Inverted Stack paper, he recognized the architecture immediately. Not the specific technical decisions — those were new to him — but the structural shape of the commercial bet. An open-source core, a managed service as the revenue vehicle, a privacy story as the differentiator. He had built that company. He knew which questions it had to answer before it could survive.
 
@@ -45,7 +45,7 @@ The assumption is not wrong — the model works for some projects. Grafana runs 
 
 The Inverted Stack paper had no equivalent specification. When does a free user become a paid user? The implication was when they need the relay — but need is not a trigger. Need is a property of the user's situation. A trigger is an event: the second team member tries to sync and cannot reach the first node because both are behind NAT. The relay solves that problem immediately. That event is the conversion trigger. The paper never named it.
 
-Without a specified trigger, the conversion model is a hope. The team builds and ships, the OSS community grows, and at some undefined point some fraction of that community pays for managed relay. Kelsey had watched this play out at multiple portfolio companies. The fraction without a named trigger is always smaller than projected, because some point never arrives with urgency attached.
+Without a specified trigger, the conversion model is a hope. The team builds and ships, the OSS community grows, and at some undefined point some undefined fraction converts to paid relay. Kelsey had watched this play out at multiple portfolio companies. The fraction without a named trigger is always smaller than projected, because "when they need it" never becomes a transaction without a defined trigger.
 
 The funding and sustainability analysis scored 5/10 as well. At 100 teams paying fifteen dollars per month, that is fifteen hundred dollars per month — not a salary. The paper needed a model that showed when relay revenue covers at least one full-time engineer, and what team count achieves break-even at different price points.
 
@@ -57,7 +57,7 @@ Kelsey issued two blocks.
 
 **B2 — No OSS-to-paid conversion mechanism.** The specific moment or event that causes a team to pay for the managed relay must be named. A hypothesis about community conversion is not a mechanism.
 
-His overall domain average was 5.5/10 — the lowest Round 1 score across the council. The architecture was sound. The business case was not yet written.
+His overall domain average was 5.5/10 — the lowest Round 1 score across the council. The architecture was sound. The business case did not exist yet.
 
 ---
 
@@ -69,7 +69,9 @@ Construction project management was selected as the initial target market — an
 
 The five-step customer development path was the concrete resolution to B1.
 
-First: identify ten construction project managers through industry association channels — Associated General Contractors (AGC), Associated Builders and Contractors (ABC), or trade publications including Engineering News-Record and Constructor. Second: conduct discovery interviews focused on one question — when did software failure cost you money? Third: find the specific workflow where connectivity failure or platform outage has measurable, repeated cost. The author identified RFI tracking and punch lists as candidate workflows. Fourth: build directly to that scenario — no generic feature development, one vertical, one workflow, one failure mode. Fifth: get one team live, measure relay activation at ninety days, and use that data to decide whether to deepen the vertical or pivot.
+First: identify ten construction project managers through industry association channels — Associated General Contractors (AGC), Associated Builders and Contractors (ABC), or trade publications including Engineering News-Record and Constructor. Second: conduct discovery interviews focused on one question — when did software failure cost you money? Third: find the specific workflow where connectivity failure or platform outage has measurable, repeated cost. The author identified RFI tracking and punch lists as candidate workflows.
+
+Fourth: build directly to that scenario — no generic feature development, one vertical, one workflow, one failure mode. Fifth: get one team live, measure relay activation at ninety days, and use that data to decide whether to deepen the vertical or pivot.
 
 The relay economics were modeled across three scale tiers. A single relay instance on commodity infrastructure handles approximately 500 concurrent team connections. At a per-team infrastructure cost under two dollars per month and a pricing target of fifteen to twenty-five dollars per team per month, gross margin at scale exceeds 90 percent. The model showed the revenue at each tier and the headcount it could support.
 
@@ -105,7 +107,7 @@ The AGPL network use clause requires that organizations deploying the software m
 
 The standard resolution is a dual-license structure: AGPLv3 for open-source users and self-hosters who accept the copyleft terms, plus a commercial license for organizations that cannot accept AGPL and are willing to pay for the exception. This is the model used by Metabase, Grafana Enterprise, and multiple other OSS-commercial projects. The commercial license tier needs a price point, a definition of which organizations require it, and a clear relationship to the managed relay subscription.
 
-The timing condition is non-negotiable. Introducing a dual-license structure after a community has formed requires contributor license agreements (CLAs) from every contributor who has merged code. Retroactive CLA collection fails for two reasons: contributors become unreachable, and contributors who are reachable sometimes refuse on principle. The time to introduce the CLA and dual-license structure is at the repository's founding, before the first external contributor opens a pull request. After that moment, the option becomes expensive or impossible.
+The timing condition is non-negotiable. Introducing a dual-license structure after a community has formed requires contributor license agreements (CLAs) from every contributor who has merged code. Retroactive CLA collection fails for two reasons: contributors become unreachable, and contributors who are reachable sometimes refuse on principle. The time to introduce the CLA and dual-license structure is at the repository's founding, before the first external contributor opens a pull request. After that moment, the option is either expensive or foreclosed.
 
 The specific structure the paper must document: all contributors sign a CLA assigning copyright to the project entity. The default license is AGPLv3. A commercial license is available for organizations that cannot accept AGPLv3, at a price determined by deployment scale. The relay subscription and the commercial license are separate line items; managed relay customers receive the commercial license included.
 
@@ -143,7 +145,7 @@ His commendation was specific: the construction vertical selection and the five-
 
 Kelsey's two-round arc distills to a single operational principle: the business model must be specified before the repository goes public.
 
-This is not intuitive for founders who come from engineering backgrounds. The instinct is to build first, prove the technology, then figure out commercialization. That sequence works when the commercial model is straightforward — when there is a clear product to sell and a clear buyer to sell it to. It fails when the commercial model depends on community dynamics that are set in motion the moment the repository goes live.
+Founders from engineering backgrounds resist this sequence — the instinct is to build first, prove the technology, then figure out commercialization. That sequence works when the commercial model is straightforward — when there is a clear product to sell and a clear buyer to sell it to. It fails when the commercial model depends on community dynamics that are set in motion the moment the repository goes live.
 
 The dual-license structure requires a CLA from every contributor. If the CLA is not in place at founding, retroactive collection is expensive and sometimes impossible. The governance model shapes who feels ownership of the project and who feels like a contributor to someone else's commercial venture. The first-customer vertical determines what the early codebase optimizes for — and early codebase decisions compound. A project that optimizes for construction project management in year one looks different from one that optimized for general developer tooling, and changing direction requires changing the community's expectations, not just the code.
 
@@ -151,6 +153,4 @@ The managed relay as a revenue model has genuine structural advantages: exceptio
 
 What the relay model cannot survive is launching with undefined conversion triggers, no specified license strategy, and no acquisition channel. Those are not gaps that get filled by building a better sync daemon. They are decisions that must be made before the first line of code is committed to a public repository.
 
-The managed relay is the right unit of competitive analysis. Its defensibility rests on support quality and product-integrated onboarding — not on the protocol, which is open. Get the dual-license structure and the CLA in place before the first external contributor opens a pull request. Pick the acquisition channel before the first customer development interview. Name the conversion trigger before the first OSS release.
-
-The architecture earns a PROCEED. The business earns it conditionally — and the conditions have deadlines that the technology calendar does not set.
+The managed relay is the right unit of competitive analysis. Its defensibility rests on support quality and product-integrated onboarding — not on the protocol, which is open. Get the dual-license structure and the CLA in place before the first external contributor opens a pull request. Pick the acquisition channel before the first customer development interview. The architecture earns a PROCEED. The business earns it conditionally — and the conditions have deadlines that the technology calendar does not set.

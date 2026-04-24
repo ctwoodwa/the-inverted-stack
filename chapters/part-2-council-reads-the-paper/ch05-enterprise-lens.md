@@ -10,7 +10,7 @@ Dr. Marguerite Voss spent twenty-two years watching innovative software die in p
 
 She has her own shorthand for the pattern: a team builds something genuinely useful, a forward-thinking IT manager shepherds it to a procurement committee, and the first question from legal or InfoSec kills it on the spot. Not whether it works — everyone in the room can see it works. The question is where the data goes when an endpoint is compromised. Or what is the incident response procedure. Or, most often, does this run as root.
 
-Three times, she has watched a promising rollout collapse not because of technical failure but because the architecture had no answer to questions any enterprise IT department would ask on day one. The software teams in those cases were not incompetent. They had simply never been required to think about their product from the perspective of a CISO responsible for ten thousand managed endpoints.
+Three times, she has watched a promising rollout collapse not because of technical failure but because the architecture had no answer to questions any enterprise IT department would ask on day one. The software teams in those cases were not incompetent. They had never designed for a CISO audience.
 
 That is her lens. Not whether this is interesting, but whether it will survive a real procurement committee. Not whether the security story sounds plausible, but whether IT can actually operate this, audit it, and respond when something goes wrong.
 
@@ -30,13 +30,13 @@ That is architecturally correct. Most MDM-compatible software validates complian
 
 The SBOM commitment also earned strong marks. The architecture commits to publishing a Software Bill of Materials with each release — the list of every software component in the product, their versions, and their provenance. This is now a requirement for many enterprise procurement conversations and a baseline expectation for any software sold into regulated industries. The signed and notarized installer language — Apple Developer ID on macOS, Authenticode signing with App Control for Business (WDAC) integration on Windows — is procurement-ready. An IT administrator reading that section can translate it directly into a policy: this software can be added to the trusted-publisher list, deployed silently via Intune, and installed without user elevation.
 
-The governance documentation quality was solid. SBOM plus signed installer plus MDM integration is a coherent governance story. For most local-first pitches, which typically arrive to procurement with a GitHub link and a request to run as administrator, this was a meaningful departure from the standard.
+SBOM plus signed installer plus MDM integration is a coherent governance story. For most local-first pitches, which typically arrive to procurement with a GitHub link and a request to run as administrator, this was a meaningful departure from the standard.
 
 ### The Blocking Issue: No Incident Response Procedure
 
 Voss scored incident response and forensic capability at a six. That score came with a blocking issue.
 
-The paper describes a CRDT audit trail. Every write operation is recorded in a tamper-evident append-only log; the sync daemon can reconstruct the full history of any record from its operation log. For forensic purposes, this is genuinely useful. For an incident response procedure, it is not a substitute.
+The paper describes a CRDT audit trail. Every write operation is recorded in a tamper-evident append-only log; the sync daemon can reconstruct the full history of any record from its operation log. For an incident response procedure, it is not a substitute.
 
 The specific problem Voss raised: when an endpoint is compromised in an enterprise environment, the incident response process is not look at the audit trail. It is a defined sequence of steps: who is notified first, what artifacts are collected and from where, how the chain of custody is established for those artifacts, what the communication protocol is between IT, legal, and affected users, and who files the formal incident report with what regulators if required.
 
@@ -46,7 +46,7 @@ The paper had the first and not the second. A CISO cannot hand an audit trail to
 
 Without that document, the architecture cannot pass a security review in any enterprise that takes its compliance obligations seriously. A financial institution, a healthcare organization, a federal contractor, a law firm handling client confidential data — all of these require incident response procedures as a condition of deploying new software. The CRDT audit trail is a forensic asset. It is not a procedure.
 
-Container update governance also drew scrutiny. The paper describes container images delivered through a registry — a standard and appropriate update mechanism. What it does not describe is how those updates are applied to a running production stack without downtime. Enterprise IT departments need to know whether updates require a maintenance window, whether they are applied automatically or manually triggered, and what the rollback procedure is if an update introduces a regression. None of those questions had answers.
+Container update governance failed to answer three questions IT departments always ask. The paper describes container images delivered through a registry — a standard and appropriate update mechanism. What it does not describe is how those updates are applied to a running production stack without downtime. Enterprise IT departments need to know whether updates require a maintenance window, whether they are applied automatically or manually triggered, and what the rollback procedure is if an update introduces a regression. None of those questions had answers.
 
 Network policy compatibility scored a seven rather than the eight it could have earned. Relay traffic over port 443 is implied by the architecture — the relay is an HTTPS service — but the paper does not state it explicitly. More importantly, PAC file compatibility and behavior behind corporate proxies that perform TLS inspection are not addressed. Many enterprises route all outbound traffic through a proxy that terminates and re-establishes TLS connections. Software that does not respect proxy configuration fails invisibly in these environments. The paper needed to confirm that the sync daemon respects system proxy configuration and that relay connections route cleanly through PAC-file-configured proxies.
 
@@ -54,7 +54,7 @@ Compliance certification pathway was a six. SOC 2 Type II and ISO 27001 are not 
 
 ### Round 1 Verdict: PROCEED — With One Hard Prerequisite
 
-Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. The blocking item — the absent incident response runbook — had to be resolved before any enterprise security review could proceed. The three conditions she attached were lower-priority additions: explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain. None would individually block the architecture; all would surface in any security questionnaire.
+Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. The absent incident response runbook blocked any enterprise security review until resolved. The three conditions she attached were lower-priority additions: explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain. None would individually block the architecture; all would surface in any security questionnaire.
 
 ---
 
@@ -134,8 +134,6 @@ Voss scored the procurement dimension at a six — the lowest score in her Round
 
 Voss Round 2 domain average was 7.2 — a marginal improvement over Round 1 7.1, with the blocking issue resolved and scores redistributed across the stronger governance narrative.
 
-Her verdict: PROCEED WITH CONDITIONS.
-
 The five conditions — C1 through C5, detailed in the sections above — require no changes to the sync protocol, the CRDT data model, the security architecture, or the deployment model. They are governance documentation, operational tooling descriptions, and a commercial licensing decision. The architecture cleared the review; the conditions govern how it is packaged, licensed, and operated.
 
 ---
@@ -144,7 +142,7 @@ The five conditions — C1 through C5, detailed in the sections above — requir
 
 The review across two rounds produced something more durable than a verdict: a clear picture of the constraints that any local-first architecture must satisfy before an enterprise IT department will allow it on managed endpoints.
 
-These are not negotiating positions. They are the baseline. An architecture that does not meet them will not reach the procurement committee — it will be rejected at the IT security pre-screening that happens before the formal review.
+These are not negotiating positions. An architecture that does not meet them will not reach the procurement committee — it will be rejected at the IT security pre-screening that happens before the formal review.
 
 **MDM-compatible installation.** Silent deployment via Intune on Windows and Jamf on macOS. No user interaction required. Configuration pre-seeded via MDM profile. If IT cannot deploy and configure the software without touching each endpoint individually, they cannot manage a fleet of them.
 

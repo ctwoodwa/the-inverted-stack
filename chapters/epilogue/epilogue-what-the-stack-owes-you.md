@@ -7,7 +7,7 @@
 
 ---
 
-What remains is more personal: what the architecture owes you if you build with it, what it does not yet know how to do, and where it goes from here.
+Three things close this book: what the architecture owes you if you build with it, where it falls short today, and where it goes from here.
 
 ---
 
@@ -35,7 +35,7 @@ These are not aspirations. They are the conditions under which the word "local-f
 
 ## The Open Questions That Remain Genuinely Unsettled
 
-This book does not resolve everything. It would be dishonest to pretend otherwise.
+This book does not resolve everything.
 
 The envelope encryption model handles role revocation well. The incident-response story for KEK compromise — a stolen administrator workstation with broad role access, active sync sessions, documents distributed across many nodes — has a procedure, but that procedure has not been stress-tested at scale. What does recovery look like when the compromised key had access to ten thousand documents across three hundred nodes? The architecture has answers; those answers have not been validated under production load.
 
@@ -47,11 +47,11 @@ CRDTs give structural convergence. They do not give domain invariants. The inven
 
 GDPR Article 17 — the right to erasure — is partially addressed by crypto-shredding. Destroy the DEK, and the content is unrecoverable. Whether the operation metadata in the CRDT log — the fact that a document existed, was created by a particular user, was modified at a particular time — constitutes personal data under Article 17 depends on a legal analysis this book cannot perform. The technical mechanism is sound. The legal question requires a lawyer with CRDT expertise, and that intersection is rare.
 
-The analytics problem has no answer here. How do you run product analytics on local-first data without shipping it all to a server? How do you understand aggregate user behavior without centralizing the events that generate it? The architecture is silent on this because the author does not have a credible answer. If your product depends on traditional product analytics, you will feel this gap before the end of Phase 1.
+The analytics problem has no answer here. How do you run product analytics on local-first data without shipping it all to a server? How do you understand aggregate user behavior without centralizing the events that generate it? The architecture has no answer for this. If your product depends on traditional product analytics, you will feel this gap before the end of Phase 1.
 
 The mobile platform question is unresolved. iOS and Android impose constraints on background processing, keystore behavior, and filesystem access that the local-node architecture has not yet solved for. A sync daemon that needs to run continuously encounters App Store restrictions on background execution. A local encrypted database that must survive across app launches faces platform-specific keystore semantics that differ materially from the desktop model. The architecture is designed desktop-first. The path to mobile as a first-class deployment target requires platform-specific engineering that has not been done, and the tradeoffs — battery, background execution limits, user-facing permission prompts — have not been specified. A field operations crew whose primary computing surface is an iPhone does not yet have a complete answer here.
 
-Naming these is not a confession of failure. Every architecture has a horizon. The value of honesty about the horizon is that you know where the map ends before you need it.
+Every architecture has a horizon. The value of honesty about the horizon is that you know where the map ends before you need it.
 
 ---
 
@@ -67,19 +67,19 @@ The anti-patterns are specific enough to name. Server-side feature gates after P
 
 None of these drift patterns requires a bad actor. They require ordinary engineering teams under ordinary schedule pressure making ordinary pragmatic decisions. The antidote is not a technology choice. It is a set of architectural decisions made before the pressure arrives, recorded in ADRs that future engineers can read, so that when the analytics request lands there is a written answer that predates the request and does not require relitigating the architecture.
 
-Once the pattern is established, it is very difficult to reverse, because the server-side paths accumulate dependencies that become load-bearing before anyone realizes it. Write the decision records first.
+Once the pattern is established, it is very difficult to reverse: server-side paths accumulate dependencies that become load-bearing before anyone notices.
 
 ---
 
 ## What Comes Next
 
-The sync daemon protocol sub-document is the first and most critical deliverable. It defines the peer handshake, the capability negotiation message format, the stream subscription filtering, and the lease coordination protocol. Every Phase 1 kernel item is blocked without it. Once the sync daemon contract exists as a specification — not an implementation, a specification — the remainder of the implementation follows a clear and validated path. This is the document to write next, before anything else.
+The sync daemon protocol sub-document is the first and most critical deliverable. It defines the peer handshake, the capability negotiation message format, the stream subscription filtering, and the lease coordination protocol. Every Phase 1 kernel item is blocked without it. Once the sync daemon contract exists as a specification — not an implementation, a specification — the remainder of the implementation follows a clear and validated path.
 
 Sunfish Anchor, the Zone A local-first desktop reference, is running. Waves 3.3 and 3.4 delivered the core kernel wiring — CRDT engine integration, the sync daemon skeleton, the basic role attestation flow. Five items remain deferred from the Wave 3 scope: the Flease lease coordinator integration, gossip anti-entropy for stale peer recovery, the MDM compliance attestation in capability negotiation, the three-tier backup UX, and the plain-file export pipeline. These are not speculative. They are scheduled.
 
 Sunfish Bridge, the Zone C hybrid SaaS reference, is the on-ramp for organizations that cannot cut over to pure local-first in a single step. Three deployment variants — cloud-authoritative with local cache, dual-authority with sync reconciliation, and local-authoritative with cloud backup — cover the migration path documented in Chapter 18. Wave 5 work includes the browser shell, which is the component that makes the hybrid architecture visible to end users who will never install a native app.
 
-Community governance must be decided before the repository opens to external contributors, not after. The BDFL model — a single project lead with veto authority — provides fast decisions and coherent direction at the cost of bus factor and perceived legitimacy for enterprise adopters. A contributor council model — a small committee with defined roles and decision processes — provides legitimacy at the cost of speed and the coordination overhead of committee governance. Neither model is wrong. The decision must be made before the first external pull request, because the governance model shapes contributor expectations in ways that are very difficult to revise once set.
+Community governance must be decided before the repository opens to external contributors, not after. The BDFL model — a single project lead with veto authority — provides fast decisions and coherent direction at the cost of bus factor and perceived legitimacy for enterprise adopters. A contributor council model — a small committee with defined roles and decision processes — provides legitimacy at the cost of speed and the coordination overhead of committee governance. The decision must be made before the first external pull request, because the governance model shapes contributor expectations in ways that are very difficult to revise once set.
 
 The three highest-value areas for community contribution are the sync daemon protocol specification, the relay hardening work for high-risk verticals, and the formal merge invariant modeling for domain-level constraints. These are also the three areas where the architecture most needs people who bring expertise the core team does not have — distributed systems protocol experience, healthcare and legal compliance knowledge, and formal verification methods. If you have read this book and you have one of those backgrounds, the contribution that matters is not another feature. It is the specification work that unlocks the implementation.
 
@@ -89,7 +89,7 @@ The three highest-value areas for community contribution are the sync daemon pro
 
 The enabling technologies are mature. The components are individually production-validated. The remaining work is engineering: assembling what is known into a coherent, deployable system with the UX polish that makes distributed complexity invisible to the people who should never have to think about it.
 
-That is not a small thing. But it is a tractable thing, with known unknowns and a clear path through them. The stack knows what it owes. Now it has to deliver.
+It is tractable, with known unknowns and a clear path through them. The stack knows what it owes. Now it has to deliver.
 
 ---
 

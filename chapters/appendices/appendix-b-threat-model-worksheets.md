@@ -1,6 +1,6 @@
-# Appendix B — Threat Model Worksheets
+﻿# Appendix B — Threat Model Worksheets
 
-<!-- icm/draft -->
+<!-- icm/technical-review -->
 
 <!-- Target: ~1,800 words -->
 <!-- Source: v13 §11.1, Ch 15 -->
@@ -97,9 +97,9 @@ Add these rows to the standard asset inventory table:
 This is the highest-probability threat for this vertical. Construction project managers carry laptops to job sites. Vehicles are broken into. Work through each branch:
 
 1. **Attacker steals project manager's laptop from vehicle.** Physical access is achieved.
-2. **Disk encryption check.** If BitLocker is not enforced via MDM policy, the attacker can read the filesystem directly. Mitigation: enforce BitLocker via MDM; verify that node-config.json specifies `storageEncryption: required`.
+2. **Disk encryption check.** If BitLocker is not enforced via MDM policy, the attacker can read the filesystem directly. Mitigation: enforce BitLocker via MDM policy (Intune Device Compliance policy); confirm the compliance check is enforced before the node is permitted to join the sync mesh.
 3. **Disk encryption is active.** Attacker reads the SQLCipher database file. Without the SQLCipher passphrase, the database is ciphertext. Attack fails at this branch.
-4. **Device is powered on at time of theft.** Cold-boot attack window applies. See Ch 15 §7 for the in-memory key handling policy. The sync daemon zeroes key material after each operation; the window is seconds, not minutes. Realistic cold-boot attack requires lab conditions; treat as residual risk, not primary threat.
+4. **Device is powered on at time of theft.** Cold-boot attack window applies. See Ch 15 §7 for the in-memory key handling policy. Realistic cold-boot attack requires specialized lab conditions. Treat as residual risk, not a primary threat for most deployments. High-security environments should consult Ch 15 for the re-authentication interval guidance.
 5. **Attacker targets OS keychain.** The role KEK and device keypair are stored in the Windows Credential Manager. Accessing them requires the device PIN or biometric. An attacker without the credential cannot extract key material from a locked device. Mitigation: enforce 6-digit minimum PIN via MDM. Disable USB boot and BIOS settings changes.
 6. **Attacker copies SQLCipher DB offline.** Without the KEK and the SQLCipher passphrase, the ciphertext is unreadable. Attack fails.
 

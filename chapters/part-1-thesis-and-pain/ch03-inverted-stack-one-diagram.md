@@ -203,7 +203,7 @@ This architecture shifts three fundamental habits.
 
 **Failure modes are explicit.** An AP-class write always succeeds locally. A CP-class write either acquires a lease or surfaces a clear constraint. A sync conflict surfaces in the conflict inbox, not as a silent overwrite. The systemâs failure modes are designed to be visible. The developerâs job is to wire those signals to the UI correctly, not to paper over them.
 
-Part II stress-tests these properties through six rounds of adversarial review. Part III specifies every component in the five layers. Part IV shows the minimal path to a running implementation using the Sunfish accelerators. The five layers in one diagram are the complete picture. Everything that follows is detail.
+The five layers in one diagram are the complete picture. Everything that follows is detail.
 
 ---
 

@@ -1,6 +1,6 @@
 # Appendix D — Testing the Inverted Stack
 
-<!-- icm/draft -->
+<!-- icm/technical-review -->
 
 <!-- Target: ~2,200 words -->
 <!-- Source: v13 §15 -->
@@ -21,7 +21,7 @@ CRDT operations have four mathematical properties that example-based tests canno
 
 Testing these properties with hand-written examples is insufficient. Any example you construct tests one particular operation sequence. The sequences that break convergence are the ones you did not think to write. Property-based frameworks generate thousands of random operation sequences automatically and report the minimal failing case when a property is violated.
 
-For .NET: use FsCheck. For JavaScript: use fast-check. Configure each framework to generate at least 10,000 random operation sequences per property per test run. Do not reduce this count to speed up CI — property violations are rare, and reducing the search space is how they survive to production.
+For .NET, FsCheck is a well-established option. For JavaScript, fast-check works well. Configure the framework to generate at least 10,000 random operation sequences per property per test run as a starting point — reduce that count only if profiling shows it is a bottleneck, and verify that the reduction does not eliminate the sequences that catch real failures.
 
 Do not skip Level 1. An example-based CRDT test suite that passes is not evidence that the CRDT is correct. It is evidence that the specific sequences you tested are correct.
 
@@ -40,7 +40,7 @@ Network partition, packet loss, and node crash must be exercised in CI, not only
 Use Testcontainers with toxiproxy (or an equivalent network proxy) to inject faults programmatically. Three scenarios are mandatory at this level:
 
 - Node crashes mid-handshake. Assert that the peer recovers, retries, and reaches consistent state.
-- Relay becomes unreachable during DELTA_STREAM. Assert that the sender queues deltas locally and retransmits on reconnect.
+- Relay becomes unreachable during DELTA_STREAM. Assert that the sender queues deltas locally and retransmits on reconnect (the CRDT operation log provides this durability — see Chapter 14).
 - GOSSIP_PING misses three consecutive intervals due to packet loss. Assert that the node enters a degraded-but-consistent state and recovers without manual intervention.
 
 The pass condition for every fault injection test is not "the system does not crash" — it is "the system recovers to a consistent CRDT state identical to what it would have been without the fault."
@@ -49,7 +49,7 @@ The pass condition for every fault injection test is not "the system does not cr
 
 Mixed-version nodes, epoch transitions while a node is offline, and Flease edge cases cannot be tested reliably with real time. Real-time tests are non-deterministic: a lease expiry that takes 30 seconds in production cannot be exercised in CI at real speed without making the test suite unusable. A simulation harness with a controllable clock and deterministic network scheduling makes these scenarios fast, repeatable, and exhaustive.
 
-The simulation harness is not provided out of the box. Teams implementing this architecture must build it — the investment is typically two to four weeks, and justified: simulation catches failure modes that would otherwise surface as production incidents.
+The simulation harness is not provided out of the box. Teams implementing this architecture must build it — the investment is real and justified: simulation catches failure modes that would otherwise surface as production incidents.
 
 Three scenario families belong at Level 4: mixed-version node sync (one node at schema N, one at schema N-1), epoch transitions while a node is offline, and Flease edge cases such as a lease holder disconnecting mid-write. Each of these requires precise control over timing and message ordering that real-time tests cannot provide.
 
@@ -67,12 +67,12 @@ Document every anomaly found during chaos testing, whether or not it causes a vi
 
 CRDT growth tests do not belong in the per-commit test suite. Run them weekly in CI and before every major release. They answer a different question from the pyramid: not "does the system behave correctly" but "does the system stay within resource bounds over time."
 
-Run each growth test with simulated usage at the median activity level for your target vertical. Simulate 30, 90, and 365 days of usage. Measure CRDT document size in bytes at each interval.
+Run each growth test with simulated usage at the median activity level for your target vertical. Simulate usage at short, medium, and long time horizons — 30, 90, and 365 days are useful reference points. Measure CRDT document size in bytes at each interval.
 
 **Pass conditions:**
 
 - Document size at 365 days stays within the configured storage budget. The default budget is 10 GB per node. A system that exceeds this budget at 365 days will exceed it in production. Adjust either the budget or the compaction policy before release, not after.
-- Library-level compaction fires when the compaction trigger threshold is reached and reduces document size measurably. If compaction fires but document size does not decrease, the compaction implementation is not working.
+- Library-level compaction fires when the configured threshold is reached and reduces document size measurably. If compaction fires but document size does not decrease, the compaction implementation is not working.
 - Application-level document sharding keeps per-shard document size below the shallow snapshot threshold. If any shard exceeds the threshold, verify that shallow snapshot mode activates correctly and that the node does not attempt to load the full document into memory.
 
 Growth tests that fail are not test failures in the normal sense — they are architecture signals. A document that grows without bound is not a test problem; it is a CRDT design problem that requires a change to the data model, the compaction policy, or the sharding strategy.
@@ -134,7 +134,7 @@ The sum-to-zero test must verify the invariant across the complete account set, 
 
 Configure CI in four tiers that reflect the cost and speed of each testing level.
 
-**Per pull request:** Run Level 1 (property-based) and Level 2 (integration with real dependencies). These tests are fast enough to gate merges. Level 1 tests should complete in under 5 minutes. Level 2 tests, including Testcontainers startup, should complete in under 15 minutes. If either suite exceeds these targets, profile and optimize before adding more tests.
+**Per pull request:** Run Level 1 (property-based) and Level 2 (integration with real dependencies). These tests are fast enough to gate merges. A reasonable target: Level 1 under 5 minutes, Level 2 (including Testcontainers startup) under 15 minutes. If either suite consistently exceeds these, profile and optimize before adding more tests.
 
 **Nightly:** Run Level 3 (fault injection). Fault injection tests are too slow for PR gates — a single partition-and-recover scenario can take minutes at real time. Running nightly is too infrequent to catch regressions the day they are introduced, but it is far better than running only in staging. When a nightly fault injection run fails, treat it as a P1 until resolved.
 

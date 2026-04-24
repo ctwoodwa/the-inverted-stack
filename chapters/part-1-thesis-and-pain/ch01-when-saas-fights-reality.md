@@ -36,7 +36,7 @@ That's no longer true. The rest of this chapter is about what it costs before we
 
 ### The Outage That Takes Your Work With It
 
-Cloud platforms publish availability metrics. Major SaaS providers report 99.9% uptime — roughly 8.7 hours of downtime per year. For a single user, those hours distribute across the year and rarely land at a bad moment. For a team of ten, at any given moment someone is more likely to be in the middle of something time-sensitive. Marcus's 8.7 hours found him on a bid deadline.
+Major SaaS providers report 99.9% uptime — roughly 8.7 hours of downtime per year. For a single user, those hours distribute across the year and rarely land at a bad moment. For a team of ten, at any given moment someone is more likely to be in the middle of something time-sensitive. Marcus's 8.7 hours found him on a bid deadline.
 
 The outage that gets published is the one the vendor is willing to call an outage. The incidents that affect partial regions, specific features, or specific customer cohorts often appear as "degraded performance" rather than a declared incident. From the affected user's side, degraded performance means the site loads but submissions fail silently, changes save and then revert, or search returns stale results. This is harder to work around than a clean outage, because it's not obvious that the problem is the platform rather than the user's own actions.
 
@@ -84,7 +84,7 @@ Your vendor's terms of service say your data is yours. They're often technically
 
 Data that you own but cannot retrieve is data you don't have.
 
-The mechanisms by which data becomes inaccessible while technically "belonging" to you are well-documented:
+Four mechanisms make data inaccessible while it technically "belongs" to you:
 
 **Export rate limits.** Many platforms allow data export but rate-limit the export API to prevent bulk data extraction. A legal firm with ten years of matter history attempting a bulk export may find that retrieving their own data at the permitted rate takes weeks. During that window, they remain dependent on the vendor's infrastructure to operate — which is, not coincidentally, exactly the position the vendor prefers them to be in.
 

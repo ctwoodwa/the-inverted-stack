@@ -1,6 +1,6 @@
 # Appendix A — Sync Daemon Wire Protocol
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~2,000 words -->
 <!-- Source: v13 §6.2, Sunfish accelerators/anchor/README.md -->
@@ -9,7 +9,9 @@
 
 ## A.1 Overview
 
-The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later. All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming. The daemon initiates with HELLO, negotiates capabilities with CAPABILITY_NEG, and receives an ACK from the relay or peer before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
+The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later. All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming.
+
+The daemon sends HELLO, negotiates capabilities with CAPABILITY_NEG, and the relay sends ACK before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
 
 ---
 
@@ -125,7 +127,7 @@ Each entry in `membership_excerpt` is a CBOR map with the following fields:
 | `last_seen` | uint | required | Unix timestamp (seconds) of the last message received from this peer |
 | `vector_clock_summary` | map of tstr→uint | required | Most recent vector clock the sender has recorded for this peer |
 
-A receiver that observes a `last_seen` value older than 90 seconds for any peer SHOULD treat that peer as suspected-partitioned and escalate to the application layer. Three consecutive missed pings (90 seconds) constitutes a partition event.
+A receiver that observes a `last_seen` value older than 90 seconds for any peer SHOULD treat that peer as suspected-partitioned and escalate to the application layer.
 
 ---
 
@@ -198,4 +200,4 @@ The following guarantees apply across minor version increments (same major `prot
 4. A message carrying `protocol_version` greater than the receiver's maximum supported version produces ERR_VERSION_INCOMPATIBLE. The receiver closes the connection immediately after sending the error.
 5. The `supported_versions` array in HELLO enables a two-version overlap during rolling upgrades. If the receiver supports any version listed in `supported_versions`, it MUST negotiate down to the highest mutually supported version rather than returning ERR_VERSION_INCOMPATIBLE.
 
-Breaking changes — removing required fields, renaming message types, or changing field semantics — require a major `protocol_version` increment. Implementations SHOULD NOT assume that two nodes with the same major version have identical optional field support; they MUST apply the unknown-field-ignore rule unconditionally.
+Breaking changes — removing required fields, renaming message types, or changing field semantics — require a major `protocol_version` increment. Implementations SHOULD NOT assume that two nodes with the same major version have identical optional field support; they MUST apply the unknown-field-ignore rule.

@@ -11,7 +11,7 @@ Answer this question before reading any further:
 
 > **Does the primary value of your software come from the user's own data — or from aggregating data across many users?**
 
-If the value comes from a single user's records — their projects, their clients, their documents, their field data — the local-node architecture is the right default. If the value comes from pooling behavior across users — rankings, recommendations, market pricing, social graphs — centralized infrastructure is structurally required. There is no version of this architecture that changes that answer.
+If the value comes from a single user's records — their projects, their clients, their documents, their field data — the local-node architecture is the right default. If the value comes from pooling behavior across users — rankings, recommendations, market pricing, social graphs — centralized infrastructure is structurally required. No version of this architecture changes that answer.
 
 ---
 
@@ -134,7 +134,7 @@ Four skills separate local-node development from standard web application develo
 
 **Key management.** The architecture requires per-document data encryption keys, per-role key encryption keys, and device identity keys. Rotation, revocation, and recovery procedures must be designed and implemented before the first production deployment. A team that has not designed key compromise recovery before shipping has created a data loss risk that cannot be resolved under pressure.
 
-None of these skills are rare. They are learnable. The estimate of 3–6 additional months for a team without prior sync experience reflects real project history, not pessimism. Teams that treat those months as a legitimate investment ship stable systems. Teams that skip them ship systems that fail on reconnection edge cases and schema incompatibilities in the field.
+These skills are learnable, not rare. The estimate of 3–6 additional months for a team without prior sync experience reflects real project history, not pessimism. Teams that treat those months as a legitimate investment ship stable systems. Teams that skip them ship systems that fail on reconnection edge cases and schema incompatibilities in the field.
 
 ---
 
@@ -178,7 +178,7 @@ Zone A applies to: single-tenant or team-scoped productivity and business softwa
 
 Filter 1 or Filter 2 produced a hard "Centralized only" verdict. Zone B is the correct answer for: multi-tenant aggregation as the core value proposition; anonymous public access without persistent identity; millisecond global consistency as a domain requirement; pure content delivery.
 
-Zone B is not a failure of evaluation. It is the right answer for a significant category of software. Building financial trading infrastructure on a local-node architecture is not principled — it is wrong for the domain. The architecture serves specific problems, and those problems are identified by passing all five filters.
+Zone B is the right answer for a significant category of software. Building financial trading infrastructure on a local-node architecture is not principled — it is wrong for the domain. The architecture serves specific problems, and those problems are identified by passing all five filters.
 
 **Zone C — Hybrid**
 

@@ -47,8 +47,8 @@ requires user action.
 **Link status** signals the state of connectivity to the team. Green means at least one peer
 is reachable and gossip is flowing. Amber means the relay is reachable but no peers are
 directly connected — gossip continues via relay, but peer-to-peer operations are unavailable.
-Grey means the node is fully offline. There is no red link status; connectivity failure is not
-an error state for a local-first node.
+Grey means the node is fully offline. Red is not a link status state; connectivity failure is not
+an error condition for a local-first node.
 
 **Data freshness** signals whether the locally held state meets the freshness thresholds for
 the data classes in use. Under normal conditions this indicator is invisible — it appears only
@@ -86,7 +86,7 @@ single row, 24px high. The goal is ambient awareness, not a dashboard.
 
 Not all data in a local-first application has the same consistency requirements. Chapter 12
 classifies data as AP (available, partition-tolerant) or CP (consistent, partition-tolerant).
-The UX treats each class differently. The table below defines the staleness thresholds and the
+The table below defines the staleness thresholds and the
 corresponding UX treatment for the four standard data classes:
 
 | Data class | Staleness threshold | UX treatment |
@@ -121,7 +121,7 @@ deliberate events — not transient edits.
 
 ## Optimistic UI and Confirmed States
 
-AP-class writes are optimistic — they apply locally the moment the user confirms them and sync to peers asynchronously (Chapter 12). Three button states communicate the lifecycle of a write to the user:
+AP-class writes are optimistic — they apply locally the moment the user confirms them and propagate to peers asynchronously (Chapter 12). Three button states communicate the lifecycle of a write to the user:
 
 **Pending** — the write has been applied locally and submitted to the sync queue, but has not
 reached any peer. Show a spinner or a muted button state. The record is visible and editable;
@@ -178,9 +178,8 @@ merge failures into a structured review queue that a non-technical user can navi
 
 For each conflict group, the inbox offers three resolution options: prefer my version, prefer
 the remote version, or merge using a configurable rule. Merge rules are defined per record
-type in the application configuration. A numeric field might offer "keep the higher value";
-a set field might offer "combine both". The available rules are determined by the data model,
-not by the user.
+type in the application configuration. A numeric field offers "keep the higher value";
+a set field offers "combine both". The data model determines the available rules, not by the user.
 
 The "resolve all similar" affordance applies a chosen rule to every conflict of the same shape
 in a single operation. A user with 40 status conflicts from a weekend offline period can
@@ -299,7 +298,7 @@ are UX problems before they are marketing problems.
 Four elements close the non-technical trust gap:
 
 **A champion.** One technically-inclined team member who understands the model and can explain
-it to colleagues in terms they trust. The product onboarding should identify and cultivate
+it to colleagues in terms they trust. Design the product onboarding to identify and cultivate
 the champion early. The first-run experience is designed for the champion, not for every team
 member — the champion sets up the team and then invites the others.
 
@@ -325,10 +324,9 @@ Three sentences replace all infrastructure vocabulary in every user-facing surfa
 > The app keeps working when your internet is out.
 > If we shut down, your software and your data are still yours.
 
-These sentences appear in the product landing page, the first-run welcome screen, and the
-help documentation. They do not appear in the application chrome itself — no user needs to
-be reminded of the value proposition while they are working. But they must be findable when
-a team member asks a question the champion cannot answer.
+Place them in the product landing page, the first-run welcome screen, and the help
+documentation — not in the application chrome. A team member who asks a question the champion
+cannot answer must be able to find them.
 
 The trust gap is not closed in the first session. It closes over the first three weeks of
 use, as the team experiences the application working offline, as conflicts resolve without
@@ -336,20 +334,6 @@ drama, and as the champion fields fewer and fewer questions. Build the UX to sup
 arc. Make the first week easy for the champion, and make the first month unremarkable for
 everyone else.
 
-## Summary
-
-The UX layer of a local-first application has one job: make the consistency model invisible
-to users who do not need to see it, and legible to users who do. The complexity hiding
-standard is the test. The three status indicators, the AP/CP data class treatment, the
-optimistic write states, the conflict inbox, and the first-run experience are the mechanisms.
-
-None of these mechanisms require the user to understand CRDTs, gossip protocols, or quorum
-reads. The user sees a fast application, a status bar that tells them what they need to know,
-and a conflict inbox that is empty most of the time. When something goes wrong, they see a
-plain-language description of what happened and a single action to take.
-
-That experience — invisible complexity, visible status, actionable failures — is what the
-architecture earns and what the UX delivers.
 
 ---
 

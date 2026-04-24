@@ -55,7 +55,7 @@ The three conditions raised alongside the block — diagram the key hierarchy, s
 
 ### Round 1 Verdict: PROCEED WITH CONDITIONS
 
-Okonkwo issues PROCEED WITH CONDITIONS. The domain average of 7.3 out of 10 supports that verdict. But one condition is not a condition in the normal sense — it is a prerequisite. No security review of a key-based system can sign off without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — means the architecture cannot advance past a security review until that dimension is resolved.
+Okonkwo issues PROCEED WITH CONDITIONS. The domain average of 7.3 out of 10 supports that verdict. But one condition is not a condition in the normal sense — it is a prerequisite. A security review cannot clear a key-based system without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — means the architecture cannot advance past a security review until that dimension is resolved.
 
 The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. The attacker-mindset framing — that distributing data to endpoints distributes the attack surface — is rare in local-first literature. But the incident response gap is the kind of gap that causes real-world security reviews to fail. The condition holds until it is resolved.
 
@@ -84,7 +84,7 @@ graph TD
     D3 --> E3["Ciphertext"]
 ```
 
-The key compromise response procedure is now specified. Detection triggers include physical loss reports, anomalous access patterns identified in the audit log, and explicit administrator reports. On detection, the procedure is: generate an entirely new KEK for the affected role, not derived from the compromised key. Re-wrap every DEK owned by that role using the new KEK. Discard the old KEK and all node-level copies of it. Broadcast revocation through the relay. Notify affected users with the data-at-risk window: from the compromised key’s creation date to the moment of revocation.
+The revision specifies the key compromise response procedure. Detection triggers include physical loss reports, anomalous access patterns identified in the audit log, and explicit administrator reports. Detection triggers this sequence: generate an entirely new KEK for the affected role, not derived from the compromised key. Re-wrap every DEK owned by that role using the new KEK. Discard the old KEK and all node-level copies of it. Broadcast revocation through the relay. Notify affected users with the data-at-risk window: from the compromised key’s creation date to the moment of revocation.
 
 The offline node revocation reconnection flow is now specified at the step level. When an offline node reconnects, the sync daemon presents its current attestation bundle to the relay. The relay checks the revocation log. If any key in the node’s bundle has been revoked, the relay rejects the sync handshake. The node receives a specific error code indicating revocation, not a generic connection failure. Before sync can resume, the node must obtain a fresh key bundle — which requires the user to re-authenticate against the IdP, establish new role attestations, and receive new wrapped KEK copies from the administrator. The user sees a message: “Your access credentials have been updated. Sign in again to continue syncing.”
 
@@ -94,7 +94,7 @@ In-memory key material is addressed at the implementation level. Locked memory p
 
 ## Act 2: Round 2 — Four Remaining Conditions
 
-Round 2 opens with a commendation. The data minimization at the sync layer is architecturally correct and, in Okonkwo’s assessment, represents a meaningful improvement over most commercial CRDT implementations. The blocking issue is resolved. The question is what remains.
+Round 2 opens with a commendation. The data minimization at the sync layer is architecturally correct and, in Okonkwo’s assessment, represents a meaningful improvement over most commercial CRDT implementations. The question is what remains.
 
 Four conditions emerge. None is a block. All are real.
 
@@ -106,7 +106,7 @@ This is correct. The gap is one step earlier.
 
 The CID guarantees the integrity of the package relative to the CID. It does not guarantee that the CID itself came from the legitimate build process. An attacker who compromises the build system can produce a valid package, compute its correct CID, and sign that CID with a compromised release signing key. Clients verify the CID, confirm it matches, and install the attacker’s payload.
 
-Three things are missing. First, key custody specification for the release signing key: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, a reproducible build requirement: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore [1], which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
+Three gaps remain. First, key custody specification for the release signing key: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, a reproducible build requirement: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore [1], which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
 
 
 Okonkwo scores this dimension 7 out of 10. The content-addressing model is the right foundation. The signing key custody and transparency layer are what complete it.
@@ -119,7 +119,7 @@ This is the right architecture. The condition is about what the relay can see ev
 
 Traffic analysis is sensitive. A relay operator who cannot read messages can still observe which nodes communicate with which, at what times, and at what volume. For a legal firm, the communication pattern between two nodes during a specific time window can reveal which matters are active and which team members are collaborating — without any payload access at all. For healthcare deployments, communication frequency between specific nodes can reveal patient activity patterns.
 
-The architecture is not broken. The limitation is real and must be disclosed. Organizations for whom metadata privacy is a hard requirement should run a self-hosted relay on infrastructure they control, eliminating the third-party relay operator as a metadata observer. The paper should state this plainly rather than leaving security teams to discover it during deployment.
+The architecture is not broken. The limitation is real. The paper must disclose it. Organizations for whom metadata privacy is a hard requirement should run a self-hosted relay on infrastructure they control, eliminating the third-party relay operator as a metadata observer. The paper should state this plainly rather than leaving security teams to discover it during deployment.
 
 ### Physical Access and the Memory Window
 
@@ -147,7 +147,7 @@ The resolution is crypto-shredding. Rather than deleting the operation from the 
 
 This pattern satisfies Article 17 for content: the personal data is unrecoverable and therefore effectively erased. It does not satisfy Article 17 for metadata: the operation identifier, timestamp, and structural position in the DAG remain. Whether operation metadata constitutes personal data under Article 17 depends on whether it is linkable to an identified or identifiable natural person — a legal question the architecture cannot answer, but which must be disclosed.
 
-The paper must document the crypto-shredding pattern and state the limitation clearly: personal data in operation content is erasable via DEK destruction; operation metadata is not erasable without breaking the log. Organizations subject to Article 17 should obtain legal review of whether this satisfies their specific obligations.
+The paper must document the crypto-shredding pattern and name the metadata residue as a known gap: personal data in operation content is erasable via DEK destruction; operation metadata is not erasable without breaking the log. Organizations subject to Article 17 should obtain legal review of whether this satisfies their specific obligations.
 
 ### Round 2 Verdict: PROCEED WITH CONDITIONS
 
@@ -171,11 +171,11 @@ C1 and C2 must be addressed before first external release. C3 through C5 are add
 
 The council’s security review surfaces the central tension in distributed endpoint architectures. The inverted stack solves the central honeypot problem: a fleet of workstations is a harder target than a single cloud database, because there is no single high-value target and no single breach that exposes all data for all users. A compromised node exposes only what that node is authorized to access.
 
-This is a genuine improvement. Okonkwo acknowledges it. It is also a displacement of the problem rather than an elimination of it.
+This is a genuine improvement. It is also a displacement of the problem rather than an elimination of it.
 
 A fleet of workstations is a distributed attack surface. Each node is a potential target. The security posture of the weakest endpoint is the security posture of the data that endpoint holds. In an enterprise deployment with fifty nodes, an attacker does not target the strongest endpoint — they target the one belonging to the administrator with the broadest role access and the worst patch cadence.
 
-This is why the architecture requires defense-in-depth across four layers, and why none of the four layers is optional.
+The architecture requires defense-in-depth across four layers. None is optional.
 
 Layer one is encryption at rest. SQLCipher on local databases. Argon2id key derivation. OS-native keystores. Physical storage extraction without credentials yields no plaintext. This layer is table stakes.
 

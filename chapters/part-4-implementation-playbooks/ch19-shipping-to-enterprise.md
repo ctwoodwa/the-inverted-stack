@@ -15,7 +15,7 @@ You have a working local-first node. Now you need to ship it to an organization 
 
 The first conversation with enterprise legal will focus on licensing. Open-source core sounds attractive until the legal team runs it against their approved-licenses list and finds AGPLv3. The network-use clause — which requires you to publish modifications when you run the software as a service, even for internal use — triggers a categorical block at many corporate legal shops. This is not negotiable on their side. It is, however, solvable on yours.
 
-AGPLv3 plus a managed relay subscription produces one predictable line item: the relay subscription fee. There is no per-seat count to audit, no usage-based surprise. The open-source core removes the vendor lock-in objection that killed the last three SaaS proposals the CTO sat through. That story is genuinely compelling.
+AGPLv3 plus a managed relay subscription produces one predictable line item: the relay subscription fee. No per-seat count to audit, no usage-based surprise. The open-source core removes the vendor lock-in objection that killed the last three SaaS proposals the CTO sat through. That story is genuinely compelling.
 
 The resolution to the AGPLv3 block is a dual-license structure. Publish the core under AGPLv3 as the default. Offer a commercial license exception to organizations that cannot accept the network-use clause. The commercial license is a standard negotiated agreement: it permits internal modification without publishing obligation, grants a warranty, and specifies SLA terms for security patches.
 
@@ -174,7 +174,7 @@ The host refuses to start if the config file fails schema validation. It does no
 
 MDM compliance is not a one-time installation gate. A node that was compliant at install time can fall out of compliance mid-session: the MDM policy updates, the certificate expires, or the config file is modified outside the MDM channel. The compliance check runs at capability negotiation — the handshake that happens before a node touches any data. A node that fails the compliance check during an active session receives a rejection at the next handshake boundary. It does not retain access until the session ends.
 
-This architecture matters to enterprise security teams. It means that revoking MDM compliance propagates to data access within minutes, not at the next reboot.
+Revoking MDM compliance propagates to data access within minutes, not at the next reboot.
 
 ```mermaid
 sequenceDiagram
@@ -247,7 +247,7 @@ What the command does on execution:
 
 The affected node receives `ERR_KEY_REVOKED` on its next handshake with the relay. At that point, the node can no longer decrypt existing data or participate in sync. The local data directory remains on disk — MDM handles the wipe of the `dataDirectory` path specified in `node-config.json`.
 
-The relay's role on revocation is to propagate the new KEK to all remaining nodes on the next sync cycle and to reject the revoked node's attestation token permanently. The relay does not need to reach the revoked node proactively; it simply stops accepting connections from that node's identity.
+On revocation, the relay propagates the new KEK to all remaining nodes on the next sync cycle and permanently rejects the revoked node's attestation token. The relay does not need to reach the revoked node proactively; it simply stops accepting connections from that node's identity.
 
 ```mermaid
 flowchart TD
@@ -329,7 +329,7 @@ The safe-to-block list for air-gap environments:
 
 ## The Operational Runbook Minimum
 
-Enterprise customers will ask for runbooks before they sign. Three runbooks are required before enterprise GA. Without them, the security review stalls on "how do we handle X" with no documented answer.
+Enterprise customers require runbooks before they sign. Three runbooks are required before enterprise GA. Without them, the security review blocks on each undocumented procedure.
 
 ### Runbook 1: Node Deprovisioning
 
@@ -381,7 +381,7 @@ Enterprise customers will ask for runbooks before they sign. Three runbooks are 
 
 ## Putting It Together
 
-The enterprise sales cycle is not won by the architecture. It is won by the answers to a checklist. Here is the checklist in the order it will arrive:
+Here is the checklist in the order it will arrive:
 
 ```
 [ ] License: dual-license structure documented, CLA in place

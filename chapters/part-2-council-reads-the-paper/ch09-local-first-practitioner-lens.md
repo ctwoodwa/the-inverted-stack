@@ -26,7 +26,7 @@ Ferreira does not commend things he does not mean. His Round 1 scorecard opened 
 
 The multi-device onboarding flow — install, scan a QR code, sync in the background — addressed the bootstrapping problem that breaks most naive local-first architectures. The usual failure mode is a chicken-and-egg: to join a workspace, the new device needs credentials, but credentials require an existing peer, and a peer requires the network to be available at exactly the right moment. The QR-based attestation bundle transfers everything the new node needs to authenticate and begin gossip in a single out-of-band step. That is the right design.
 
-He also commended the container cold-start solution. One of the places local-first desktop applications fall apart is the delay between launch and ready for data. A Podman container starting from scratch on first open creates a pause that signals to users that something is wrong — that the software is not, in fact, running locally, but is somehow waiting for something remote. The architecture's answer — a persistent background service that keeps the container running, fronted by a health-check gate that holds the UI until the daemon is ready — is pragmatically correct. It hides the implementation reality without lying about it.
+He also commended the container cold-start solution. One of the places local-first desktop applications fall apart is the delay between launch and ready for data. A Podman container starting from scratch on first open creates a pause that signals to users that something is wrong — that the software is not, in fact, running locally, but is somehow waiting for something remote. The architecture's answer — a persistent background service that keeps the container running, fronted by a health-check gate that holds the UI until the daemon is ready — is the right call: it hides the implementation detail without deceiving the user.
 
 Alignment with the Kleppmann et al. local-first ideals [1] scored an 8 out of 10. The paper understood the ideals and implemented most of them faithfully. The Ink and Switch essays on Pushpin and Backchat were not cited, which left the paper vulnerable to community criticism — the local-first community notices when practitioners ignore prior art. But that is a condition, not a block.
 
@@ -56,7 +56,7 @@ Ferreira's domain average for Round 1 was 7.0 out of 10 — the scoring rubric w
 
 His verdict rationale was direct. The paper cannot argue for data ownership and omit the export button. Until the architecture specifies how a user retrieves their data in a form that does not require the original application to read it, the ownership claim is hollow. The underlying architecture is better than most. The specific gap is the most important one.
 
-The paper returned to the author with the data portability issue as a blocking item alongside five other blocking items: two from Shevchenko (CRDT GC and Flease split-write), two from Kelsey (no customer archetype and no conversion mechanism), and one from Okonkwo (key compromise response). The formal BLOCK verdicts came from Shevchenko and Kelsey; Voss and Okonkwo issued PROCEED WITH CONDITIONS while naming prerequisite items. The revision would need to address all six blocking items before any member would begin a second review.
+The paper returned to the author with the data portability issue as a blocking item alongside five other blocking items: two from Shevchenko (CRDT GC and Flease split-write), two from Kelsey (no customer archetype and no conversion mechanism), and one from Okonkwo (key compromise response). Shevchenko and Kelsey issued formal BLOCK verdicts. Voss and Okonkwo issued PROCEED WITH CONDITIONS while naming prerequisite items. The revision would need to address all six blocking items before any member would begin a second review.
 
 ---
 
@@ -78,7 +78,7 @@ Community governance now has a three-stage model: the author serves as BDFL for 
 
 ### Seven Ideals Compliance: The Full Checklist
 
-Ferreira opened his Round 2 review by applying the Kleppmann et al. checklist [1] directly. He had done this in Round 1 and found gaps. In Round 2, he did it again and found none.
+Ferreira opened his Round 2 review by applying the Kleppmann et al. checklist [1] directly. He had done this in Round 1 and found gaps.
 
 The seven local-first ideals, checked against the revised architecture:
 
@@ -128,7 +128,9 @@ The architecture's analogues table in the revised paper cites Figma, Linear, Obs
 
 The answer is yes. Ferreira named it: Actual Budget.
 
-Actual is a personal finance application. No server required. Data lives on the user's device. Syncing is optional and user-controlled. It charges a one-time purchase price, with an optional sync service subscription for users who want it. No per-seat pricing. No subscription required to access core features. The data is the user's by design, not by contract.
+Actual is a personal finance application. No server required. Data lives on the user's device. Syncing is optional and user-controlled.
+
+It charges a one-time purchase price, with an optional sync service subscription for users who want it. No per-seat pricing. No subscription required to access core features. The data is the user's by design, not by contract.
 
 Actual validates two things simultaneously. First, the local-first model works at the product level — real users adopt it, pay for it, and use it daily. Second, the revenue model works without server-side data custody — one-time purchase plus optional convenience subscription produces enough revenue to sustain development. The closest commercial analogue to the inverted stack's business model is not a SaaS company. It is a desktop software company that added sync as a feature, not as a dependency.
 
@@ -152,7 +154,7 @@ Ferreira issued PROCEED in Round 2. No conditions required. No blocking issues.
 
 His four observations — the zero-state first-run gap, the recovery UX, the Actual Budget omission, and the telemetry model — came with specific recommendations, not conditions. He filed them as non-blocking guidance, not as gates on implementation.
 
-This matters for two reasons. Practically: it means the architecture can proceed to alpha implementation without resolving these items first. They are refinements, not failures. Structurally: Ferreira is the first council member, across both rounds, to issue an unconditional PROCEED. The enterprise architect issued PROCEED WITH CONDITIONS. The distributed systems researcher issued PROCEED WITH CONDITIONS. The security practitioner issued PROCEED WITH CONDITIONS. The product manager issued PROCEED WITH CONDITIONS. Ferreira, the practitioner who knows where the bodies are buried, looked at the revised architecture and found nothing that blocked it.
+This matters for two reasons. Practically: the architecture proceeds to alpha implementation without resolving these items. Structurally: Ferreira is the first council member, across both rounds, to issue an unconditional PROCEED. The enterprise architect issued PROCEED WITH CONDITIONS. The distributed systems researcher issued PROCEED WITH CONDITIONS. The security practitioner issued PROCEED WITH CONDITIONS. The product manager issued PROCEED WITH CONDITIONS. Ferreira, the practitioner who knows where the bodies are buried, looked at the revised architecture and found nothing that blocked it.
 
 That verdict is not a formality. It is the hardest one to earn.
 
@@ -166,11 +168,11 @@ The local node solves the access problem. Data on the user's machine is accessib
 
 But access is not portability. A user who wants to move to a different application, or preserve their data in a format that does not require this specific software to read, needs more than local storage. They need an export. JSON, CSV, Markdown — durable, application-independent formats that any competent software can ingest.
 
-The export button is not a nice-to-have. It is the proof of the claim. An architecture that argues for data ownership and does not ship the export button is making a claim about values it has not actually implemented.
+The export button is not a nice-to-have. It is the proof of the claim.
 
 The same logic extends to disaster recovery. Your data is backed up is not sufficient. Your data can be restored by a non-technical user in under thirty minutes after a complete device failure is the claim that actually serves users. The architecture must describe the recovery path with the same care it describes the backup configuration — because a backup that cannot be restored is not a backup. It is a simulation of safety.
 
-And the symmetric NAT failure mode is a concrete example of the honesty standard that separates production local-first software from demos. Every architecture has connectivity scenarios it cannot handle. The question is whether it names them or hides them. Carrier-grade NAT plus relay outage produces a failure mode where two peers cannot communicate. The right answer is not to claim the relay is so reliable this scenario never occurs. The right answer is to document the failure mode, name the conditions that produce it, and describe the fallback: a self-hosted relay on a machine with a public IP removes the symmetric NAT problem entirely, at the cost of the infrastructure burden the managed relay was designed to eliminate.
+And the symmetric NAT failure mode is a concrete example of the honesty standard that separates production local-first software from demos. Every architecture has connectivity scenarios it cannot handle. The question is whether it names them or hides them. Carrier-grade NAT plus relay outage produces a failure mode where two peers cannot communicate. Claiming the relay is so reliable this scenario never occurs is wrong. Document the failure mode and describe the fallback: a self-hosted relay on a machine with a public IP removes the symmetric NAT problem entirely, at the cost of the infrastructure burden the managed relay was designed to eliminate.
 
 Honesty about failure modes is what distinguishes production local-first software from a persuasive demo. Ferreira has shipped production local-first software. He recognized the difference. He PROCEED'd when he saw it.
 
