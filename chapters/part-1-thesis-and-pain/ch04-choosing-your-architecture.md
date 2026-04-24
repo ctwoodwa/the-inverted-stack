@@ -75,7 +75,7 @@ What are the real operational conditions? Not the happy path — what happens wh
 | Field workers, construction sites, rural offices, mobile-poor coverage | Local-first mandatory |
 | Air-gapped facilities: defense, nuclear, certain financial data centers | Local-first mandatory |
 | Enterprise with MDM governance, IT-controlled endpoints, BYOC storage policy | Local-first node strongly preferred |
-| Regulated data residency requirements: GDPR, HIPAA, FedRAMP, ITAR | Local-first or on-premises |
+| Regulated data residency requirements (GDPR, HIPAA, and a growing global set — see atlas below) | Local-first or on-premises |
 | Hospital floors, clinical environments, legal depositions in opposing counsel's office | Local-first strongly preferred |
 | Always-online, browser-only, zero install friction, anonymous access acceptable | Traditional SaaS |
 
@@ -86,6 +86,8 @@ A structural engineer doing site inspections drives between locations where cell
 For these users, the question is not "can the software degrade gracefully?" It is "does the software work without network access?" Degradation is a different failure mode from absence. An app that loads stale data and queues writes is degraded — it still works. An app that shows a spinner and refuses to accept input is broken.
 
 The enterprise environment deserves separate attention. IT departments in regulated industries — finance, healthcare, defense contracting, government — often require that data not leave controlled infrastructure. A cloud SaaS where data lives on a vendor's servers in a region selected by the vendor fails this requirement directly. A local-node architecture where data lives on MDM-managed endpoints under IT's control passes it. The data residency properties that the local-node architecture provides as a structural side effect of its design are a primary procurement advantage in enterprise sales — not a secondary nice-to-have.
+
+The regulatory landscape behind this filter is now global. European pressure comes from the 2020 Schrems II ruling, which constrains EU personal data transfers to US cloud providers without supplemental safeguards — enforced nationally by Germany's BSI and France's CNIL. Gulf and Asia-Pacific regulation imposes residency and consent obligations through the UAE Data Protection Law 2022 and the DIFC Data Protection Law 2020 (which may legally prohibit foreign cloud storage for DIFC-licensed financial entities), India's DPDP Act 2023 and RBI data localization circular, China's PIPL (2021), Japan's PIPA, and South Korea's Personal Information Protection Act. Americas, African, and CIS regulation adds Brazil's LGPD, Mexico's LFPDPPP, Colombia's Ley 1581, Argentina's Ley 25.326, South Africa's POPIA, Nigeria's NDPR, Kenya's Data Protection Act, and Russia's Federal Law 242-FZ — among the first general-purpose data localization laws globally, predating GDPR by two years — alongside CIS import substitution policy that makes local-node architecture a natural compliance path. In each jurisdiction, the architecture where data lives on the user's own hardware is the architecture that makes compliance tractable; in several (DIFC, RBI, 242-FZ, PIPL), it is closer to the architecture the law requires.
 
 If your users work offline regularly, or in environments where they *should* be able to work offline even if they currently cannot, the connectivity filter points toward local-first.
 
@@ -120,7 +122,7 @@ This filter governs *when* and *how*, not *whether*. A team fully committed to Z
 | Constraint | Implication |
 |---|---|
 | Need to ship in under 3 months | Start with traditional SaaS; architect for local-node migration from day one |
-| Team has no CRDT or distributed sync experience | Budget 3–6 additional months before production deployment |
+| Team has no CRDT or distributed sync experience | Budget 3–6 months for CRDT and sync; add 1–3 months for key management design before production |
 | Existing hosted product with established user base and historical data | Hybrid: retain cloud as sync relay, add local-node capability incrementally |
 | Greenfield project with a team prepared to invest in the architecture | Local-first node from day one |
 
@@ -132,9 +134,9 @@ Four skills separate local-node development from standard web application develo
 
 **Schema migration in a multi-version environment.** Nodes update independently. At any given moment, the user base runs a distribution of software versions. A schema migration must work correctly when a newly updated node exchanges data with a node running two versions behind. The expand-contract pattern — adding new fields before removing old ones, maintaining backward-compatible event formats during a transition window, retiring old formats only after the compatibility window closes — is not optional.
 
-**Key management.** The architecture requires per-document data encryption keys, per-role key encryption keys, and device identity keys. Rotation, revocation, and recovery procedures must be designed and implemented before the first production deployment. A team that has not designed key compromise recovery before shipping has created a data loss risk that cannot be resolved under pressure.
+**Key management.** The architecture requires per-document data encryption keys, per-role key encryption keys, and device identity keys. Rotation, revocation, and recovery procedures must be designed and implemented before the first production deployment. A team that has not designed key compromise recovery before shipping has created a data loss risk that cannot be resolved under pressure. Plan one to three months for key hierarchy design and rotation procedure implementation before a production date can be named.
 
-These skills are learnable, not rare. The estimate of 3–6 additional months for a team without prior sync experience reflects real project history, not pessimism. Teams that treat those months as a legitimate investment ship stable systems. Teams that skip them ship systems that fail on reconnection edge cases and schema incompatibilities in the field.
+These skills are learnable, not rare. The combined estimate — three to six months for CRDT and sync plus one to three months for key management — reflects real project history, not pessimism. Teams that treat those months as a legitimate investment ship stable systems. Teams that skip them ship systems that fail on reconnection edge cases and schema incompatibilities in the field.
 
 ---
 
@@ -196,7 +198,7 @@ If the five filters feel like too much evaluation for a project in early discove
 
 **Does the team need to work offline for extended periods?** Not "it would be nice if offline worked" — users are in environments where reliable connectivity cannot be guaranteed and the software must work regardless. If yes — the architecture needs to treat offline as the primary case, not a fallback.
 
-**Does the product need to outlive vendor infrastructure?** The software should continue to work regardless of whether the vendor survives, is acquired, or changes its pricing. If yes — the product must hold its own authoritative data. Software that requires a vendor server to function cannot outlive the vendor.
+**Does the product need to outlive vendor infrastructure?** The software should continue to work regardless of whether the vendor survives, is acquired, changes its pricing, or is directed to stop serving your jurisdiction — as hundreds of thousands of organizations in Russia and CIS markets learned in 2022 when Western SaaS vendors suspended service under sanctions enforcement. If yes — the product must hold its own authoritative data. Software that requires a vendor server to function cannot outlive the vendor's continued permission to serve you.
 
 If all three answers are yes: Zone A or Zone C. Start with Anchor for a greenfield. Start with Bridge for a migration or hybrid deployment. Run the full five filters to confirm no blocking constraint applies.
 
@@ -206,16 +208,8 @@ The shortcut identifies whether a full evaluation is worth the time. It does not
 
 ---
 
-## Anchor Is Your Zone A. Bridge Is Your Zone C.
+## What You Have Earned
 
-If you ran the filters and the architecture applies, the next question is where to start building.
+A reader who cleared all five filters has earned an architecture that outlives vendor decisions, works through connectivity gaps and power interruptions, and satisfies compliance in every major regulatory jurisdiction. Anchor is the Zone A reference implementation for greenfield local-first projects; Bridge is the Zone C reference for teams migrating an existing SaaS product or offering a hosted option alongside a self-hosted one. Both reference Sunfish packages (pre-1.0 implementations of the architecture this book specifies, not finished products) and both are specified in full in Part IV.
 
-Anchor is the Zone A reference implementation. It provides .NET MAUI Blazor Hybrid application scaffolding, SQLCipher encrypted local storage, Ed25519 device identity, a gossip-based sync daemon with mDNS local peer discovery, QR-code device onboarding, and the foundational local-first UX primitives — offline status indicators, sync state tokens, conflict surfacing. You bring the domain; Anchor brings the stack.
-
-Bridge is the Zone C reference implementation. It provides per-tenant data-plane isolation on a hosted node, a ciphertext-only relay where the server coordinates sync without ever accessing plaintext data, and the hybrid architecture that lets user-owned records live locally while the cloud handles cross-tenant coordination. Bridge is the right starting point for teams migrating an existing SaaS product toward local-first properties, or for teams whose enterprise customers need a vendor-hosted option alongside a self-hosted one.
-
-Both accelerators reference packages from the Sunfish project — `Sunfish.Kernel.Sync`, `Sunfish.Foundation.LocalFirst`, `Sunfish.Kernel.Security` — whose APIs are stable at the architectural level and evolving at the method level. They are pre-1.0 implementations of the architecture this book specifies, not finished products.
-
-Part IV walks through both accelerators in detail. Before reaching that implementation, Part II stress-tests the architecture against the hardest objections five domain experts could construct. The council did not begin as believers. They began as skeptics. Every block they raised, every condition they imposed, and every objection they cleared makes the architecture stronger and the failure modes better understood.
-
-That is where this book goes next.
+Before that implementation, Part II stress-tests the architecture against the hardest objections five domain experts could construct. The council did not begin as believers. They began as skeptics. Every block they raised, every condition they imposed, and every objection they cleared makes the architecture stronger and the failure modes better understood.
