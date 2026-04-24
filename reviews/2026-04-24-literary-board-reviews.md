@@ -459,3 +459,63 @@ All eight pass-3 items verified as correctly landed: "without flinching" deleted
 - EDIT FAILURE: none
 
 **Single cycle, 13 edits, 2 chapters advanced to icm/approved stage.**
+
+---
+
+## Ch02 First-Pass Review (cycle initialization)
+**Board score: 6.2/10 — REVISE**
+
+*Context: First board review on Ch02 (3,973 words, target 4,000). Cycle's own DO-NOT-USE advisory triggered (REVISE below 7 threshold). Surfaced to user for triage decision before resolution pass.*
+
+| Critic | Score | Verdict |
+|--------|-------|---------|
+| Eleanor Chase (Acquisitions) | 8 | POLISH |
+| Marcus Webb (CTO/Target Reader) | 8 | READ |
+| Ingrid Halvorsen (Prose) | 7 | SERVICEABLE |
+| Jerome Nakamura (Technology Analyst) | 7 | ADEQUATE |
+| Dr. Amara Osei (Academic) | 8 | SOUND |
+| Meera Krishnamurthy (Dubai/India) | 5 | WESTERN-CENTRIC |
+| Prof. Raymond Hollis (Rhetoric) | 8 | COHESIVE |
+| Sofia Reyes (Accessibility/LATAM) | 4 | PARTIALLY ACCESSIBLE |
+| Yuki Tanaka (East Asia/APAC) | 5 | TRANSLATES WITH ADAPTATION |
+| Dr. Imogen Barker (European) | 6 | ADEQUATELY SUBSTANTIATED |
+| Amina Diallo (African Markets) | 4 | MISSES MAJOR MARKET |
+| Aleksei Volkov (CIS/Eastern Europe) | 4 | LARGEST CASE STUDY ABSENT |
+
+**Clean editorial/regional split:** US editorial+technical critics 7-8/10; regional/global-market critics 4-6/10. The pattern mirrors Ch01 pass-1 and Ch03 pass-1 exactly — chapter is structurally sound but globally under-scoped.
+
+### Priority Action Items
+
+1. **EXPAND REGULATORY FRAMING** (Krishnamurthy, Barker, Diallo, Volkov, Reyes, Tanaka — 6 critics). "What This Book Adds" currently names only HIPAA and SOC 2. Must add: Schrems II, GDPR (not as SOC 2 equivalent), UAE DPL / DIFC 2020, RBI data localization, Japan PIPA, South Korea PIPA, China PIPL, Nigeria NDPR, South Africa POPIA, Kenya DPA, Russia 242-FZ, Brazil LGPD, Mexico LFPDPPP, Colombia Ley 1581, Argentina Ley 25.326.
+
+2. **ADD 2022 CIS SAAS TERMINATIONS CASE STUDY** (Volkov, Webb, implicit from other critics — 2+ with cross-chapter pattern). The Sunrise Calendar shutdown currently carries the "long now" argument alone; the 2022 CIS terminations are the strongest available empirical proof of vendor-dependency risk.
+
+3. **NAME M-PESA/MTN MOMO AS OFFLINE-FIRST PRECEDENTS** (Diallo, Krishnamurthy, Reyes — 3 critics). Chapter's taxonomy currently presents Automerge/Linear/Actual Budget as the frontier; African mobile money is the actual frontier at population scale.
+
+4. **CUT NOTION PRODUCT-VERSION DETAIL + COLLAPSE "WHAT EACH GETS RIGHT" SECTION** (Chase, Halvorsen, Hollis — 3 critics). Notion entry runs ~180 words with dated product specifics (mid-2025 offline support, fifty-row sync cap, Wi-Fi restrictions) — will date the book within 18 months. Collapse to two-sentence architectural point. "What Each Gets Right" section runs four paragraphs where one synthesis sentence would do.
+
+5. **ADDRESS YJS OMISSION** (Nakamura — 1 critic, but prominent production asymmetry). Yjs gets a single attributive clause while Automerge gets four paragraphs. Either give Yjs its own entry or add explicit footnote explaining the treatment.
+
+6. **MOVE "THE WORD 'SERIOUS'..." SENTENCE TO CHAPTER OPENER** (Chase, Halvorsen — 2 critics). Currently the best sentence in the chapter, buried on page 12; it is the thesis sentence the opener is circling toward but never lands.
+
+### Secondary cluster
+
+- Qualify Automerge characterization: "no production deployment model" → "no enterprise deployment model" (Osei)
+- Add bridging sentence for CAP-per-record model in "What This Book Adds" (Osei)
+- Verify Figma CRDT claim — Figma uses OT, not CRDTs, for multiplayer (Osei — factual check)
+- Move Smart Cache vs. Full Node diagram earlier to open "Missing Step" (Webb)
+- Revise seven-ideals headings for rhythmic consistency (Halvorsen)
+- Add accessibility-advantage sentence to "network is optional" property (Reyes)
+- Address relay-as-vendor-dependency tension explicitly (Nakamura)
+- Cut Liveblocks paragraph or relegate to footnote (Chase, Webb)
+- Strengthen chapter-ending transition to Ch03 — end on gap, not answer (Hollis)
+
+### Strengths to preserve
+
+- Seven-ideals section's enforcement logic ("A project management tool that must phone home... fails this property")
+- Linear analysis: "Linear's local SQLite database is a replica... not an authoritative local node"
+- Smart cache vs. full node distinction with construction superintendent example
+- "What This Book Adds" bullet list specificity (per-record CAP model, three-tier GC, key hierarchy)
+- "The word 'serious' in this chapter's title is not a claim about complexity. It is a claim about scope." — best sentence; must survive revision and move earlier
+- "Not new primitives" framing — intellectually honest, disarms obvious objection
+- Both Mermaid diagrams — well-scoped and useful
