@@ -28,6 +28,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 AUDIO_DIR = REPO / "build" / "output" / "audiobook"
+EPUB_DIR = REPO / "build" / "output"
 
 # Hardcoded fallback for this repo's primary author. Override via --dest
 # or the INVERTED_STACK_AUDIO_DEST environment variable for other machines.
@@ -78,6 +79,10 @@ def main() -> None:
                     help="also copy the per-chapter narration .txt scripts")
     ap.add_argument("--include-m4b", action="store_true",
                     help="also copy any .m4b audiobook bundles in the source dir")
+    ap.add_argument("--include-epub", action="store_true",
+                    help="also copy the .epub from build/output/")
+    ap.add_argument("--include-pdf", action="store_true",
+                    help="also copy any .pdf from build/output/")
     ap.add_argument("--no-manifest", action="store_false", dest="manifest", default=True,
                     help="skip manifest.json (default: copy it)")
     ap.add_argument("--no-stability-check", action="store_false",
@@ -118,6 +123,14 @@ def main() -> None:
         if scripts_src.exists():
             for txt in sorted(scripts_src.glob("*.txt")):
                 queue.append((txt, dest / "scripts" / txt.name))
+
+    if args.include_epub:
+        for epub in sorted(EPUB_DIR.glob("*.epub")):
+            queue.append((epub, dest / epub.name))
+
+    if args.include_pdf:
+        for pdf in sorted(EPUB_DIR.glob("*.pdf")):
+            queue.append((pdf, dest / pdf.name))
 
     if not queue:
         print("Nothing to copy.")

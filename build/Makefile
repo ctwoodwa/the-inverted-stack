@@ -70,9 +70,23 @@ epub: $(OUT_DIR)
 audiobook:
 	python build/audiobook.py
 
+.PHONY: audiobook-hd
+audiobook-hd:
+	python build/audiobook.py --per-sentence
+
 .PHONY: m4b
 m4b:
 	python build/m4b.py
+
+# normalize: EBU R128 loudness normalization to -16 LUFS / -1.5 dBTP / 11 LRA
+# (Audible / ACX / podcast submission spec). Two-pass mode by default.
+.PHONY: normalize
+normalize:
+	python build/normalize.py
+
+.PHONY: normalize-fast
+normalize-fast:
+	python build/normalize.py --single-pass
 
 # audio-copy: run alone, with stability check on (protects against picking
 # up in-flight files when an audiobook render is happening in another shell).
@@ -82,27 +96,39 @@ audio-copy:
 
 .PHONY: audio-copy-all
 audio-copy-all:
-	python build/copy-to-dropbox.py --include-m4b --include-scripts
+	python build/copy-to-dropbox.py --include-m4b --include-scripts --include-epub
 
-# audiobook-deploy is the full pipeline: regen MP3s, bundle .m4b, copy
-# everything to Dropbox. This is the canonical "ship the audiobook" target.
-# --no-stability-check is safe here because m4b.py is synchronous — by the
-# time the copy step runs, the .m4b is fully written.
+# audiobook-deploy is the audiobook pipeline: regen MP3s, normalize loudness,
+# bundle .m4b, copy MP3s+manifest+.m4b to Dropbox. Canonical "ship the
+# audiobook" target. --no-stability-check is safe in chained context because
+# each step is synchronous.
 .PHONY: audiobook-deploy
-audiobook-deploy: audiobook m4b-deploy
+audiobook-deploy: audiobook normalize m4b-deploy
 
 # m4b-deploy bundles the existing MP3s into a .m4b and copies both MP3s
-# and the .m4b to Dropbox. Use this when MP3s are already current and only
-# the bundle needs (re)generation + deploy.
+# and the .m4b to Dropbox. Use this when MP3s are already normalized and
+# only the bundle needs (re)generation + deploy.
 .PHONY: m4b-deploy
 m4b-deploy: m4b
 	python build/copy-to-dropbox.py --include-m4b --no-stability-check
 
-# audiobook-deploy-mp3 is the lighter variant: regen MP3s and copy them
-# without rebuilding the .m4b. Useful for iteration on individual chapters.
+# audiobook-deploy-mp3 is the lighter variant: regen MP3s, normalize, copy.
+# Skip the .m4b rebuild. Useful for iteration on individual chapters.
 .PHONY: audiobook-deploy-mp3
-audiobook-deploy-mp3: audiobook
+audiobook-deploy-mp3: audiobook normalize
 	python build/copy-to-dropbox.py --no-stability-check
+
+# epub-deploy: regenerate the .epub and copy it to Dropbox. Independent
+# of the audiobook pipeline; can run any time the manuscript is updated.
+.PHONY: epub-deploy
+epub-deploy: epub
+	python build/copy-to-dropbox.py --include-epub --no-stability-check
+
+# book-deploy: ship everything — audiobook (regen + normalize + .m4b)
+# AND .epub. Canonical "ship the entire book in every format" target.
+.PHONY: book-deploy
+book-deploy: audiobook normalize m4b epub
+	python build/copy-to-dropbox.py --include-m4b --include-epub --no-stability-check
 
 .PHONY: chapter-pdf
 chapter-pdf: $(OUT_DIR)

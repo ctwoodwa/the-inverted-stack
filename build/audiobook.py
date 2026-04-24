@@ -42,6 +42,13 @@ ACRONYM_FIXES = {
     r"\bgRPC\b": "G-R-P-C",
     r"\bWebAssembly\b": "Web Assembly",
     r"\bSignalR\b": "Signal-R",
+    r"\bYjs\b": "Y-J-S",
+    r"\bDEK\b": "D-E-K",
+    r"\bKEK\b": "K-E-K",
+    r"\bMDM\b": "M-D-M",
+    r"\bSBOM\b": "S-bom",
+    r"\bAP/CP\b": "A-P / C-P",
+    r"\bRFC (\d+)\b": r"R-F-C \1",
     # Roman numerals after "Part" — espeak mispronounces these as
     # "eye", "eye-eye", "triple-eye" etc. Spell them as Arabic digits.
     # Word boundaries prevent shorter forms from matching inside longer
@@ -56,6 +63,46 @@ ACRONYM_FIXES = {
     r"(?i)\bPart VIII\b": "Part 8",
     r"(?i)\bPart IX\b":   "Part 9",
     r"(?i)\bPart X\b":    "Part 10",
+}
+
+# Proper-noun pronunciation lexicon. These are the names espeak gets wrong
+# enough that listeners notice. Add entries by listening to a render and
+# noting any name that came out wrong. Format is the same as ACRONYM_FIXES:
+# regex (with \b word boundaries) -> respelling that espeak phonemizes
+# correctly. Stress is denoted by capital letters on the stressed syllable.
+PROPER_NOUN_FIXES = {
+    # Council members in Part II (named in chapters' first-person rewrites)
+    r"\bShevchenko\b":    "shev-CHEN-koh",
+    r"\bOkonkwo\b":       "oh-KONK-woh",
+    r"\bFerreira\b":      "feh-RAY-rah",
+    r"\bTomás\b":         "toh-MAHS",
+    # Tomas without accent — fallback if the diacritic is stripped upstream
+    r"\bTomas\b":         "toh-MAHS",
+    # Voss / Kelsey / Voss read correctly by default — no override needed.
+
+    # Technical and legal proper nouns the book cites repeatedly.
+    r"\bSchrems\b":       "shrems",
+    r"\bKleppmann\b":     "KLEP-mahn",
+    r"\bFlease\b":        "fleeze",
+    r"\bRoskomnadzor\b":  "ros-kom-NOD-zor",
+    r"\bAnpd\b":          "A-N-P-D",
+    r"\bANPD\b":          "A-N-P-D",
+}
+
+# Common abbreviations that espeak mispronounces or reads literally.
+# Order matters: longer patterns first so "i.e." doesn't match part of a
+# longer compound. Apply with re.sub(pattern, replacement, text).
+ABBREVIATION_FIXES = {
+    r"(?i)\bi\.e\.,?": "that is,",
+    r"(?i)\be\.g\.,?": "for example,",
+    r"(?i)\betc\.":    "and so on",
+    r"(?i)\bvs\.":     "versus",
+    r"(?i)\bcf\.":     "compare",
+    r"(?i)\bc\.f\.":   "compare",
+    r"(?i)\bp\.m\.":   "P-M",
+    r"(?i)\ba\.m\.":   "A-M",
+    r"(?i)\bv1\.0\b":  "version one point zero",
+    r"(?i)\bpre-1\.0\b": "pre-version-one",
 }
 
 # Named voice + speed presets. --preset selects one; --voice/--speed override.
@@ -153,6 +200,52 @@ CHAPTER_FILES = [
 CHUNK_CHAR_BUDGET = 1400  # target per-request size in characters
 
 
+_ORDINAL_WORDS = {
+    1: "First", 2: "Second", 3: "Third", 4: "Fourth", 5: "Fifth",
+    6: "Sixth", 7: "Seventh", 8: "Eighth", 9: "Ninth", 10: "Tenth",
+}
+
+
+def _ordinal_word(n: int) -> str:
+    """Convert a parenthetical (N) marker into a spoken ordinal cue with a
+    trailing comma so espeak inserts a micro-pause. Beyond ten, fall back
+    to "Item N," which reads correctly without enumerating large ordinals."""
+    if n in _ORDINAL_WORDS:
+        return f"{_ORDINAL_WORDS[n]},"
+    return f"Item {n},"
+
+
+def _expand_numbers(t: str) -> str:
+    """Expand currency and percentage shorthand that espeak mishandles.
+
+    Conservative scope — only the patterns that demonstrably misread:
+    - N%       -> "N percent"        (espeak: "N percent" ok but inconsistent)
+    - $NK/M/B  -> "N thousand/million/billion dollars"
+    - NK/NM    -> left alone (ambiguous: K could be Kelvin, M could be mega)
+
+    Plain integers, decimals, and comma-grouped numbers (10,000) are left
+    to espeak's default reader — it handles those cleanly.
+    """
+    # Percentages: "20%" -> "20 percent"; preserve the integer for espeak
+    # to read normally. Decimals like "3.5%" are also handled.
+    t = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"\1 percent", t)
+
+    # Currency shorthand with magnitude suffix.
+    suffix_map = {"K": "thousand", "M": "million", "B": "billion", "T": "trillion"}
+    def _currency_sub(m: re.Match) -> str:
+        amount = m.group(1)
+        suffix = m.group(2).upper()
+        word = suffix_map[suffix]
+        return f"{amount} {word} dollars"
+
+    t = re.sub(r"\$(\d+(?:\.\d+)?)\s*([KMBTkmbt])\b", _currency_sub, t)
+    # Plain "$N" without magnitude suffix: espeak reads as "dollar N" which
+    # sounds inverted. Convert "$N" to "N dollars" instead.
+    t = re.sub(r"\$(\d+(?:\.\d+)?)\b", r"\1 dollars", t)
+
+    return t
+
+
 def narratable_text(md: str) -> str:
     """Convert a chapter markdown file to a clean narration script."""
     t = md
@@ -219,14 +312,51 @@ def narratable_text(md: str) -> str:
     t = t.replace(" — ", " ... ").replace(" – ", " ... ")
     t = t.replace("—", ", ").replace("–", ", ")
 
+    # Smart-quote normalization. Espeak handles curly quotes inconsistently;
+    # straight ASCII quotes are reliably ignored (they don't introduce
+    # phantom pauses or mispronunciations). Apply before footnote-stripping
+    # so any captured quoted footnote markers are normalized too.
+    t = (t.replace("“", '"').replace("”", '"')   # " "
+           .replace("‘", "'").replace("’", "'")   # ' '
+           .replace("«", '"').replace("»", '"')   # « »
+           .replace("„", '"').replace("‚", "'"))  # „ ‚
+
+    # Ellipsis character normalization. Single-glyph "…" reads inconsistently;
+    # three dots is what every other rule in this file expects.
+    t = t.replace("…", "...")
+
     # Strip footnote-style reference markers before the acronym pass.
     # Markdown footnote refs `[^1]` and stray carets read as garbage in TTS.
     t = re.sub(r"\[\^[^\]]+\]", "", t)
     t = re.sub(r"\^", "", t)
 
+    # Abbreviation expansion: i.e., e.g., etc., vs., cf., p.m./a.m., v1.0.
+    # Run before the acronym pass so "i.e." in "the i.e. clarifier" expands
+    # cleanly without acronym-style respelling overriding it.
+    for pat, repl in ABBREVIATION_FIXES.items():
+        t = re.sub(pat, repl, t)
+
+    # Number-to-word expansion for narrative numbers. Espeak reads "10,000"
+    # acceptably but reads "$10K" / "10K" / "100M" / "20%" inconsistently.
+    # Normalize the most common patterns to plain English.
+    t = _expand_numbers(t)
+
+    # List-marker spoken cues. Markdown numbered lists ("1. foo / 2. bar")
+    # were already stripped of leading "1." earlier, but inline ordinal
+    # references in prose ("first..., second..., third...") are already
+    # natural. The remaining work is enumerated parenthetical lists like
+    # "(1) ... (2) ... (3)" which espeak reads as "left-paren one right-paren".
+    t = re.sub(r"\((\d+)\)", lambda m: _ordinal_word(int(m.group(1))), t)
+
     # Acronym pre-processing for known-mangled terms (applied before
     # terminal-punctuation guarantee so word boundaries still match).
     for pat, repl in ACRONYM_FIXES.items():
+        t = re.sub(pat, repl, t)
+
+    # Proper-noun pronunciation lexicon. Council member names and other
+    # repeated proper nouns the book cites. Applied after acronym fixes
+    # so neither pass interferes with the other.
+    for pat, repl in PROPER_NOUN_FIXES.items():
         t = re.sub(pat, repl, t)
 
     # Guarantee terminal punctuation on every non-empty line so sentence
@@ -256,7 +386,24 @@ def narratable_text(md: str) -> str:
     return t.strip()
 
 
-_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"'(])")
+_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'(])")
+
+
+def chunk_sentences(text: str) -> list[str]:
+    """Split into one chunk per sentence, preserving paragraph breaks as
+    standalone empty entries. Used by --per-sentence synthesis. Each
+    chunk is small (~50-300 chars typical), giving Kokoro fresh prosody
+    on every utterance at the cost of more API calls."""
+    chunks: list[str] = []
+    for para in re.split(r"\n{2,}", text):
+        para = para.strip()
+        if not para:
+            continue
+        for sent in _SENT_SPLIT.split(para):
+            sent = sent.strip()
+            if sent:
+                chunks.append(sent)
+    return chunks
 
 
 def chunk_text(text: str, budget: int = CHUNK_CHAR_BUDGET) -> list[str]:
@@ -357,13 +504,15 @@ def render_chapter(
     md_path: Path,
     out_path: Path,
     script_path: Path,
+    per_sentence: bool = False,
 ) -> dict:
     script = build_script(md_path)
     script_path.parent.mkdir(parents=True, exist_ok=True)
     script_path.write_text(script, encoding="utf-8")
-    chunks = chunk_text(script)
+    chunks = chunk_sentences(script) if per_sentence else chunk_text(script)
     total_chars = sum(len(c) for c in chunks)
-    print(f"  {md_path.name}: {len(chunks)} chunks, {total_chars:,} chars")
+    mode = "sentence" if per_sentence else "chunk"
+    print(f"  {md_path.name}: {len(chunks)} {mode}s, {total_chars:,} chars")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
@@ -419,6 +568,9 @@ def main() -> None:
     ap.add_argument("--scripts-only", action="store_true",
                     help="regenerate narration scripts from markdown without calling TTS")
     ap.add_argument("--list-presets", action="store_true", help="print presets and exit")
+    ap.add_argument("--per-sentence", action="store_true",
+                    help="render one sentence per Kokoro call (cleaner prosody, "
+                         "~3-5x more API calls and total time). Default: off.")
     args = ap.parse_args()
 
     if args.list_presets:
@@ -477,8 +629,9 @@ def main() -> None:
 
         if args.dry_run:
             script = build_script(md_path)
-            chunks = chunk_text(script)
-            print(f"{rel}: {len(chunks)} chunks, {sum(len(c) for c in chunks):,} chars")
+            chunks = chunk_sentences(script) if args.per_sentence else chunk_text(script)
+            mode = "sentence" if args.per_sentence else "chunk"
+            print(f"{rel}: {len(chunks)} {mode}s, {sum(len(c) for c in chunks):,} chars")
             continue
 
         if args.scripts_only:
@@ -493,11 +646,14 @@ def main() -> None:
             continue
 
         preset_name, voice, speed = resolve_preset(rel)
-        print(f"\n=> {rel}  [preset={preset_name} voice={voice} speed={speed}]")
-        entry = render_chapter(client, voice, speed, md_path, out_path, script_path)
+        mode_tag = " per-sentence" if args.per_sentence else ""
+        print(f"\n=> {rel}  [preset={preset_name} voice={voice} speed={speed}{mode_tag}]")
+        entry = render_chapter(client, voice, speed, md_path, out_path, script_path,
+                               per_sentence=args.per_sentence)
         entry["preset"] = preset_name
         entry["voice"] = voice
         entry["speed"] = speed
+        entry["mode"] = "sentence" if args.per_sentence else "chunk"
         by_source[entry["source"]] = entry
         manifest["chapters"] = [by_source[s] for s in [c["source"] for c in manifest.get("chapters", [])] + [entry["source"]] if s in by_source]
         # deduplicate preserving first-seen order

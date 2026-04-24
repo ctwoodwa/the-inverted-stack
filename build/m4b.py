@@ -6,8 +6,9 @@ metadata (title, author, genre=Audiobook). Uses the static ffmpeg bundled with
 the `imageio-ffmpeg` pip package — no system ffmpeg install required.
 
 Usage:
-    python build/m4b.py                  # default 64 kbps AAC mono
-    python build/m4b.py --bitrate 96k    # higher quality
+    python build/m4b.py                  # default 96 kbps AAC mono (audiobook quality floor)
+    python build/m4b.py --bitrate 128k   # higher quality, ~33% larger file
+    python build/m4b.py --bitrate 64k    # podcast tier
     python build/m4b.py --out custom.m4b
 """
 
@@ -71,8 +72,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT,
                     help=f"output .m4b path (default: {DEFAULT_OUT.name})")
-    ap.add_argument("--bitrate", default="64k",
-                    help="AAC bitrate (default: 64k — industry standard for speech)")
+    ap.add_argument("--bitrate", default="96k",
+                    help="AAC bitrate (default: 96k — audiobook quality floor; "
+                         "Audible accepts 64-320k, but 96k is the threshold below "
+                         "which speech artifacts become audible on critical listening)")
     ap.add_argument("--keep-temp", action="store_true",
                     help="keep intermediate concat-list.txt and ffmetadata.txt")
     args = ap.parse_args()
