@@ -1,6 +1,6 @@
 # Chapter 20 — UX, Sync, and Conflict
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~3,000 words -->
 <!-- Source: v13 §13, §14, v5 §6 -->
@@ -55,7 +55,7 @@ the data classes in use. Under normal conditions this indicator is invisible —
 when a threshold is close to expiring or has expired. The staleness thresholds are not
 arbitrary; they reflect the AP/CP classification from Chapter 12.
 
-`Sunfish.Foundation.LocalFirst` and `Sunfish.UICore` together provide `SunfishNodeHealthBar`,
+`Sunfish.UIAdapters.Blazor` provides `SunfishNodeHealthBar`,
 which implements all three indicators. Wire it into your application shell and configure the
 thresholds; the component handles the rest. Do not build a custom status bar from scratch —
 the platform component has been hardened against edge cases that a bespoke implementation
@@ -144,7 +144,7 @@ make. Never leave a failed write in the pending visual state — the circuit bre
 deterministic and arrives as soon as the node reconnects.
 
 ```
-// Illustrative — not runnable
+// Illustrative — not runnable (pre-1.0 API)
 // Wired via Sunfish.Foundation.LocalFirst write pipeline
 
 writeResult = crdtEngine.ApplyLocalWrite(document, edit);

@@ -6,7 +6,7 @@
 
 ---
 
-The sync daemon is the connective tissue of the local-first node. It maintains peer relationships, enforces subscription boundaries, and propagates state changes without coupling its lifecycle to the application that consumes it. Every design decision in this chapter follows from one constraint: the daemon must keep operating while the application restarts, updates, or crashes.
+The sync daemon is the connective tissue of the local-first node. It maintains peer relationships, enforces subscription boundaries, and propagates state changes without coupling its lifecycle to the application that consumes it. Every design decision follows from one constraint: the daemon must keep operating while the application restarts, updates, or crashes.
 
 ---
 
@@ -68,7 +68,7 @@ sequenceDiagram
     B->>A: GOSSIP_PING (every 30s)
 ```
 
-**HELLO.** Both peers identify themselves simultaneously. The HELLO message carries the sending node's node ID — a stable identifier derived from its device key — the current schema epoch, and the list of protocol versions the node supports. The session proceeds on the highest version supported by both nodes. A peer that supports no version in the other's list sends `SCHEMA_VERSION_INCOMPATIBLE` and closes the session. The schema epoch in HELLO tells the receiving node whether the sender is ahead, behind, or at parity. If the epochs are incompatible — the remote node is below the minimum supported epoch — the accepting node sends `SCHEMA_VERSION_INCOMPATIBLE` and closes the session; there is no partial or read-only mode. The application surfaces a schema update notification when the daemon closes a session on version grounds.
+**HELLO.** Both peers identify themselves simultaneously. The HELLO message carries the sending node's node ID — a stable identifier derived from its device key — the current schema epoch, and the list of protocol versions the node supports. The session proceeds on the highest version both nodes support. A peer that supports no version in the other's list sends `SCHEMA_VERSION_INCOMPATIBLE` and closes the session. The schema epoch in HELLO tells the receiving node whether the sender is ahead, behind, or at parity. If the epochs are incompatible — the remote node is below the minimum supported epoch — the accepting node sends `SCHEMA_VERSION_INCOMPATIBLE` and closes the session; there is no partial or read-only mode. The application surfaces a schema update notification when the daemon closes a session on version grounds.
 
 **CAPABILITY_NEG.** The requesting node declares what it participates in. The CAPABILITY_NEG message carries three arrays: the CRDT stream types the node holds and contributes to, the CP leases it currently holds, and the bucket subscriptions it requests. Each requested subscription includes a role attestation token signed by the node's device key. The receiving node verifies the attestation before granting any subscription. This is the phase where data minimization is enforced at the send boundary, not at the receiving application.
 
@@ -82,7 +82,7 @@ sequenceDiagram
 
 ## Gossip Anti-Entropy
 
-The DELTA_STREAM handles real-time operation propagation. Gossip anti-entropy handles convergence: it ensures that nodes that missed operations during a partition eventually receive them.
+The DELTA_STREAM handles real-time operation propagation. Gossip anti-entropy handles convergence — operations missed during a partition propagate on reconnect.
 
 Each node maintains a membership list. Each entry records a peer's node ID, its last known address for each discovery tier, its current reachability state (active, suspected, or failed), and the vector clock the local node last received from that peer.
 
@@ -181,7 +181,7 @@ backoff_interval = min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter
 
 Where `base`, `max_seconds`, and `jitter_range` are configurable per deployment, with the 60-second maximum enforced by the relay. A node that has been offline for an extended period — beyond a full gossip cycle — uses the maximum backoff on its first reconnection attempt regardless of its attempt count.
 
-The managed relay enforces a per-node rate limit on delta submissions. A node that submits deltas faster than the rate limit is queued, not rejected. The queue is bounded: if the queue depth for a node exceeds the configured limit, the relay drops the oldest queued submission. The node receives a flow control indication within the ACK frame of the next handshake and increases its backoff interval for subsequent submissions.
+The managed relay enforces a per-node rate limit on delta submissions. The relay queues nodes that submit deltas faster than the rate limit rather than rejecting them. The queue is bounded: if the queue depth for a node exceeds the configured limit, the relay drops the oldest queued submission. The node receives a flow control indication within the ACK frame of the next handshake and increases its backoff interval for subsequent submissions.
 
 These two controls together spread a partition-healing reconnection event across a 60-second window rather than concentrating it at the moment network access returns.
 

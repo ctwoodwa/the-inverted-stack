@@ -45,7 +45,7 @@ The contract phase does not begin automatically when the compatibility window ex
 
 ### Dual-Write Safety
 
-During the expand phase, dual-write semantics must be consistent across all code paths that produce records. A code path that writes only the new field — because the developer forgot the dual-write requirement — produces records that old-schema nodes cannot interpret. The `ISchemaVersion` interface in `Sunfish.Kernel.Runtime` registers the schema version and its upcasting logic; dual-write consistency across all write paths is a code-review invariant, not a runtime guarantee.
+During the expand phase, dual-write semantics must be consistent across all code paths that produce records. A code path that writes only the new field produces records that old-schema nodes cannot interpret. The `ISchemaVersion` interface in `Sunfish.Kernel.Runtime` registers the schema version and its upcasting logic; dual-write consistency across all write paths is a code-review invariant, not a runtime guarantee.
 
 ---
 
@@ -63,15 +63,13 @@ Non-additive changes require a new event type. Renaming a field in an existing e
 
 Upcaster chains accumulate over time. A system with three major versions of a record type has upcasters from V1 to V2 and V2 to V3. A system with ten major versions has nine upcasters composed in sequence for every event read. Each upcaster is individually simple; the chain introduces maintenance risk as developers must trace the full sequence to understand what any stored event means.
 
-The architecture addresses this through mandatory stream compaction. Compaction is a background copy-transform job: it replays the original event stream, applies all current upcasters in sequence, and writes a new compacted stream where every event is already in the current-version shape. Once compaction completes and the compacted stream is verified, the old upcasters for compacted events are retired. The old stream is archived rather than deleted — it is the audit record of original history — but the read path no longer traverses it for operational queries.
+Mandatory stream compaction bounds the accumulation problem. Compaction is a background copy-transform job: it replays the original event stream, applies all current upcasters in sequence, and writes a new compacted stream where every event is already in the current-version shape. Once compaction completes and the compacted stream is verified, the old upcasters for compacted events are retired. The old stream is archived rather than deleted — it is the audit record of original history — but the read path no longer traverses it for operational queries.
 
 Compaction is scheduled after each major schema epoch transition. It runs as a low-priority background process and does not block synchronization. The kernel checkpoints compaction progress so that an interrupted compaction resumes rather than restarts.
 
 ---
 
 ## Bidirectional Schema Lenses
-
-Upcasters handle the read-path problem. Lenses handle the synchronization problem.
 
 A lens is a pair of transformation functions between two schema versions: a forward function that transforms a record from schema v(n) to schema v(n+1), and a backward function that transforms it back. The forward and backward functions must be inverses of each other up to information loss — a value that exists in v(n+1) but has no equivalent in v(n) cannot survive a round-trip backward.
 
@@ -87,7 +85,7 @@ Bidirectional lenses allow two nodes at different schema versions to exchange re
 
 Lenses form a directed graph. Each directed edge between two consecutive schema versions carries a lens pair. To translate between non-adjacent versions, the sync daemon traverses the shortest path through the graph, composing lens functions in order. Version distance is a performance concern, not a correctness concern: a node that is three versions behind applies three composed lenses on receipt and transmission. The kernel caches composed lens chains per peer schema version to avoid recomputing the path on every delta.
 
-The reference design for bidirectional schema lenses is Ink and Switch’s Cambria project [1]. Cambria demonstrated that lenses can be declared as a data structure rather than hand-written code — a lens schema specifying field renames, type coercions, and structural transforms — and that the bidirectionality constraint can be checked mechanically rather than by inspection. The architecture follows the Cambria model: lenses are registered as `ISchemaLens` implementations via `LensGraph.AddLens()` in `Sunfish.Kernel.SchemaRegistry`, and the `LensGraph` engine traverses and composes them. The current implementation requires lenses to be written as C# code rather than as pure declarative specifications — a pragmatic divergence from Cambria's data-driven approach that retains the bidirectionality and graph-composition properties.
+The reference design for bidirectional schema lenses is Ink and Switch’s Cambria project [1]. Cambria demonstrated that lenses can be declared as a data structure rather than hand-written code — a lens schema specifying field renames, type coercions, and structural transforms — and that the lens engine checks the bidirectionality constraint mechanically rather than by inspection. The architecture follows the Cambria model: lenses are registered as `ISchemaLens` implementations via `LensGraph.AddLens()` in `Sunfish.Kernel.SchemaRegistry`, and the `LensGraph` engine traverses and composes them. The current implementation requires lenses to be written as C# code rather than as pure declarative specifications — a pragmatic divergence from Cambria's data-driven approach that retains the bidirectionality and graph-composition properties.
 
 ### Lens Registration
 

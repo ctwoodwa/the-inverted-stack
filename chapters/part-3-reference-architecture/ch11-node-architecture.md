@@ -130,7 +130,7 @@ flowchart TB
     U --> C
 ```
 
-The `SyncState` enumeration defined in Foundation propagates unchanged through every tier. The alignment invariant is the mechanism that prevents a local-first node from presenting a false sense of data currency. No tier is permitted to present data as current when the kernel reports it as stale, and no tier is permitted to hide a resolvable conflict from a user who has the authority to act on it.
+The `SyncState` enumeration defined in Foundation propagates unchanged through every tier. No tier is permitted to present data as current when the kernel reports it as stale, and no tier is permitted to hide a resolvable conflict from a user who has the authority to act on it.
 
 ## Process Boundaries and IPC
 
@@ -140,7 +140,7 @@ The host communicates with the daemon over a length-prefixed binary channel. On 
 
 The IPC channel is authenticated. The daemon enforces the five-phase handshake — `HELLO`, `CAPABILITY_NEG`, `ACK`, `DELTA_STREAM`, and `GOSSIP_PING` — against every connecting process. The `HELLO` message carries an Ed25519 signature over a canonical CBOR array of `[node_id, schema_version, public_key, sent_at]`. The daemon verifies the signature against the claimed public key and rejects any `HELLO` message whose `sent_at` timestamp falls outside a ±30-second window. This replay-protection window closes the attack surface where a captured handshake message could be replayed by an unauthorized process on the same machine.
 
-Capability negotiation follows successful authentication. The host declares its workspaces and required role attestations; the daemon responds with the allowed subscription set based on the attestation bundles the host presents. Non-attested subscriptions are refused at this stage. A host presenting no attestation for the financial records bucket receives no events from that bucket, regardless of what its application code requests. There is no bypass path through the local IPC channel that differs from the peer-to-peer path: both are governed by the same attestation verification logic.
+Capability negotiation follows successful authentication. The host declares its workspaces and required role attestations; the daemon responds with the allowed subscription set based on the attestation bundles the host presents. Non-attested subscriptions are refused at this stage. A host presenting no attestation for the financial records bucket receives no events from that bucket, regardless of what its application code requests. No bypass path through the local IPC channel differs from the peer-to-peer path: both follow the same attestation verification logic.
 
 After capability negotiation, the relationship is push-based. The daemon pushes change notifications to the host as CRDT deltas arrive from peers. The host does not poll the daemon. Command traffic flows in the opposite direction: the host sends create, update, and delete operations, which the daemon validates against the CRDT document store, applies locally, and schedules for gossip propagation to peers. This command channel separates user intent from CRDT operations: the host describes what the user wants to do; the daemon determines how to express that intent as CRDT mutations compatible with concurrent edits from other nodes.
 
@@ -189,7 +189,7 @@ builder.Services
     .AddSunfishEncryptedStore();
 ```
 
-Each `AddSunfish*` extension uses `TryAddSingleton` internally. A preceding registration — a test double, a stub CRDT backend, a custom socket transport — wins without requiring any change to the extension method. A test harness injects an in-memory CRDT stub by calling `AddSunfishCrdtEngineStub()` before `AddSunfishCrdtEngine()`, and injects an in-process sync transport by registering `InMemorySyncDaemonTransport` before `AddSunfishKernelSync()`.
+Each `AddSunfish*` extension uses `TryAddSingleton` internally. A preceding registration — a test double, a stub CRDT backend, a custom socket transport — takes precedence without modifying the extension method. A test harness injects an in-memory CRDT stub by calling `AddSunfishCrdtEngineStub()` before `AddSunfishCrdtEngine()`, and injects an in-process sync transport by registering `InMemorySyncDaemonTransport` before `AddSunfishKernelSync()`.
 
 The `Sunfish.Kernel` facade package exists for a specific structural reason. Five of the seven kernel primitives — entity store, version store, audit log, permission evaluator, and blob store — are already implemented in `Sunfish.Foundation.*` sub-packages. `Sunfish.Kernel` re-exports them via assembly type forwarding so that a package wanting to communicate "we only touch the kernel surface" takes a single dependency rather than listing individual Foundation sub-packages. The two remaining primitives — schema registry and event bus — are implemented in `Sunfish.Kernel.SchemaRegistry` and `Sunfish.Kernel.EventBus` respectively and surfaced through stub interfaces in `Sunfish.Kernel`. This split between the facade and the runtime package reflects a deliberate boundary: the facade exposes stable contracts; `Sunfish.Kernel.Runtime` owns the live services with state.
 
