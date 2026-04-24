@@ -1,6 +1,6 @@
 # Chapter 13 — Schema Migration and Evolution
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 s7, s8, s15, s19; v5 s3; book-structure.md sCh13 -->
 <!-- Part: III — specification voice -->

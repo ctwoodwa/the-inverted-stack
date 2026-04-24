@@ -1,5 +1,6 @@
 # Chapter 12 — CRDT Engine and Data Layer
 
+<!-- icm/prose-review -->
 <!-- Target: ~4,000 words -->
 <!-- Source: v13 §2.2, §2.4, §9, §12; v5 §3.1; ADR 0028 -->
 <!-- Part: III — specification voice -->
