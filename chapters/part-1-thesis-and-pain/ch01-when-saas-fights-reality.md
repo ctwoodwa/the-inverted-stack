@@ -1,6 +1,6 @@
 # Chapter 1 — When SaaS Fights Reality
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 <!-- Target: ~4,500 words -->
 <!-- Source: v13 §3, v13 Executive Summary, v13 §14.1, v13 §20.4, v5 §1 -->
 

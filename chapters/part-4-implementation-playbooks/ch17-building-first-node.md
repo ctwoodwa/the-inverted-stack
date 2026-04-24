@@ -1,5 +1,7 @@
 # Chapter 17 — Building Your First Node
 
+<!-- icm/draft -->
+
 <!-- Target: ~4,000 words -->
 <!-- Source: v13 §5, §13, §18; Sunfish accelerators/anchor/README.md -->
 

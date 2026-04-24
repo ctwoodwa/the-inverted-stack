@@ -7,6 +7,8 @@
 
 ## Who Is Jordan Kelsey
 
+<!-- icm/prose-review -->
+
 Jordan Kelsey has been on both sides of the pitch. His first company was a B2C privacy-first notes app — the kind of product where the slide deck led with your data stays yours and the demo wowed everyone who saw it. It ran out of runway eighteen months in. Not because the technology failed. Because privacy-first turned out to be a value proposition that users endorsed enthusiastically in surveys and declined to pay for at checkout. He knows what it feels like to watch conversion data tell you a story your product strategy refuses to believe.
 
 His second company was developer tooling. It got acquired for 22 million dollars. That one worked because he had learned to answer a different set of questions first: who is in pain, what does the pain cost them, and what is the smallest intervention that makes it stop. He angel-invests now and advises early-stage teams. He has sat through more than two hundred pitches that said we will monetize with services and support. He has watched most of them fail at the same place: a business model that is theoretically correct and operationally impossible.

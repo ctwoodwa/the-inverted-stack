@@ -1,5 +1,7 @@
 # Appendix B — Threat Model Worksheets
 
+<!-- icm/draft -->
+
 <!-- Target: ~1,800 words -->
 <!-- Source: v13 §11.1, Ch 15 -->
 

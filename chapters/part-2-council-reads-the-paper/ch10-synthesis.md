@@ -1,5 +1,7 @@
 # Chapter 10 — Synthesis: What the Council Finally Agreed On
 
+<!-- icm/prose-review -->
+
 <!-- Target: ~2,500 words -->
 <!-- Source: R1, R2 -->
 

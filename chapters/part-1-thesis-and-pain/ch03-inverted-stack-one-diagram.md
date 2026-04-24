@@ -1,5 +1,7 @@
 # Chapter 3 — The Inverted Stack in One Diagram
 
+<!-- icm/prose-review -->
+
 <!-- Target: ~3,000 words -->
 <!-- Source: v13 §5, Executive Summary comparison table; v5 §2, §2.1, §2.2 -->
 

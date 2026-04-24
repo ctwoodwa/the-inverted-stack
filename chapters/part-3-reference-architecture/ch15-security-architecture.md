@@ -1,5 +1,7 @@
 # Chapter 15 — Security Architecture
 
+<!-- icm/draft -->
+
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §11, v5 §4 -->
 

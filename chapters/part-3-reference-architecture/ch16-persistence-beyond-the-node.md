@@ -1,5 +1,7 @@
 # Chapter 16 — Persistence Beyond the Node
 
+<!-- icm/draft -->
+
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §2.4, §8, §9, §10, v5 §3.5 -->
 

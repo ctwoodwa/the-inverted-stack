@@ -1,5 +1,7 @@
 # Chapter 2 — Local-First: From Sync Toy to Serious Stack
 
+<!-- icm/prose-review -->
+
 <!-- Target: ~4,000 words -->
 <!-- Source: v13 §2.1–§2.4, §19; v5 §1–§3 -->
 

@@ -1,6 +1,6 @@
 # Chapter 9 — The Local-First Practitioner Lens
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 <!-- Target: ~3,500 words -->
 <!-- Source: R1 Ferreira, R2 Ferreira, v13 §13 -->
 

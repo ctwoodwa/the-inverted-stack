@@ -1,5 +1,7 @@
 # Chapter 19 — Shipping to Enterprise
 
+<!-- icm/draft -->
+
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §16, v5 §5, Sunfish docs/specifications/mdm-config-schema.md, Sunfish docs/specifications/air-gap-deployment.md -->
 

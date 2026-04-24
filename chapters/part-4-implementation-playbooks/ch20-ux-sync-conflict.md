@@ -1,5 +1,7 @@
 # Chapter 20 — UX, Sync, and Conflict
 
+<!-- icm/draft -->
+
 <!-- Target: ~3,000 words -->
 <!-- Source: v13 §13, §14, v5 §6 -->
 

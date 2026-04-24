@@ -1,5 +1,7 @@
 # Appendix A — Sync Daemon Wire Protocol
 
+<!-- icm/draft -->
+
 <!-- Target: ~2,000 words -->
 <!-- Source: v13 §6.2, Sunfish accelerators/anchor/README.md -->
 

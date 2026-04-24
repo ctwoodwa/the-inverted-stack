@@ -1,5 +1,7 @@
 # Chapter 6 — The Distributed Systems Lens
 
+<!-- icm/prose-review -->
+
 <!-- Target: ~3,500 words -->
 <!-- Source: R1 Shevchenko, R2 Shevchenko, v13 §2, §6, §9 -->
 

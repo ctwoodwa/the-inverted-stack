@@ -1,5 +1,7 @@
 # Appendix C — Further Reading
 
+<!-- icm/draft -->
+
 <!-- Target: ~1,000 words -->
 
 ---

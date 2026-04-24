@@ -1,5 +1,7 @@
 # Appendix D — Testing the Inverted Stack
 
+<!-- icm/draft -->
+
 <!-- Target: ~2,200 words -->
 <!-- Source: v13 §15 -->
 
