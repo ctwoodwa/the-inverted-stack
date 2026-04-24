@@ -19,12 +19,18 @@ This chapter is a playbook, not a specification. When you need to understand *wh
 
 Marcus lost his bid data not because it was destroyed but because someone else controlled the infrastructure it lived on. Everything you wire up in this chapter inverts that arrangement — the data stays on the device that needs it, and the infrastructure answers to you.
 
-Anchor is the canonical Zone-A local-first node. It is a .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell by design: the kernel is wired, the onboarding flow is real, and the CRDT engine is live. The report catalog, sync toggle, and platform packaging are deferred. That is not a deficit; it is the point. You get the hard parts — the security and sync infrastructure — without a pre-baked application domain baked on top.
+### Before You Begin
+
+You should have: .NET SDK 11.0 or later (`dotnet --version` returns `11.0.x`); the MAUI workloads installed (`dotnet workload install maui`); Git; and access to NuGet.org (or your organization's internal package mirror). If your network restricts public package access — common in GCC enterprise, Indian BFSI, CIS import-substitution, and proxied Latin American environments — configure a mirrored `nuget.config` pointing at your internal feed before running any `dotnet` command in this chapter.
+
+A local-first node is a desktop application that holds the authoritative copy of its own data and synchronizes with peers through a CRDT engine. A CRDT (Conflict-free Replicated Data Type) is a data structure that merges concurrent edits deterministically without a central coordinator. Zone A is the deployment profile where every user runs a full local-first node (as distinct from Zone C, where a hosted node participates alongside local nodes — covered in Chapter 18). Chapters 1–4 establish why this matters; Chapter 17 gets you running.
+
+Anchor is the canonical Zone-A local-first node. It is a .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell by design: the kernel is wired, the onboarding flow is real, and the security primitives are live. The report catalog, sync toggle, and platform packaging are deferred. The CRDT engine currently ships as `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" — pending the YDotNet integration in an upcoming Sunfish wave. That is not a deficit; it is the point. You get the hard parts — the security and sync scaffolding — without a pre-baked application domain baked on top, and with honest visibility into which subsystems are production-ready today and which are specification-ahead-of-implementation.
 
 Clone the repository and build for Windows:
 
 ```bash
-git clone https://github.com/your-org/sunfish.git
+git clone https://github.com/[PUBLISHER PLACEHOLDER — resolve before print]/sunfish.git
 cd sunfish/accelerators/anchor
 dotnet build Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0
 ```
@@ -101,7 +107,7 @@ Each call registers a distinct layer. Their order matters.
 
 `AddSunfishEncryptedStore()` — from `Sunfish.Foundation.LocalFirst` — registers the encrypted store with the DI container; the key derivation and store initialization happen as part of the node startup sequence managed by the Sunfish kernel. This call must come first because both the runtime and the security layer depend on the store.
 
-`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — registers the core node host and plugin registry; additional kernel services are registered through their own extension methods. This call must come before security registration because the runtime owns the session context that security decorates.
+`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — registers `INodeHost` and `IPluginRegistry` only. It does not wire the sync daemon, mDNS discovery, or the CRDT engine; each of those is registered by its own extension method (`AddSunfishKernelSync()`, `AddSunfishCrdtEngine()`, `AddSunfishKernelSecurity()`, `AddSunfishLocalFirst()`, `AddSunfishKernelSchemaRegistry()`) called in the composition root. This separation lets a test harness swap any subsystem independently — `TryAddSingleton` semantics mean a preceding registration takes precedence. `AddSunfishKernelRuntime()` must come before security registration because the runtime owns the session context that security decorates.
 
 `AddSunfishKernelSecurity()` — from `Sunfish.Kernel.Security` — registers the cryptographic services: signing, key agreement, attestation issuance and verification, and role key management.
 
@@ -140,9 +146,10 @@ Create a document. Register it with the engine. Subscribe to changes. This is th
 // illustrative — not runnable (pre-1.0 API)
 var engine = services.GetRequiredService<ICrdtEngine>();
 
-// Create a new document and open it
-var docId = DocumentId.NewId();
-var doc = await engine.OpenAsync(docId, cancellationToken);
+// Create a new document. ICrdtEngine.CreateDocument and OpenDocument are
+// synchronous per the current interface (Ch12 specifies the full surface).
+var docId = "doc-" + Guid.NewGuid().ToString("N");
+var doc = engine.CreateDocument(docId);
 
 // Apply a local update
 await doc.ApplyAsync(new SetFieldUpdate("title", "Q1 Plan"), cancellationToken);
@@ -168,7 +175,11 @@ dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0 \
 
 The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration, no IP address, no port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Healthy` when the peer handshake completes.
 
-Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and the document update handler fires with the remote change. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination.
+Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and the document update handler fires with the remote change. The document converges.
+
+> **Implementation status.** Today's Anchor ships `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" that converges only for sequentially-issued updates on a single writer. True CRDT merge — commutative, associative, idempotent, concurrent-write-safe — arrives with the YDotNet integration specified in Chapter 12 and tracked on the Sunfish roadmap. Until YDotNet lands, concurrent writes in this tutorial will not converge deterministically; you are exercising the wire format and the handler plumbing, not the merge semantics. When the architectural claims in this chapter reach field-proven behavior, the tutorial will be updated; for now, the reader sees exactly what works and what is specified ahead of implementation.
+
+When true CRDT merge is in place, the order of concurrent updates will not matter — the merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination.
 
 Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
 
@@ -220,9 +231,10 @@ The founder generates a joiner bundle for each new member:
 
 ```csharp
 // illustrative — not runnable (pre-1.0 API)
-var joinerBundle = await onboardingService.GenerateJoinerBundleAsync(
-    joinerPublicKey: incomingPublicKey,     // from the joining device
-    role: TeamRole.Member,
+byte[] attestation = await attestationIssuer.IssueJoinerAttestationAsync(
+    teamId,
+    incomingPublicKey,       // from the joining device
+    founderPrivateKey,
     cancellationToken
 );
 ```
@@ -318,21 +330,23 @@ Every write in a local-first application is optimistic: apply locally first, syn
 
 ```razor
 @* illustrative — not runnable (pre-1.0 API) *@
-@if (writeState == WriteState.Pending)
+@* Local component state — "pending/confirmed/failed" is the reader's local enum, *@
+@* not a framework-provided type. Sunfish does not expose a WriteState enum. *@
+@if (localWriteState == LocalWriteState.Pending)
 {
     <button disabled>Saving locally…</button>
 }
-else if (writeState == WriteState.Confirmed)
+else if (localWriteState == LocalWriteState.Confirmed)
 {
     <button>Saved</button>
 }
-else if (writeState == WriteState.Failed)
+else if (localWriteState == LocalWriteState.Failed)
 {
     <button class="error" @onclick="RetryWrite">Save failed — retry</button>
 }
 ```
 
-`Pending` appears immediately when the user submits. The write goes to the CRDT engine and the local store. The UI does not wait for peer acknowledgment. `Confirmed` appears when the local store write completes — not when a peer syncs the change. The change is already durable on the local device. `Failed` appears only when the local write itself fails — typically a storage error, not a network error.
+Define `LocalWriteState` as a local component enum (`Pending`, `Confirmed`, `Failed`) — it is UI state, not a framework type, and Sunfish deliberately does not expose one because the taxonomy is application-specific. `Pending` appears immediately when the user submits. The write goes to the CRDT engine and the local store. The UI does not wait for peer acknowledgment. `Confirmed` appears when the local store write completes — not when a peer syncs the change. The change is already durable on the local device. `Failed` appears only when the local write itself fails — typically a storage error, not a network error.
 
 Do not surface sync delays as write errors — users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay signal; the write button carries the local-durability signal. Keep them separate.
 
@@ -350,96 +364,41 @@ The `Id` and `Version` properties on `ILocalNodePlugin` are logged at load time 
 
 ### Registering Your First Plugin
 
-Implement `ILocalNodePlugin` from `Sunfish.Kernel.Runtime`:
+Implement `ILocalNodePlugin` from `Sunfish.Kernel.Runtime`. The real interface has four members: `Id` (string, reverse-DNS style), `Version` (string, semver), `Dependencies` (a read-only collection of plugin-id strings to resolve), and the lifecycle method `OnLoadAsync(IPluginContext context, CancellationToken ct)`:
 
 ```csharp
 // illustrative — not runnable (pre-1.0 API)
 public class ReportsPlugin : ILocalNodePlugin
 {
-    public string PluginId => "com.yourorg.reports";
-    public Version Version => new Version(0, 1, 0);
+    public string Id => "com.yourorg.reports";
+    public string Version => "0.1.0";
+    public IReadOnlyCollection<string> Dependencies => Array.Empty<string>();
 
-    public IEnumerable<Type> DependsOn => Enumerable.Empty<Type>();
-
-    public void Register(ILocalNodeBuilder builder)
+    public Task OnLoadAsync(IPluginContext context, CancellationToken ct)
     {
-        builder.AddStream<ReportStream>();
-        builder.AddProjection<ReportListProjection>();
+        // Register streams and projections through the context surface.
+        // The exact registration API is Chapter 11 territory; this call is
+        // where your domain wiring begins.
+        return Task.CompletedTask;
     }
 }
 ```
 
-Register it in `MauiProgram.cs` after the three kernel calls:
-
-```csharp
-// illustrative — not runnable (pre-1.0 API)
-builder.Services.AddSunfishPlugin<ReportsPlugin>();
-```
-
-The kernel discovers the plugin at startup, validates its dependencies, and invokes the plugin lifecycle. The streams and projections the plugin declares become available immediately.
-
-### Declaring a Stream
-
-A stream is the unit of sync. It groups related CRDT documents into a sync bucket that peers replicate together. Implement `IStreamDefinition`:
-
-```csharp
-// illustrative — not runnable (pre-1.0 API)
-public class ReportStream : IStreamDefinition
-{
-    public StreamId StreamId => StreamId.Parse("reports.v1");
-
-    public IEnumerable<CrdtDocumentType> DocumentTypes =>
-        new[] { CrdtDocumentType.For<ReportDocument>() };
-
-    public SyncBucketPolicy BucketPolicy =>
-        SyncBucketPolicy.ReplicateAll;
-}
-```
-
-`BucketPolicy.ReplicateAll` means every peer with access to this stream gets every document in it. For coarser replication — per-team, per-user, per-record — see Chapter 16, which covers declarative sync buckets and lazy fetch in detail.
-
-### Building a Projection
-
-A projection is a read model rebuilt from the event log. It answers queries without touching the CRDT engine on every read. Implement `IProjectionBuilder`:
-
-```csharp
-// illustrative — not runnable (pre-1.0 API)
-public class ReportListProjection : IProjectionBuilder
-{
-    public ProjectionId ProjectionId => ProjectionId.Parse("report-list.v1");
-
-    public void Build(IProjectionRegistry registry)
-    {
-        registry.On<ReportCreated>((state, evt) =>
-        {
-            state.Reports.Add(new ReportSummary(evt.Id, evt.Title, evt.CreatedAt));
-        });
-
-        registry.On<ReportArchived>((state, evt) =>
-        {
-            state.Reports.RemoveAll(r => r.Id == evt.ReportId);
-        });
-    }
-}
-```
-
-The kernel rebuilds projections from the event log on startup. After rebuild, it keeps them current as new events arrive — both local writes and remote syncs. Your UI reads from the projection, not from the raw CRDT document. This keeps render paths fast and type-safe.
+Plugin registration in the composition root follows the DI pattern the Sunfish kernel exposes; the exact extension method is specified in Chapter 11 (Node Architecture) alongside the full plugin lifecycle contract. The kernel discovers the plugin at startup, validates its `Dependencies` through the plugin registry's topological sort, and invokes `OnLoadAsync` in dependency order.
 
 ### The Full Extension-Point Map
 
-Five extension points define the complete plugin surface. The three covered in this chapter:
+Five extension points define the complete plugin surface. This chapter shows `ILocalNodePlugin`; the remaining four are covered where they are specified in full:
 
-| Extension Point | What it does | When you need it |
-|----------------|-------------|-----------------|
-| `ILocalNodePlugin` | Registration and lifecycle | Always — it is the entry point |
-| `IStreamDefinition` | Declares CRDT streams and sync buckets | When you have documents to sync |
-| `IProjectionBuilder` | Registers read-model projections | When you need fast, typed queries |
-| `ISchemaVersion` | Declares schema versions and upcasters | When your document shape changes |
-| `IUiBlockManifest` | Registers UI blocks with the UI kernel | When you add plugin-specific Blazor components |
+| Extension Point | What it does | When you need it | Specified in |
+|----------------|-------------|-----------------|---|
+| `ILocalNodePlugin` | Registration and lifecycle | Always — it is the entry point | Ch11 |
+| `IStreamDefinition` | Declares CRDT streams and sync buckets (fields: `EventTypes`, `BucketContributions`) | When you have documents to sync | Ch11, Ch14 |
+| `IProjectionBuilder` | Registers read-model projections (`RebuildAsync(CancellationToken)`) | When you need fast, typed queries | Ch12 |
+| `ISchemaVersion` | Declares schema versions and upcasters | When your document shape changes | Ch13 |
+| `IUiBlockManifest` | Registers UI blocks with the UI kernel | When you add plugin-specific Blazor components | Ch11, Ch20 |
 
-Chapter 11 defines the full plugin contract, including lifecycle hooks, dependency ordering, and error isolation. Read it before you add a second plugin or add production error handling to the first.
-
-Chapter 12 covers CRDT document modeling in depth — how to choose the right CRDT type for each field, how to model lists and maps, and how to avoid the pitfalls of naively mapping relational schemas onto CRDT documents.
+Chapter 11 defines the full plugin contract, including lifecycle hooks, dependency ordering, and error isolation. Read it before you add a second plugin or add production error handling to the first. Chapter 12 covers CRDT document modeling in depth — how to choose the right CRDT type for each field, how to model lists and maps, and how to avoid the pitfalls of naively mapping relational schemas onto CRDT documents.
 
 ### What You Are Not Building Yet
 
