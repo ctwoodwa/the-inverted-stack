@@ -1,6 +1,6 @@
 # Chapter 17 — Building Your First Node
 
-<!-- icm/technical-review -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~4,000 words -->
 <!-- Source: v13 §5, §13, §18; Sunfish accelerators/anchor/README.md -->
@@ -42,7 +42,7 @@ dotnet build Sunfish.Anchor.csproj -f net11.0-maccatalyst
 dotnet run --project Sunfish.Anchor.csproj -f net11.0-maccatalyst
 ```
 
-iOS and Android targets must also be built on macOS. Windows is the fastest path for first contact. Use it unless you have a specific reason not to.
+Build iOS and Android targets on macOS. Windows is the fastest path for first contact; use it unless you have a specific reason not to.
 
 ---
 
@@ -166,7 +166,9 @@ dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0 \
 
 The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration, no IP address, no port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Healthy` when the peer handshake completes.
 
-Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and the document update handler fires with the remote change. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination. Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. This is correct CRDT behavior. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
+Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and the document update handler fires with the remote change. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination.
+
+Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
 
 This is the core primitive. Everything else in the platform — stream subscriptions, projections, schema migration — runs on top of this document sync loop. Chapter 12 defines the full data modeling contract.
 
@@ -187,7 +189,7 @@ Every onboarding payload is a binary blob with four fields concatenated in this 
 [M bytes: raw snapshot bytes]
 ```
 
-The 4-byte length prefix for each section lets the decoder know how many bytes to read before moving to the next field. There are no delimiters, no version byte at the outer envelope — the CBOR bundle carries the attestation records for all team members.
+The 4-byte length prefix for each section lets the decoder know how many bytes to read before moving to the next field. The format uses no delimiters and no version byte at the outer envelope — the CBOR bundle carries the attestation records for all team members.
 
 The snapshot section carries the initial state of all CRDT documents the new member needs to bootstrap with. On a fresh team, this is empty or minimal. On an established team with months of history, this is a compacted snapshot of current state — not the full event log, just the merged head. Chapter 16 covers snapshot rehydration in detail.
 
@@ -294,15 +296,15 @@ Add it to your Blazor layout:
 <SunfishNodeHealthBar ShowLabels="true" />
 ```
 
-`ShowLabels="true"` renders text alongside the icons. Use it during development. In production, icons alone are sufficient once users learn the visual language — but always keep the bar visible. Hiding sync state from users trains them to distrust the application.
+`ShowLabels="true"` renders text alongside the icons. Use it during development. In production, icons alone work once users learn the visual language — but always keep the bar visible. Hiding sync state from users trains them to distrust the application.
 
 ### Reading the States
 
 **Node Health** reflects the kernel runtime. `Healthy` means the database opened, the keypair loaded, and onboarding is complete. `Stale` means the kernel started but the last confirmed sync exchange has aged past the staleness threshold — check the runtime log. `Offline` means the node cannot reach peers; surface an actionable message, not a generic "something went wrong."
 
-**Link Status** reflects peer connectivity. When at least one peer has completed the sync handshake, link health is `Healthy`. When mDNS is broadcasting but no peer has responded, the node shows `Offline` for this indicator. A node with no active peers still accepts local writes — that is the point of local-first. It cannot sync them yet, but it does not lose them.
+**Link Status** reflects peer connectivity. When at least one peer has completed the sync handshake, link health is `Healthy`. When mDNS is broadcasting but no peer has responded, the node shows `Offline` for this indicator. A node with no active peers still accepts local writes and queues them for the next sync cycle.
 
-**Data Freshness** reflects the last confirmed sync event. A data-fresh node shows `Healthy` — a peer acknowledged a state exchange within the staleness threshold (configurable; default five minutes). `Stale` means the threshold elapsed without a confirmed exchange. `ConflictPending` means the node has unresolved conflicts that require attention before the next sync exchange can complete cleanly.
+**Data Freshness** reflects the last confirmed sync exchange. A data-fresh node shows `Healthy` — a peer acknowledged a sync exchange within the staleness threshold (configurable; default five minutes). `Stale` means the threshold elapsed without a confirmed exchange. `ConflictPending` means the node has unresolved conflicts that require attention before the next sync exchange can complete cleanly.
 
 ### Optimistic Write Button States
 
@@ -326,7 +328,7 @@ else if (writeState == WriteState.Failed)
 
 `Pending` appears immediately when the user submits. The write goes to the CRDT engine and the local store. The UI does not wait for peer acknowledgment. `Confirmed` appears when the local store write completes — not when a peer syncs the change. The change is already durable on the local device. `Failed` appears only when the local write itself fails — typically a storage error, not a network error.
 
-A network error is a sync delay, not a write failure — the data is already durable on the local device. Do not surface sync delays as write errors. Users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay communication. The write button carries the local-durability communication. These are different signals; they belong in different places.
+Do not surface sync delays as write errors — users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay signal; the write button carries the local-durability signal. Keep them separate.
 
 ---
 
@@ -461,8 +463,6 @@ The cycle from step E to I is the development loop for every feature you add. De
 ---
 
 ## Summary
-
-You built a local-first node from zero. The platform handled discovery, encryption, merge, and persistence. You handled the domain.
 
 The shell is no longer empty. What you put in it is up to you.
 
