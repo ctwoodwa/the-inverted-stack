@@ -50,24 +50,24 @@ Build iOS and Android targets on macOS. Windows is the fastest path for first co
 
 ## 2. What Anchor Gives You Today
 
-Before you write a line of domain code, know exactly what the platform has already delivered. Wave 3.3 and 3.4 landed the following.
+Before you write a line of domain code, know what the Anchor accelerator provides and what you build yourself. The accelerator delivers the security and sync infrastructure — the parts that are hardest to get right — and leaves the application domain to you.
 
-**Working now:**
+**The accelerator provides:**
 
 - **Kernel security and runtime wired.** `MauiProgram.cs` registers the three core packages. The kernel starts, the encrypted local database opens, and the device keypair loads on every subsequent launch.
 - **Device-bound Ed25519 keypair.** Generated at first launch and stored in the OS keystore. Every attestation the node produces is signed with this key. The private key never leaves the device.
 - **Founder/joiner attestation flow.** A founder generates a self-signed bundle. A joiner receives a bundle signed by the founder's key and verified at decode time. Both paths are live in `QrOnboardingService`.
 - **Three-step onboarding surface.** `Components/Pages/Onboarding.razor` renders all three steps: install (implicit — the app is running), authenticate (paste bundle or generate founder team), sync (apply attestation and transition node health to Healthy).
 
-**Still placeholder:**
+**You build on top:**
 
-- Bundle selection UI — you paste a base64 string directly; camera/QR-scan is a TODO.
-- Report catalog — no domain content yet.
-- Sync toggle — the sync daemon wires up but has no UI control.
-- Platform packaging — no installer, no code-signing pipeline.
-- Auto-update — not wired.
+- Bundle selection UI for your deployment context — the reference transport uses paste; camera/QR-scan and deep-link options suit different deployment models.
+- Domain content — report catalog, document views, and application-specific screens.
+- Sync UI — the sync daemon is wired; the toggle and status surface are yours to design per Chapter 20.
+- Platform packaging and code-signing pipeline for your distribution channel.
+- Auto-update strategy appropriate to your deployment model.
 
-These items appear on the v1 and v2 roadmaps. They do not block the work in this chapter.
+This division is by design. You inherit the hard parts without a pre-baked application domain on top.
 
 **The deliverable checklist.** After completing this chapter, verify each item:
 
@@ -231,7 +231,7 @@ The joiner bundle is signed by the founder's Ed25519 private key. `IssuerPublicK
 
 ### Paste-Bundle Fallback
 
-Camera-based QR scanning is a TODO in Wave 3.4. The reference transport is paste: the founder copies the base64 string, sends it via any side channel (email, Slack, a shared document), and the joiner pastes it into the Onboarding screen.
+The reference transport is paste: the founder copies the base64 string, sends it via any side channel (email, Slack, a shared document), and the joiner pastes it into the Onboarding screen. Camera-based QR scanning and deep-link activation are architectural options the onboarding flow supports for production deployment.
 
 Sending the payload over an unsecured side channel is acceptable. The security of the handshake does not depend on channel confidentiality — it depends on signature verification. An intercepted bundle is useless without the founder's Ed25519 private key, and a tampered bundle fails signature verification before onboarding proceeds. The side channel is a convenience mechanism; the cryptography is the trust mechanism. Chapter 15 covers the key hierarchy in detail.
 
