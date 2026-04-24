@@ -42,15 +42,15 @@ The specific problem Voss raised: when an endpoint is compromised in an enterpri
 
 An audit trail tells you what happened. An incident response procedure tells you what to do about it.
 
-The paper had the first and not the second. A CISO cannot hand an audit trail to a procurement committee as a response to the question about incident response procedure. They need a document that specifies the triggering events — what constitutes a reportable incident for this system — the artifact collection sequence, the chain of custody requirements for those artifacts, and the escalation path.
+The paper specified the audit trail and omitted the procedure. A CISO cannot hand an audit trail to a procurement committee as a response to the question about incident response procedure. They need a document that specifies the triggering events — what constitutes a reportable incident for this system — the artifact collection sequence, the chain of custody requirements for those artifacts, and the escalation path.
 
 Without that document, the architecture cannot pass a security review in any enterprise that takes its compliance obligations seriously. A financial institution, a healthcare organization, a federal contractor, a law firm handling client confidential data — all of these require incident response procedures as a condition of deploying new software. The CRDT audit trail is a forensic asset. It is not a procedure.
 
 Container update governance failed to answer three questions IT departments always ask. The paper describes container images delivered through a registry — a standard and appropriate update mechanism. What it does not describe is how those updates are applied to a running production stack without downtime. Enterprise IT departments need to know whether updates require a maintenance window, whether they are applied automatically or manually triggered, and what the rollback procedure is if an update introduces a regression. None of those questions had answers.
 
-Network policy compatibility scored a seven rather than the eight it could have earned. Relay traffic over port 443 is implied by the architecture — the relay is an HTTPS service — but the paper does not state it explicitly. More importantly, PAC file compatibility and behavior behind corporate proxies that perform TLS inspection are not addressed. Many enterprises route all outbound traffic through a proxy that terminates and re-establishes TLS connections. Software that does not respect proxy configuration fails invisibly in these environments. The paper needed to confirm that the sync daemon respects system proxy configuration and that relay connections route cleanly through PAC-file-configured proxies.
+Network policy compatibility scored a seven rather than the eight it could have earned. The architecture implies relay traffic over port 443 — the relay is an HTTPS service — but the paper does not state it explicitly. More importantly, the paper addresses neither PAC file compatibility nor behavior behind corporate proxies that perform TLS inspection. Many enterprises route all outbound traffic through a proxy that terminates and re-establishes TLS connections. Software that does not respect proxy configuration fails invisibly in these environments. The paper needed to confirm that the sync daemon respects system proxy configuration and that relay connections route cleanly through PAC-file-configured proxies.
 
-Compliance certification pathway was a six. SOC 2 Type II and ISO 27001 are not mentioned anywhere in the paper. For enterprise procurement, the absence of any mention of a compliance certification path — even a statement that the architecture is designed with SOC 2 controls in mind — is a gap that a security questionnaire will surface immediately.
+Compliance certification pathway was a six. The paper mentions SOC 2 Type II and ISO 27001 nowhere. For enterprise procurement, the absence of any mention of a compliance certification path — even a statement that the architecture is designed with SOC 2 controls in mind — is a gap that a security questionnaire will surface immediately.
 
 ### Round 1 Verdict: PROCEED — With One Hard Prerequisite
 
@@ -94,7 +94,7 @@ The gap Voss identified: the paper does not specify whether Podman for Windows r
 
 WSL2 requires the Windows Subsystem for Linux feature, which some organizations disable in Group Policy because it introduces a Linux kernel execution environment they cannot fully audit. Hyper-V is the native Windows virtualization substrate and is typically already enabled in enterprise environments — but it conflicts with VMware Workstation Pro, which many enterprise developers have installed for testing. Neither choice is universally correct. The paper needs a two-sentence acknowledgment: WSL2 is the recommended default for most deployments, Hyper-V for organizations already running it as their primary virtualization substrate, with a note that IT administrators should verify compatibility with any existing virtualization products before deployment.
 
-Condition C2: document Podman Windows substrate options with recommended defaults. This is the kind of environmental detail that saves an IT administrator from a failed deployment and a confused support ticket.
+Condition C2: document Podman Windows substrate options with recommended defaults. That environmental detail saves an IT administrator from a failed deployment and a confused support ticket.
 
 ### The Deprovisioning Gap
 

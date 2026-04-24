@@ -15,7 +15,7 @@ Three things close this book: what the architecture owes you if you build with i
 
 The seven non-negotiables from Chapter 10 were presented as design constraints. They are something else. They are obligations — promises the architecture makes to the person sitting in front of it. If the implementation walks them back, the architecture has not merely failed a technical requirement. It has broken faith.
 
-**The stack owes you data minimization at the protocol layer.** Not a UI filter. Not a server-side policy document. A protocol enforcement that ensures data never crosses the network to a node that is not authorized to receive it. The send-tier filter runs before the byte leaves the originating node. There is no version of this obligation that says "we filter it on the way in." The promise is that unauthorized nodes never see the data at all. Anything less is a UI that lies about what security it provides.
+**The stack owes you data minimization at the protocol layer.** Not a UI filter. Not a server-side policy document. A protocol enforcement that ensures data never crosses the network to a node that is not authorized to receive it. The send-tier filter runs before the byte leaves the originating node. No version of this obligation says "we filter it on the way in." The promise is that unauthorized nodes never see the data at all. Anything less is a UI that lies about what security it provides.
 
 **The stack owes you a compliance check before a compromised node touches your data.** MDM attestation happens at capability negotiation — before the handshake completes, before the sync stream opens, before a single document operation is applied. A compromised device is identified and rejected at the perimeter of the trust relationship, not detected after the fact in an audit log. An audit log of a breach is not a security posture. It is a post-mortem.
 
@@ -67,7 +67,7 @@ The anti-patterns are specific enough to name. Server-side feature gates after P
 
 None of these drift patterns requires a bad actor. They require ordinary engineering teams under ordinary schedule pressure making ordinary pragmatic decisions. The antidote is not a technology choice. It is a set of architectural decisions made before the pressure arrives, recorded in ADRs that future engineers can read, so that when the analytics request lands there is a written answer that predates the request and does not require relitigating the architecture.
 
-Once the pattern is established, it is very difficult to reverse: server-side paths accumulate dependencies that become load-bearing before anyone notices.
+Once established, the pattern is not reversible without rearchitecting: server-side paths accumulate dependencies that become load-bearing before anyone notices.
 
 ---
 

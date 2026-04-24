@@ -91,7 +91,7 @@ This policy is specific and falsifiable. A deployment can test whether the GC bo
 
 ## Act 2: Round 2 — Surviving the Correctness Audit
 
-Shevchenko's Round 2 average was 6.8 — slightly below his Round 1 average of 7.1 — with a PROCEED WITH CONDITIONS verdict. The lower average reflects that he examined the revised architecture more deeply and found second-order concerns where the Round 1 architecture had not provided enough surface area to critique. This is the expected dynamic: a reviewer who finds a Round 2 architecture more objectionable than Round 1 is not saying it got worse. He is saying it got precise enough to critique at a deeper level.
+Shevchenko's Round 2 average was 6.8 — slightly below his Round 1 average of 7.1 — with a PROCEED WITH CONDITIONS verdict. The lower average reflects that he examined the revised architecture more deeply and found second-order concerns where the Round 1 architecture had not provided enough surface area to critique. A reviewer who finds a Round 2 architecture more objectionable than Round 1 is not saying it got worse — he is saying it got precise enough to critique at a deeper level.
 
 ### Correctness Under Partition
 

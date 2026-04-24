@@ -40,7 +40,7 @@ The Round 1 commendations defined what the revision had to preserve: the three-t
 
 ## Round 2: The Architecture Survives (with Conditions)
 
-The revision cleared every block. The revision cleared every BLOCK verdict.
+The revision cleared every BLOCK verdict.
 
 | Member | R1 Avg | R2 Avg | Delta | Verdict |
 |--------|--------|--------|-------|---------|

@@ -9,7 +9,7 @@
 
 ## The Problem Single-Node Storage Cannot Solve
 
-A node that stores data only on the device it runs on fails in three ways. First, the device fails — drives fail, phones are lost, laptops are stolen. Second, the storage budget fills — multi-gigabyte local databases are reasonable for primary work data, not for every archive, every team member's history, every binary asset ever uploaded. Third, users move to new devices without expecting to lose their work. Local-first architecture does not mean data lives only on one machine. It means the node is the authority over the data it holds; the architecture must then specify how that data survives beyond it.
+A node that stores data only on the device it runs on fails in three ways. Devices fail — drives fail, phones are lost, laptops are stolen. Storage budgets fill — multi-gigabyte local databases are reasonable for primary work data, not for every archive, every team member's history, every binary asset ever uploaded. Users move to new devices without expecting to lose their work. Local-first architecture does not mean data lives only on one machine. It means the node is the authority over the data it holds; the architecture must then specify how that data survives beyond it.
 
 ---
 

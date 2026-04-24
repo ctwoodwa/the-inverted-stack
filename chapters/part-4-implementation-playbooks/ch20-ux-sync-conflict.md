@@ -179,7 +179,7 @@ merge failures into a structured review queue that a non-technical user can navi
 For each conflict group, the inbox offers three resolution options: prefer my version, prefer
 the remote version, or merge using a configurable rule. Merge rules are defined per record
 type in the application configuration. A numeric field offers "keep the higher value";
-a set field offers "combine both". The data model determines the available rules, not by the user.
+a set field offers "combine both". The data model determines the available rules, not the user.
 
 The "resolve all similar" affordance applies a chosen rule to every conflict of the same shape
 in a single operation. A user with 40 status conflicts from a weekend offline period can
@@ -217,8 +217,7 @@ the system is doing on their behalf.
 **Full offline** — the node has no connectivity to peers or relay. The node operates at full
 fidelity. AP-class edits apply immediately. CP-class edits are blocked with a clear
 explanation that avoids technical terminology: "This action requires a connection to your
-team. Your other changes are saved locally and will sync when you reconnect." There is no
-degraded banner. The application does not enter a special mode. The data freshness indicator
+team. Your other changes are saved locally and will sync when you reconnect." No degraded banner appears. The application does not enter a special mode. The data freshness indicator
 shifts to amber or red depending on how long the node has been offline, but the application
 chrome is otherwise unchanged.
 

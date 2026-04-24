@@ -112,7 +112,7 @@ builder.Services.AddSunfishFeatureManagement();
 
 This flag is your instant rollback path. If shadow mode causes a performance regression or data inconsistency, flip it off without a deployment.
 
-**Success criteria.** P95 read latency improves measurably<!-- PROSE REVIEW FLAG: "measurably" is hedging as a metric. Replace with a concrete threshold, e.g. "drops by at least 20%" or "falls below Xms". -->. No regressions in write consistency. The local replica stays within your AP staleness window — 30 seconds is a reasonable baseline for most task-management domains.
+**Success criteria.** P95 read latency drops by at least 20%. No regressions in write consistency. The local replica stays within your AP staleness window — 30 seconds is a reasonable baseline for most task-management domains.
 
 **Reversible.** Remove the `AddSunfishLocalFirst` registration. UI read paths fall back to the server. No data migration required.
 
@@ -156,7 +156,7 @@ services.AddSunfishKernelSync();
 services.AddSunfishKernelSecurity();
 ```
 
-`Sunfish.Kernel.Security` issues device keypairs at first launch. Role attestations govern what the hosted-node peer can access. The hosted-node peer holds ciphertext for catch-up-on-reconnect but cannot decrypt without a team-issued attestation. Configure BYOC backup for new workspaces at provisioning time. The hosted-node peer is not a backup; it is a relay cache<!-- PROSE REVIEW FLAG: Part IV tutorial rule — point to Part III spec rather than re-explaining. Consider: "see Chapter 16 for the hosted-node peer storage guarantees." -->. Teams that skip BYOC backup configuration discover this only during an incident.
+`Sunfish.Kernel.Security` issues device keypairs at first launch. Role attestations govern what the hosted-node peer can access. The hosted-node peer holds ciphertext for catch-up-on-reconnect but cannot decrypt without a team-issued attestation. Configure BYOC backup for new workspaces at provisioning time. The hosted-node peer is not a backup; it is a relay cache — see Chapter 16 for the storage guarantees. Teams that skip BYOC backup configuration discover this only during an incident.
 
 **Success criteria.** New workspaces operate at full fidelity without server connectivity. Gossip anti-entropy converges within the 30-second interval under your test topology. The hosted-node peer holds ciphertext-only — verify this with the Bridge audit tooling before shipping.
 
@@ -254,8 +254,7 @@ Know which packages become available as you advance through phases. Do not reach
 
 ## The Greenfield Case
 
-<!-- PROSE REVIEW FLAG: This section duplicates the greenfield redirect on line 24 ("If you are building greenfield...skip straight to cloning accelerators/bridge/"). Cut the opening redirect or this section — both say the same thing. -->
-If your product is greenfield — no existing data, no existing tenants, no migration debt — and the five-filter framework from Chapter 4 returns Zone C, you do not need this migration path. Clone `accelerators/bridge/`. It ships Zone C out of the box. The control plane, relay tier, and per-tenant data plane are already separated. The hosted-node peer is already configured ciphertext-only. Your work is product configuration, not architecture construction.
+If your product is greenfield — no existing data, no existing tenants, no migration debt — and the five-filter framework from Chapter 4 returns Zone C, clone `accelerators/bridge/`. It ships Zone C out of the box. The control plane, relay tier, and per-tenant data plane are already separated. The hosted-node peer is already configured ciphertext-only. Your work is product configuration, not architecture construction.
 
 The migration path in this chapter exists for teams with production workloads, existing schemas, and customers who cannot tolerate a flag-day cutover. Every phase delivers value independently. Phase 1 is deployable in a sprint. Phase 2 is deployable in a quarter. Phases 3 and 4 are available when the business case justifies them.
 

@@ -14,7 +14,7 @@ Every architectural decision in this book follows from one reversal of priority:
 > **Conventional SaaS:** Cloud database is primary — local device caches and renders.  
 > **Local-Node Architecture:** Local node is primary — cloud relay is an optional sync peer.
 
-In the conventional model, the local device is a thin client. It renders what the server says to render and writes what the server accepts. Remove the server and the device has nothing — a shell waiting for instructions that will not arrive. In the local-node model, the device *is* the server. The local encrypted database holds the authoritative copy of the user’s data. When peers are reachable, the node exchanges state with them. When no peers are reachable, the node operates at full fidelity. There is no degraded mode, because there is no dependency on any remote service for core function.
+In the conventional model, the local device is a thin client. It renders what the server says to render and writes what the server accepts. Remove the server and the device has nothing — a shell waiting for instructions that will not arrive. In the local-node model, the device *is* the server. The local encrypted database holds the authoritative copy of the user’s data. When peers are reachable, the node exchanges state with them. When no peers are reachable, the node operates at full fidelity. The node has no degraded mode, because it carries no dependency on any remote service for core function.
 
 ```mermaid
 graph LR

@@ -33,7 +33,7 @@ The key hierarchy described in the first version uses envelope encryption. Each 
 
 This is the correct model. The problem is what happens when the KEK itself is compromised — not rotated on schedule, but actually stolen.
 
-The first version of the paper scores a 5 out of 10 on incident response for key compromise. There is no detection mechanism. There is no re-keying procedure for the compromise case as opposed to the scheduled rotation case. There is no analysis of what historical data is now accessible to an attacker who holds the KEK. There is no user notification path.
+The first version of the paper scores a 5 out of 10 on incident response for key compromise. The paper provides no detection mechanism. It specifies no re-keying procedure for the compromise case as opposed to the scheduled rotation case. It analyzes no historical data exposure window for an attacker who holds the KEK. It defines no user notification path.
 
 Consider the failure scenario concretely. A senior administrator’s workstation is physically stolen. The attacker recovers the device, breaks the full-disk encryption — a realistic attack if the device is powered on — and extracts the OS keychain. The keychain contains the current role KEK for every role this administrator manages. With the KEK, the attacker can decrypt every wrapped DEK in the sync log. Every document those roles ever had access to is now readable.
 

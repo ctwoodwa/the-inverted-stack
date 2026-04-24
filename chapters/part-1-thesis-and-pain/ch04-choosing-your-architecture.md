@@ -198,7 +198,7 @@ If the five filters feel like too much evaluation for a project in early discove
 
 **Does the product need to outlive vendor infrastructure?** The software should continue to work regardless of whether the vendor survives, is acquired, or changes its pricing. If yes — the product must hold its own authoritative data. Software that requires a vendor server to function cannot outlive the vendor.
 
-If all three answers are yes: Zone A or Zone C. Start with Anchor for a greenfield. Start with Bridge for a migration or hybrid deployment. Run the full five filters to confirm there is no blocking constraint.
+If all three answers are yes: Zone A or Zone C. Start with Anchor for a greenfield. Start with Bridge for a migration or hybrid deployment. Run the full five filters to confirm no blocking constraint applies.
 
 If any answer is no: identify which filter captures it. A "no" on the first question is Filter 2. A "no" on the second is a Zone C tolerance. A "no" on the third is Filter 4 — a business model that requires data custody. Each has a specific implication, and the relevant filter section above addresses it.
 
@@ -208,7 +208,7 @@ The shortcut identifies whether a full evaluation is worth the time. It does not
 
 ## Anchor Is Your Zone A. Bridge Is Your Zone C.
 
-The framework in this chapter has given you a method. If you ran the filters and the architecture applies, the next question is where to start building.
+If you ran the filters and the architecture applies, the next question is where to start building.
 
 Anchor is the Zone A reference implementation. It provides .NET MAUI Blazor Hybrid application scaffolding, SQLCipher encrypted local storage, Ed25519 device identity, a gossip-based sync daemon with mDNS local peer discovery, QR-code device onboarding, and the foundational local-first UX primitives — offline status indicators, sync state tokens, conflict surfacing. You bring the domain; Anchor brings the stack.
 
