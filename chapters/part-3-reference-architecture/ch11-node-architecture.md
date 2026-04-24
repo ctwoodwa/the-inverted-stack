@@ -12,9 +12,7 @@ kernel changes slowly, and domain code changes independently.
 The local node enforces this separation through a microkernel monolith: a small, stable core
 that owns all infrastructure concerns, surrounded by domain plugins that implement well-defined
 extension-point contracts. The monolith half of that phrase matters as much as the microkernel
-half. All plugins run in-process with the kernel. There are no per-plugin processes, no
-inter-plugin RPC calls, no serialization overhead between a task board plugin and the CRDT
-engine underneath it. The microkernel pattern disciplines the design; the in-process execution
+half. All plugins run in-process with the kernel. No per-plugin processes. No inter-plugin RPC calls. No serialization overhead between a task board plugin and the CRDT engine underneath it. The microkernel pattern disciplines the design; the in-process execution
 preserves the performance properties that make a local node viable at all.
 
 ## The Microkernel Monolith
@@ -84,8 +82,6 @@ Every domain plugin implements `ILocalNodePlugin`. The kernel plugin registry ca
 **`IUiBlockManifest`** registers a UI block with the kernel UI layer. Each manifest declares a stable block identifier, a display name, a category label for grouping in the block picker, the stream IDs the block reads from, and the role attestations the current user must hold to render the block. The kernel uses the attestation requirements to suppress blocks whose underlying streams the current user cannot access. A block that presents data the user cannot receive is not rendered and not listed in the block picker. This ensures UI visibility and sync eligibility remain synchronized.
 
 The `IPluginContext` surface collects these registrations during the plugin load phase and makes them available to the kernel after all plugins in the current load batch have completed. Plugins resolve shared services through `IPluginContext.Services`, which exposes the host DI container, allowing a plugin to access `ICrdtEngine`, `IEventLog`, or any other kernel-registered service without depending on a specific implementation.
-
-The following illustrative example demonstrates a domain plugin wiring its extension points during load:
 
 ```csharp
 // illustrative — package APIs are pre-1.0
@@ -192,11 +188,11 @@ builder.Services
     .AddSunfishEncryptedStore();
 ```
 
-Each `AddSunfish*` extension uses `TryAddSingleton` internally. A preceding registration — a test double, a stub CRDT backend, a custom socket transport — wins without requiring any change to the extension method. This design allows the test harness to inject an in-memory CRDT stub by calling `AddSunfishCrdtEngineStub()` before `AddSunfishCrdtEngine()`, and to inject an in-process sync transport by registering `InMemorySyncDaemonTransport` before `AddSunfishKernelSync()`.
+Each `AddSunfish*` extension uses `TryAddSingleton` internally. A preceding registration — a test double, a stub CRDT backend, a custom socket transport — wins without requiring any change to the extension method. A test harness injects an in-memory CRDT stub by calling `AddSunfishCrdtEngineStub()` before `AddSunfishCrdtEngine()`, and injects an in-process sync transport by registering `InMemorySyncDaemonTransport` before `AddSunfishKernelSync()`.
 
 The `Sunfish.Kernel` facade package exists for a specific structural reason. Five of the seven kernel primitives — entity store, version store, audit log, permission evaluator, and blob store — are already implemented in `Sunfish.Foundation.*` sub-packages. `Sunfish.Kernel` re-exports them via assembly type forwarding so that a package wanting to communicate "we only touch the kernel surface" takes a single dependency rather than listing individual Foundation sub-packages. The two remaining primitives — schema registry and event bus — are implemented in `Sunfish.Kernel.SchemaRegistry` and `Sunfish.Kernel.EventBus` respectively and surfaced through stub interfaces in `Sunfish.Kernel`. This split between the facade and the runtime package reflects a deliberate boundary: the facade exposes stable contracts; `Sunfish.Kernel.Runtime` owns the live services with state.
 
-All Sunfish packages are pre-1.0. Package names are stable enough for reference in this specification; specific interface method signatures and registration-method options are subject to change before the 1.0 release. The Anchor accelerator in `accelerators/anchor/` assembles this full wiring in a working Zone A node. Chapter 17 provides the minimal implementation path using that accelerator as the starting point.
+All Sunfish packages are pre-1.0. Package names are stable for reference in this specification; specific interface method signatures and registration-method options are subject to change before the 1.0 release. The Anchor accelerator in `accelerators/anchor/` assembles this full wiring in a working Zone A node. Chapter 17 provides the minimal implementation path using that accelerator as the starting point.
 
 ---
 

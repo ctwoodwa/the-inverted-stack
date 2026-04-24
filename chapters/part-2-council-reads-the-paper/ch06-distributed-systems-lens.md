@@ -141,7 +141,7 @@ His commendation was unequivocal: the Flease treatment in Round 2 was correct. T
 
 The lesson from Shevchenko's review needs to be stated plainly, because practitioners building on CRDT foundations will be tempted to treat it as settled once they have understood the data structures.
 
-A CRDT guarantees that all peers converge to the same state. It does not guarantee that the state they converge to is the state the user intended. These are different properties. A buggy operation propagates faithfully. An operation that was valid when generated but violates a domain invariant added three months later is still applied correctly. Two concurrent writes that individually satisfy every constraint can produce a merged state that violates a constraint neither write would have violated alone — because constraints are evaluated per-write, not per-merge.
+A CRDT guarantees that all peers converge to the same state. It does not guarantee that the state they converge to is the state the user intended. A buggy operation propagates faithfully. An operation that was valid when generated but violates a domain invariant added three months later is still applied correctly. Two concurrent writes that individually satisfy every constraint can produce a merged state that violates a constraint neither write would have violated alone — because constraints are evaluated per-write, not per-merge.
 
 The three-tier resolution model handles this correctly at the structural level: CRDT for AP-class records, distributed lease for CP-class records, user arbitration for semantic conflicts that neither mechanism can resolve. But within each tier, the application bears responsibility for validating domain semantics that the data structure cannot enforce.
 
@@ -161,9 +161,9 @@ flowchart TD
 
 The GC policy, the stale peer recovery protocol, and the Flease split-write resolution are all instances of the same underlying demand: correctness requires specifying what happens at the boundary conditions that the happy-path design never exercises. In a distributed system, those boundaries arrive on their own schedule, at production scale, in a deployment that real users depend on.
 
-The split-write window arrives the first time a lease holder loses connectivity mid-write. The GC horizon arrives twelve months into the first long-lived deployment. The corrupt operation sequence arrives the first time a client-side bug ships to production. None of these scenarios are exotic. All of them are inevitable. The architecture's job is to specify what happens in each case before the case arrives.
+The split-write window arrives the first time a lease holder loses connectivity mid-write. The GC horizon arrives twelve months into the first long-lived deployment. The corrupt operation sequence arrives the first time a client-side bug ships to production. None are exotic — all are inevitable in any long-lived deployment. The architecture's job is to specify what happens in each case before the case arrives.
 
-Convergence is a property of data structures. Correctness is a property of applications. The CRDT guarantees the former. The application is solely responsible for the latter.
+Convergence is a property of data structures. Correctness is a property of applications.
 
 ---
 

@@ -3,9 +3,8 @@
 <!-- Target: ~2,500 words -->
 <!-- Source: R1, R2 -->
 
-The council approved the architecture. That sentence is not a comfortable place to start, because the council did not approve it easily, and "approved" is not the same as "finished." Round 1 ended with two hard blocks and a 6.8 average. Round 2 cleared every block, raised the average to 7.1, and issued fifteen conditions — none individually blocking, all addressable during alpha implementation. The result is a green light with a specific list of things to get right.
+The council approved the architecture. Round 1 ended with two hard blocks and a 6.8 average. Round 2 cleared every block, raised the average to 7.1, and issued fifteen conditions — none individually blocking, all addressable during alpha implementation. The result is a green light with a specific list of things to get right.
 
-This chapter draws across the five council reviews to extract what the council, collectively and sometimes despite its own disagreements, treated as mandatory — and what it left genuinely open.
 
 ---
 
@@ -49,8 +48,6 @@ The revision cleared every block. After revision, no council member found a cond
 | Jordan Kelsey | 5.5 | 6.8 | +1.3 | PROCEED WITH CONDITIONS |
 | Tomás Ferreira | 7.0 | 7.6 | +0.6 | PROCEED — NO CONDITIONS |
 | **Overall** | **6.8** | **7.1** | **+0.3** | **PROCEED WITH CONDITIONS** |
-
-Three movements in this scorecard are worth reading carefully.
 
 Ferreira's unconditional PROCEED is the most meaningful single verdict in Round 2. He is the council member with the strictest local-first standards — a practitioner who has shipped production local-first applications and watched the failure modes that theory misses. He checked the revised architecture against all seven Kleppmann ideals and found every one satisfied. A practitioner with the hardest standards gave the cleanest pass.
 
@@ -110,7 +107,7 @@ Part III is structured against the seven non-negotiables. Chapter 11 specifies t
 
 The fifteen conditions are distributed across Part III and Part IV, addressed where they are architecturally relevant. The stale peer recovery protocol belongs in Chapter 12, alongside the GC policy that creates the condition under which it is needed. The admin tooling sketch belongs in Chapter 19, alongside the MDM deployment guidance. The GDPR Article 17 crypto-shredding treatment belongs in Chapter 15, alongside the compliance framework mapping.
 
-The council reviewed an architecture document. Part III is the architecture. The council's work — five domain experts, two rounds, six blocks raised and cleared, fifteen conditions still open — is why Part III is written to the depth it is. Every section in Part III exists because someone on the council asked a question that required it.
+The council reviewed an architecture document. Part III is the architecture.
 
 ---
 

@@ -31,7 +31,7 @@ Run it:
 dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0
 ```
 
-The app opens. You see a three-step onboarding surface and a status bar with three indicators. No data, no peers, no reports — that is correct. The shell is intentionally empty. You fill it with your domain in later sections.
+The app opens. You see a three-step onboarding surface and a status bar with three indicators. No data, no peers, no reports — that is correct. You fill it with your domain in later sections.
 
 If you are on macOS, build and run with the catalyst target:
 
@@ -322,7 +322,7 @@ else if (writeState == WriteState.Failed)
 
 `Pending` appears immediately when the user submits. The write goes to the CRDT engine and the local store. The UI does not wait for peer acknowledgment. `Confirmed` appears when the local store write completes — not when a peer syncs the change. The change is already durable on the local device. `Failed` appears only when the local write itself fails — typically a storage error, not a network error.
 
-A network error is not a write failure in a local-first system. It is a sync delay. The data is safe on the local device. Do not surface sync delays as write errors. Users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay communication. The write button carries the local-durability communication. These are different signals; they belong in different places.
+A network error is a sync delay, not a write failure — the data is already durable on the local device. Do not surface sync delays as write errors. Users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay communication. The write button carries the local-durability communication. These are different signals; they belong in different places.
 
 ---
 
@@ -458,7 +458,7 @@ The cycle from step E to I is the development loop for every feature you add. De
 
 ## Summary
 
-You built a local-first node from zero. You wired the kernel, ran the onboarding flow, created a CRDT document, and watched two instances sync over LAN without configuration. You added status indicators that show the user exactly what the system is doing. And you registered your first domain plugin — the boundary between Anchor's platform and your application logic.
+You built a local-first node from zero. The platform handled discovery, encryption, merge, and persistence. You handled the domain.
 
 The shell is no longer empty. What you put in it is up to you.
 

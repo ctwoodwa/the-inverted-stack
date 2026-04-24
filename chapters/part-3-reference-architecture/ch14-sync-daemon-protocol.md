@@ -106,7 +106,7 @@ flowchart LR
 
 Every 30 seconds, each node selects two peers at random from its active membership list and initiates a delta exchange. The exchange is symmetric: each node sends the operations it holds that the other's vector clock indicates are missing, and receives the same in return. After the exchange, both nodes have converged on the union of their operation sets for the subscribed streams.
 
-The random peer selection prevents gossip load from concentrating on high-degree nodes. It ensures that information propagates across the network in O(log N) rounds regardless of the physical topology [1]. The 30-second default interval is calibrated for teams of up to 100 nodes; larger deployments require tuning the interval and the per-tick fanout count.
+The random peer selection prevents gossip load from concentrating on high-degree nodes. It ensures that information propagates across the network in O(log N) rounds regardless of the physical topology [1]. The 30-second default interval suits teams of up to 100 nodes; larger deployments require tuning the interval and the per-tick fanout count.
 
 Vector clocks track causality at the operation level. Each CRDT operation carries a vector clock entry that identifies the node that generated it and the logical time at which it was generated. When a node receives an operation, it advances its vector clock accordingly. When it computes a delta for gossip, it includes all operations with vector clock entries that are causally ahead of the remote node's last known clock. `Sunfish.Kernel.Sync` manages clock maintenance and delta computation; the daemon surfaces the results through the gossip exchange.
 
@@ -160,7 +160,7 @@ sequenceDiagram
 
 If quorum is unreachable — because peers are offline, partitioned, or slow — the daemon blocks the write. It does not fall back to a best-effort write. The application layer receives a clear signal: the write cannot proceed, and the UI must reflect this with a definitive indicator. A blocked write is never silently queued as though it will eventually succeed.
 
-Leases expire automatically at the configured duration. A node that goes offline without explicitly releasing its lease loses the lease at expiry. Other nodes detect the expiry through the absence of a lease renewal GOSSIP_PING. After expiry, the next node to request the lease acquires it through normal quorum acknowledgement.
+Leases expire automatically at the configured duration. A node that goes offline without explicitly releasing its lease loses the lease at expiry. Other nodes detect the expiry through the absence of a lease renewal GOSSIP_PING. After expiry, the next node to request the lease acquires it through quorum acknowledgement.
 
 The daemon tracks active leases in the CAPABILITY_NEG `cp_leases[]` field. When a node initiates a handshake with a peer that holds a lease on a record the local node also needs, the handshake surfaces the conflict immediately rather than deferring it to the write attempt. This early detection prevents the failure mode where a node discovers a lease conflict only after composing a write operation.
 
@@ -218,13 +218,11 @@ The sync daemon's capabilities are exposed to the application layer through `Sun
 
 Applications interact with the daemon through the command channel on the Unix domain socket or named pipe. The command channel accepts write intents, subscription updates, and lease requests. It emits change notifications, lease status updates, and membership events. The application layer does not implement any part of the sync protocol — it declares what it needs and reacts to what the daemon delivers.
 
-The separation between `Sunfish.Kernel.Sync` and the application layer is not just an API boundary — it is the boundary that makes the daemon's process isolation meaningful. Code that runs in the application process restarts with the application. Code that runs in the daemon process does not.
+The separation between `Sunfish.Kernel.Sync` and the application layer is not just an API boundary — it is the boundary that makes the daemon's process isolation meaningful.
 
 ---
 
 ## Protocol Invariants
-
-The sync daemon enforces four invariants that the rest of the architecture depends on.
 
 **Subscription scope is enforced at the source.** A node never transmits operations for streams or fields that the receiving node is not authorized to hold. Application-layer filtering is not a substitute for this guarantee.
 
@@ -238,7 +236,7 @@ These invariants hold whether peers communicate directly over mDNS, through a me
 
 ---
 
-## What Comes Next
+## Related Specifications
 
 Chapter 15 covers the security architecture that underpins the daemon's device-key authentication, role attestation verification, and the cryptographic mechanisms that make subscription filtering tamper-evident. The data minimization invariant described in this chapter depends on that security layer — the daemon's filtering is only as strong as the attestations it evaluates.
 

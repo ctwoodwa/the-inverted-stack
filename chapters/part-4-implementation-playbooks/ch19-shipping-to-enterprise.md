@@ -5,9 +5,7 @@
 
 ---
 
-Enterprise IT does not evaluate software by reading your architecture document. It evaluates software through a procurement checklist, a security review, and a legal sign-off. Each of those gates has a specific requirement, and each requirement has a concrete resolution. This chapter walks you through all of them in the order they will hit you.
-
-You have a working local-first node. Now you need to ship it to an organization with managed endpoints, a security team, and a procurement team that has seen vendor lock-in before. Here is how you get through the door.
+You have a working local-first node. Now you need to ship it to an organization with managed endpoints, a security team, and a procurement team that has seen vendor lock-in before. Enterprise IT evaluates software through a procurement checklist, a security review, and a legal sign-off — each gate has a specific requirement, and each requirement has a concrete resolution. This chapter walks you through all of them in the order they will hit you.
 
 ---
 
@@ -394,7 +392,5 @@ The enterprise sales cycle is not won by the architecture. It is won by the answ
 [ ] Air-gap: internal update server and internal relay, tested end-to-end
 [ ] Runbooks: node deprovisioning, incident response, container update rollout
 ```
-
-None of these items require changes to your architecture. Chapter 11 through Chapter 16 describe the architecture that makes them possible. This chapter is the checklist that converts that architecture into a signed purchase order.
 
 Satisfy each item before your first enterprise conversation. Do not negotiate the checklist. Close the gaps, ship the evidence, and let IT say yes.

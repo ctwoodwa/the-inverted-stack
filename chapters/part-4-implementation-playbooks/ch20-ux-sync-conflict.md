@@ -8,8 +8,7 @@
 The architecture handles consistency. The UX handles trust. Get the UX wrong and users will
 distrust the application the moment they see anything unexpected — a spinner, a warning badge,
 a conflict dialog. Get it right and they experience a fast, reliable desktop application that
-happens to collaborate seamlessly. This chapter translates the sync and conflict model from
-Part III into the concrete affordances a developer builds for non-technical users.
+happens to collaborate seamlessly.
 
 ## The Complexity Hiding Standard
 
@@ -29,8 +28,6 @@ without training. "Last updated 3 minutes ago" is acceptable. "Gossip round inco
 not. "Your connection to the team server is limited" is acceptable. "Relay-only mode active"
 is not. Every string the user reads should pass a plain-language test: would a practitioner
 with no knowledge of distributed systems understand it?
-
-Hold this standard as the primary constraint on every design decision in this chapter.
 
 ## The Three Always-Visible Indicators
 

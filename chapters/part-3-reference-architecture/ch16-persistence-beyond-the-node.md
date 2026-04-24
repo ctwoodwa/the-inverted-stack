@@ -9,9 +9,8 @@
 
 A node that stores data only on the device it runs on fails in three ways. First, the device fails — drives fail, phones are lost, laptops are stolen. Second, the storage budget fills — multi-gigabyte local databases are reasonable for primary work data, not for every archive, every team member's history, every binary asset ever uploaded. Third, users move to new devices without expecting to lose their work. Local-first architecture does not mean data lives only on one machine. It means the node is the authority over the data it holds; the architecture must then specify how that data survives beyond it.
 
-The instinct in traditional SaaS is to solve these problems by making the server the single source of truth and the node a thin client. That instinct trades one failure mode for another: the node that cannot operate offline, the vendor whose billing lapses and takes your data with it, the API that changes and breaks your integrations. The architecture specified in this book takes a different position — the node owns the data, and the persistence mechanisms exist to protect that ownership across device loss, storage pressure, and team collaboration.
+This chapter specifies the full persistence model for a node whose data must survive beyond the device it runs on: how storage is layered, how selective sync bounds what each node holds, how stubs represent data not yet local, how snapshots enable fast rehydration, how CRDT history is bounded, and what the user sees when any of this goes wrong.
 
-This chapter specifies the full persistence model: how storage is layered, how selective sync bounds what each node holds, how stubs represent data that is not yet local, how snapshots enable fast rehydration, how CRDT history is bounded, and what the user sees when any of this goes wrong.
 
 ---
 
@@ -92,7 +91,7 @@ Data minimization operates at this layer. Each document schema defines a subscri
 
 ## Lazy Fetch and Storage Budgets
 
-Eager replication is the right default for active working data. It is the wrong default for archives, large binary assets, and records that most nodes will never access. Lazy replication serves those cases.
+Eager replication serves active working data. Lazy replication serves archives, large binary assets, and records with infrequent access.
 
 A lazy-replicated record is represented locally as a stub. The stub contains:
 
@@ -287,8 +286,6 @@ The export directory is the user's data in a form that outlasts the application.
 ## Summary
 
 Persistence beyond the node is not a single mechanism but a composition of decisions made at each layer of the stack. The five-tier storage architecture separates operational state, audit history, and archival storage into distinct tiers with distinct failure modes. Sync buckets bound what each node holds to what it is authorized to hold, resolving both the storage problem and the security problem of full replication. Lazy fetch with content-hash verification gives nodes access to the full team dataset without requiring full local storage. Snapshots bound rehydration cost without sacrificing correctness. CRDT garbage collection is a spectrum from conservative full-history retention to opt-in shallow snapshots, with the default favoring correctness over compactness. The three-state backup UX translates a complex distributed state into three actionable signals. Non-technical disaster recovery returns a user to working state from a lost device without manual file management. Plain-file export ensures that the user's data outlasts any particular version of the application.
-
-These mechanisms are specified, not optional. An implementation that omits plain-file export or that exposes raw CRDT state in its backup UX is not a partial implementation of this architecture — it violates the architectural contract. The contract is that the user's data is theirs, in forms they can use, at every stage of the system's life.
 
 ---
 

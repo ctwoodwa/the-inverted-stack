@@ -5,7 +5,7 @@
 
 ---
 
-You have read twenty chapters arguing that local-first architecture is not a regression but a redistribution — that the cloud is a better supporting actor than a protagonist, and that the local node is ready to take the lead role it was always forced to share. That argument is finished. What remains is more personal: what the architecture owes you if you build with it, what it does not yet know how to do, and where it goes from here.
+What remains is more personal: what the architecture owes you if you build with it, what it does not yet know how to do, and where it goes from here.
 
 ---
 
