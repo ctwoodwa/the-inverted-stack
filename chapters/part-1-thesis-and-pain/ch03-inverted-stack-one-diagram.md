@@ -2,7 +2,7 @@
 
 <!-- icm/prose-review -->
 
-<!-- Target: ~3,000 words -->
+<!-- Target: ~3,500 words -->
 <!-- Source: v13 §5, Executive Summary comparison table; v5 §2, §2.1, §2.2 -->
 
 ---
@@ -163,11 +163,25 @@ When the relay is unreachable, nodes fall back to direct peer-to-peer communicat
 
 ## How This Changes Failure Modes
 
-The conventional failure modes disappear. New ones appear. A complete architecture requires honesty about both.
+Chapter 1 named six failure modes. The inversion addresses each of them specifically. There are also failure modes the SaaS model created that may not have been visible as such — they only become legible once you understand what the vendor was holding on your behalf. And there are new failure modes the inverted architecture introduces. All three categories deserve honest treatment.
 
-**What disappears:** The availability dependency on vendor infrastructure is gone. No SaaS outage stops the application from functioning. No vendor shutdown destroys the data. No pricing change can interrupt an in-progress operation. The construction PM submitting a bid at 4:58 PM does not care whether a cloud region is degraded, because his node does not consult that region to function.
+**What the inversion resolves:**
 
-**What the relay adds and removes:** A managed relay is a potential single point of failure for discovery and NAT traversal — not for data. If the relay goes down, nodes on the same LAN continue syncing directly. Nodes on different networks cannot discover each other until the relay recovers, but their local state remains intact and they catch up automatically when it comes back. A relay outage is an inconvenience. It is not a data event.
+*The Outage and The Dependency Chain.* The local node holds authoritative state on the device. No upstream failure — your vendor's, or the cloud region beneath your vendor — interrupts it. A relay outage is an inconvenience: nodes on the same LAN continue syncing directly, and cross-network nodes catch up when the relay recovers. A relay outage is not a data event. The construction PM submitting a bid at 4:58 PM does not care whether a cloud region is degraded, because his node does not consult any remote service to function.
+
+*The Vendor.* Data on vendor infrastructure is at the vendor's business decision's mercy. Data on the user's hardware is not. A vendor acquisition, pivot, or shutdown interrupts the sync service. It does not interrupt access to the user's data.
+
+*The Connectivity.* SaaS requires a persistent connection because the cloud database holds the authoritative copy. The local node holds its own authoritative copy. Connectivity enables sync; it is not a prerequisite for function.
+
+*The Data.* Vendor-managed data is portable only on vendor terms — export rate limits, proprietary formats, feature-gated access. Data on the local node is accessible to the user at any time, in a standard format, without vendor participation. Chapter 16 specifies the plain-file export path and the non-technical disaster recovery walkthrough.
+
+*The Price.* Pricing leverage depends on switching costs that compound when data and workflows are entangled with vendor infrastructure. The relay — the one remaining billable dependency — is replaceable. The data custody that makes price changes coercive is removed from the equation.
+
+*The Third-Party Veto.* Government or regulatory action targeting a vendor can interrupt service to every customer downstream, regardless of both parties' preferences. The local-node architecture does not eliminate this vector entirely — a relay can be targeted, or the software vendor itself — but it disaggregates exposure: data is not reachable by acting on the relay operator, and the relay can be self-hosted or replaced for the highest-sensitivity deployments. Chapter 11 specifies relay governance; Chapter 15 covers the compliance framework for the customer-directed variant of this failure mode.
+
+**What you may not have noticed you were exposed to:**
+
+*The Security Breach.* Every SaaS vendor holds decryptable copies of everything you have stored with them. A breach anywhere in their infrastructure stack — servers, sub-processors, privileged internal access — is a breach of your data, regardless of any action you took or failed to take. This failure mode is invisible until it has already happened; you cannot evaluate a vendor's internal security posture from outside it. In this architecture, the relay holds only ciphertext. A complete breach of the relay infrastructure exposes nothing — there is no decryptable content to exfiltrate. The attack surface moves to the endpoints, which this architecture addresses explicitly rather than hiding.
 
 **What the architecture introduces honestly:**
 

@@ -1,7 +1,7 @@
 # Chapter 1 — When SaaS Fights Reality
 
 <!-- icm/prose-review -->
-<!-- Target: ~4,500 words -->
+<!-- Target: ~5,200 words -->
 <!-- Source: v13 §3, v13 Executive Summary, v13 §14.1, v13 §20.4, v5 §1 -->
 
 ---
@@ -34,7 +34,7 @@ That is no longer true.
 
 ---
 
-## Five Ways SaaS Breaks in the Field
+## Six Ways SaaS Breaks in the Field
 
 ### The Outage That Takes Your Work With It
 
@@ -46,7 +46,7 @@ What makes outage risk particularly asymmetric is that it falls hardest on the m
 
 The construction PM example is not unusual for the industry. Construction project management is deadline-driven by definition. A subcontractor bid has a submission deadline that is not negotiable after the fact. A change order authorization has a response window tied to contract terms. A safety inspection log has a regulatory timestamp requirement. When any of these processes depends on cloud infrastructure being available exactly when needed, the infrastructure is a single point of failure in a workflow that cannot tolerate one.
 
-Availability statistics miss a compounding factor: the concentration of cloud hosting means that failures cascade across unrelated products simultaneously. An AWS us-east-1 availability zone failure affects every product hosted there — project management tools, document collaboration platforms, file storage services, communication tools — at the same moment. A single incident becomes an industry-wide incident for everyone whose vendor chose the same region. Users who experience a simultaneous failure across multiple tools they rely on don't find redundancy in having adopted multiple platforms; they find that all their fallback options went down at the same time.
+Availability statistics miss a compounding factor: the concentration of cloud hosting means that failures cascade across unrelated products simultaneously. An AWS us-east-1 availability zone failure affects every product hosted there — project management tools, document collaboration platforms, file storage services, communication tools — at the same moment. A single incident becomes an industry-wide incident for everyone whose vendor chose the same region. Users who experience a simultaneous failure across multiple tools they rely on don't find redundancy in having adopted multiple platforms; they find that all their fallback options went down at the same time. This is the dependency chain: not your vendor failing, but the infrastructure layer beneath your vendor — shared cloud regions, CDN providers, authentication services — none of which appear in your vendor's SLA and none of which you have any contract with.
 
 ### The Vendor That Disappears
 
@@ -114,11 +114,23 @@ Mid-contract price changes are less common but not rare. Platform economics shif
 
 The lock-in compounds when teams use multiple SaaS products that integrate with each other. A project management platform connected to a communication tool, a file storage service, a time tracker, and a billing system creates a dependency web where each integration raises the switching cost of every other platform. When one vendor raises prices, the team isn't evaluating that product in isolation — they're evaluating the cost of unwinding a set of integrations built over years. Integration ecosystems serve the vendor's retention objectives as reliably as they serve the user's productivity. The web of dependencies isn't a side effect of the SaaS model — it's a feature of it, from the vendor's perspective.
 
+### The Third-Party Veto
+
+Every failure mode above originates inside the service relationship. The vendor fails, decides, or prices. Both the vendor and the customer are subject to the same disruption, and in most cases neither party wanted it.
+
+The Third-Party Veto is structurally different. An external authority — a government, a regulator, a court — restricts access regardless of what either party wants. The vendor has not failed. The customer has not been negligent. A third party with authority over one or both sides of the relationship has acted, and the service relationship cannot continue.
+
+The authority can act on the vendor. In 2022, Western SaaS providers — Adobe, Autodesk, Microsoft, Figma, and dozens of others — suspended service across Russia and CIS markets under sanctions enforcement; organizations in those markets that had built workflows on Western SaaS found their operations interrupted not because their vendors failed them but because their vendors were directed to stop serving them. Organizations that had licensed software, trained staff on it, and built operational workflows around it found it inaccessible with days of notice, not months. In February 2026, the US Defense Secretary designated Anthropic's AI services a national security supply-chain risk; federal agencies with active Anthropic deployments — deployments they found valuable and wished to continue — received direction to cease using them under executive order. Anthropic contested the designation legally; a California court subsequently enjoined portions of the order for civilian agencies; the Department of Defense exclusion stood. Both Anthropic and its federal customers wanted to continue the relationship. Neither controlled the outcome. The analytically significant detail: the restriction came from a party with authority over the vendor, independent of both the vendor's and the customer's preferences.
+
+The authority can act on the customer. Russia's Federal Law 242-FZ has required since 2015 that personal data of Russian citizens be stored on servers located within Russia; organizations using Western SaaS found themselves structurally non-compliant not because their vendor did anything but because the SaaS architecture cannot provide on-premises data residency by design. The European Court of Justice's 2020 Schrems II ruling constrained EU organizations from transferring personal data to US cloud providers without adequate supplemental safeguards — the vendor continued operating; the customer's legal ability to continue using it was constrained. India's DPDP Act 2023 is now creating comparable obligations for Indian organizations using US-hosted services for Indian residents' personal data. In each case, the customer becomes non-compliant regardless of the vendor's preferences or actions.
+
+The structural property that makes this failure mode distinct: data custody determines exposure. Data in vendor infrastructure can be reached by a government action targeted at the vendor. Data on hardware the user controls requires action targeted specifically at the user. The architecture either concentrates that exposure surface at the vendor or distributes it.
+
 ---
 
 ## Who Pays the Most
 
-The organizations most exposed to all five failure modes share a characteristic: they have the least structural leverage to address any of them.
+The organizations most exposed to all six failure modes share a characteristic: they have the least structural leverage to address any of them.
 
 A large enterprise with a skilled procurement and IT organization can negotiate. Data portability clauses, SLAs with financial penalties, escrow provisions for source code and data — these are available to buyers with enough revenue to make the vendor's legal team engage seriously. When the vendor gets acquired, the enterprise has attorneys who can enforce contract terms or negotiate exit conditions.
 

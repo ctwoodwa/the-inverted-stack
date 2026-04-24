@@ -45,13 +45,14 @@ space). Written last.*
 ---
 
 ## Part I — The Thesis and the Pain
-*~14,000 words. Establishes the problem, the solution shape, and when to use it.*
+*~16,200 words. Establishes the problem, the solution shape, and when to use it.*
 
 ### Chapter 1 — When SaaS Fights Reality
-*~4,500 words*
+*~5,200 words*
 - The hidden costs of the SaaS bundle: vendor dependency, data custody, pricing risk
-- Concrete failure modes by domain: construction site offline, legal firm during outage,
-  medical practice during vendor shutdown, field operations in low-connectivity environments
+- Six concrete failure modes: outage and the dependency chain, vendor disappearance,
+  connectivity gaps, data inaccessibility, price capture, and the third-party veto
+  (government or regulatory authority restricts access regardless of vendor or customer preference)
 - What actually breaks first when all state lives in someone else's cloud
 - Why users have accepted this — and why that acceptance is eroding
 
@@ -66,7 +67,7 @@ space). Written last.*
 - What "serious stack" requires that toy examples omit
 
 ### Chapter 3 — The Inverted Stack in One Diagram
-*~3,000 words*
+*~3,500 words*
 - The central inversion: local node as primary, cloud as relay/backup/discovery
 - Visual: five-layer model (presentation, application logic, sync daemon, storage, relay)
 - How this changes failure modes vs. classic SaaS — and which failure modes it creates
@@ -364,13 +365,13 @@ finished product.*
 | Section | Target |
 |---|---|
 | Front Matter (Preface + Foreword) | ~2,000 |
-| Part I — Thesis and Pain (Ch 1–4) | ~15,000 |
+| Part I — Thesis and Pain (Ch 1–4) | ~16,200 |
 | Part II — The Council (Ch 5–10) | ~20,000 |
 | Part III — Reference Architecture (Ch 11–16) | ~22,000 |
 | Part IV — Implementation Playbooks (Ch 17–20) | ~14,000 |
 | Epilogue | ~2,500 |
 | Appendices A–D | ~8,000 |
-| **Total** | **~83,500** |
+| **Total** | **~84,700** |
 
 ---
 
