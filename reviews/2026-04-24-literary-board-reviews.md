@@ -191,3 +191,121 @@ Ch11 is strong by US technical standards. Three gaps for European precision:
 - "The relay's failure is not the application's failure." — Keep as written.
 - "Part II is six rounds of adversarial review by people who were looking for exactly these problems." — Clean transition. Do not revise.
 - "What Changes for the Developer" section's three declarative subheadings — good paragraph architecture throughout.
+
+---
+
+## Ch01 Third-Pass Review (post priority board fixes)
+**Board score: 8.3/10 — POLISH**
+
+*Context: Priority fixes applied: 242-FZ qualifier added; China PIPL and South Korea PIPA added to regulatory survey; "correct merged result" → "deterministically merged result" + convergence clarification; "The constraint has been removed" → "The constraint is removable — by the architecture this book describes"; AT paragraph moved from orphaned closing position into The Outage section as its conclusion; orphaned AT paragraph removed from closing section; scale context added for Linear and Actual Budget.*
+
+| Critic | Score | Verdict |
+|--------|-------|---------|
+| Eleanor Chase (Acquisitions) | 9 | POLISH |
+| Marcus Webb (CTO/Target Reader) | 8 | READ |
+| Ingrid Halvorsen (Prose) | 8 | FLOWING |
+| Jerome Nakamura (Technology Analyst) | 8 | COMPELLING |
+| Dr. Amara Osei (Academic) | 8 | SOUND |
+| Meera Krishnamurthy (Dubai/India) | 9 | GLOBALLY POSITIONED |
+| Prof. Raymond Hollis (Rhetoric) | 9 | COHESIVE |
+| Sofia Reyes (Accessibility/LATAM) | 8 | INCLUSIVE |
+| Yuki Tanaka (East Asia/APAC) | 8 | TRANSLATES WITH ADAPTATION |
+| Dr. Imogen Barker (European) | 9 | RIGOROUS |
+| Amina Diallo (African Markets) | 8 | RELEVANT WITH EXPANSION |
+| Aleksei Volkov (CIS/Eastern Europe) | 8 | NEEDS CIS CONTEXT |
+
+### Priority Action Items
+
+1. **SCALE THE 2022 CIS TERMINATIONS.** "Adobe, Autodesk, Microsoft, Figma, and dozens of others" names the event but not its evidentiary weight. "Hundreds of thousands of organizations" — or a verified figure — converts the example from illustrative to structural evidence. Flagged by Volkov (all three passes), Webb (Passes 2 and 3), Nakamura (Pass 3). Highest-priority remaining fix.
+
+2. **RESTRUCTURE ANTHROPIC/DOD SEMICOLON CHAIN.** Four distinct events share one sentence. Break into three: executive order; Anthropic's legal challenge and civilian injunction; DoD exclusion. Add date anchor ("In February 2026..."). Flagged by Chase, Halvorsen, Hollis.
+
+3. **ADD BRIDGE SENTENCE BETWEEN THIRD-PARTY VETO AND "WHO PAYS THE MOST."** Register shifts from geopolitical restriction to SME leverage without a hinge. Flagged by Chase, Nakamura, Hollis across two passes.
+
+4. **RESTRUCTURE REGULATORY SURVEY INTO ARGUMENT.** Twelve jurisdictions in continuous prose is a catalog. Name the claim first, anchor with two or three examples, close with structural consequence. Flagged by Halvorsen, Hollis, Reyes, Barker.
+
+5. **ADD M-PESA / MTN MOMO AS OFFLINE-FIRST PRECEDENTS.** African fintech deployed offline-first architecture at continental scale fifteen years before this book. Their absence makes the commercial proof section US/European-only. One sentence in "Why Users Have Accepted This" or the technology section. Flagged by Diallo in all three passes.
+
+### Additional items (lower priority)
+
+- Add DIFC-specific data residency constraints alongside UAE DPL 2022 (Krishnamurthy)
+- Add Colombia and Argentina data protection laws alongside LGPD (Reyes)
+- Qualify "first major data localization law globally" — consider "among the first general-purpose" to cover potential pre-2015 sectoral laws (Osei, Barker)
+- Add Relay self-hostability sentence for European procurement readers (Barker)
+- Add one sentence noting SCCs remain legally contested under Schrems II (Barker)
+- Add import substitution acknowledgment as demand driver in CIS markets (Volkov)
+- Verify 242-FZ "first global" claim; verify Actual Budget architecture currency (Osei)
+- Confirm AT paragraph mechanism: "because data is local, the application has a data source regardless of network state" (Reyes)
+
+### Strengths to preserve
+
+- Marcus cold open and bookend close. "100% of the users who matter right now" / "His data was never gone. It was inaccessible because the software's design placed it somewhere he couldn't reach." Unanimous — do not touch.
+- "The Bundle Nobody Agreed To" three/three parallel structure. "The bundle reveals itself over time, after the switching costs have accumulated." Preserve exactly.
+- "The constraint is removable — by the architecture this book describes." Correctly hedged; keep exactly.
+- Global connectivity paragraph — "does not have a niche offline problem... excludes the majority of the world's enterprise users from full functionality." Unanimous praise — do not touch.
+- AT paragraph as placed in The Outage section — correctly positioned, correctly scoped.
+- "Deterministically merged result" + convergence/semantic intent clarifying sentence. Carry forward to every subsequent chapter that discusses CRDTs.
+- The Third-Party Veto transition: "The first five failure modes originate inside the service relationship. The sixth does not." Structurally essential.
+- "In each of these jurisdictions... it is the architecture that makes compliance tractable." Best sentence added in this revision cycle. Do not dilute.
+
+---
+
+## Ch03 Second-Pass Review (post priority board fixes)
+**Board score: 7.8/10 — POLISH**
+
+*Context: Priority fixes applied: Third-Party Veto resolution leads with 2022 CIS terminations; regulatory naming paragraph added after six resolutions; HealthBar accessibility spec added (SemanticProperties + live region + Ch20 forward ref); Layer 2, 3, 4 closing refrains cut; Layer 5 trimmed to "The relay's failure is not the application's failure."; Security Breach anchored in DEK/KEK/Argon2id hierarchy.*
+
+| Critic | Score | Verdict |
+|--------|-------|---------|
+| Eleanor Chase (Acquisitions) | 8 | POLISH |
+| Marcus Webb (CTO/Target Reader) | 8 | READ |
+| Ingrid Halvorsen (Prose) | 8 | FLOWING |
+| Jerome Nakamura (Technology Analyst) | 7 | COMPELLING |
+| Dr. Amara Osei (Academic) | 7 | SOUND |
+| Meera Krishnamurthy (Dubai/India) | 8 | GLOBALLY POSITIONED |
+| Prof. Raymond Hollis (Rhetoric) | 7 | COHESIVE |
+| Sofia Reyes (Accessibility/LATAM) | 8 | INCLUSIVE |
+| Yuki Tanaka (East Asia/APAC) | 7 | TRANSLATES WITH ADAPTATION |
+| Dr. Imogen Barker (European) | 8 | RIGOROUS |
+| Amina Diallo (African Markets) | 7 | RELEVANT WITH EXPANSION |
+| Aleksei Volkov (CIS/Eastern Europe) | 9 | GLOBALLY COMPLETE |
+
+### Priority Action Items
+
+1. **WRITE THE BRIDGE SENTENCE between the inversion thesis and the five-layer walkthrough.** Three critics (Chase, Halvorsen, Hollis) independently identified this as the chapter's structural gap. "Why am I about to read a five-layer specification?" Answer: the thesis requires a proof of implementability; the five layers are that proof.
+
+2. **ADD AFRICAN FINTECH PRECEDENT (M-PESA, MTN MoMo) as operational proof of the connectivity argument.** One sentence in the Connectivity resolution or Layer 3 section transforms the offline-first argument from theoretical to proven at continental scale. Flagged by Diallo across both passes.
+
+3. **REFRAME "FIELD DEPLOYMENTS" AS GLOBAL BASELINE.** "Intermittent, sometimes slow connections that field deployments encounter" is US-centric framing. Replace with language acknowledging intermittent connectivity as the baseline condition for hundreds of millions of enterprise workers. Flagged by Krishnamurthy, Reyes, Tanaka, Diallo.
+
+4. **CONFIRM WRITE-BUFFER SURVIVES POWER INTERRUPTION.** The daemon buffers writes to durable local storage; the chapter says it survives app restarts but does not confirm power interruption. One sentence closes this for African enterprise contexts. (Diallo)
+
+5. **ADD REGULATORY ATLAS COMPLETIONS.** LGPD and LFPDPPP for Latin America (Reyes); South Korea PIPA (Tanaka); BSI/CNIL for European enforcement context (Barker). Two to three sentences total.
+
+### Additional items (lower priority)
+
+- Add import substitution (импортозамещение) acknowledgment as adoption driver (Volkov)
+- Delete "without flinching" from CRDT GC paragraph (Halvorsen)
+- Cut parenthetical list from CP-class prose sentence in Layer 2 — duplicates the table that follows (Halvorsen)
+- Add bridge sentence from Third-Party Veto to regulatory atlas acknowledging geography isn't the risk — structural dependency is (Nakamura)
+- Add one honest sentence acknowledging Bridge deployment complexity (per-tenant host processes, isolation) beyond "one system, two shapes" (Nakamura)
+- Add one sentence on relay self-hostability and protocol openness for European procurement due diligence (Barker)
+- Add key-management compelled-access threat model sentence to Security Breach paragraph (Volkov)
+- Audit "What Changes for the Developer" — may collapse into Anchor/Bridge final paragraph (Chase, Hollis)
+- Source or justify "90-day retention" GC parameter (Webb)
+- Source Flease 30-second default vs. Sunfish implementation default (Osei)
+- Add formal correctness annotation for Flease (mutual exclusion with bounded lease expiry) for Japanese/German technical readers (Tanaka, Osei)
+
+### Strengths to preserve
+
+- The diptych structure (Ch01 six failure modes ↔ Ch03 six named resolutions). Do not flatten.
+- "This is the inversion. Everything else is implementation." Do not move or edit.
+- The Security Breach paragraph — "Invisible until it has already happened" plus DEK/KEK specification. The best paragraph in the chapter. Chase, Osei, Barker all noted improvement.
+- "The relay's failure is not the application's failure." Nine words. Perfect.
+- The CAP-per-record-class table. Multiple critics cited this as the most actionable single element.
+- The three-tier peer discovery hierarchy (mDNS → WireGuard → relay). Unchallenged by any critic.
+- The event log as ground truth, projections as optimization. Unchallenged.
+- "The software works." Layer 1 offline close. Keep.
+- "Part II is six rounds of adversarial review by people who were looking for exactly these problems." Clean transition. Do not revise.
+- Third-Party Veto resolution leading with 2022 CIS terminations — editorially restrained, analytically precise. Do not elaborate further.
+- HealthBar accessibility spec (SemanticProperties.Description + live region + Ch20 forward ref). Correctly placed and scoped. Reyes noted this as the right treatment for Chapter 3.

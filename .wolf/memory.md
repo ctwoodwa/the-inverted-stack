@@ -65,3 +65,65 @@
 | 06:44 | Expanded literary-board to 11 global critics: Reyes (LATAM/accessibility), Tanaka (APAC/Japan), Barker (Europe/Germany), Diallo (Africa) | .claude/agents/literary-board.md | committed 3bdfd33 | ~8000 |
 | 07:07 | Applied Hollis findings: Ch10 verdict-reveal fix + bridge passage, Ch17 voice restoration | ch10-synthesis.md, ch17-building-first-node.md | committed 754defa + 06fe3cf | ~6000 |
 | 07:32 | Applied remaining Hollis findings: Ch17/Ch12 implementation-state cleanup, Ch01 final polish (Marcus representativeness, Quip, closing handoff) | ch17, ch12, ch01 | committed 2142073 + 139e856 | ~5000 |
+| 08:10 | Edited .claude/agents/literary-board.md | inline fix | ~196 |
+| 08:10 | Edited .claude/agents/literary-board.md | inline fix | ~59 |
+| 08:15 | Edited .claude/agents/literary-board.md | modified substitution() | ~1300 |
+| 08:16 | Edited .claude/agents/literary-board.md | 2→2 lines | ~54 |
+| 08:16 | Edited .claude/agents/literary-board.md | 5→5 lines | ~98 |
+| 08:16 | Edited .claude/agents/literary-board.md | expanded (+10 lines) | ~189 |
+| 08:16 | Edited .claude/agents/literary-board.md | 3→4 lines | ~88 |
+| 08:17 | Session end: 7 writes across 1 files (literary-board.md) | 1 reads | ~10289 tok |
+| 08:21 | Session end: 7 writes across 1 files (literary-board.md) | 1 reads | ~10289 tok |
+| 08:24 | Session end: 7 writes across 1 files (literary-board.md) | 1 reads | ~10289 tok |
+
+## Session: 2026-04-24 08:29
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 09:09 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~8 |
+| 09:09 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~10 |
+| 09:09 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~124 |
+| 09:09 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | expanded (+12 lines) | ~920 |
+| 09:10 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~39 |
+| 09:10 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~8 |
+| 09:10 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | expanded (+14 lines) | ~1563 |
+| 09:11 | Edited book-structure.md | 2→2 lines | ~32 |
+| 09:11 | Edited book-structure.md | 7→8 lines | ~147 |
+| 09:11 | Edited book-structure.md | 2→2 lines | ~18 |
+| 09:11 | Edited book-structure.md | inline fix | ~13 |
+| 09:11 | Edited book-structure.md | inline fix | ~8 |
+| 09:12 | Created ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/project_failure_mode_taxonomy.md | — | ~449 |
+| 09:12 | Edited ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md | 1→2 lines | ~98 |
+| 09:12 | Session end: 14 writes across 5 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, book-structure.md, project_failure_mode_taxonomy.md, MEMORY.md) | 4 reads | ~3683 tok |
+
+## Session: 2026-04-24 09:15
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 09:24 | Edited reviews/2026-04-24-literary-board-reviews.md | expanded (+106 lines) | ~2689 |
+| 09:24 | Session end: 1 writes across 1 files (2026-04-24-literary-board-reviews.md) | 5 reads | ~17282 tok |
+| 09:32 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | 3→3 lines | ~148 |
+
+## Session: 2026-04-24 09:34
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 09:35 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~57 |
+| 09:35 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~101 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~89 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~19 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | 3→5 lines | ~274 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | removed 3 lines | ~12 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~104 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~207 |
+| 09:36 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 3→5 lines | ~297 |
+| 09:37 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 3→5 lines | ~175 |
+| 09:37 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | removed 3 lines | ~7 |
+| 09:37 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | removed 3 lines | ~6 |
+| 09:37 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | removed 3 lines | ~9 |
+| 09:37 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~15 |
+| 09:37 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~81 |
+| 09:43 | Edited reviews/2026-04-24-literary-board-reviews.md | expanded (+118 lines) | ~2698 |
+| 09:52 | Applied 15 priority board fixes to Ch01 and Ch03 (7+8 edits) | ch01, ch03 | committed c23dbe4 | ~800 |
+| 09:52 | Third-pass board review Ch01: 8.3/10 POLISH (was 7.6) — 5 priority items remain | ch01, reviews | complete | ~43k |
+| 09:52 | Second-pass board review Ch03: 7.8/10 POLISH (was 6.4) — 5 priority items remain | ch03, reviews | complete | ~39k |
