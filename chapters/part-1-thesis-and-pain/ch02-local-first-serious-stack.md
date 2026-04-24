@@ -5,9 +5,9 @@
 
 ---
 
-In 2019, a group of researchers at Ink & Switch published a paper asking a question that sounded modest at first: what would it mean for software to take data ownership seriously [1]? Not seriously in the legal sense — privacy policies and terms of service. Seriously in the structural sense: software that keeps your data on your machine, syncs it when convenient, and does not stop working the moment a vendor server fails or a company changes its business model. They named the answer "local-first software" and listed seven properties that any serious implementation would have to satisfy.
+In 2019, researchers at Ink & Switch asked what it would mean for software to take data ownership seriously [1] — not in the legal sense of privacy policies and terms of service, but in the structural sense: software that keeps your data on your machine, syncs it when convenient, and does not stop working the moment a vendor server fails or a company changes its business model. They named the answer "local-first software" and listed seven properties that any serious implementation would have to satisfy.
 
-The paper became the reference point for a field. The seven properties remain the benchmark, because they expose exactly where every existing attempt — including the best commercial ones — falls short. Getting to all seven requires more than clever sync. It requires running a complete application stack at the edge, not a smarter cache of someone else's database.
+The seven properties expose exactly where every existing attempt — including the best commercial ones — falls short. Getting to all seven requires more than clever sync. It requires running a complete application stack at the edge, not a smarter cache of someone else's database.
 
 ---
 
@@ -29,7 +29,7 @@ The seven properties from Kleppmann et al. [1] are not a wishlist. They are a mi
 
 **You retain ultimate ownership and control.** The user decides where the data lives, who can access it, and when to delete it. This is not a contractual guarantee. It is a structural one: the bits live on hardware the user controls, in a format the user can read, under encryption the user can manage. Ownership conveyed only through a contract is ownership that can be revoked when the contract changes.
 
-Seven properties. Together they describe software that works for the user independent of vendor survival, vendor pricing, and vendor infrastructure. No production app satisfies all seven today. The reasons why reveal exactly what is missing.
+Seven properties. Together they describe software that works for the user independent of vendor survival, vendor pricing, and vendor infrastructure. No production app satisfies all seven today.
 
 ---
 
@@ -53,11 +53,7 @@ Both approaches demonstrate a genuine tension: plain-file formats satisfy the lo
 
 ### The Lightweight Replica Apps (Linear, Liveblocks)
 
-Linear's sync engine is one of the most sophisticated pieces of production local-first infrastructure in commercial software. Each Linear client maintains a local SQLite replica of the user's team data. Writes go to local state first; the sync engine applies them immediately to the local replica and propagates them to the server asynchronously. The result is an application that feels instant — no loading spinners, no optimistic-update lag, no visible round trips. Linear's UI responds at the speed of a local database read because that is exactly what it is doing.
-
-This is a meaningful architectural advance over conventional SaaS. The local replica means the UI stays functional under degraded connectivity. New tasks appear instantly. Filters and search query local state. The experience is noticeably better than tools that touch a network on every interaction.
-
-The gap is where the replica ends. Linear's local SQLite database is a replica: it reflects a copy of server state, not an authoritative local node. The server remains the source of truth. When Linear's servers are unreachable, offline writes to server-owned records — status changes on issues, comment submissions, project mutations that require server-side validation — either fail silently or queue for an uncertain duration. More critically, Linear's sync protocol is proprietary: there is no peer-to-peer mode. Two Linear clients on the same local network cannot sync directly with each other when the internet is down. The relay is Linear's infrastructure, and it is not optional.
+Each Linear client maintains a local SQLite replica of the user's team data. Writes go to local state first; the sync engine applies them to the local replica immediately and propagates to the server asynchronously. The result is an application that feels instant — no loading spinners, no optimistic-update lag, no visible round trips. The gap is where the replica ends. Linear's local SQLite database is a replica: it reflects a copy of server state, not an authoritative local node. The server remains the source of truth. When Linear's servers are unreachable, offline writes to server-owned records — status changes on issues, comment submissions, project mutations that require server-side validation — either fail silently or queue for an uncertain duration. More critically, Linear's sync protocol is proprietary: there is no peer-to-peer mode. Two Linear clients on the same local network cannot sync directly with each other when the internet is down. The relay is Linear's infrastructure, and it is not optional.
 
 
 Background jobs — notifications, automations, integrations — run server-side. An automation that moves issues between states when conditions are met does not run on the local node; it runs in Linear's cloud. Remove the cloud and the automation stops. The local replica is a performance optimization and a UX improvement. It is not a full node.
@@ -68,7 +64,7 @@ Liveblocks and similar collaborative state frameworks take this further in the C
 
 ### The Local-First Finance App (Actual Budget)
 
-Actual Budget is the closest commercial analogue to what this book describes. It runs entirely offline by default. No account is required. No network request is made during normal operation. All budget data lives in a local SQLite file that the user can copy, back up, or open directly. The application is a proper desktop application — not an Electron wrapper around a web app that polls a server, but a local data engine with a local UI. When the network is unavailable, Actual Budget functions identically to when it is available, because its operation does not depend on the network at any point.
+Actual Budget runs entirely offline by default — no account required, no network request during normal operation. All budget data lives in a local SQLite file the user can copy, back up, or open directly. When the network is unavailable, Actual Budget functions identically to when it is available, because its operation does not depend on the network at any point.
 
 This satisfies the first property (no spinners), the third (network optional), and substantially the seventh (ownership and control — the user has a file on their disk). It makes a credible attempt at the fifth (the long now) by virtue of using an open database format that other tools can read.
 
@@ -177,9 +173,7 @@ graph TB
 
 ## What This Book Adds
 
-The local-first community has the right theory and several correct implementations. What it lacks is a production blueprint that gets from correct theory to deployable enterprise system.
-
-The seven Kleppmann ideals [1] tell you what to build. They do not tell you how to satisfy all seven simultaneously in a system that also passes enterprise procurement review, deploys via MDM, satisfies HIPAA and SOC 2 auditors, handles key rotation when a team member leaves, migrates schema when nodes run different versions, survives a "couch device" returning after six months offline, and generates revenue that funds ongoing development.
+The seven Kleppmann ideals [1] define the target. They do not tell you how to satisfy all seven simultaneously in a system that also passes enterprise procurement review, deploys via MDM, satisfies HIPAA and SOC 2 auditors, handles key rotation when a team member leaves, migrates schema when nodes run different versions, survives a "couch device" returning after six months offline, and generates revenue that funds ongoing development.
 
 The existing implementations — Automerge, Actual Budget, Linear's sync engine, Obsidian's local storage — each solve one part of this problem correctly. CRDTs handle concurrent merge. Local storage handles offline reads. Plain-file formats handle long-term portability. Fast local replicas handle perceived performance. None of them addresses the full set, and none provides the composition.
 

@@ -100,7 +100,7 @@ Scheduled key rotation is a maintenance operation. Key compromise is an incident
 
 **New KEK generation.** The administrator generates an entirely new KEK for the affected role from a fresh entropy source. Derivation from the compromised key would propagate the compromise forward. All other aspects of the distribution flow — wrapping with member public keys, publishing as signed administrative events — are identical to routine rotation.
 
-**DEK re-wrapping.** The system re-wraps every DEK owned by the affected role using the new KEK. The background job processes DEK blobs only; document bodies are not touched. During re-wrapping, documents remain accessible to nodes that hold the current KEK. The old KEK is not discarded until all DEKs in scope are re-wrapped and new bundles are delivered to all authorized nodes.
+**DEK re-wrapping.** The system re-wraps every DEK owned by the affected role using the new KEK. The background job processes DEK blobs only, leaving document bodies unchanged. During re-wrapping, documents remain accessible to nodes that hold the current KEK. The old KEK is not discarded until all DEKs in scope are re-wrapped and new bundles are delivered to all authorized nodes.
 
 **Old KEK discard.** Once DEK re-wrapping completes and new bundles are delivered, the administrator triggers discard of the old KEK. `Sunfish.Kernel.Security` broadcasts a discard signal through the relay; each node zeros its in-memory copy of the old KEK and removes it from the OS keystore. A node that received the discard signal but has not yet received the new bundle is temporarily unable to decrypt documents in that role — this is the correct behavior. Partial access is not granted as a fallback.
 
@@ -176,7 +176,7 @@ The relay is a ciphertext router. It receives encrypted event payloads from sour
 
 **Relay and legal process.** A relay operator served with legal process can produce connection logs and message metadata. Content is not producible — the operator does not hold decryption keys. Organizations whose threat model includes legal process directed at the relay operator deploy a self-hosted relay and ensure that connection logs are subject to their own retention policies.
 
-**Traffic analysis resistance.** Constant-rate padding between nodes is not implemented in the current architecture. Organizations for whom traffic analysis by a well-resourced adversary is a realistic threat should treat the relay as insufficient and implement application-layer obfuscation or operate the relay behind a mixnet. The architecture documents the limitation; the mitigation is an operator deployment choice outside the scope of `Sunfish.Kernel.Security`.
+**Traffic analysis resistance.** The current architecture does not implement constant-rate padding between nodes. Organizations whose threat model includes traffic analysis by a well-resourced adversary treat the relay as insufficient and implement application-layer obfuscation or operate the relay behind a mixnet. The architecture documents the limitation; the mitigation is an operator deployment choice outside the scope of `Sunfish.Kernel.Security`.
 
 ---
 
@@ -184,13 +184,12 @@ The relay is a ciphertext router. It receives encrypted event payloads from sour
 
 The four defensive layers, key hierarchy, and operational procedures together provide four guarantees.
 
-**Confidentiality.** A compromised endpoint exposes only data within the compromised node's role subscriptions and only data encrypted under keys present on that node. Data from other roles, other tenants, and future key generations is not exposed.
-
-**Integrity.** The CRDT operation log is append-only and DAG-linked. Tampering with historical records breaks DAG continuity and is detectable by any node that validates the log. Administrative events — key bundles, revocations, role changes — are signed by the administrator's key; unsigned administrative events are rejected at receipt.
-
-**Availability.** The local-first architecture means that an unavailable relay does not prevent local operations. Confidentiality and integrity guarantees are maintained offline. Sync resumes when the relay becomes available and the node's attestations are current.
-
-**Non-repudiation.** Every write is attributed to the device key of the originating node. Device keys are long-lived and stored in hardware-backed keystores where available. A node cannot deny authorship of an operation it signed.
+| Property | Guarantee | Mechanism |
+|---|---|---|
+| **Confidentiality** | A compromised endpoint exposes only data within the compromised node's role subscriptions and only data encrypted under keys present on that node. Data from other roles, other tenants, and future key generations is not exposed. | Role-scoped KEKs; per-document DEKs; bucket-level subscription filtering at sync negotiation. |
+| **Integrity** | Tampering with historical records breaks DAG continuity and is detectable by any node that validates the log. Unsigned administrative events — key bundles, revocations, role changes — are rejected at receipt. | Append-only, DAG-linked CRDT operation log; administrator-signed administrative events. |
+| **Availability** | An unavailable relay does not prevent local operations. Confidentiality and integrity guarantees hold offline. Sync resumes when the relay becomes available and the node's attestations are current. | Local-node primary architecture; relay is an optional sync peer, not a required dependency. |
+| **Non-repudiation** | Every write is attributed to the device key of the originating node. A node cannot deny authorship of an operation it signed. | Long-lived Ed25519 device keypairs stored in hardware-backed OS keystores where available. |
 
 These properties hold under the threat model stated at the opening of this chapter. They do not hold if the administrator's device is compromised and the attacker performs fraudulent key distribution before detection. The administrator device is the system's trust anchor; its protection is an organizational security responsibility outside the scope of `Sunfish.Kernel.Security`.
 

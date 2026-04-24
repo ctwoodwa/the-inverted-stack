@@ -119,12 +119,7 @@ deliberate events — not transient edits.
 
 ## Optimistic UI and Confirmed States
 
-AP-class writes apply locally the moment the user confirms them. The write enters the CRDT
-engine and the UI reflects the new state immediately. Sync to peers happens asynchronously in
-the background. This is optimistic UI: the application assumes the write will succeed and
-shows the result before confirmation from any peer.
-
-Three button states communicate the lifecycle of a write to the user:
+AP-class writes are optimistic — they apply locally the moment the user confirms them and sync to peers asynchronously (Chapter 12). Three button states communicate the lifecycle of a write to the user:
 
 **Pending** — the write has been applied locally and submitted to the sync queue, but has not
 reached any peer. Show a spinner or a muted button state. The record is visible and editable;

@@ -64,7 +64,7 @@ This risk has a name that undersells it. "Vendor shutdown" sounds like a rare ca
 
 ### The Connectivity That Wasn't There
 
-Not everyone's internet is always on. This sounds obvious. It is consistently underweighted in the architecture of software sold to the industries where it most frequently fails.
+Not everyone's internet is always on — and this is consistently underweighted in the architecture of software sold to the industries where it most frequently fails.
 
 Construction sites operate at the edge of mobile coverage. A superintendent in a concrete frame building can't get a signal three floors underground. Rural professional service firms — accounting firms in small towns, medical practices in counties with limited broadband, legal practices in areas where fiber hasn't reached — operate on connectivity that drops daily and fails entirely during weather events. Hospital clinical environments include zones where mobile devices are restricted near sensitive equipment. Air-gapped facilities — manufacturing, defense, government — cannot connect to any external network at all as a policy requirement.
 
@@ -100,7 +100,7 @@ None of these are edge cases. They are the routine operational parameters of ven
 
 Switching costs in SaaS are high because users build workflows around software. Training, integrations, historical data, learned patterns — these represent real investments. Vendors know this. Pricing structures often reflect it.
 
-The pattern is predictable. Pricing is competitive during the acquisition phase, when vendors are winning customers and competing on features and price. After adoption, when the switching cost is real and rising, pricing pressure relaxes. A company that adopted a project management platform at $8 per seat per month, built an organization-wide workflow on it over two years, and now faces a renewal at $18 per seat per month confronts a real calculation: pay the new rate, or absorb the migration cost. The migration cost is often large enough that the price increase wins.
+Pricing is competitive during the acquisition phase, when vendors are winning customers and competing on features and price. After adoption, when the switching cost is real and rising, pricing pressure relaxes. A company that adopted a project management platform at $8 per seat per month, built an organization-wide workflow on it over two years, and now faces a renewal at $18 per seat per month confronts a real calculation: pay the new rate, or absorb the migration cost. The migration cost is often large enough that the price increase wins.
 
 Feature paywalls move in one direction. Features available on a given tier at adoption are not guaranteed to remain there. The roadmap description from three years ago that listed a capability as "included on Professional" may not match the current pricing page. Users who built workflows on features they understood to be included sometimes discover those features now require the next tier up.
 
@@ -161,6 +161,8 @@ Three specific technology shifts made the structural necessity of the SaaS bundl
 **The local service pattern.** Container runtimes, and specifically the background-service model that tools like Docker Desktop and Tailscale established, made it normal for complex multi-service software to run silently on a user's machine without requiring the user to manage it. The pattern of a native UI shell connecting to a locally running application server is not novel — VS Code does it with language servers, 1Password does it with its desktop helper, Tailscale does it with its mesh daemon. The user experience is indistinguishable from a cloud application. The infrastructure is local.
 
 These three shifts happened independently, solving problems that had nothing to do with the SaaS bundle. CRDTs were a distributed systems research problem. Gossip protocols were a database scaling problem. Container runtimes were a server deployment problem. The consequence — that the technical necessity of the SaaS bundle is now removable — followed from solutions to those other problems.
+
+Marcus's scenario — deadline-critical work held hostage by infrastructure he doesn't control — is the failure mode this architecture addresses first. His data was never gone. It was inaccessible because the software's design placed it somewhere he couldn't reach. The rest of this book specifies a design where that distinction doesn't exist.
 
 What remains is the blueprint: how to assemble these proven components into a coherent, deployable architecture that behaves like a cloud application, passes enterprise security review, and treats user data ownership as a structural guarantee rather than a contractual one.
 

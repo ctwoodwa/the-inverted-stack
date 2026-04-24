@@ -51,7 +51,7 @@ What does the user see? An incident response that produces correct cryptographic
 
 The three conditions raised alongside the block — diagram the key hierarchy, specify the offline node revocation reconnection flow, address in-memory key material — are completeness items. They are real. But the block stands on the compromise response alone.
 
-### Round 1 Verdict: PROCEED — Conditional on One Prerequisite
+### Round 1 Verdict: PROCEED WITH CONDITIONS
 
 Okonkwo issues PROCEED WITH CONDITIONS. The domain average of 7.3 out of 10 supports that verdict. But one condition is not a condition in the normal sense — it is a prerequisite. No security review of a key-based system can sign off without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — means the architecture cannot advance past a security review until that dimension is resolved.
 
@@ -61,9 +61,7 @@ The architecture is unusually honest for its class. The threat model is real. Th
 
 ## What Changed Between Rounds
 
-The revisions between Round 1 and Round 2 address every item Okonkwo flagged.
-
-The key hierarchy is diagrammed. The diagram runs from the root organization key down through role KEKs, then per-node wrapped copies of those KEKs, then per-record DEKs, then ciphertext. The relationship between each layer is explicit: role KEKs are wrapped with each authorized node’s public key, DEKs are wrapped with the role KEK, and ciphertext is produced by the DEK using a symmetric cipher. No level of the hierarchy is implicit.
+The compromise response procedure — the condition with blocking weight — was specified fully between rounds. The key hierarchy is diagrammed. The diagram runs from the root organization key down through role KEKs, then per-node wrapped copies of those KEKs, then per-record DEKs, then ciphertext. The relationship between each layer is explicit: role KEKs are wrapped with each authorized node’s public key, DEKs are wrapped with the role KEK, and ciphertext is produced by the DEK using a symmetric cipher. No level of the hierarchy is implicit.
 
 This is the hierarchy Okonkwo asked for in Round 1:
 

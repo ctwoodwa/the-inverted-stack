@@ -54,13 +54,7 @@ Compliance certification pathway was a six. SOC 2 Type II and ISO 27001 are not 
 
 ### Round 1 Verdict: PROCEED — With One Hard Prerequisite
 
-Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. Her formal verdict was not a block. But one item on her scorecard carried a weight that overrode the overall average in practical terms: without it, no enterprise security sign-off could follow.
-
-The paper has no formal incident response procedure. For enterprise procurement, a CRDT audit trail is a forensic artifact, not a runbook. Before the architecture can be presented to a procurement committee in any enterprise environment with real compliance obligations, it must specify the triggering events that constitute a reportable incident for this system, the sequence of artifact collection steps, the chain of custody requirements for those artifacts, and the communication protocol — who notifies whom, in what order, within what timeframe.
-
-This is not a theoretical gap. It is the specific question that kills procurement at the InfoSec review. Without it, the strongest governance story in the architecture is incomplete, because governance without incident response is not governance — it is a checklist that stops at the moment it matters most.
-
-The three conditions Voss attached — explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain — were lower-priority additions. They would not individually block the architecture. They were completeness items. The incident response gap was the one that had to be resolved before any security-phase review could proceed.
+Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. The blocking item — the absent incident response runbook — had to be resolved before any enterprise security review could proceed. The three conditions she attached were lower-priority additions: explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain. None would individually block the architecture; all would surface in any security questionnaire.
 
 ---
 
@@ -142,19 +136,7 @@ Voss Round 2 domain average was 7.2 — a marginal improvement over Round 1 7.1,
 
 Her verdict: PROCEED WITH CONDITIONS.
 
-The five conditions she attached are all addressable without architectural revision:
-
-**C1:** Specify SBOM generation timing in the CI/CD pipeline — confirm build-time generation from source rather than post-install assembly.
-
-**C2:** Document Podman Windows substrate options (WSL2 vs. Hyper-V) with recommended defaults and compatibility notes for environments with existing virtualization products.
-
-**C3:** Add an admin tooling sketch for the revocation workflow — at minimum, a description of the interface an IT administrator uses to trigger and monitor access revocation.
-
-**C4:** Add phase-transition success criteria and rough timing estimates to the migration section — what data validates readiness to move from each phase to the next.
-
-**C5:** Address AGPLv3 copyleft implications for enterprise customization; specify or commit to specify a dual-license structure before the first enterprise sales conversation.
-
-None of these conditions require changes to the sync protocol, the CRDT data model, the security architecture, or the deployment model. They are governance documentation, operational tooling descriptions, and commercial licensing decisions. The architecture itself cleared the review. The conditions govern how it is packaged, licensed, and operated.
+The five conditions — C1 through C5, detailed in the sections above — require no changes to the sync protocol, the CRDT data model, the security architecture, or the deployment model. They are governance documentation, operational tooling descriptions, and a commercial licensing decision. The architecture cleared the review; the conditions govern how it is packaged, licensed, and operated.
 
 ---
 
