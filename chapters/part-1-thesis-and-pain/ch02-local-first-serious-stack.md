@@ -33,7 +33,7 @@ The seven properties from Kleppmann et al. [1] are not a wishlist. They are a mi
 
 **You retain ultimate ownership and control.** The user decides where the data lives, who can access it, and when to delete it. This is not a contractual guarantee. It is a structural one: the bits live on hardware the user controls, in a format the user can read, under encryption the user can manage. Ownership conveyed only through a contract is ownership that can be revoked when the contract changes.
 
-Seven properties. Together they describe software that works for the user independent of vendor survival, vendor pricing, and vendor infrastructure. To the authors' knowledge at time of writing, no production app satisfies all seven.
+Seven properties. Together they describe software that works for the user independent of vendor survival, vendor pricing, and vendor infrastructure. To the authors' knowledge at time of writing, no production app satisfies all seven. The closest candidate is Anytype, which satisfies five with CRDT-based collaboration and zero-knowledge encryption by default — but falls short on the long now (its full-fidelity export uses a proprietary Any-Block format no competing app reads natively) and on ultimate ownership (the application layer is "source available," not open-source; structural vendor independence depends on a contractual arrangement with the Any Association, not the architecture alone). Kleppmann himself no longer treats the seven as a binary checklist — at Local-First Conf 2024 he acknowledged the properties form "a gradient" rather than a pass-or-fail definition [3]. The seven remain the most rigorous available filter; no production app has cleared them all.
 
 ---
 
@@ -199,3 +199,5 @@ The composition is the contribution. The next chapter shows what the complete st
 [1] M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward!)*, Athens, Greece, 2019, pp. 154–178.
 
 [2] M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O'Reilly Media, 2017.
+
+[3] M. Kleppmann, "The past, present, and future of local-first," presented at Local-First Conf, Berlin, Germany, May 30, 2024. [Online]. Available: https://martin.kleppmann.com/2024/05/30/local-first-conference.html
