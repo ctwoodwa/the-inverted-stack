@@ -1,10 +1,10 @@
 # Preface
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 <!-- Target: ~1,300 words -->
 <!-- Source: source/local_node_saas_v13.md preface, source/inverted-stack-v5.md §1 -->
 
-The gap this book addresses is not a gap in research. The local-first ideals — offline operation, real-time collaboration without a central authority, data portability, user ownership — have been clearly articulated since Kleppmann et al.'s 2019 essay. The distributed systems components that make those ideals technically achievable — CRDTs, gossip protocols, envelope encryption, distributed leases — are all production-proven in individual systems. The gap is a blueprint: a single resource that specifies how to compose those components into production software that survives contact with enterprise IT, adversarial security review, and the commercial reality of building a business on top of it.
+The gap this book addresses is not a gap in research. The local-first ideals — offline operation, real-time collaboration without a central authority, data portability, user ownership — date to Kleppmann et al.'s 2019 essay. The distributed systems components that make those ideals technically achievable — CRDTs, gossip protocols, envelope encryption, distributed leases — are all production-proven in individual systems. The gap is a blueprint: a single resource that specifies how to compose those components into production software that survives contact with enterprise IT, adversarial security review, and the commercial reality of building a business on top of it.
 
 This book is that blueprint.
 
@@ -18,8 +18,6 @@ This book is the result of that process, written to be the resource I needed whe
 
 ## Who This Book Is For
 
-Three audiences will find different things most useful here.
-
 **Software architects and senior engineers** building or evaluating local-first systems will find a complete distributed systems specification in Parts III and IV: CRDT engine selection and GC policy, schema migration for mixed-version fleets, sync daemon protocol, security key hierarchy, and the full Sunfish package reference. The technical sections are precise enough to implement from.
 
 **Enterprise evaluators, IT architects, and technical decision-makers** will find a governance-first design in Chapters 5, 7, 15, and 19: named MDM policies, SBOM toolchain specification, compliance framework mappings, and an incident response runbook written to answer procurement questions directly. Chapter 19 covers code signing, MDM deployment, and air-gap operation as first-class requirements, not afterthoughts.
@@ -30,9 +28,9 @@ Three audiences will find different things most useful here.
 
 Part I convinces. It establishes the failure modes of centralized SaaS — not as abstractions but as specific, domain-grounded scenarios — and introduces the architecture that addresses them. If you finish Chapter 4 unconvinced that the local-node architecture is worth the implementation complexity for your use case, the selection framework there will tell you why, and Parts III and IV are not for you.
 
-Part II stress-tests. Five domain experts challenged the architecture across two rounds of adversarial review. Each chapter presents one lens, one set of objections, and one verdict. You do not have to agree with every council member's conclusion. But you should understand what each raised and why, because the same objections will come from your own enterprise customers, security auditors, and commercial partners.
+Part II stress-tests. Five domain experts challenged the architecture across two rounds of adversarial review. Each chapter presents one lens, one set of objections, and one verdict. You need not agree with every council member's conclusion, but understand what each raised — because the same objections will come from your own enterprise customers, security auditors, and commercial partners.
 
-Parts III and IV are reference material. Part III specifies the architecture component by component — read it when you are ready to build or when you need to understand why a particular design choice was made. Part IV provides the minimal path to a working implementation — read it when you are ready to run something.
+Parts III and IV are reference material. Part III specifies the architecture component by component — read it when you are ready to build or need to understand why a design choice was made. Part IV provides the minimal path to a working implementation — read it when you are ready to run something.
 
 ## A Note on Sunfish
 
@@ -46,9 +44,9 @@ The architecture specifies Loro as the aspirational primary CRDT engine for .NET
 
 ## A Note on the Kleppmann Council
 
-The five council members in Part II are named personas representing real professional domains. Their scoring dimensions, standard prompts, and verdict rules are defined in a charter that preceded the review. The reviews were conducted adversarially — the council's job is to find the conditions under which the architecture fails, not to endorse it.
+The five council members in Part II are named personas representing real professional domains. A charter written before the review defines their scoring dimensions, standard prompts, and verdict rules. The council's job is to find the conditions under which the architecture fails, not to endorse it.
 
-Part II can be read as a narrative — what failed, what changed, what the architecture earned — or as a reference for the specific technical and commercial problems each chapter resolves. Either way, the council's objections are the objections you will face. Reading Part II before you begin implementation is the shortest path to not being surprised by them.
+Part II can be read as a narrative — what failed, what changed, what the architecture earned — or as a reference for the specific technical and commercial problems each chapter resolves. Read Part II before you build — the council's objections are the ones your enterprise customers, security auditors, and commercial partners will raise.
 
 ---
 
