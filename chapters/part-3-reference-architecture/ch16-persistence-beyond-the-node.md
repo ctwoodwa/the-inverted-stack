@@ -179,11 +179,11 @@ The default policy is conservative: full history is retained, relying on library
 
 The backup system exposes three states to the user. Internal replication factors, CRDT vector clocks, and sync daemon health checks are not visible. The user sees a status, and the status demands a specific action or confirms that none is needed.
 
-**Protected.** All nodes have synchronized within the configured backup policy window. The default window is 24 hours. A green indicator confirms protection. <!-- CLAIM: 24-hour default backup policy window not specified in v13 §10 or v5 §3 — source? --> No action is required.
+**Protected.** All nodes have synchronized within the configured backup policy window. The policy window is operator-defined per deployment. A green indicator confirms protection. No action is required.
 
 **Attention.** Backup lag has exceeded the policy window on one or more nodes, but no data has been lost. The UI surfaces a single actionable prompt: "Back up now." The prompt is dismissible once acknowledged.
 
-**At Risk.** No successful backup has completed in seven or more days. <!-- CLAIM: seven-day At Risk threshold not specified in v13 or v5 — source? --> The UI displays a persistent warning — not a dismissible notification, not a banner that fades. The user must explicitly acknowledge the risk before the warning clears. Acknowledging does not resolve the risk; it records that the user is aware of it. The warning returns the next session until backup completes.
+**At Risk.** No successful backup has completed within the escalation threshold — a configurable multiple of the policy window. The UI displays a persistent warning — not a dismissible notification, not a banner that fades. The user must explicitly acknowledge the risk before the warning clears. Acknowledging does not resolve the risk; it records that the user is aware of it. The warning returns the next session until backup completes.
 
 ```mermaid
 stateDiagram-v2
