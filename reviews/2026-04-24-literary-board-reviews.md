@@ -519,3 +519,61 @@ All eight pass-3 items verified as correctly landed: "without flinching" deleted
 - "The word 'serious' in this chapter's title is not a claim about complexity. It is a claim about scope." — best sentence; must survive revision and move earlier
 - "Not new primitives" framing — intellectually honest, disarms obvious objection
 - Both Mermaid diagrams — well-scoped and useful
+
+---
+
+## Ch02 Second-Pass Verification (UPF Option-C+ resolution applied)
+**Board score: 8.0/10 — POLISH** (trajectory 6.2 → 8.0, delta +1.8)
+
+*Context: Seven edits applied per UPF Option-C+ plan. Pre-flight UPF check discovered Figma-uses-CRDT error (not in original A/B/C options) and corrected both the chapter and the v13 source paper concern (v13 line 643). All four kill criteria passed.*
+
+| Critic | Score | Verdict | PUBLISH-ready? |
+|--------|-------|---------|----------------|
+| Eleanor Chase (Acquisitions) | 8 | POLISH | borderline |
+| Marcus Webb (CTO/Target Reader) | 8 | READ | borderline |
+| Ingrid Halvorsen (Prose) | 7 | SERVICEABLE | no (regulatory atlas prose) |
+| Jerome Nakamura (Technology Analyst) | 7 | COMPELLING | no (relay dependency tension) |
+| Dr. Amara Osei (Academic) | 8 | SOUND | YES |
+| Meera Krishnamurthy (Dubai/India) | 9 | GLOBALLY POSITIONED | YES |
+| Prof. Raymond Hollis (Rhetoric) | 8 | COHESIVE | YES |
+| Sofia Reyes (Accessibility/LATAM) | 7 | PARTIALLY ACCESSIBLE | no (M-PESA LATAM clause) |
+| Yuki Tanaka (East Asia/APAC) | 8 | TRANSLATES WITH ADAPTATION | YES |
+| Dr. Imogen Barker (European) | 8 | ADEQUATELY SUBSTANTIATED | YES |
+| Amina Diallo (African Markets) | 9 | RELEVANT WITH EXPANSION | YES |
+| Aleksei Volkov (CIS/Eastern Europe) | 9 | NEEDS CIS CONTEXT | YES |
+
+9 of 12 critics would allow publication. 3 critics require one specific fix each.
+
+**Board's own verdict:** *"The cycle should terminate on this pass... The chapter does not need another adversarial board pass. It needs a focused author edit followed by copy-editing."*
+
+### Remaining priority items (all light-polish)
+
+1. **Regulatory atlas prose grouping** — break 17-jurisdiction run-on into three grouped sentences (Halvorsen, Chase)
+2. **Relay vendor-dependency acknowledgment** + Ch03 forward ref (Nakamura, Barker)
+3. **Liveblocks compression** to one sentence appended to Linear (Chase, Webb)
+4. **State-mandated access threat model** sentence (Volkov, Barker)
+5. **"No production app satisfies all seven"** qualification (Osei)
+
+### Strengths locked in by board
+
+- Figma correction (accurate characterization as server-authoritative per-property merge)
+- Synthesis paragraph at "What Each Gets Right" (four paragraphs → one)
+- 2022 CIS + Sunrise pairing in "The long now"
+- M-PESA/MTN MoMo operational precedent framing
+- "The composition is the contribution" closing
+- Full-node vs smart-cache section with construction superintendent specificity
+- Thesis sentence relocated to paragraph 3 (chase/halvorsen satisfied)
+
+### /review-cycle Ch02 run summary
+
+**Invocation:** manual execution of `/review-cycle ch02` workflow (slash command registration deferred to next session)
+
+| Phase | Action | Result |
+|---|---|---|
+| UPF Stage 0 | Applied Universal Planning Framework to evaluate A/B/C options | Discovered Option C+ superior; pre-flight caught Figma factual error not in any original option |
+| Pre-flight | Verified Figma multiplayer architecture via research-assistant | Confirmed: Figma does NOT use CRDTs; source v13 line 643 also incorrect |
+| Pass 1 | 6.2/10 REVISE | — |
+| Pass 1 resolution | 7 edits applied (Figma fix + 6 priority items) | committed 99915f3 |
+| Pass 2 verification | 8.0/10 POLISH | +1.8 delta, no kill criterion fired |
+
+**Single cycle, 7 edits, chapter advanced from REVISE to POLISH.** Board explicitly recommended cycle termination; 5 light-polish items flagged for optional final pass or voice-check stage.
