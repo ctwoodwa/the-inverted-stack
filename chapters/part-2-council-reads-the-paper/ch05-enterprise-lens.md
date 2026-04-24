@@ -52,17 +52,15 @@ Network policy compatibility scored a seven rather than the eight it could have 
 
 Compliance certification pathway was a six. SOC 2 Type II and ISO 27001 are not mentioned anywhere in the paper. For enterprise procurement, the absence of any mention of a compliance certification path — even a statement that the architecture is designed with SOC 2 controls in mind — is a gap that a security questionnaire will surface immediately.
 
-### The BLOCK Verdict
+### Round 1 Verdict: PROCEED — With One Hard Prerequisite
 
-Voss scored a domain average of 7.1 out of 10 — above the threshold that would ordinarily produce a PROCEED WITH CONDITIONS verdict. But the verdict gate has one overriding condition: a blocking issue in any dimension produces a BLOCK regardless of the overall average.
-
-She issued the block on one issue.
+Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS. Her formal verdict was not a block. But one item on her scorecard carried a weight that overrode the overall average in practical terms: without it, no enterprise security sign-off could follow.
 
 The paper has no formal incident response procedure. For enterprise procurement, a CRDT audit trail is a forensic artifact, not a runbook. Before the architecture can be presented to a procurement committee in any enterprise environment with real compliance obligations, it must specify the triggering events that constitute a reportable incident for this system, the sequence of artifact collection steps, the chain of custody requirements for those artifacts, and the communication protocol — who notifies whom, in what order, within what timeframe.
 
 This is not a theoretical gap. It is the specific question that kills procurement at the InfoSec review. Without it, the strongest governance story in the architecture is incomplete, because governance without incident response is not governance — it is a checklist that stops at the moment it matters most.
 
-The three conditions Voss attached — explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain — were lower-priority additions. They would not individually block the architecture. They were completeness items. The BLOCK was the incident response gap alone.
+The three conditions Voss attached — explicit port 443 and TLS 1.3 with proxy compatibility, zero-downtime update path, and named SBOM toolchain — were lower-priority additions. They would not individually block the architecture. They were completeness items. The incident response gap was the one that had to be resolved before any security-phase review could proceed.
 
 ---
 

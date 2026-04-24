@@ -51,11 +51,11 @@ What does the user see? An incident response that produces correct cryptographic
 
 The three conditions raised alongside the block — diagram the key hierarchy, specify the offline node revocation reconnection flow, address in-memory key material — are completeness items. They are real. But the block stands on the compromise response alone.
 
-### The BLOCK Verdict
+### Round 1 Verdict: PROCEED — Conditional on One Prerequisite
 
-Okonkwo issues a BLOCK. The domain average of 7.3 out of 10 would normally support PROCEED WITH CONDITIONS. The key compromise gap pushes the verdict to a full block because no security review of a key-based system can sign off without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — is not a conditions matter. It is a prerequisite.
+Okonkwo issues PROCEED WITH CONDITIONS. The domain average of 7.3 out of 10 supports that verdict. But one condition is not a condition in the normal sense — it is a prerequisite. No security review of a key-based system can sign off without a specified compromise response. A score of 5 out of 10 on the weakest dimension — for a dimension that governs every other security property in the architecture — means the architecture cannot advance past a security review until that dimension is resolved.
 
-The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. The attacker-mindset framing — that distributing data to endpoints distributes the attack surface — is rare in local-first literature. But the incident response gap is the kind of gap that causes real-world security reviews to fail. The block holds until it is resolved.
+The architecture is unusually honest for its class. The threat model is real. The send-tier filtering is correct. The attacker-mindset framing — that distributing data to endpoints distributes the attack surface — is rare in local-first literature. But the incident response gap is the kind of gap that causes real-world security reviews to fail. The condition holds until it is resolved.
 
 ---
 

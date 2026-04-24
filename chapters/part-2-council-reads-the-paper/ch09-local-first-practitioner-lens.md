@@ -56,7 +56,7 @@ Ferreira's domain average for Round 1 was 7.0 out of 10 — the scoring rubric w
 
 His verdict rationale was direct. The paper cannot argue for data ownership and omit the export button. Until the architecture specifies how a user retrieves their data in a form that does not require the original application to read it, the ownership claim is hollow. The underlying architecture is better than most. The specific gap is the most important one.
 
-The paper returned to the author with the data portability issue as a blocking item alongside the five blocks raised by the other four council members. The revision would need to resolve all six before any member would begin a second review.
+The paper returned to the author with the data portability issue as a blocking item alongside five other blocking items: two from Shevchenko (CRDT GC and Flease split-write), two from Kelsey (no customer archetype and no conversion mechanism), and one from Okonkwo (key compromise response). The formal BLOCK verdicts came from Shevchenko and Kelsey; Voss and Okonkwo issued PROCEED WITH CONDITIONS while naming prerequisite items. The revision would need to address all six blocking items before any member would begin a second review.
 
 ---
 
