@@ -11,21 +11,15 @@ Answer this question before reading any further:
 
 If the value comes from a single user's records — their projects, their clients, their documents, their field data — the local-node architecture is the right default. If the value comes from pooling behavior across users — rankings, recommendations, market pricing, social graphs — centralized infrastructure is structurally required. There is no version of this architecture that changes that answer.
 
-Everything that follows is how to reason from that starting point to a confident architectural choice.
-
 ---
 
 ## The One Question That Decides Everything
-
-The question above is not a filter among many. It is a root node. A team that answers it honestly eliminates most of the architecture debate before it starts.
 
 Software whose core value pre-exists any other user — a project management tool where a solo user's project list is valuable on day one, a CRM where a consultant's client records matter before any colleague joins, a design tool where the file exists before any reviewer opens it — has user-owned data as its primary asset. The local node is the correct home for that asset. The architecture in this book was built for that case.
 
 Software whose value emerges only when many users are present — a global leaderboard, a price-discovery marketplace, a social platform where content is worthless without an audience — has aggregated state as its primary asset. That asset requires a coordinator. No local-node design changes that.
 
 Most real products contain both. A project management tool's core value is user-owned. Its org-wide reporting analytics are aggregated. The architecture question is not which category applies to the whole product — it is which category applies to the *primary* records. Secondary aggregated features can sit on a separate service layer without compromising the architecture for the main data plane.
-
-Once you have a clear answer to the root question, run the five filters below in order. Stop as soon as one produces a hard verdict. If you reach the end without a stop, you are in Zone A or Zone C.
 
 ---
 
@@ -40,13 +34,11 @@ This is the only filter that can disqualify the entire architecture. Answer each
 | Does every user need the exact same truth at the exact same millisecond? | **Stop. Centralized only.** |
 | Can users tolerate eventual consistency, where peers may diverge for minutes or hours? | Local-first viable. Continue. |
 
-The CAP theorem is not a negotiating position. A distributed system that must be both available during partitions and immediately consistent across all nodes is asking for something that does not exist. If your domain requires atomic cross-user transactions — a seat reservation that prevents two users from booking the same seat simultaneously, a payment that must debit one ledger and credit another atomically, a trade execution that requires globally consistent state at the moment of settlement — stop here. The local-node architecture is not the right choice.
+No distributed system can be both available during partitions and immediately consistent across all nodes. If your domain requires atomic cross-user transactions — a seat reservation that prevents two users from booking the same seat simultaneously, a payment that must debit one ledger and credit another atomically, a trade execution that requires globally consistent state at the moment of settlement — stop here. The local-node architecture is not the right choice.
 
 This does not mean local-node architectures cannot handle financial data. The double-entry ledger is a deliberately specified subsystem in this architecture, and it handles CP-class operations correctly: local posting with idempotent replay, CQRS read models for aggregated views, period closing with rollup snapshots. But the ledger treats certain operations — cross-user settlements, real-time inventory — as out of scope for eventual consistency. If your product's *core loop* requires those operations, you are building a payments processor, not a local-first productivity tool.
 
 The test is specific: do your *primary* records require atomic cross-user consistency as a moment-to-moment invariant? If a field operations manager's daily work log can show yesterday's site activity from a peer who came back online this morning, that is eventual consistency and it is fine. If a commodities exchange must show every participant the same order book at the same microsecond, that is a different system and this architecture is not for it.
-
-If you passed Filter 1 — if your domain tolerates eventual consistency for its primary records — continue to Filter 2.
 
 ---
 

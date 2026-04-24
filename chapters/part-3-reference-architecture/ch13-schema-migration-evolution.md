@@ -7,11 +7,7 @@
 
 ---
 
-Schema migration is the hardest operational problem in a local-node architecture — harder than it is in conventional SaaS, and harder than most engineers expect when they first build against a CRDT-based data layer.
-
-In a centralized system, schema migration is a deployment event. The server goes down or transitions gracefully, runs the migration against the single authoritative database, and comes back up. Every client is talking to the same schema version within minutes. The problem has a hard start and a hard end.
-
-A local-node architecture has neither. Nodes upgrade on their own schedule. A team of twelve people running a local-first application may, at any given moment, have four people on the latest release, six on the previous release, and two on a release that is two minor versions old — one of whom has not connected to the network in six weeks. Every node holds an authoritative copy of the data. The sync daemon does not know which schema version a peer is running until the handshake. No central authority can force an upgrade. The application must remain correct and interoperable across all of those versions simultaneously.
+Schema migration in a local-node architecture has no central authority and no coordinated deployment window. Nodes upgrade on their own schedule. A team of twelve people running a local-first application may, at any given moment, have four people on the latest release, six on the previous release, and two on a release that is two minor versions old — one of whom has not connected to the network in six weeks. Every node holds an authoritative copy of the data. The sync daemon does not know which schema version a peer is running until the handshake. No central authority can force an upgrade. The application must remain correct and interoperable across all of those versions simultaneously.
 
 Three mechanisms compose to solve this: the expand-contract pattern for safe additive migration, bidirectional schema lenses for structural transformation, and schema epoch coordination for the moments when a breaking change cannot be avoided. Each handles a different class of schema change. The architecture requires all three because no single mechanism covers the full range.
 
@@ -51,7 +47,7 @@ The contract phase does not begin automatically when the compatibility window ex
 
 ### Dual-Write Safety
 
-During the expand phase, dual-write semantics must be consistent across all code paths that produce records. A code path that writes only the new field — because the developer forgot the dual-write requirement — produces records that old-schema nodes cannot interpret. The `ISchemaVersion` interface in `Sunfish.Kernel.Runtime` registers the schema version and its upcasting logic; dual-write consistency across all write paths is enforced by convention and code review rather than a runtime mechanism. A code path that writes only the new field produces records that old-schema nodes cannot interpret, making the expand phase unsafe to activate.
+During the expand phase, dual-write semantics must be consistent across all code paths that produce records. A code path that writes only the new field — because the developer forgot the dual-write requirement — produces records that old-schema nodes cannot interpret. The `ISchemaVersion` interface in `Sunfish.Kernel.Runtime` registers the schema version and its upcasting logic; dual-write consistency across all write paths is a code-review invariant, not a runtime guarantee.
 
 ---
 
@@ -132,7 +128,7 @@ sequenceDiagram
     R->>N2: Sync resumed
 ```
 
-The epoch coordinator is the node initiating the migration — typically the team administrator’s node. The coordinator announces the new epoch to the relay and all directly reachable peers. Each peer acknowledges. The coordinator waits for quorum acknowledgment — the same quorum threshold used for CP-class lease coordination — before declaring the epoch active.
+The node initiating the migration acts as epoch coordinator — typically the team administrator’s node. The coordinator announces the new epoch to the relay and all directly reachable peers. Each peer acknowledges. The coordinator waits for quorum acknowledgment — the same quorum threshold used for CP-class lease coordination — before declaring the epoch active.
 
 Quorum acknowledgment does not require every peer to have upgraded. It requires that the majority of currently reachable peers have acknowledged the epoch announcement. Peers that are offline at announcement time receive the epoch event when they reconnect. An offline peer that reconnects after the epoch becomes active but before upgrading receives a clear message from its first peer contact: the epoch has advanced and the peer must upgrade before synchronization resumes for the affected record types. The offline peer’s unaffected record types continue to sync normally; only the record types governed by the new epoch are gated.
 

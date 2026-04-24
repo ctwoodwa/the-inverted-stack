@@ -12,8 +12,6 @@ Every architectural decision in this book follows from one reversal of priority:
 > **Conventional SaaS:** Cloud database is primary — local device caches and renders.  
 > **Local-Node Architecture:** Local node is primary — cloud relay is an optional sync peer.
 
-The sentence sounds simple. Its consequences reach every layer of the stack, every failure mode, and every developer habit the rest of this book addresses.
-
 In the conventional model, the local device is a thin client. It renders what the server says to render and writes what the server accepts. Remove the server and the device has nothing — a shell waiting for instructions that will not arrive. In the local-node model, the device *is* the server. The local encrypted database holds the authoritative copy of the user’s data. When peers are reachable, the node exchanges state with them. When no peers are reachable, the node operates at full fidelity. There is no degraded mode, because there is no dependency on any remote service for core function.
 
 ```mermaid
@@ -43,7 +41,7 @@ Primary: Node B")]
     end
 ```
 
-The relay is optional. Two nodes on the same LAN sync directly via mDNS peer discovery without a relay at all. The relay exists to help nodes find each other across NAT boundaries, not to hold their data. If the relay goes down, nodes fall back to direct peer-to-peer communication on the local network. If that also fails, they work offline and catch up when connectivity returns. At no point does any node stop functioning because a server is unreachable.
+The relay is optional. Two nodes on the same LAN sync directly via mDNS peer discovery without a relay at all. The relay exists to help nodes find each other across NAT boundaries, not to hold their data. If the relay goes down, nodes fall back to direct peer-to-peer communication on the local network. If that also fails, they work offline and catch up when connectivity returns.
 
 This is the inversion. Everything else is implementation.
 
@@ -177,7 +175,7 @@ The conventional failure modes disappear. New ones appear. A complete architectu
 
 *CRDT GC debt accumulates.* A CRDT document records every operation in its history. Without garbage collection, a high-churn document grows without bound. The three-tier GC policy â aggressive compaction for stable documents, 90-day retention for active collaboration documents, indefinite retention for compliance-classified records â keeps growth bounded. But GC in a peer-to-peer system requires coordination: a peer offline for three months may return with operations that reference a history the active peers have already compacted. The stale peer recovery protocol handles this case. Chapter 6 covers the failure scenarios. CRDT GC is a real operational concern. This architecture addresses it; it does not make it disappear.
 
-Naming these failure modes directly earns credibility for the pages that follow. Part II of this book is six rounds of adversarial review by people who were looking for exactly these problems.
+Part II is six rounds of adversarial review by people who were looking for exactly these problems.
 
 ---
 
