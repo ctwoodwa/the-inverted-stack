@@ -402,3 +402,60 @@ Ch11 is strong by US technical standards. Three gaps for European precision:
 ### Board recommendation
 
 "This chapter does not need another full board pass. It needs one targeted editorial session addressing the five priority items above." A single focused pass on items 1-5 plus the secondary cluster brings the chapter to a clean PUBLISH verdict from 10 of 12 critics.
+
+---
+
+## Ch01 Fifth-Pass Verification — CYCLE EXIT
+**Board score: 8.9/10 — PUBLISH-READY** (trajectory 6.2 → 7.6 → 8.3 → 8.6 → 8.9)
+
+**12 of 12 individual PUBLISH votes.** Unanimous.
+
+All five pass-4 priority items verified as correctly landed: 242-FZ qualifier, "Who Pays the Most" bridge sentence, SCC-adequacy-contested sentence, Colombia Ley 1581 + Argentina Ley 25.326, DIFC Data Protection Law 2020 parenthetical. No new blocking items surfaced.
+
+**Exit condition:** TARGET 8.8 reached (8.9) AND PUBLISH quorum 9 reached (12). Cycle terminates cleanly.
+
+**Next stage:** icm/voice-check (Stage 6 — author only).
+
+---
+
+## Ch03 Fourth-Pass Verification — CYCLE EXIT
+**Board score: 8.8/10 — PUBLISH-READY** (trajectory 6.4 → 7.8 → 8.1 → 8.8)
+
+**12 of 12 individual PUBLISH votes.** Unanimous.
+
+All eight pass-3 items verified as correctly landed: "without flinching" deleted, four-region regulatory atlas with Colombia/Argentina, relay self-hostability moved into Layer 5, compelled-access threat model sentence, GC retention pointer to Ch6 + HIPAA/SOX context, Flease 30s pointer to Ch14, CRDT commutative/associative/idempotent property, power-interruption durability confirmation. No new blocking items surfaced.
+
+**Exit condition:** TARGET 8.8 reached (8.8) AND PUBLISH quorum 9 reached (12). Cycle terminates cleanly.
+
+**Deferred (not blocking):**
+- False-ending structural reorder (Chase, Hollis) — requires explicit user instruction
+- Sophisticated-offline-cache steelman (Nakamura)
+- Emerging-markets regulatory cluster prose split (Halvorsen)
+- MLPS 2.0 China entry (Tanaka)
+- Mermaid diagram EPUB/PDF alt-text (Reyes, production-stage)
+
+**Next stage:** icm/voice-check (Stage 6 — author only).
+
+---
+
+## /review-cycle Run Summary — 2026-04-24
+
+**Invocation:** `/review-cycle ch01 ch03 --max-passes 2 --target 8.8`
+
+| Chapter | Start | Pass 1 Resolution | Verification | End | Exit |
+|---------|-------|-------------------|--------------|-----|------|
+| Ch01 | 8.6/10 | 5 items applied | Pass 5 verify | **8.9/10 PUBLISH** | TARGET + QUORUM |
+| Ch03 | 8.1/10 | 8 items applied | Pass 4 verify | **8.8/10 PUBLISH** | TARGET + QUORUM |
+
+**Trajectory (Ch01):** 6.2 → 7.6 → 8.3 → 8.6 → **8.9** (+2.7 over 5 passes)
+**Trajectory (Ch03):** 6.4 → 7.8 → 8.1 → **8.8** (+2.4 over 4 passes)
+
+**Escape hatches that could have fired but didn't (for posterity):**
+- MAX_PASSES (2): not reached; exit on pass 1 of cycle
+- PLATEAU: Ch01 delta +0.3 (edge); Ch03 delta +0.7 (no plateau)
+- SINGLE-CRITIC ITEMS: triggered on both chapters for deferred items — correctly excluded from in-scope work
+- WORD BUDGET: Ch01 5,480 words (+5%, within), Ch03 3,753 words (+7%, within)
+- USER HALT: not invoked
+- EDIT FAILURE: none
+
+**Single cycle, 13 edits, 2 chapters advanced to icm/approved stage.**
