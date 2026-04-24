@@ -164,7 +164,7 @@ dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0 \
 
 The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration, no IP address, no port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Linked` when the peer handshake completes.
 
-Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and fires `doc.OnUpdate` with `UpdateOrigin.Remote`. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination.
+Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and fires `doc.OnUpdate` with `UpdateOrigin.Remote`. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination. Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. This is correct CRDT behavior. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
 
 This is the core primitive. Everything else in the platform — stream subscriptions, projections, schema migration — runs on top of this document sync loop. Chapter 12 defines the full data modeling contract.
 
@@ -226,6 +226,8 @@ The joiner bundle is signed by the founder's Ed25519 private key. `IssuerPublicK
 ### Paste-Bundle Fallback
 
 Camera-based QR scanning is a TODO in Wave 3.4. The reference transport is paste: the founder copies the base64 string, sends it via any side channel (email, Slack, a shared document), and the joiner pastes it into the Onboarding screen.
+
+Sending the payload over an unsecured side channel is acceptable. The security of the handshake does not depend on channel confidentiality — it depends on signature verification. An intercepted bundle is useless without the founder's Ed25519 private key, and a tampered bundle fails signature verification before onboarding proceeds. The side channel is a convenience mechanism; the cryptography is the trust mechanism. Chapter 15 covers the key hierarchy in detail.
 
 The paste field in `Onboarding.razor` calls `DecodePayloadAsync` on submit:
 

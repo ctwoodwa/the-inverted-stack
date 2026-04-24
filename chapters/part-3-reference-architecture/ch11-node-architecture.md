@@ -135,7 +135,7 @@ The `SyncState` enumeration defined in Foundation propagates unchanged through e
 
 The sync daemon runs as a separate long-running process from the MAUI host or Blazor shell. This boundary is intentional and structurally load-bearing. The sync daemon survives host restarts. In-flight gossip rounds and active peer connections continue uninterrupted when the user navigates away or the host process cycles. The daemon manages its own connection pool, peer membership list, and CRDT document store: state that must outlast any individual host session.
 
-The host communicates with the daemon over a length-prefixed binary channel. On POSIX platforms — Linux and macOS — `Sunfish.Kernel.Sync` uses Unix domain sockets via `UnixDomainSocketEndPoint`. File-permission controls on the socket path confine the channel to authorized processes on the same machine. On Windows, named pipes serve the equivalent role with DACL permission controls. Both transports use identical framing: every message is a CBOR payload preceded by a 4-byte big-endian length prefix. Individual frames are capped at 16 MiB. Payloads exceeding this limit must be chunked at the application layer, a condition that arises in practice only for full bucket snapshots during initial node sync.
+The host communicates with the daemon over a length-prefixed binary channel. On POSIX platforms — Linux and macOS — `Sunfish.Kernel.Sync` uses Unix domain sockets via `UnixDomainSocketEndPoint`. File-permission controls on the socket path confine the channel to authorized processes on the same machine. On Windows, named pipes serve the equivalent role with OS-level pipe access controls. Both transports use identical framing: every message is a CBOR payload preceded by a 4-byte big-endian length prefix. Individual frames are capped at 16 MiB. Payloads exceeding this limit must be chunked at the application layer, a condition that arises in practice only for full bucket snapshots during initial node sync.
 
 The IPC channel is authenticated. The daemon enforces the five-phase handshake — `HELLO`, `CAPABILITY_NEG`, `ACK`, `DELTA_STREAM`, and `GOSSIP_PING` — against every connecting process. The `HELLO` message carries an Ed25519 signature over a canonical CBOR array of `[node_id, schema_version, public_key, sent_at]`. The daemon verifies the signature against the claimed public key and rejects any `HELLO` message whose `sent_at` timestamp falls outside a ±30-second window. This replay-protection window closes the attack surface where a captured handshake message could be replayed by an unauthorized process on the same machine.
 
@@ -153,7 +153,7 @@ The Sunfish package set maps directly to the architectural layers described in t
 
 | Layer | Package | Primary responsibility |
 |---|---|---|
-| Foundation | `Sunfish.Foundation` | Core contracts, design tokens, `SyncState`, identity types, cryptographic primitives |
+| Foundation | `Sunfish.Foundation` | Core contracts, design tokens, identity types, cryptographic primitives |
 | Foundation | `Sunfish.Foundation.LocalFirst` | Local encrypted store (SQLCipher), `IOfflineStore`, circuit-breaker quarantine queue |
 | Kernel contracts | `Sunfish.Kernel` | Type-forwarding facade for the seven kernel primitives: entity store, version store, audit log, permission evaluator, blob store, schema registry, event bus |
 | Kernel runtime | `Sunfish.Kernel.Runtime` | `INodeHost`, `IPluginRegistry`, `ILocalNodePlugin`, `IPluginContext`, all five extension-point contract interfaces |
