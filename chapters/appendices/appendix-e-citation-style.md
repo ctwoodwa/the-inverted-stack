@@ -59,6 +59,34 @@ Include enough information — title, publisher or journal, year — for readers
 
 > [n] A. A. Author, "Title of page," *Site Name*, Year. [Online]. Available: URL. [Accessed: Month Day, Year].
 
+**Technical Report**
+
+> [n] A. A. Author, B. B. Author, and C. C. Author, "Title of report," Institution, City, Tech. Rep. XX-NNNN, Month Year.
+
+**Pre-print (arXiv and similar)**
+
+> [n] A. A. Author and B. B. Author, "Title of paper," *arXiv:NNNN.NNNNN*, Month Year.
+
+**Standard or RFC**
+
+> [n] A. A. Author, "Title of specification," Organization, Standard/RFC Number, Month Year.
+
+For IETF RFCs specifically: `[n] A. A. Author, "Title," IETF RFC NNNN, Month Year.`
+
+**Legal Decision**
+
+> [n] Court Name, "Case name — short form," Case No. XXX/YY, Judgment, Month Day, Year.
+
+Example: CJEU Schrems II is cited as `[n] Court of Justice of the European Union, "Case C-311/18 — Data Protection Commissioner v. Facebook Ireland Ltd and Maximillian Schrems," Judgment, Jul. 16, 2020.`
+
+**Statute or Regulation**
+
+> [n] Enacting Body, Jurisdiction, "Title of Act, Year (Act No. XX of YYYY)," Month Day, YYYY (effective Month Day, YYYY).
+
+Example: `[n] Government of India, The Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023), Aug. 11, 2023.`
+
+For EU regulations specifically: `[n] Regulation (EU) NNNN/YYYY of the European Parliament and of the Council of Day Month YYYY on [subject], Official Journal of the European Union, L NNN/N, Month YYYY.`
+
 ---
 
 ## Consistency Rules
@@ -72,11 +100,31 @@ Include enough information — title, publisher or journal, year — for readers
 
 ## Examples from This Book
 
-The following in-text citations appear in the book. The full reference list is assembled at the final-manuscript stage.
+The following in-text citations illustrate the variety of source types cited across the manuscript. The full reference list is assembled at the final-manuscript stage; Appendix C contains the complete annotated bibliography organized by topic.
 
-| Citation | Source |
-|---|---|
-| [1] | M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward!)*, Athens, Greece, 2019, pp. 154–178. |
-| [2] | M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O'Reilly Media, 2017. |
+| Citation | Format | Source |
+|---|---|---|
+| [1] | Conference paper | M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward! '19)*, Athens, Greece, Oct. 2019, pp. 154–178. |
+| [2] | Book | M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O'Reilly Media, 2017. |
+| [3] | Technical report | M. Shapiro, N. Preguiça, C. Baquero, and M. Zawirski, "A comprehensive study of convergent and commutative replicated data types," INRIA, Tech. Rep. RR-7506, Jan. 2011. |
+| [4] | arXiv pre-print | H. Howard, D. Malkhi, and A. Spiegelman, "Flexible Paxos: Quorum intersection revisited," *arXiv:1608.06696*, Aug. 2016. |
+| [5] | IETF RFC | S. Josefsson and I. Liusvaara, "Edwards-Curve Digital Signature Algorithm (EdDSA)," IETF RFC 8032, Jan. 2017. |
+| [6] | Online source | T. Perrin, "The Noise Protocol Framework," Revision 34, Jul. 2018. [Online]. Available: https://noiseprotocol.org/noise.html |
+| [7] | Legal decision | Court of Justice of the European Union, "Case C-311/18 — Data Protection Commissioner v. Facebook Ireland Ltd and Maximillian Schrems," Judgment, Jul. 16, 2020. |
+| [8] | EU Regulation | Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 on the protection of natural persons with regard to the processing of personal data and on the free movement of such data (General Data Protection Regulation), *Official Journal of the European Union*, L 119/1, May 2016. |
+| [9] | National statute | Government of India, The Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023), Aug. 11, 2023. |
+| [10] | Engineering blog | T. Palmer, "Scaling the Linear sync engine to 100M+ records," *Linear Engineering Blog*, 2023. [Online]. Available: https://linear.app/blog/scaling-the-linear-sync-engine |
 
-Additional citations are added as each chapter is finalized.
+Numbering above is illustrative. The canonical numbered assembly runs from the first citation in the manuscript's reading order.
+
+---
+
+## Assembly Guidance
+
+At final-manuscript assembly:
+
+1. Walk the manuscript in reading order and renumber every citation from [1] to [N] in first-appearance order.
+2. Compile the numbered Reference List in the back matter, entries matching the renumbered in-text citations.
+3. Verify every in-text bracket resolves to a Reference List entry and every Reference List entry is cited at least once.
+4. Check legal and regulatory citations against primary sources — a misspelled case name or wrong regulation number in a book making a compliance argument is a credibility defect that security and legal reviewers will catch immediately.
+5. Check URLs are reachable at the time of press; annotate any URL with a retrieval date if the content is expected to shift.
