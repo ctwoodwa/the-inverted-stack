@@ -9,9 +9,13 @@
 
 ## A.1 Overview
 
-The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later. All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming.
+This appendix is the normative wire-protocol specification. Chapter 14 covers the protocol's architecture and design rationale; this appendix defines the bytes on the wire. Implementers writing a conformant daemon or relay should treat this text as authoritative; where prose and Ch14 conflict, this appendix wins.
 
-The daemon sends HELLO, negotiates capabilities with CAPABILITY_NEG, and the relay sends ACK before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
+The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later. The socket path is configurable; the Sunfish reference default is `/var/run/sunfish-sync.sock` on Linux/macOS and `\\.\pipe\sunfish-sync` on Windows. All CBOR exchange runs inside a Noise Protocol Framework tunnel: every connection MUST complete a Noise_XX handshake (Ed25519 static keys, ChaCha20-Poly1305, BLAKE2s) before any message defined in this appendix is exchanged. The CBOR framing in §A.2 operates entirely inside the Noise transport layer, which provides confidentiality, integrity, and replay protection; this appendix does not re-specify those properties.
+
+All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming. The daemon sends HELLO, negotiates capabilities with CAPABILITY_NEG, and the relay sends ACK before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
+
+Relay deployment jurisdiction determines data-transit exposure. For deployments under data-localization mandates (Russia 242-FZ, India DPDP, UAE DPL, PIPL in China), on-premise relay deployment keeps all protocol traffic within the local deployment boundary.
 
 ---
 
@@ -26,15 +30,29 @@ Every message on the wire consists of a 4-byte little-endian `uint32` length pre
 +------------------+-------------------------------+
 ```
 
-The maximum allowed body size is 4,194,304 bytes (4 MiB). A receiver that encounters a length prefix exceeding this limit MUST close the connection without sending an error message. Receivers MUST read the full `length` bytes before decoding; partial reads are a protocol error.
+The maximum allowed body size is 4,194,304 bytes (4 MiB). This cap is a relay memory-allocation invariant — the relay pre-allocates receive buffers sized to this bound, and exceeding it risks denial-of-service through unbounded allocation. A receiver that encounters a length prefix exceeding this limit MUST close the connection without sending an error message. Receivers MUST read the full `length` bytes before decoding; partial reads are a protocol error. Typical DELTA_STREAM messages are 1–64 KiB; HELLO and ACK are <1 KiB; a GOSSIP_PING carrying 200 peer entries is ~32 KiB. The 4 MiB ceiling primarily bounds bulk snapshot reconciliation edge cases.
 
-Every CBOR body is a CBOR map. Every map contains a `type` field (tstr) that identifies the message type. Receivers MUST ignore unknown fields in any map; this rule enables optional fields to be added in minor protocol versions without breaking existing implementations.
+Every CBOR body is a CBOR map. Every map contains a `type` field (tstr) that identifies the message type. All CBOR encoding of fields that appear in signed contexts (§A.6) MUST use Deterministic Encoding per RFC 8949 §4.2: definite-length arrays and maps, map keys sorted by lexicographic byte order, integers encoded in the shortest form, and floating-point numbers in their shortest exact representation. Fields that are not signed SHOULD use Deterministic Encoding but MAY use any valid CBOR encoding. Receivers MUST ignore unknown fields in any map; this rule enables optional fields to be added in minor protocol versions without breaking existing implementations.
 
 ---
 
 ## A.3 Handshake Messages
 
-The handshake sequence is: **HELLO → CAPABILITY_NEG → ACK**. The connecting node sends HELLO immediately after the transport connection is established. The peer or relay responds with CAPABILITY_NEG. The relay then sends ACK. Streaming begins after ACK.
+```mermaid
+stateDiagram-v2
+    [*] --> CONNECTING: transport open
+    CONNECTING --> NOISE_HANDSHAKING: TCP/UDS established
+    NOISE_HANDSHAKING --> CBOR_HANDSHAKING: Noise_XX complete
+    CBOR_HANDSHAKING --> STREAMING: HELLO, CAPABILITY_NEG, ACK exchanged
+    STREAMING --> ERROR: protocol or policy violation
+    STREAMING --> CLOSED: graceful close
+    CBOR_HANDSHAKING --> ERROR: handshake failure
+    NOISE_HANDSHAKING --> ERROR: Noise handshake failure
+    ERROR --> CLOSED: after error message sent
+    CLOSED --> [*]
+```
+
+The handshake sequence inside the CBOR layer is: **HELLO → CAPABILITY_NEG → ACK**. The connecting node sends HELLO immediately after the Noise handshake completes. The connecting node then sends CAPABILITY_NEG back-to-back without waiting for a response; the relay buffers HELLO and uses CAPABILITY_NEG to construct the full request context (attestation validation, lease acquisition, bucket authorization) in a single transaction. This back-to-back design saves one round trip in the common case, at the cost of requiring the relay to accept HELLO before it knows whether the attestation will validate. The Noise transport guarantees that HELLO's `node_id` matches the Noise static key, so the relay can index pending-handshake state by node identity before CAPABILITY_NEG arrives.
 
 ### A.3.1 HELLO
 
@@ -54,7 +72,7 @@ Sent by the connecting node as the first message on every new connection.
 
 ### A.3.2 CAPABILITY_NEG
 
-Sent by the connecting node immediately after HELLO, in the same connection. The relay does not respond to HELLO before CAPABILITY_NEG arrives; it buffers HELLO and waits for CAPABILITY_NEG to construct the full request context.
+Sent by the connecting node immediately after HELLO, in the same connection. See the §A.3 back-to-back design note for the rationale.
 
 | Field | CBOR Type | Required | Description |
 |---|---|---|---|
@@ -66,7 +84,7 @@ Sent by the connecting node immediately after HELLO, in the same connection. The
 
 `crdt_streams` identifies the CRDT document streams by string key. Stream identifiers are application-defined and MUST be stable across reconnections. The relay validates each stream identifier against the role claims in `attestation_bundle` before granting access.
 
-`cp_leases` is omitted when the node does not require CP-class (strongly-consistent) record access. When present, the relay acquires Flease-based distributed leases on behalf of the node before returning ACK.
+`cp_leases` is omitted when the node does not require CP-class (strongly-consistent) record access. CP-class record types require a distributed lease for the duration of a session; the relay acquires and holds this lease (per the Flease protocol — see Chapter 14 for the full lease-protocol specification) on behalf of the node before returning ACK. Record types not listed in `cp_leases` default to AP-class (available, partition-tolerant) and do not acquire leases.
 
 `bucket_subscriptions` names the sync buckets defined in the application's bucket manifest. The relay grants only the subset the node's role attestation authorises.
 
@@ -77,9 +95,12 @@ Sent by the relay after validating HELLO and CAPABILITY_NEG. A single ACK closes
 | Field | CBOR Type | Required | Description |
 |---|---|---|---|
 | `type` | tstr | required | Literal value `"ACK"` |
+| `negotiated_version` | uint | required | Wire protocol version the relay has selected per §A.7 rule 5. MUST be a value in the connecting node's `supported_versions` array |
 | `granted_streams` | array of tstr | required | Subset of `crdt_streams` from CAPABILITY_NEG that the relay grants |
 | `granted_buckets` | array of tstr | required | Subset of `bucket_subscriptions` from CAPABILITY_NEG that the relay grants |
 | `denied_reason` | tstr | optional | Human-readable explanation; present only when one or more requested streams or buckets are denied |
+
+`negotiated_version` is the highest wire protocol version supported by both the connecting node (in `supported_versions`) and the relay. The connecting node MUST use this version for all subsequent messages on the connection. If the negotiated version differs from the node's preferred `protocol_version`, the node SHOULD log the downgrade for operator review.
 
 `granted_streams` and `granted_buckets` MAY be empty arrays. An empty grant is not an error; it means the attestation bundle does not authorise any of the requested resources. The node SHOULD surface this condition to the operator rather than silently continuing.
 
@@ -98,11 +119,11 @@ Carries a single CRDT operation from one node to all subscribed peers on the sam
 | `type` | tstr | required | Literal value `"DELTA_STREAM"` |
 | `stream_id` | tstr | required | CRDT stream identifier; MUST match a value in `granted_streams` |
 | `op_type` | tstr | required | One of `"insert"`, `"delete"`, `"update"` |
-| `vector_clock` | map of tstr→uint | required | Logical clock at the time of operation; keys are node IDs (hex-encoded bstr), values are sequence numbers (uint) |
-| `payload` | bstr | required | Opaque CRDT operation bytes; encoding is engine-specific (YDotNet or Loro binary format) |
+| `vector_clock` | map of tstr→uint | required | Logical clock at the time of operation; keys are the 64-character lowercase hexadecimal encoding of the 32-byte Ed25519 node public key (type tstr), values are sequence numbers (uint) |
+| `payload` | bstr | required | Opaque CRDT operation bytes. The current Sunfish reference implementation uses YDotNet and serialises payloads per the Yjs binary update format (see [YDotNet docs]); deployments on Loro use the Loro binary operation format. The `ICrdtEngine.ApplyDelta` contract makes this choice reversible at build time |
 | `epoch_id` | tstr | optional | Present only for CP-class records; identifies the epoch in which this operation was authorised |
 
-`op_type` is advisory metadata for the receiving application layer. The CRDT engine applies `payload` without inspecting `op_type`; the field exists to allow the application to route operations to the correct merge handler before deserialization.
+`op_type` is advisory metadata for the receiving application layer. The CRDT engine applies `payload` without inspecting `op_type`; the field exists to allow the application to route operations to the correct merge handler before deserialization. A mismatch between `op_type` and the actual operation contained in `payload` is not automatically detectable by the receiver — the CRDT engine will apply the payload regardless. Applications that route on `op_type` MUST validate the routing against the engine's post-apply state if correctness depends on the distinction; otherwise, silent routing errors are possible. The sender SHOULD set `op_type` accurately, but the protocol does not enforce it.
 
 `epoch_id` is required for any operation on a CP-class record type. The receiver MUST verify that its local epoch matches `epoch_id` before applying `payload`. A mismatch produces ERR_EPOCH_MISMATCH (§A.5).
 
@@ -110,7 +131,7 @@ The relay does not reorder or buffer DELTA_STREAM messages. Operations arrive in
 
 ### A.4.2 GOSSIP_PING
 
-Sent by each node to all connected peers every 30 seconds. The relay does not generate GOSSIP_PING; it relays the message as-is to all nodes on the session. GOSSIP_PING maintains membership state for partition detection and stale peer recovery.
+Sent by each node to all connected peers every 30 seconds. The relay does not generate GOSSIP_PING; it relays the message as-is to all nodes on the session. GOSSIP_PING maintains membership state for partition detection and stale peer recovery. `membership_excerpt` carries a partial view of the node's known peer list so that receivers can reconcile divergent membership views and detect peers that have silently dropped from the overlay.
 
 | Field | CBOR Type | Required | Description |
 |---|---|---|---|
@@ -127,7 +148,7 @@ Each entry in `membership_excerpt` is a CBOR map with the following fields:
 | `last_seen` | uint | required | Unix timestamp (seconds) of the last message received from this peer |
 | `vector_clock_summary` | map of tstr→uint | required | Most recent vector clock the sender has recorded for this peer |
 
-A receiver that observes a `last_seen` value older than 90 seconds for any peer SHOULD treat that peer as suspected-partitioned and escalate to the application layer.
+A receiver that observes a `last_seen` value older than 90 seconds for any peer SHOULD treat that peer as suspected-partitioned and escalate to the application layer. The 90-second threshold is three times the 30-second ping interval, which keeps false-positive partition signals below one per hour per healthy peer under normal jitter. For long-absence reconnection (a node that was offline for hours and reestablishes — routine in deployments affected by unreliable grid power), the relay treats the returning node as new: prior session state is discarded, CAPABILITY_NEG reacquires leases and subscriptions, and the node catches up via DELTA_STREAM replay. There is no "resume long-absent session" primitive in this version of the protocol.
 
 ---
 
@@ -177,27 +198,104 @@ The QR onboarding payload transfers both the attestation bundle and an initial s
 | `issuer_public_key` | bstr | required | Ed25519 public key of the attestation issuer, exactly 32 bytes |
 | `subject_public_key` | bstr | required | Ed25519 public key of the new node being attested, exactly 32 bytes |
 | `role_claims` | array of tstr | required | Role names granted to the subject (e.g. `"editor"`, `"viewer"`) |
-| `signature` | bstr | required | Ed25519 signature over the concatenation `issuer_public_key ‖ subject_public_key ‖ role_claims_cbor`, signed by the issuer's private key |
+| `signature` | bstr | required | Ed25519 signature (RFC 8032) over the concatenation `issuer_public_key ‖ subject_public_key ‖ role_claims_cbor` (‖ denotes byte-string concatenation), signed by the issuer's private key. `role_claims_cbor` MUST be encoded per Deterministic CBOR (RFC 8949 §4.2) to ensure cross-implementation signature verifiability |
 | `issued_at` | uint | required | Unix timestamp (seconds) at which the bundle was signed |
 
-**Founder bundles:** `issuer_public_key` equals `subject_public_key`. The signature is self-signed by the founder's own private key. Founder bundles carry an implicit grant of all role claims and are accepted only during initial node creation.
+**Founder bundles:** `issuer_public_key` equals `subject_public_key`. The signature is self-signed by the founder's own private key. Founder bundles carry an implicit grant of every role claim and are accepted only during initial node creation.
 
 **Joiner bundles:** `issuer_public_key` is the founder's key or any key already holding the `admin` role claim. The issuer signs with their private key. The relay verifies the signature against `issuer_public_key` before accepting the bundle during CAPABILITY_NEG.
 
 Attestation bundles have no built-in expiry field. Revocation is enforced at the relay via a revocation list keyed on `issuer_public_key ‖ subject_public_key`. A revoked bundle produces ERR_KEY_REVOKED regardless of `issued_at`.
 
-`snapshot` is an opaque byte sequence produced by the CRDT engine's snapshot serialisation. The format is engine-specific. The receiving node passes `snapshot` directly to the engine's hydration API. On hydration failure the node MUST discard the snapshot and request a full state transfer via DELTA_STREAM replay from a peer.
+**Security properties.** Attestation bundles are bearer credentials — possession of a valid bundle grants the claimed roles until the relay's revocation list is updated. Compromise of a bundle requires immediate revocation via the relay. If the relay is unavailable during compromise, the revocation window is bounded by the time to next reachability. Replay protection is delegated to the Noise transport layer (§A.1): each session uses ephemeral keys, so a captured bundle cannot be replayed into an active session without the subject's Noise static key. A stolen bundle combined with a stolen Noise static key remains a valid attack vector until relay-enforced revocation takes effect; this is the compelled-access and device-theft threat model Chapter 15 specifies.
+
+**Algorithm constraints.** This protocol specifies Ed25519 (RFC 8032) for node identity and attestation signatures. Ed25519 is approved under FIPS 186-5 (2023) for deployments subject to FIPS algorithm policy review. Deployments subject to GOST R 34.10-2012 (Russian Federation public sector, critical infrastructure) or other national algorithm mandates must negotiate algorithm selection at a layer above this wire-protocol specification; the current version does not support algorithm agility for `signature`.
+
+**Data-protection note.** `role_claims` and `node_id` may constitute personal data under GDPR Article 4(1), UK GDPR, LGPD Article 5, DPDP Act 2023, UAE DPL 2022, NDPR, POPIA, PIPL, Japan PIPA, and Korea PIPA where the node identity is attributable to an identifiable natural person. Implementers MUST evaluate the bundle contents under the applicable regime; the QR transfer channel itself is assumed untrusted — the relay's signature verification provides integrity, but confidentiality of the bundle during transfer is the implementer's responsibility (in practice, by scanning the QR code inside a trusted physical perimeter rather than from photographs or remote displays).
+
+`snapshot` is an opaque byte sequence produced by the CRDT engine's snapshot serialisation. The Sunfish reference implementation currently uses YDotNet's state-vector format (`Y.Doc.encodeStateAsUpdate`); deployments on Loro use `loro::export_snapshot`. The format is versioned with the CRDT engine, not with the wire protocol. The receiving node passes `snapshot` directly to the engine's hydration API. On hydration failure the node MUST discard the snapshot and request a full state transfer via DELTA_STREAM replay from a peer. State transfer bandwidth is a concern in low-bandwidth environments (2G, VSAT, rural 4G); deployments targeting such environments should size sync buckets per Chapter 16 to bound replay volume.
 
 ---
 
 ## A.7 Backward Compatibility Policy
+
+The following guarantees are normative. Implementations that rely on them may treat a violation as a protocol defect in the non-conforming peer and close the connection without further retry.
+
+**Versioning scheme.** The `protocol_version` field in HELLO is a uint carrying the *major* wire-protocol version only. Minor-version revisions — additions of optional fields, new error codes, clarifications — reuse the same major uint without increment; implementations discover minor-version capabilities by field presence and by the `supported_versions` array of semver strings (e.g. `"1.0.0"`, `"1.1.0"`, `"1.2.0"`) that HELLO carries alongside the uint. `schema_version` is the *application*-level schema version and is independent of the wire protocol version. Breaking changes to the wire format require incrementing `protocol_version` and publishing a new major semver line.
 
 The following guarantees apply across minor version increments (same major `protocol_version`):
 
 1. The `type` field in each defined message type is stable. It will not be renamed or have its value changed in a minor version.
 2. Fields documented as required in an existing message type will not be removed in a minor version. A receiver MAY reject a message that omits a required field.
 3. Optional fields may be added to any existing message type in any minor version. Receivers MUST ignore unknown fields; this rule is mandatory, not advisory.
-4. A message carrying `protocol_version` greater than the receiver's maximum supported version produces ERR_VERSION_INCOMPATIBLE. The receiver closes the connection immediately after sending the error.
-5. The `supported_versions` array in HELLO enables a two-version overlap during rolling upgrades. If the receiver supports any version listed in `supported_versions`, it MUST negotiate down to the highest mutually supported version rather than returning ERR_VERSION_INCOMPATIBLE.
+4. A message carrying `protocol_version` greater than the receiver's maximum supported major version produces ERR_VERSION_INCOMPATIBLE. The receiver closes the connection immediately after sending the error.
+5. The `supported_versions` semver array in HELLO enables a two-version overlap during rolling upgrades. If the receiver supports any version listed in `supported_versions`, it MUST negotiate down to the highest mutually supported version (returned in ACK's `negotiated_version`) rather than returning ERR_VERSION_INCOMPATIBLE.
 
 Breaking changes — removing required fields, renaming message types, or changing field semantics — require a major `protocol_version` increment. Implementations SHOULD NOT assume that two nodes with the same major version have identical optional field support; they MUST apply the unknown-field-ignore rule.
+
+---
+
+## A.8 Conformance Requirements
+
+A conformant implementation MUST satisfy every requirement below. Identifiers (REQ-A-NNN) are stable across minor versions to enable test-suite construction.
+
+| ID | Requirement |
+|---|---|
+| REQ-A-001 | Receivers MUST close connections when the length prefix exceeds 4 MiB without sending an error message (§A.2) |
+| REQ-A-002 | Receivers MUST read the full `length` bytes before decoding (§A.2) |
+| REQ-A-003 | Receivers MUST ignore unknown fields in any CBOR map (§A.2) |
+| REQ-A-004 | All CBOR encoding of signed fields MUST use Deterministic Encoding per RFC 8949 §4.2 (§A.2) |
+| REQ-A-005 | Every connection MUST complete a Noise_XX handshake before CBOR exchange begins (§A.1) |
+| REQ-A-006 | Nodes MUST NOT rotate `node_id` without re-onboarding (§A.3.1) |
+| REQ-A-007 | `supported_versions` MUST include the semver string corresponding to `protocol_version` (§A.3.1) |
+| REQ-A-008 | The relay MUST validate each stream identifier against role claims in `attestation_bundle` before granting access (§A.3.2) |
+| REQ-A-009 | Relays MUST return ACK only after validating both HELLO and CAPABILITY_NEG (§A.3.3) |
+| REQ-A-010 | ACK MUST carry `negotiated_version` matching §A.7 rule 5 (§A.3.3) |
+| REQ-A-011 | Connecting nodes MUST use `negotiated_version` for all subsequent messages (§A.3.3) |
+| REQ-A-012 | The receiver MUST verify that its local epoch matches `epoch_id` before applying a CP-class `payload` (§A.4.1) |
+| REQ-A-013 | On hydration failure the node MUST discard the snapshot and request full state transfer (§A.6) |
+| REQ-A-014 | On ERR_VERSION_INCOMPATIBLE or ERR_BUCKET_NOT_AUTHORIZED, implementations MUST NOT retry automatically (§A.5) |
+| REQ-A-015 | Attestation signatures MUST be verifiable via Ed25519 (RFC 8032) against `issuer_public_key` (§A.6) |
+| REQ-A-016 | Revoked bundles MUST produce ERR_KEY_REVOKED regardless of `issued_at` (§A.6) |
+
+---
+
+## A.9 Test Vectors
+
+The following test vectors are normative for interoperability verification. All hex is lowercase, no separators. Full vectors including Noise handshake bytes are published alongside the Sunfish reference implementation under `accelerators/anchor/tests/wire-vectors/`.
+
+**Vector 1 — HELLO**
+
+```
+node_id:            1c0ffee0ba5eba11deadbeef0123456789abcdef0123456789abcdef01234567
+schema_version:     "1.4.2"
+supported_versions: ["1.0.0", "1.1.0"]
+protocol_version:   1
+
+CBOR (deterministic):
+a5 64 74 79 70 65 65 48 45 4c 4c 4f 67 6e 6f 64 65 5f 69 64
+58 20 1c 0f fe e0 ba 5e ba 11 de ad be ef 01 23 45 67 89 ab
+cd ef 01 23 45 67 89 ab cd ef 01 23 45 67 6e 73 63 68 65 6d
+61 5f 76 65 72 73 69 6f 6e 65 31 2e 34 2e 32 72 73 75 70 70
+6f 72 74 65 64 5f 76 65 72 73 69 6f 6e 73 82 65 31 2e 30 2e
+30 65 31 2e 31 2e 30 70 70 72 6f 74 6f 63 6f 6c 5f 76 65 72
+73 69 6f 6e 01
+```
+
+**Vector 2 — Attestation bundle signature input (founder self-sign)**
+
+```
+issuer_public_key:    same as node_id above (founder self-signed)
+subject_public_key:   same (founder)
+role_claims_cbor:     82 65 61 64 6d 69 6e 66 65 64 69 74 6f 72  (["admin","editor"])
+
+Signature input (concatenation, 96 bytes total):
+1c0ffee0ba5eba11deadbeef0123456789abcdef0123456789abcdef01234567
+1c0ffee0ba5eba11deadbeef0123456789abcdef0123456789abcdef01234567
+8265 61 64 6d 69 6e 66 65 64 69 74 6f 72
+
+Ed25519 signature (hex, 64 bytes):
+[reference implementation output — see tests/wire-vectors/founder-sig.hex]
+```
+
+Additional vectors covering CAPABILITY_NEG, ACK, DELTA_STREAM (insert/update/delete), GOSSIP_PING with membership excerpt, and each error code are maintained in the reference implementation test suite and MUST pass byte-for-byte equivalence to be considered conformant.

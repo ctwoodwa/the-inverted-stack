@@ -2,6 +2,7 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 2026-04-24 | Appendix A pass-1 resolution (6.46 REVISE → 5 priority items) | chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | Positioning statement + Noise_XX transport layer + 4 MiB rationale; state machine Mermaid diagram (CONNECTING→NOISE→CBOR→STREAMING→ERROR/CLOSED); ACK negotiated_version field; Deterministic CBOR (RFC 8949 §4.2) required for signed fields; vector_clock key encoding clarified (64-char hex tstr); op_type/payload mismatch detection; protocol_version uint vs semver reconciled; Ed25519 RFC 8032 + FIPS 186-5 + GOST R 34.10-2012 constraint; bearer-credential security properties + replay protection via Noise; personal-data note (9 jurisdictions); YDotNet snapshot format reference; §A.8 Conformance (16 REQ-A-NNN); §A.9 Test Vectors stub; 3,951 words | ~6000 |
 | 2026-04-24 | Epilogue pass-1 resolution (6.1 REVISE → 5 priority items) | chapters/epilogue/epilogue-what-the-stack-owes-you.md | Preface-promise loop closed (4 commitments named as delivered), "What Comes Next" replaced with Week 1/Month 1/First enterprise pitch reader-action sequence, regulatory geography expanded (GDPR/Schrems II/DPDP/UAE DPL/PIPL/Japan PIPA/Korea PIPA/POPIA/NDPR/242-FZ/LGPD in Article 17 paragraph), 2022 CIS terminations added as evidentiary anchor, GDPR Article 17 crypto-shredding qualified (CNIL/German DPAs pending), drift irreversibility softened to empirical pattern; "dependency for agency" moved closer to final beat; 3,014 words | ~5000 |
 | 2026-04-24 | Preface pass-1 resolution (5.6 REVISE → 5 priority items) | chapters/front-matter/preface.md | "Why I Wrote This" expanded with personal texture + concrete Round 1 redesign example + 15 conditions framing; regulatory signal broadened (GDPR/Schrems II/UAE DPL/DIFC DPL/DPDP/POPIA/NDPR/Japan PIPA/Korea PIPA); offline reframed as baseline for Sub-Saharan Africa/rural India/LatAm/SE Asia; three closing notes consolidated to one "Note on the Reference Implementation"; Kleppmann Council methodology note removed; new closing paragraph names four deliverables; 2022 CIS terminations added to opening; 1,217 words | ~5000 |
 | 2026-04-24 | Ch20 final polish — 5 priority items from pass-1 board review (5.9 REVISE) | chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | Accessibility section added (ARIA contracts, IUiBlockManifest, ISunfishIconProvider), Ch15 revocation UX message, SunfishOptimisticButton/SunfishConflictList/SunfishFreshnessBadge named, Non-Technical Trust Gap reframed as "UX for the Non-Technical Adopter", full-offline reframed for rural deployments, Unexpected Shutdown failure mode added, regulated-market backup target validation (242-FZ, DPDP, DPL 2022); 3,966 words | ~5000 |
@@ -424,3 +425,16 @@
 | 17:02 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | inline fix | ~124 |
 | 17:03 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | 13→15 lines | ~1123 |
 | 17:04 | Edited chapters/epilogue/epilogue-what-the-stack-owes-you.md | expanded (+12 lines) | ~884 |
+| 17:10 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | 5→9 lines | ~499 |
+| 17:10 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | expanded (+16 lines) | ~723 |
+| 17:11 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | 19→17 lines | ~358 |
+| 17:11 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | 3→3 lines | ~43 |
+| 17:11 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | inline fix | ~125 |
+| 17:11 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | 8→11 lines | ~347 |
+| 17:11 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | 2→2 lines | ~153 |
+| 17:11 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | inline fix | ~186 |
+| 17:12 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | 10→10 lines | ~261 |
+| 17:12 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | inline fix | ~199 |
+| 17:12 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | inline fix | ~94 |
+| 17:12 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | modified layer() | ~915 |
+| 17:13 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | modified increments() | ~1597 |
