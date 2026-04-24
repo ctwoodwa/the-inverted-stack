@@ -73,7 +73,7 @@
 
 ## chapters/part-3-reference-architecture/
 
-- `ch11-node-architecture.md` — Chapter 11 — Node Architecture (~7353 tok)
+- `ch11-node-architecture.md` — Chapter 11 — Node Architecture (~7650 tok) — icm/prose-review: microkernel monolith, 8 kernel responsibilities (incl. Flease quorum formula + partition failure mode), plugin contracts, 4-tier UI kernel, process boundaries + IPC + relay governance paragraph, Sunfish package map, Schrems II callout + citation [2]
 - `ch12-crdt-engine-data-layer.md` — Chapter 12 — CRDT Engine and Data Layer (~7842 tok)
 - `ch13-schema-migration-evolution.md` — Chapter 13 — Schema Migration and Evolution (~6500 tok) — icm/draft: expand-contract, lenses, epochs, runbook, failure modes
 - `ch14-sync-daemon-protocol.md` — Chapter 14 — Sync Daemon Protocol (~7000 tok) — icm/draft: process isolation, 3-tier discovery, 5-step handshake, gossip anti-entropy, data minimization, Flease/lease coordination, reconnection storms, stale peer recovery

@@ -3,6 +3,8 @@
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
 | 20:19 | Drafted Chapter 13 Schema Migration and Evolution | chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | 4144 words, committed to main | ~8000 |
+| 06:58 | Applied 8 literary board priority edits to Ch01 | chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | all 8 edits applied, 4702 words (within ±10% of 4500 target), committed | ~4500 |
+| 09:45 | Applied Barker editorial review to Ch11: relay governance paragraph, Flease quorum formula + partition failure mode, Schrems II callout + citation [2] | chapters/part-3-reference-architecture/ch11-node-architecture.md | ~230 words added, committed to main | ~3500 |
 | prose-review | Style enforcement pass on Part II (Ch05–Ch10) — fixed there-is openers, passive voice, weak verbs, throat-clearing, restatement duplicates; fixed one Edit-induced duplication in ch07 | ch05–ch10 enterprise/distributed/security/product/practitioner/synthesis | ~45 targeted edits across 6 files | ~12000 |
 | session | Resolved 40 technical-review markers in ch17 | chapters/part-4-implementation-playbooks/ch17-building-first-node.md | All CLAIM/SUNFISH-API/PACKAGE markers removed; ICM advanced to icm/technical-review | ~6000 |
 | 2026-04-24 | Prose review appendix-b + appendix-d | chapters/appendices/appendix-b*.md, appendix-d*.md | 20+ edits applied; both advanced to icm/prose-review; committed c84c2cc | ~4000 |
@@ -59,3 +61,4 @@
 | 2026-04-24 | QC-1 word count expansions: ch16, ch17, ch19, epilogue | ch16 (2949→3556), ch17 (3520→3910), ch19 (3148→3481), epilogue (2219→2488) | all four now PASS QC-1; corrected fabricated plugin lifecycle claims (OnUnloadAsync, no faulted-continue, no version validation) | ~12000 |
 | 2026-04-24 | Automated pipeline complete | All 27 chapters at icm/prose-review; 27/28 pass QC-1 (preface 926/1300 is human-only); running total ~81,900 words vs ~83,500 target | Pipeline blocked on icm/voice-check (human stage); preface expansion and foreword still needed | ~5000 |
 | 06:16 | prose-review style pass: Part III Ch11–Ch16, fixed there-is openers, hedges, weak verbs, passive, restatements | ch11-node-architecture.md ch12-crdt-engine-data-layer.md ch13-schema-migration-evolution.md ch14-sync-daemon-protocol.md ch15-security-architecture.md ch16-persistence-beyond-the-node.md | ~30 targeted edits applied | ~12000 |
+| 06:44 | Expanded literary-board to 11 global critics: Reyes (LATAM/accessibility), Tanaka (APAC/Japan), Barker (Europe/Germany), Diallo (Africa) | .claude/agents/literary-board.md | committed 3bdfd33 | ~8000 |
