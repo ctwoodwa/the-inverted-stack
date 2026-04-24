@@ -5,7 +5,7 @@
 <!-- Target: ~2,500 words -->
 <!-- Source: R1, R2 -->
 
-The council approved the architecture. Round 1 ended with two hard blocks and a 6.8 average. Round 2 cleared every block, raised the average to 7.1, and issued fifteen conditions — none individually blocking, all resolvable during alpha implementation. The result is a green light with a specific list of things to get right.
+The council reviewed the architecture across two rounds. Round 1 is what happens when five domain experts encounter an architectural proposal for the first time: full authority to block, independent mandates, no courtesy scores. The record below tracks what each reviewer found, what the revision addressed, and what the second round concluded. It is the most rigorous test this architecture faced before implementation.
 
 
 ---
@@ -109,7 +109,15 @@ Part III is structured against the seven non-negotiables. Chapter 11 specifies t
 
 The fifteen conditions are distributed across Part III and Part IV, addressed where they are architecturally relevant. The stale peer recovery protocol belongs in Chapter 12, alongside the GC policy that creates the condition under which it is needed. The admin tooling sketch belongs in Chapter 19, alongside the MDM deployment guidance. The GDPR Article 17 crypto-shredding treatment belongs in Chapter 15, alongside the compliance framework mapping.
 
-The council reviewed an architecture document. Part III is the architecture.
+The council reviewed an architecture document. Part III is the architecture. The two are different objects.
+
+Chapters 5 through 10 were a procedure: a proposal submitted, reviewed, blocked, revised, and approved under conditions. The reader witnessed a process. The architecture had to be argued for, defended, and refined against objection. It arrived at its current form through that process — the Flease lease coordination, the send-tier subscription filter, the DEK/KEK rotation policy are not arbitrary choices but specific answers to specific blocks.
+
+Part III is not a continuation of that process. It is its output.
+
+The voice shifts here by design. Part II's register is narrative: events happened, reviewers reacted, positions changed. Part III's register is specification: the component does this, the invariant holds for this reason, the failure mode presents as this. A specification that performs uncertainty undermines the thing it is specifying. Part III is written with the confidence of an architecture that has already survived adversarial review — because it has.
+
+The seven non-negotiables from this chapter are the spinal cord of Part III. Every specification chapter is organized against at least one of them. Chapter 11 specifies the node kernel whose plugin contract enforces the three-tier CRDT model. Chapter 12 addresses the GC policy Shevchenko blocked in Round 1. Chapter 14 specifies the send-tier data minimization invariant Okonkwo and Shevchenko commended independently. Chapter 15 addresses the key compromise incident response procedure Okonkwo conditioned. Read Part III knowing that every mechanism was earned before it was specified.
 
 ---
 
