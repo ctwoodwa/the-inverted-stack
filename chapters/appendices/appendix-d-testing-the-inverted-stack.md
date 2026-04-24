@@ -1,15 +1,13 @@
 # Appendix D — Testing the Inverted Stack
 
-<!-- icm/technical-review -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~2,200 words -->
 <!-- Source: v13 §15 -->
 
 ---
 
-Local-first systems fail in ways that conventional server-side software does not. A network partition, a vector clock divergence, a schema version mismatch between two nodes, or a Flease expiry mid-write are not edge cases — they are normal operating conditions that the system must handle correctly every time. A test suite that does not exercise these conditions is not a test suite; it is a confidence illusion.
-
-This appendix specifies five testing levels and the mandatory scenarios that must pass before first production release. Level 1 and Level 2 run on every pull request. Level 3 runs nightly. Level 4 runs weekly or before release. Level 5 runs in staging before each major release. Every scenario below includes explicit setup conditions, the action to perform, and the expected outcome. If a scenario has no pass condition, it is not a test.
+Five testing levels govern this architecture, each with mandatory pass conditions before first production release. Level 1 and Level 2 run on every pull request. Level 3 runs nightly. Level 4 runs weekly or before release. Level 5 runs in staging before each major release. Each scenario specifies setup conditions, the action to perform, and the expected outcome. If a scenario has no pass condition, it is not a test.
 
 ---
 
@@ -17,11 +15,9 @@ This appendix specifies five testing levels and the mandatory scenarios that mus
 
 ### Level 1 — Property-Based Tests
 
-CRDT operations have four mathematical properties that example-based tests cannot verify reliably. Convergence: all replicas eventually agree, regardless of operation order. Idempotency: applying the same operation twice produces the same result as applying it once. Commutativity: concurrent operations reach the same final state regardless of the order in which they are applied. Monotonicity: the CRDT state never shrinks — information is never silently discarded.
+CRDT operations have four mathematical properties that example-based tests cannot verify reliably. Convergence: all replicas eventually agree, regardless of operation order. Idempotency: applying the same operation twice produces the same result as applying it once. Commutativity: concurrent operations reach the same final state regardless of application order. Monotonicity: the CRDT state never shrinks — no operation silently removes information.
 
-Testing these properties with hand-written examples is insufficient. Any example you construct tests one particular operation sequence. The sequences that break convergence are the ones you did not think to write. Property-based frameworks generate thousands of random operation sequences automatically and report the minimal failing case when a property is violated.
-
-For .NET, FsCheck is a well-established option. For JavaScript, fast-check works well. Configure the framework to generate at least 10,000 random operation sequences per property per test run as a starting point — reduce that count only if profiling shows it is a bottleneck, and verify that the reduction does not eliminate the sequences that catch real failures.
+Property-based frameworks generate thousands of random operation sequences automatically and report the minimal failing case when a property is violated. Use FsCheck (.NET) or fast-check (JavaScript). Configure the framework to generate at least 10,000 random operation sequences per property per test run; reduce that count only if profiling identifies it as a bottleneck, and verify that the reduction does not eliminate the sequences that catch real failures.
 
 Do not skip Level 1. An example-based CRDT test suite that passes is not evidence that the CRDT is correct. It is evidence that the specific sequences you tested are correct.
 
@@ -31,11 +27,11 @@ The sync handshake, capability negotiation, and delta streaming must run against
 
 Use Testcontainers (.NET) to spin up a real local-node instance per test suite. Run the full five-step handshake: HELLO → CAPABILITY_NEG → ACK → DELTA_STREAM → GOSSIP_PING. Assert on the CRDT state after delta exchange, not on the wire messages. The state is what matters; the message sequence is how you get there.
 
-Testcontainers requires Docker. Add Docker to your CI environment before adding Level 2 tests. The setup cost is hours; the failure modes it catches are production incidents.
+Testcontainers requires Docker. Add Docker to your CI environment before adding Level 2 tests.
 
 ### Level 3 — Fault Injection in CI
 
-Network partition, packet loss, and node crash must be exercised in CI, not only in staging. Fault injection in staging runs infrequently, and the gap between a fault being possible and a fault being tested is where production incidents originate.
+Network partition, packet loss, and node crash must be exercised in CI, not only in staging. Staging runs fault injection infrequently, and production incidents originate in the gap between a possible fault and a tested one.
 
 Use Testcontainers with toxiproxy (or an equivalent network proxy) to inject faults programmatically. Three scenarios are mandatory at this level:
 
@@ -49,9 +45,9 @@ The pass condition for every fault injection test is not "the system does not cr
 
 Mixed-version nodes, epoch transitions while a node is offline, and Flease edge cases cannot be tested reliably with real time. Real-time tests are non-deterministic: a lease expiry that takes 30 seconds in production cannot be exercised in CI at real speed without making the test suite unusable. A simulation harness with a controllable clock and deterministic network scheduling makes these scenarios fast, repeatable, and exhaustive.
 
-The simulation harness is not provided out of the box. Teams implementing this architecture must build it — the investment is real and justified: simulation catches failure modes that would otherwise surface as production incidents.
+No off-the-shelf simulation harness implements this protocol. Teams implementing this architecture must build one — the investment is justified: simulation catches failure modes that would otherwise surface as production incidents.
 
-Three scenario families belong at Level 4: mixed-version node sync (one node at schema N, one at schema N-1), epoch transitions while a node is offline, and Flease edge cases such as a lease holder disconnecting mid-write. Each of these requires precise control over timing and message ordering that real-time tests cannot provide.
+Three scenario families belong at Level 4: mixed-version node sync (one node at schema N, one at schema N-1), epoch transitions while a node is offline, and Flease edge cases such as a lease holder disconnecting mid-write. Each of these requires precise control over timing and message ordering.
 
 ### Level 5 — Chaos Testing in Staging
 
@@ -99,7 +95,7 @@ The quorum-loss test is the most important scenario in this group. A system that
 |---|---|---|---|
 | N-1 to N sync | One node at schema version N; one node at schema version N-1 | Exchange CRDT deltas in both directions | Lenses translate correctly in both directions; no data loss; both nodes reach valid state for their respective schema version |
 | Offline epoch transition | One node offline during an epoch transition | Return the offline node online after the transition completes | Node downloads the epoch snapshot and resumes sync; no manual intervention required; no data loss |
-| Couch device | One node offline for 3+ major schema versions | Attempt to reconnect | Capability negotiation rejects the connection with ERR_VERSION_INCOMPATIBLE; the user is directed to update before sync resumes; the system does not attempt a partial or lossy migration |
+| Couch device | One node offline for 3+ major schema versions | Attempt to reconnect | Capability negotiation rejects the connection with ERR_VERSION_INCOMPATIBLE; the system directs the user to update before sync resumes; the system does not attempt a partial or lossy migration |
 
 The couch-device scenario requires a clear policy decision before testing: what is the maximum schema gap the system will bridge automatically, and what gap triggers a forced update? Encode that policy in the capability negotiation layer and test the boundary explicitly.
 
@@ -116,7 +112,7 @@ The mid-write quarantine behavior is critical. A partial write that is silently 
 
 | Scenario | Setup | Action | Expected Outcome |
 |---|---|---|---|
-| Storage extraction without credentials | A running node with a SQLCipher-encrypted database | Copy the SQLCipher file to a separate machine; attempt to open it without the encryption key | The file is unreadable; SQLCipher encryption prevents plaintext access to any document content |
+| Storage extraction without credentials | A running node with a SQLCipher-encrypted database | Copy the SQLCipher file to a separate machine; attempt to open it without the encryption key | SQLCipher renders the file unreadable; plaintext access to document content requires the encryption key |
 | Key rotation blocks former member | A team with a role key; one member's access is revoked | Rotate the role KEK; the former member's node attempts to reconnect and request documents written after rotation | The node receives ERR_KEY_REVOKED; it cannot decrypt any document written after the key rotation; re-adding the member requires explicit operator action |
 
 ### Ledger
@@ -136,7 +132,7 @@ Configure CI in four tiers that reflect the cost and speed of each testing level
 
 **Per pull request:** Run Level 1 (property-based) and Level 2 (integration with real dependencies). These tests are fast enough to gate merges. A reasonable target: Level 1 under 5 minutes, Level 2 (including Testcontainers startup) under 15 minutes. If either suite consistently exceeds these, profile and optimize before adding more tests.
 
-**Nightly:** Run Level 3 (fault injection). Fault injection tests are too slow for PR gates — a single partition-and-recover scenario can take minutes at real time. Running nightly is too infrequent to catch regressions the day they are introduced, but it is far better than running only in staging. When a nightly fault injection run fails, treat it as a P1 until resolved.
+**Nightly:** Run Level 3 (fault injection). Fault injection tests are too slow for PR gates — a single partition-and-recover scenario can take minutes at real time. Nightly runs do not catch regressions the day they are introduced — that is acceptable. Running only in staging is not. When a nightly fault injection run fails, treat it as a P1 until resolved.
 
 **Weekly or pre-release:** Run Level 4 (deterministic simulation). The simulation harness requires setup investment. Once it exists, simulation runs are fast — controllable clocks make 30-day scenarios run in seconds. The weekly cadence is a minimum; run simulation before every release candidate.
 
@@ -144,4 +140,4 @@ Configure CI in four tiers that reflect the cost and speed of each testing level
 
 **Infrastructure notes:** Testcontainers requires Docker in CI. Verify Docker availability before adding Level 2 or Level 3 tests to an existing CI pipeline — discovering this dependency after the tests are written wastes time. The simulation harness at Level 4 is not a commodity tool; it is custom infrastructure that the team must design and build. The design should be reviewed against the protocol specification in Appendix A before implementation begins. A simulation harness built on an incomplete understanding of the handshake will simulate the wrong system.
 
-The total CI investment for a team implementing all five levels is significant and not optional. The failure modes these tests exercise will occur in production. The question is whether they surface in CI or in a customer's environment.
+The failure modes these tests exercise will occur in production. The question is whether they surface in CI or in a customer's environment.

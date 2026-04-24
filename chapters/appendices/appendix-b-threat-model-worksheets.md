@@ -1,6 +1,6 @@
 ﻿# Appendix B — Threat Model Worksheets
 
-<!-- icm/technical-review -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~1,800 words -->
 <!-- Source: v13 §11.1, Ch 15 -->
@@ -9,13 +9,13 @@
 
 ## Introduction
 
-This appendix provides ready-to-use worksheets for building a deployment-specific threat model for an inverted-stack system. Chapter 15 describes the full security architecture — the four defensive layers, the DEK/KEK key hierarchy, the role attestation flow, and the key compromise incident response procedure. These worksheets operationalize that architecture. Fill them in before your first production deployment, update them when the asset inventory changes, and use the incident response template whenever a key compromise is detected or suspected.
+Build your deployment threat model with these four worksheets. Fill them in before your first production deployment, update them when the asset inventory changes, and execute the incident response template on any suspected key compromise. Chapter 15 describes the full security architecture — the four defensive layers, the DEK/KEK key hierarchy, the role attestation flow, and the key compromise incident response procedure.
 
 ---
 
 ## Section 1 — Asset Inventory Template
 
-Fill this table before starting the threat model exercise. Every row represents an asset that, if compromised, lost, or corrupted, would cause material harm to the team or to individual users. Add rows for domain-specific assets. Adjust sensitivity ratings based on regulatory requirements (HIPAA, SOX, ITAR, and similar frameworks impose mandatory minimum classifications).
+Fill this table before starting the threat model exercise. Every row represents an asset that, if compromised, lost, or corrupted, would cause material harm to the team or to individual users.
 
 | Asset | Classification | Location | Owner | Sensitivity |
 |---|---|---|---|---|
@@ -28,7 +28,7 @@ Fill this table before starting the threat model exercise. Every row represents 
 | Relay ciphertext cache | Encrypted | Relay (operator-managed) | Operator | Medium (ciphertext only) |
 | MDM configuration | Internal | MDM system; node-config.json on endpoint | IT admin | Medium |
 
-**Customization guidance:** Add domain-specific rows. Adjust sensitivity ratings to match regulatory requirements — HIPAA-covered entities must treat patient identifiers as Critical.
+**Customization guidance:** Add domain-specific rows. HIPAA-covered entities must treat patient identifiers as Critical; HIPAA, SOX, and ITAR mandate minimum classification floors — set those before filling in this column.
 
 **Classification definitions for this template:**
 
@@ -44,7 +44,7 @@ Fill this table before starting the threat model exercise. Every row represents 
 
 ## Section 2 — Actor Taxonomy Template
 
-List every actor who might interact with your system, including adversarial interactions. Include actors who currently have no access — they represent the baseline threat that the encryption boundary must hold against. For each actor, record the realistic motivation and the capability level you must plan for.
+List every actor who interacts or could realistically interact with your system, including adversarial actors. For each actor, record the realistic motivation and the capability level you must plan for.
 
 | Actor | Access level | Likely motivation | Capability level |
 |---|---|---|---|
@@ -99,7 +99,7 @@ This is the highest-probability threat for this vertical. Construction project m
 1. **Attacker steals project manager's laptop from vehicle.** Physical access is achieved.
 2. **Disk encryption check.** If BitLocker is not enforced via MDM policy, the attacker can read the filesystem directly. Mitigation: enforce BitLocker via MDM policy (Intune Device Compliance policy); confirm the compliance check is enforced before the node is permitted to join the sync mesh.
 3. **Disk encryption is active.** Attacker reads the SQLCipher database file. Without the SQLCipher passphrase, the database is ciphertext. Attack fails at this branch.
-4. **Device is powered on at time of theft.** Cold-boot attack window applies. See Ch 15 §7 for the in-memory key handling policy. Realistic cold-boot attack requires specialized lab conditions. Treat as residual risk, not a primary threat for most deployments. High-security environments should consult Ch 15 for the re-authentication interval guidance.
+4. **Device is powered on at time of theft.** Cold-boot attack window applies. See Ch 15 §7 for the in-memory key handling policy. Realistic cold-boot attack requires specialized lab conditions. Treat as residual risk outside high-security environments. High-security environments should consult Ch 15 for the re-authentication interval guidance.
 5. **Attacker targets OS keychain.** The role KEK and device keypair are stored in the Windows Credential Manager. Accessing them requires the device PIN or biometric. An attacker without the credential cannot extract key material from a locked device. Mitigation: enforce 6-digit minimum PIN via MDM. Disable USB boot and BIOS settings changes.
 6. **Attacker copies SQLCipher DB offline.** Without the KEK and the SQLCipher passphrase, the ciphertext is unreadable. Attack fails.
 
@@ -144,7 +144,7 @@ Execute these steps in order. Do not skip steps. Each step has a named owner and
 
 - **Start date:** Date the compromised KEK was created. Check the keystore creation timestamp — do not rely on employee recollection.
 - **End date:** Date the revocation broadcast was confirmed at the relay.
-- **Scope:** All documents in roles protected by the compromised KEK during the window between start date and end date.
+- **Scope:** All documents that the compromised KEK protected between the start date and the end date.
 - **Excluded from scope:** Documents in roles not protected by the compromised KEK. Documents created after the revocation date (these use the new KEK).
 
 ### User Notification Template
@@ -159,7 +159,7 @@ Send this message to every team member in the affected role. Adjust the brackete
 >
 > Contact [IT contact name] at [IT contact email or phone] if you have questions or concerns.
 
-**Logging requirement:** Record the timestamp of each notification, the channel used (email, SMS, in-app), and the recipient. Retain this record for a minimum of 90 days. Regulated industries may require longer retention — check applicable requirements before setting the retention period.
+**Logging requirement:** Record the timestamp of each notification, the channel used (email, SMS, in-app), and the recipient. Retain this record for a minimum of 90 days. Regulated industries specify retention floors — verify the applicable requirement before setting this period.
 
 ---
 
