@@ -79,13 +79,19 @@ flowchart LR
     T1 ~~~ T2 ~~~ T3
 ```
 
+*Three parallel tiers. Tier 1 (Ephemeral) covers cursors, presence, and live indicators with aggressive GC and no durability requirement. Tier 2 (Business Records) covers tasks, notes, and project records with 90-day retention and snapshot-transfer recovery for stale peers. Tier 3 (Compliance) covers regulated records and audit trails with no GC and full history retained.*
+
 This policy is specific and falsifiable. A deployment can test whether the GC boundary is enforced. A peer can determine from its vector clock whether incremental sync is possible before attempting it.
+
+The tier mapping has direct regulatory implications. Tier 3 (no-GC) is required — not recommended — for records subject to GDPR and Schrems II (EU), China's PIPL (cross-border transfer restrictions), Japan's PIPA retention mandates, South Korea's ISMS-P data lifecycle documentation, India's DPDP Act and RBI financial data localization, UAE DPL 2022 and DIFC DPL 2020, Nigeria's NDPR, South Africa's POPIA, Kenya's Data Protection Act 2019, and Russia's Federal Law 242-FZ. For these regimes, full operation history is a regulatory obligation that no retention optimization can override. The Tier 3 data class is also the structural answer to Schrems II specifically: data retained locally under local key management, with no relay-exposed payload, is the direct architectural response to the constraint on transfers of EU personal data to US cloud providers. GDPR Article 17 (right to erasure) creates a specific tension with full-history retention — a CRDT that retains every operation contains the complete edit history of every field by design. The resolution is deletion via a compensating operation that overwrites content in all present and future reads while preserving the operation log's audit integrity; Chapter 15 (Security Architecture) specifies the mechanism.
 
 **Stale peer recovery protocol.** The 90-day retention window creates a new edge case: a peer offline for 95 days reconnects and requests operations the originating node has already compacted away. When a reconnecting peer's vector clock predates the current GC horizon, the sync daemon detects the incompatibility at the CAPABILITY_NEG phase, abandons incremental sync, and initiates a full-state snapshot transfer. The peer receives the current document state directly — not the operations that produced it — and resumes gossip anti-entropy from the snapshot as a new baseline. This is slower than incremental sync, but it is correct and deterministic.
 
 **Flease split-write proof.** The resolution required distinguishing between two record classes that had been treated as a single category. For CP-class records that use CRDT merge semantics for their underlying representation — records where the CP constraint is a domain invariant layered on top of an AP data structure — the CRDT handles the write window correctly. Two concurrent writes during a lease gap produce a merged state that CRDT semantics resolve, and the domain invariant is enforced as a post-merge validation step. For records where two concurrent writes cannot be merged at all — sequential IDs, unique constraints — the architecture specified a fence: the new lease holder requires acknowledgment from all reachable peers that the previous lease has expired and no in-flight write is pending before accepting the first new write. This is safe under the crash-failure model the architecture assumes, and it is honestly scoped.
 
 **Reconnection storm handling.** Gossip anti-entropy pairs nodes randomly and exchanges deltas on a periodic tick. When many nodes reconnect simultaneously, the resource governor throttles per-tick bandwidth consumption so that each gossip cycle processes a bounded number of exchanges. The architecture made this explicit rather than assumed.
+
+A practical note on verification. The convergence guarantees specified above are architectural commitments ahead of the CRDT backend integration currently in progress: the reference implementation replaces its present stub with YDotNet as the production CRDT engine, and delta apply-back in the sync daemon is the adjacent integration that makes two-node convergence demonstrable end-to-end. The specification is complete. The evidence catches up when those integrations land.
 
 ---
 
@@ -139,6 +145,19 @@ His commendation was unequivocal: the Flease treatment in Round 2 was correct. T
 
 ---
 
+## The Non-Negotiable Distributed Systems Checklist
+
+What a practitioner carries forward from Shevchenko's review:
+
+- **Enumerate linearizable operations before development.** Identify every operation in the domain model that requires CP-class semantics — sequential IDs, unique constraints, resource allocation, financial totals, inventory quantities, appointment slots. The architecture's Flease examples are illustrative, not exhaustive.
+- **Classify every record into one of three GC tiers by data class.** Ephemeral records use aggressive GC; business records use 90-day retention (extending to 180 days for deployments with known seasonal multi-month offline patterns); compliance records use no GC. When a record could belong to multiple tiers, assign the higher tier.
+- **Implement the stale peer recovery protocol for vector clocks predating the GC horizon.** Full-state snapshot transfer with documented concurrent-transfer limits and priority relative to normal gossip anti-entropy.
+- **Validate CRDT operations at store entry against the current schema.** Structurally valid operations that violate schema constraints are quarantined, not applied. Schema version compatibility is negotiated at CAPABILITY_NEG to avoid rejecting legitimate operations from peers running earlier versions.
+- **Document the break-glass recovery procedure for corrupt operation sequences.** Convergence is consistent; convergence on a bug is persistent. The tooling to remediate a propagated software defect must exist before it is needed.
+- **Define test categories for partition behavior.** Network partition simulation, clock skew injection, concurrent edit generation, GC boundary conditions, Byzantine operation injection, and long-partition reconnect scenarios.
+
+---
+
 ## The Principle: Convergence Is Not Correctness
 
 Practitioners building on CRDT foundations will be tempted to treat convergence as settled once they have understood the data structures — it is not.
@@ -160,6 +179,8 @@ flowchart TD
     G -- Promote --> C
     G -- Reject --> H[Recorded Rejection with Reason]
 ```
+
+*Incoming operations from the peer mesh undergo a structural schema check. Valid operations apply to the CRDT store and gossip to other peers. Invalid operations enter the quarantine queue, surface in the conflict inbox, and require human review. Review outcomes are either promotion to the CRDT store or a recorded rejection with reason.*
 
 The GC policy, the stale peer recovery protocol, and the Flease split-write resolution are all instances of the same underlying demand: correctness requires specifying what happens at the boundary conditions that the happy-path design never exercises. In a distributed system, those boundaries arrive on their own schedule, at production scale, in a deployment that real users depend on.
 
