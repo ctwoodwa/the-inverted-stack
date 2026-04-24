@@ -2,6 +2,7 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 2026-04-24 | Ch20 final polish — 5 priority items from pass-1 board review (5.9 REVISE) | chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | Accessibility section added (ARIA contracts, IUiBlockManifest, ISunfishIconProvider), Ch15 revocation UX message, SunfishOptimisticButton/SunfishConflictList/SunfishFreshnessBadge named, Non-Technical Trust Gap reframed as "UX for the Non-Technical Adopter", full-offline reframed for rural deployments, Unexpected Shutdown failure mode added, regulated-market backup target validation (242-FZ, DPDP, DPL 2022); 3,966 words | ~5000 |
 | 20:19 | Drafted Chapter 13 Schema Migration and Evolution | chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | 4144 words, committed to main | ~8000 |
 | 06:58 | Applied 8 literary board priority edits to Ch01 | chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | all 8 edits applied, 4702 words (within ±10% of 4500 target), committed | ~4500 |
 | 09:45 | Applied Barker editorial review to Ch11: relay governance paragraph, Flease quorum formula + partition failure mode, Schrems II callout + citation [2] | chapters/part-3-reference-architecture/ch11-node-architecture.md | ~230 words added, committed to main | ~3500 |
@@ -225,3 +226,190 @@
 | 13:20 | Ch04 pass 1 resolution: 4 of 5 items applied (structural deferred) | ch04 | committed aee8eca | ~700 |
 | 13:27 | Ch04 pass 2 verification: 7.92 POLISH (delta +1.62) | ch04 | board voted terminate | ~35k |
 | 13:32 | Ch04 final polish: 4 of 5 remaining items applied | ch04 | committed 29fb90b; Part I cycle complete | ~600 |
+| 12:31 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 3→5 lines | ~265 |
+| 12:31 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 1→3 lines | ~231 |
+| 12:31 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | inline fix | ~151 |
+| 12:32 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 5→5 lines | ~420 |
+| 12:32 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 1→3 lines | ~88 |
+| 12:32 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | inline fix | ~140 |
+| 12:32 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | inline fix | ~118 |
+| 12:33 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 1→3 lines | ~222 |
+| 12:33 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 3→1 lines | ~81 |
+| 12:38 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | "s DPDP Rules, Nigeria" → "s DPDP Rules, Japan" | ~150 |
+| 12:38 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 5→3 lines | ~188 |
+| 12:38 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | inline fix | ~85 |
+| 12:39 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | inline fix | ~95 |
+| 12:39 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 1→3 lines | ~327 |
+| 12:46 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | expanded (+13 lines) | ~484 |
+| 12:46 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | 1→3 lines | ~219 |
+| 12:46 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | 1→3 lines | ~395 |
+| 12:47 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | 4→6 lines | ~119 |
+| 12:47 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | 4→6 lines | ~143 |
+| 12:51 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | inline fix | ~71 |
+| 12:51 | Edited chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md | "s NDPR, South Africa" → "s LGPD, Mexico" | ~74 |
+| 12:59 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | 1→3 lines | ~434 |
+| 13:00 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | expanded (+10 lines) | ~431 |
+| 13:00 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | 1→3 lines | ~257 |
+| 13:00 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | modified C5() | ~147 |
+| 13:00 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~121 |
+| 13:01 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | expanded (+14 lines) | ~590 |
+| 13:06 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~38 |
+| 13:06 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~152 |
+| 13:06 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | 1→2 lines | ~199 |
+| 13:12 | Literary board review pass 1 — Ch08 Product-Economic Lens | chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | Board score 5.92/10 REVISE; 5 priority items; regional gap is primary finding | ~9000 |
+| 13:13 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | inline fix | ~209 |
+| 13:14 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | inline fix | ~446 |
+| 13:14 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | 1→3 lines | ~396 |
+| 13:14 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | modified if() | ~947 |
+| 13:20 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | removed 7 lines | ~40 |
+| 13:20 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | inline fix | ~92 |
+| 13:20 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | inline fix | ~108 |
+| 13:20 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | inline fix | ~168 |
+| 13:20 | Edited chapters/part-2-council-reads-the-paper/ch08-product-economic-lens.md | 1→3 lines | ~379 |
+| 13:27 | Edited chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md | inline fix | ~144 |
+| 13:28 | Edited chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md | reduced (-6 lines) | ~696 |
+| 13:29 | Edited chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md | expanded (+25 lines) | ~1103 |
+| 13:34 | Edited chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md | 3→3 lines | ~650 |
+| 13:35 | Edited chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md | inline fix | ~198 |
+| 13:41 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | inline fix | ~206 |
+| 13:42 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | 1→3 lines | ~435 |
+| 13:42 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | 1→3 lines | ~635 |
+| 13:42 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | modified as() | ~292 |
+| 13:42 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | inline fix | ~52 |
+| 13:47 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | inline fix | ~63 |
+| 13:47 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | inline fix | ~121 |
+| 13:47 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | inline fix | ~185 |
+| 13:47 | Edited chapters/part-2-council-reads-the-paper/ch10-synthesis.md | inline fix | ~145 |
+| 13:48 | Session end: 125 writes across 14 files (ch01-when-saas-fights-reality.md, ch03-inverted-stack-one-diagram.md, 2026-04-24-literary-board-reviews.md, review-cycle.md, ch02-local-first-serious-stack.md) | 36 reads | ~131149 tok |
+
+## Session: 2026-04-24 14:55
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 15:03 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | inline fix | ~258 |
+| 15:03 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | inline fix | ~60 |
+| 15:03 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | 1→3 lines | ~392 |
+| 15:04 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | 1→3 lines | ~593 |
+| 15:04 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | 3→1 lines | ~110 |
+| 15:04 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | 1→3 lines | ~392 |
+| 15:05 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | 1→3 lines | ~354 |
+| 15:10 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | "s relay-is-ciphertext-onl" → "s relay-is-ciphertext-onl" | ~540 |
+| 15:10 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | inline fix | ~293 |
+| 15:10 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | inline fix | ~260 |
+| 15:10 | Edited chapters/part-3-reference-architecture/ch11-node-architecture.md | 1→3 lines | ~102 |
+| 15:17 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | expanded (+24 lines) | ~1410 |
+| 15:17 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | 1→3 lines | ~506 |
+| 15:18 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | inline fix | ~300 |
+| 15:18 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | inline fix | ~67 |
+
+## Session: 2026-04-24 15:19
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 15:23 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | expanded (+9 lines) | ~594 |
+| 15:24 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | 1→3 lines | ~96 |
+| 15:24 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | inline fix | ~335 |
+| 15:24 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | modified must() | ~155 |
+| 15:24 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | inline fix | ~194 |
+| 15:24 | Edited build/Makefile | expanded (+9 lines) | ~215 |
+| 15:26 | Edited build/Makefile | 3→2 lines | ~12 |
+| 15:26 | Built EPUB 3 from 27 chapters + updated Makefile to --to epub3 --split-level=1 | build/Makefile, build/output/the-inverted-stack.epub | 288 KB EPUB 3 | ~1500 |
+| 15:26 | Session end: 7 writes across 2 files (ch12-crdt-engine-data-layer.md, Makefile) | 6 reads | ~20892 tok |
+| 15:29 | Edited chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | inline fix | ~239 |
+| 15:30 | Edited chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | inline fix | ~248 |
+| 15:30 | Edited chapters/part-3-reference-architecture/ch13-schema-migration-evolution.md | 1→3 lines | ~522 |
+| 15:31 | Session end: 10 writes across 3 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md) | 6 reads | ~21972 tok |
+| 15:32 | Created build/audiobook.py | — | ~3230 |
+| 15:34 | Session end: 11 writes across 4 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py) | 9 reads | ~45930 tok |
+| 15:36 | Edited chapters/part-3-reference-architecture/ch14-sync-daemon-protocol.md | expanded (+23 lines) | ~692 |
+| 15:36 | Edited chapters/part-3-reference-architecture/ch14-sync-daemon-protocol.md | inline fix | ~271 |
+| 15:37 | Edited chapters/part-3-reference-architecture/ch14-sync-daemon-protocol.md | 1→3 lines | ~535 |
+| 15:39 | Session end: 14 writes across 5 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 10 reads | ~47534 tok |
+| 15:43 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | modified required() | ~391 |
+| 15:43 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~151 |
+| 15:43 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | expanded (+6 lines) | ~1034 |
+| 15:44 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | "s integrity guarantees an" → "s DPDP Act erasure right," | ~234 |
+| 15:44 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 1→3 lines | ~389 |
+| 15:51 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | expanded (+20 lines) | ~1832 |
+| 15:51 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | 1→3 lines | ~446 |
+| 15:52 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | expanded (+8 lines) | ~693 |
+| 15:52 | Session end: 22 writes across 7 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 13 reads | ~89153 tok |
+| 15:52 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | 6→5 lines | ~374 |
+| 15:53 | Session end: 23 writes across 7 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 13 reads | ~89553 tok |
+| 15:55 | Session end: 23 writes across 7 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 13 reads | ~89553 tok |
+| 16:00 | Edited build/audiobook.py | expanded (+17 lines) | ~203 |
+| 16:00 | Edited build/audiobook.py | modified _heading_sub() | ~215 |
+| 16:00 | Edited build/audiobook.py | modified _ensure_period() | ~283 |
+| 16:00 | Edited build/audiobook.py | modified synth_chunk() | ~488 |
+| 16:00 | Edited build/audiobook.py | modified enumerate() | ~222 |
+| 16:01 | Edited build/audiobook.py | modified exists() | ~409 |
+| 16:01 | Edited build/audiobook.py | modified len() | ~257 |
+| 16:02 | Session end: 30 writes across 7 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 13 reads | ~91630 tok |
+| 16:02 | Session end: 30 writes across 7 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 13 reads | ~91630 tok |
+| 16:12 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | expanded (+6 lines) | ~575 |
+| 16:12 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | inline fix | ~24 |
+| 16:12 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | inline fix | ~187 |
+| 16:13 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | 10→11 lines | ~123 |
+| 16:13 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | 1→5 lines | ~326 |
+| 16:13 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | GenerateJoinerBundleAsync() → IssueJoinerAttestationAsync() | ~67 |
+| 16:14 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | modified if() | ~311 |
+| 16:14 | Edited chapters/part-4-implementation-playbooks/ch17-building-first-node.md | modified OnLoadAsync() | ~717 |
+| 16:17 | Edited build/audiobook.py | expanded (+23 lines) | ~374 |
+| 16:17 | Edited build/audiobook.py | expanded (+7 lines) | ~209 |
+| 16:18 | Edited build/audiobook.py | modified items() | ~486 |
+| 16:18 | Edited build/audiobook.py | modified exists() | ~172 |
+| 16:18 | Edited build/audiobook.py | 2→2 lines | ~33 |
+| 16:18 | Session end: 43 writes across 8 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 16 reads | ~109267 tok |
+| 16:19 | Session end: 43 writes across 8 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 16 reads | ~109267 tok |
+| 16:19 | Session end: 43 writes across 8 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 16 reads | ~109267 tok |
+| 16:22 | Edited chapters/part-4-implementation-playbooks/ch18-migrating-existing-saas.md | expanded (+24 lines) | ~1112 |
+| 16:23 | Edited chapters/part-4-implementation-playbooks/ch18-migrating-existing-saas.md | AddSunfishFeatureManagement() → AddFeatureManagement() | ~469 |
+| 16:23 | Edited chapters/part-4-implementation-playbooks/ch18-migrating-existing-saas.md | expanded (+21 lines) | ~354 |
+| 16:24 | Edited build/audiobook.py | expanded (+17 lines) | ~415 |
+| 16:24 | Edited build/audiobook.py | 2→5 lines | ~115 |
+| 16:24 | Edited build/audiobook.py | modified resolve_preset() | ~182 |
+| 16:24 | Edited build/audiobook.py | modified exists() | ~157 |
+| 16:24 | Edited build/audiobook.py | 2→6 lines | ~92 |
+| 16:25 | Session end: 51 writes across 9 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 18 reads | ~125422 tok |
+| 16:29 | Edited chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md | 12→12 lines | ~531 |
+| 16:30 | Edited chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md | expanded (+14 lines) | ~506 |
+| 16:31 | Edited chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md | expanded (+26 lines) | ~1775 |
+| 16:31 | Edited chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md | expanded (+23 lines) | ~663 |
+| 16:36 | Session end: 55 writes across 10 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 19 reads | ~137391 tok |
+| 16:39 | Created build/m4b.py | — | ~1622 |
+| 16:39 | Edited build/Makefile | expanded (+8 lines) | ~31 |
+| 16:39 | Session end: 57 writes across 11 files (ch12-crdt-engine-data-layer.md, Makefile, ch13-schema-migration-evolution.md, audiobook.py, ch14-sync-daemon-protocol.md) | 19 reads | ~139046 tok |
+
+## Session: 2026-04-24 16:40
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-24 16:41
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-24 16:42
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:42 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | 2→6 lines | ~142 |
+| 16:42 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+6 lines) | ~152 |
+
+## Session: 2026-04-24 16:42
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-24 16:42
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:42 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+6 lines) | ~208 |
+| 16:42 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+7 lines) | ~244 |
+| 16:43 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | 6→11 lines | ~250 |
+| 16:43 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+11 lines) | ~310 |
+| 16:43 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+11 lines) | ~369 |
+| 16:44 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | expanded (+43 lines) | ~932 |
+| 16:44 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | 15→18 lines | ~278 |

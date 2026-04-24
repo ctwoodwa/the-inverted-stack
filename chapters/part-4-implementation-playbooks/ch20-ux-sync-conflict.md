@@ -42,7 +42,11 @@ shift to amber or red.
 engine and sync daemon are running and the last self-check passed. Amber means a degraded
 condition — disk near capacity, sync daemon restarting, or a schema migration in progress.
 Red means the node cannot accept writes. A red node health indicator is rare and always
-requires user action.
+requires user action. The most common cause is credential revocation under the Chapter 15
+rekeying flow. When revocation fires, the node displays a plain-language prompt rather than a
+technical error: "Your access credentials have been updated. Sign in again to continue
+syncing." The message never names the rekeying epoch, the joiner attestation, or the
+underlying cryptographic state — the user needs to act, not to understand the protocol.
 
 **Link status** signals the state of connectivity to the team. Green means at least one peer
 is reachable and gossip is flowing. Amber means the relay is reachable but no peers are
@@ -95,6 +99,12 @@ Staleness thresholds and UX treatment for the four standard data classes:
 | Scheduled appointments | 10 minutes | Calendar freshness badge; conflicts surfaced on reconnect |
 | Team membership | 24 hours | Silent; surfaced only at a role-dependent action |
 
+`Sunfish.UIAdapters.Blazor.SunfishFreshnessBadge` renders the per-record freshness indicator
+for any data class. Bind it to the AP/CP classification configured in `Sunfish.Kernel.Sync`;
+the badge computes staleness against the configured threshold and updates its state without
+additional application code. Do not hand-roll freshness timers — stale-window edge cases
+(clock skew, daylight-saving boundaries, suspend/resume) are handled by the component.
+
 Resource availability is the tightest threshold because double-booking a resource causes
 immediate, concrete harm. When the node cannot confirm freshness within the 5-minute window,
 the booking UI shows an amber indicator on the affected resource and blocks the confirm action
@@ -141,6 +151,12 @@ The distinction between pending and failed matters enormously. A user who sees a
 spinner will wait. A user who sees a red "Review" indicator knows they have a decision to
 make. Never leave a failed write in the pending visual state — the circuit breaker result is
 deterministic and arrives as soon as the node reconnects.
+
+`Sunfish.UIAdapters.Blazor.SunfishOptimisticButton` implements the three-state lifecycle. Wire
+it to a write action; it handles the transition from idle to pending to confirmed, and opens
+the conflict inbox on a failed state. Do not implement button-state transitions by hand — the
+component handles the circuit-breaker signalling and the timeout recovery that a bespoke
+implementation will miss.
 
 ```
 // Illustrative — not runnable (pre-1.0 API)
@@ -192,6 +208,13 @@ user who resolved it, and the timestamp. Do not let any conflict resolution pass
 system without a corresponding log entry — the audit requirement is non-negotiable for the
 enterprise customers Chapter 19 describes.
 
+`Sunfish.UIAdapters.Blazor.SunfishConflictList` renders the grouped inbox, the per-group
+resolution affordances, and the "resolve all similar" bulk action. It logs every resolution via
+`Sunfish.Kernel.Sync` without additional wiring. Configure merge rules per record type through
+the component's manifest; the component enforces that the user chooses from declared rules
+only, preventing the common mistake of letting end-users select arbitrary merge strategies
+that the data model does not support.
+
 ```mermaid
 flowchart TD
     RC[Node Reconnects] --> CQ[Quarantine Queue]
@@ -214,11 +237,16 @@ is a common mistake. Each mode has a different implication for what the user can
 the system is doing on their behalf.
 
 **Full offline** — the node has no connectivity to peers or relay. The node operates at full
-fidelity. AP-class edits apply immediately. CP-class edits are blocked with a clear
-explanation that avoids technical terminology: "This action requires a connection to your
-team. Your other changes are saved locally and will sync when you reconnect." No degraded banner appears. The application does not enter a special mode. The data freshness indicator
-shifts to amber or red depending on how long the node has been offline, but the application
-chrome is otherwise unchanged.
+fidelity. This is not an exception state. For many deployments — rural clinics in sub-Saharan
+Africa, legal practices in tier-3 Indian cities, field offices in the Andes — full offline is
+the normal operating condition, and connectivity is the exception. The UX treatment must
+reflect that reality: no degraded banner, no "offline mode" label, no implied apology for the
+state the user is most often in. AP-class edits apply immediately. CP-class edits are blocked
+with a clear explanation that avoids technical terminology: "This action requires a connection
+to your team. Your other changes are saved locally and will sync when you reconnect." The
+application does not enter a special mode. The data freshness indicator shifts to amber or red
+depending on how long the node has been offline, but the application chrome is otherwise
+unchanged.
 
 **Partial connectivity** — the relay is reachable but no peers are directly connected. Gossip
 continues via relay, so writes propagate eventually. The link status indicator shifts to amber.
@@ -239,6 +267,17 @@ understand what is about to happen before it happens.
 The quarantine queue surface is a one-sentence count with a single review action. It is not a
 modal. It is not a blocker. If the user dismisses it, sync completes and any conflicts land
 in the conflict inbox. The count is a courtesy, not a gate.
+
+**Unexpected shutdown** — the node was terminated by power loss or OS kill rather than a clean
+shutdown. On next launch, the node validates the last write-ahead checkpoint and replays any
+pending writes from the CRDT log. The UX surfaces this as a short one-sentence status during
+relaunch — "Restoring your work from the last session" — and opens the workspace as soon as
+replay completes. Do not show a progress bar unless the replay takes more than two seconds.
+Do not present a crash dialog; the CRDT log is the source of truth and the session resumes
+exactly where it stopped. This failure mode matters most in markets with unreliable grid power
+— Nigeria, Pakistan, parts of Southeast Asia — where users experience unexpected shutdowns
+often enough that a crash dialog would become a recurring irritation. The correct treatment is
+invisible recovery, surfaced only when recovery takes long enough to notice.
 
 ## The First-Run Experience
 
@@ -286,14 +325,68 @@ backup. This takes about 2 minutes." Offer the most common options — a local f
 Dropbox — as concrete choices. Do not present a generic file-picker and expect the user to
 navigate to the right place.
 
-## The Non-Technical Trust Gap
+For regulated markets the backup target carries jurisdictional weight. Russian deployments
+under 242-FZ require a backup inside Russian territory. Indian deployments under the DPDP Act
+require defensible classification of personal data crossing borders. UAE deployments under DPL
+2022 require clarity on whether the chosen location sits inside or outside a free zone. Surface
+the chosen target's jurisdiction alongside the path — "Backup location: OneDrive (Microsoft,
+United States)" rather than a raw file URL — and, when the team's declared jurisdiction
+requires in-country storage, present a labelled list of in-country targets and block selection
+of out-of-jurisdiction options with a short explanation: "This location stores data outside
+[jurisdiction]. Your team's policy requires a local target." A silent failure at this step is a
+compliance incident, not a UX inconvenience.
 
-Architecture does not sell itself. A legal practice, a medical clinic, or an architecture
-studio will not evaluate software on the merits of its CRDT engine. The adoption barriers for
-non-technical buyers are trust, perceived complexity, and uncertainty about support [1]. These
-are UX problems before they are marketing problems.
+## Accessibility as a Contract
 
-Four elements close the non-technical trust gap:
+Every indicator, badge, and status surface above carries an accessibility contract that the
+local-first architecture must honour as rigorously as it honours the write path. The three
+always-visible indicators, the freshness badges, the optimistic buttons, the conflict inbox,
+and the first-run flow all convey state to users whose primary access channel may be a screen
+reader, a keyboard, or a high-contrast display. Four contracts apply across every component in
+the Sunfish UI adapter library and any custom UI a node author ships.
+
+**Status surfaces announce semantically.** Every indicator component exposes its state through
+ARIA: `role="status"` with `aria-live="polite"` for ambient changes such as freshness
+transitions and optimistic-write confirmations; `role="alert"` with `aria-live="assertive"` for
+states the user must act on, such as a red node health indicator or a revoked-credential
+message. Do not use colour alone to signal state. Every indicator pairs colour with a text
+equivalent surfaced through `ISunfishIconProvider`, and the text equivalent ships in the
+active locale's language — not the development locale.
+
+**Interactive elements are keyboard-reachable.** The conflict inbox, the optimistic buttons,
+and the first-run flow all support tab order, Enter and Space activation, and Escape-to-dismiss
+where dismissal is allowed. The "resolve all similar" affordance reaches without a pointer
+device. Focus management after a conflict resolution returns focus to the next pending group,
+not to the page header — a keyboard user resolves an inbox without re-tabbing through
+application chrome on every action.
+
+**Component metadata declares accessibility commitments.** `IUiBlockManifest` exposes each
+component's ARIA role, announced state transitions, and keyboard contract. A node author who
+embeds `SunfishConflictList` inherits the contract without re-declaring it. Custom components
+that replace a Sunfish UI adapter must implement `IUiBlockManifest` with equivalent
+commitments — the platform refuses to register a component declaring a weaker accessibility
+contract than the component it replaces.
+
+**Freshness and failure messages read as plain language.** Text equivalents surfaced to
+assistive technology use the same plain-language register as the visible text. A screen-reader
+user hearing "Availability not confirmed. Reconnect to complete this booking" receives the
+same information, in the same register, as a sighted user. Do not let visible text read as
+plain-language while the ARIA label falls back to technical terminology — the accessibility
+channel is not a second-class surface, and a dual-track UX fails the Complexity Hiding
+Standard as surely as a technical banner would.
+
+These contracts operationalise the Chapter 11 UI block framing. The UI adapter library
+enforces them by default; a custom component that bypasses the adapter must implement them
+explicitly or fail manifest validation at registration time.
+
+## UX for the Non-Technical Adopter
+
+The UX decisions above assume a user who can interpret indicators, freshness labels, and
+conflict inboxes. Non-technical buyers — legal practices, medical clinics, architecture
+studios — evaluate software through a different lens. The adoption barriers are trust,
+perceived complexity, and uncertainty about support [1]. These are UX problems before they are
+marketing problems, and the UX surfaces above do not automatically close them. Four UX
+commitments do.
 
 **A champion.** One technically-inclined team member who understands the model and can explain
 it to colleagues in terms they trust. Design the product onboarding to identify and cultivate
@@ -316,21 +409,24 @@ contact. Make it visible in the application: a "Contact support" link that opens
 draft or a support chat. Non-technical users will not file tickets; they will abandon the
 application if they cannot find a human.
 
-Three sentences replace all infrastructure vocabulary in every user-facing surface:
+Three sentences replace every infrastructure term in every user-facing surface a non-technical
+user sees:
 
 > Your data lives on your computers, in your office.
 > The app keeps working when your internet is out.
 > If we shut down, your software and your data are still yours.
 
-Place them in the product landing page, the first-run welcome screen, and the help
-documentation — not in the application chrome. A team member who asks a question the champion
-cannot answer must be able to find them.
+Surface them on the first-run welcome screen and the help documentation — not in the
+application chrome. A team member who asks a question the champion cannot answer must be able
+to find them.
 
-The trust gap is not closed in the first session. It closes over the first three weeks of
+The trust gap does not close in the first session. It closes over the first three weeks of
 use, as the team experiences the application working offline, as conflicts resolve without
-drama, and as the champion fields fewer and fewer questions. Build the UX to support that
-arc. Make the first week easy for the champion, and make the first month unremarkable for
-everyone else.
+drama, and as the champion fields fewer and fewer questions. The UX supports that arc by
+staying out of the way — surfacing state when it matters, silent when it does not, and plain-
+language wherever the user reads it. An application that meets the Complexity Hiding Standard
+is one the non-technical team stops thinking about. That absence of thought is the sign the
+UX has done its work.
 
 
 ---
