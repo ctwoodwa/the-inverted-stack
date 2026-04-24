@@ -1,6 +1,6 @@
-# Chapter 19 — Shipping to Enterprise
+﻿# Chapter 19 — Shipping to Enterprise
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~3,500 words -->
 <!-- Source: v13 §16, v5 §5, Sunfish docs/specifications/mdm-config-schema.md, Sunfish docs/specifications/air-gap-deployment.md -->
@@ -36,7 +36,7 @@ The reference implementation targets two packaging formats, one per major manage
 **Windows: MSIX or signed MSI.** The installer provisions the MAUI host application and registers the sync daemon as a Windows Service. The Windows Service registration means the daemon starts before any user logs in, survives user logoff, and can be restarted by the Service Control Manager on failure. Use the `<ServiceInstall>` element in a WiX installer to declare the service, or the MSIX `<uap5:StartupTask>` extension for store-distributed packages. Silent install with no UI:
 
 ```bash
-msiexec /i Sunfish.msi /quiet /norestart DATADIR="C:\ProgramData\Sunfish\TeamData"
+msiexec /i Sunfish.msi /qn /norestart INSTALLFOLDER="C:\ProgramData\Sunfish" SERVICESTART=1
 ```
 
 **macOS: signed and notarized .pkg or .dmg.** The package installs a `.app` bundle for the MAUI foreground application and a `launchd` launch agent for the sync daemon. The launch agent plist goes to `/Library/LaunchDaemons/` (system context, no user login required) rather than `~/Library/LaunchAgents/`. This distinction matters for enterprise deployment: system-context daemons run under MDM supervision, which is where the compliance hooks live.
@@ -126,7 +126,7 @@ Publish the `.msi` or `.intunewin` package to Intune. Add a detection rule that 
 
 ```
 Detection type: Registry
-Key path: HKLM\SYSTEM\CurrentControlSet\Services\SunfishSync
+Key path: HKLM\SYSTEM\CurrentControlSet\Services\SunfishLocalNode
 Value name: (exists)
 ```
 
@@ -138,7 +138,7 @@ Upload the `.pkg` to Jamf Pro as a package. Create a policy scoped to a smart co
 
 ```bash
 #!/bin/bash
-launchctl list | grep com.sunfish.sync && echo "installed" || exit 1
+launchctl list | grep com.sunfish.local-node-host && echo "installed" || exit 1
 ```
 
 ### Pre-Seeded Configuration
