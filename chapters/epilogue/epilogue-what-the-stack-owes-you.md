@@ -47,6 +47,8 @@ GDPR Article 17 — the right to erasure — is partially addressed by crypto-sh
 
 The analytics problem has no answer here. How do you run product analytics on local-first data without shipping it all to a server? How do you understand aggregate user behavior without centralizing the events that generate it? The architecture is silent on this because the author does not have a credible answer. If your product depends on traditional product analytics, you will feel this gap before the end of Phase 1.
 
+The mobile platform question is unresolved. iOS and Android impose constraints on background processing, keystore behavior, and filesystem access that the local-node architecture has not yet solved for. A sync daemon that needs to run continuously encounters App Store restrictions on background execution. A local encrypted database that must survive across app launches faces platform-specific keystore semantics that differ materially from the desktop model. The architecture is designed desktop-first. The path to mobile as a first-class deployment target requires platform-specific engineering that has not been done, and the tradeoffs — battery, background execution limits, user-facing permission prompts — have not been specified. A field operations crew whose primary computing surface is an iPhone does not yet have a complete answer here.
+
 Naming these is not a confession of failure. Every architecture has a horizon. The value of honesty about the horizon is that you know where the map ends before you need it.
 
 ---

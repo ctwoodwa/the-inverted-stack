@@ -41,13 +41,13 @@ Use Testcontainers with toxiproxy (or an equivalent network proxy) to inject fau
 - Relay becomes unreachable during DELTA_STREAM. Assert that the sender queues deltas locally and retransmits on reconnect.
 - GOSSIP_PING misses three consecutive intervals due to packet loss. Assert that the node enters a degraded-but-consistent state and recovers without manual intervention.
 
-The pass condition for every fault injection test is not "the system does not crash." It is "the system recovers to a consistent state." Crashing and restarting is not recovery. Recovery means the CRDT state is identical to what it would have been without the fault.
+The pass condition for every fault injection test is not "the system does not crash" — it is "the system recovers to a consistent CRDT state identical to what it would have been without the fault."
 
 ### Level 4 — Deterministic Simulation
 
 Mixed-version nodes, epoch transitions while a node is offline, and Flease edge cases cannot be tested reliably with real time. Real-time tests are non-deterministic: a lease expiry that takes 30 seconds in production cannot be exercised in CI at real speed without making the test suite unusable. A simulation harness with a controllable clock and deterministic network scheduling makes these scenarios fast, repeatable, and exhaustive.
 
-The simulation harness is not provided out of the box. Teams implementing this architecture must build it. The investment is significant — typically two to four weeks for an engineer who understands the protocol. It is justified: every production incident in a distributed system that a simulation harness would have caught represents a proportionally larger cost in incident response, customer impact, and repair time.
+The simulation harness is not provided out of the box. Teams implementing this architecture must build it — the investment is typically two to four weeks, and justified: simulation catches failure modes that would otherwise surface as production incidents.
 
 Three scenario families belong at Level 4: mixed-version node sync (one node at schema N, one at schema N-1), epoch transitions while a node is offline, and Flease edge cases such as a lease holder disconnecting mid-write. Each of these requires precise control over timing and message ordering that real-time tests cannot provide.
 
@@ -55,7 +55,7 @@ Three scenario families belong at Level 4: mixed-version node sync (one node at 
 
 After Levels 1–4 pass, run chaos testing in a staging environment under production-representative load. Randomly kill processes, introduce latency spikes, flip nodes offline, and corrupt network links. The goal is not to verify known properties — it is to discover failure modes that were not anticipated at Level 4.
 
-Chaos testing requires a multi-node staging environment. It cannot run meaningfully against a single-node setup. The staging environment must be loaded at a traffic level that reflects median production usage, not idle or synthetic load. Chaos under idle conditions finds different failures than chaos under load.
+Chaos testing requires a multi-node staging environment loaded at a traffic level that reflects median production usage. Chaos under idle conditions finds different failures than chaos under load.
 
 Document every anomaly found during chaos testing, whether or not it causes a visible failure. Anomalies are leading indicators. A node that recovers but takes 47 seconds instead of the expected 3 seconds is not failing — it is about to fail under a slightly different condition.
 
@@ -79,7 +79,7 @@ Growth tests that fail are not test failures in the normal sense — they are ar
 
 ## Section 3: Mandatory Scenarios Before First Production Release
 
-Every scenario in this section must pass before the system ships. These are not representative samples — they are the minimum set. A system that passes all scenarios below is not guaranteed to be correct, but a system that fails any of them is guaranteed to have production incidents that were preventable.
+Every scenario below must pass before first production release. These are the minimum set, not representative samples.
 
 ### Partition and Reconnect
 
@@ -130,7 +130,7 @@ The sum-to-zero test must verify the invariant across the complete account set, 
 
 ## Section 4: CI Configuration Guidance
 
-A team starting with this architecture should configure CI in four tiers that reflect the cost and speed of each testing level.
+Configure CI in four tiers that reflect the cost and speed of each testing level.
 
 **Per pull request:** Run Level 1 (property-based) and Level 2 (integration with real dependencies). These tests are fast enough to gate merges. Level 1 tests should complete in under 5 minutes. Level 2 tests, including Testcontainers startup, should complete in under 15 minutes. If either suite exceeds these targets, profile and optimize before adding more tests.
 
@@ -142,4 +142,4 @@ A team starting with this architecture should configure CI in four tiers that re
 
 **Infrastructure notes:** Testcontainers requires Docker in CI. Verify Docker availability before adding Level 2 or Level 3 tests to an existing CI pipeline — discovering this dependency after the tests are written wastes time. The simulation harness at Level 4 is not a commodity tool; it is custom infrastructure that the team must design and build. The design should be reviewed against the protocol specification in Appendix A before implementation begins. A simulation harness built on an incomplete understanding of the handshake will simulate the wrong system.
 
-The total CI investment for a team implementing all five levels is significant. It is not optional. The failure modes that these tests exercise are the failure modes that will occur in production. The question is not whether to test them — it is whether to find them in CI or in a customer's production environment.
+The total CI investment for a team implementing all five levels is significant and not optional. The failure modes these tests exercise will occur in production. The question is whether they surface in CI or in a customer's environment.

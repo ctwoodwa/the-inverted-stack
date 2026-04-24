@@ -60,7 +60,7 @@ flowchart LR
 
 Nodes operating offline in AP mode accumulate writes against AP records freely. CP-class writes attempted offline are queued in the circuit breaker quarantine queue. On reconnect, the circuit breaker attempts to acquire the required lease before promoting each queued CP write to the shared event log. A CP write that cannot acquire a lease — because another node already holds the lease and committed a conflicting write — surfaces to the user as a conflict requiring resolution, not a silent merge.
 
-The boundary between AP and CP is not a guess. It is a domain decision that belongs in the semantic layer. The data layer does not know which record classes are CP; that designation lives in the `IStreamDefinition` each plugin registers when it declares its CRDT streams and bucket contributions. A stream marked CP routes its writes through `Sunfish.Kernel.Lease` for distributed lease coordination before any write reaches the CRDT document store.
+The boundary between AP and CP is not a guess. It is a domain decision that belongs in the semantic layer. The data layer does not know which record classes are CP; that designation lives in the plugin's stream definition registered with the kernel. CP-designated streams route writes through distributed lease coordination via `Sunfish.Kernel.Lease` before any write reaches the CRDT document store. <!-- illustrative — the specific kernel interface through which plugins declare CP/AP designation is pre-1.0 -->
 
 ---
 
@@ -70,9 +70,9 @@ The `ICrdtEngine` interface in `Sunfish.Kernel.Crdt` exposes what the sync proto
 
 The abstraction carries an engine name and version string that appear in diagnostics, handshake capability advertisements, and stale peer recovery logs. An implementation swap from YDotNet to Loro does not require a schema epoch bump because the event log stores domain events, not CRDT wire format. The CRDT document is a live working surface. The append-only event log is the source of truth from which that surface can be rebuilt. Swapping the engine rebuilds CRDT working documents from the event log under the new engine; it does not invalidate the event log itself.
 
-**YDotNet** is the default production backend. Yjs — the JavaScript original — is the most widely deployed CRDT library in production, used across collaborative editors and document platforms [3]. YDotNet provides .NET bindings to `yrs`, the Rust rewrite of the Yjs core. The bindings are well-maintained, the documentation is thorough, and the behavior under conflict conditions is extensively tested. YDotNet supports the snapshot, delta, and version-vector surfaces the sync protocol requires. Its garbage collection approach is emergent rather than compaction-first: Yjs/yrs accumulates tombstones and historical operations, and GC requires all peers to have acknowledged operations before they can be pruned. This works correctly but produces documents that grow with operation history.
+**YDotNet** is the default production backend. YDotNet provides .NET bindings to `yrs`, the Rust rewrite of the Yjs core [3]. The bindings are well-maintained, the documentation is thorough, and the behavior under conflict conditions is extensively tested. YDotNet supports the snapshot, delta, and version-vector surfaces the sync protocol requires. Its garbage collection approach is emergent rather than compaction-first: Yjs/yrs accumulates tombstones and historical operations, and GC requires all peers to have acknowledged operations before they can be pruned. This works correctly but produces documents that grow with operation history.
 
-**Loro** is the aspirational primary engine. It was designed with compaction as a first-class architectural concern from the outset, not bolted on afterward [4]. Loro’s compact encoding and shallow snapshot model reduce memory footprint for high-churn documents and align directly with the three-tier GC policy described below. The `loro-cs` bindings at `github.com/sensslen/loro-cs` are actively maintained as a cross-platform NuGet package tracking `loro-core` with a small version lag. The current bindings cover the core CRDT surface with minimal coverage of the extended snapshot and delta APIs. Engine selection requires evaluating `loro-cs` against the required API surface — snapshot restoration, version vector comparison, and delta production under concurrent edit conditions. A small gap warrants contributing the missing bindings rather than falling back to YDotNet.
+**Loro** is the aspirational primary engine. It was designed with compaction as a first-class architectural concern from the outset, not bolted on afterward [4]. Loro’s compact encoding and shallow snapshot model reduce memory footprint for high-churn documents and align directly with the three-tier GC policy described below. The `loro-cs` bindings at `github.com/sensslen/loro-cs` exist as a NuGet package tracking `loro-core` but currently cover only the core CRDT surface; the snapshot restoration, version vector comparison, and delta production APIs required by the sync protocol are not yet exposed. Completing the binding layer is a multi-week engineering effort. Sunfish uses YDotNet as the default engine while the `loro-cs` surface matures; the `ICrdtEngine` abstraction keeps the transition reversible.
 
 **Automerge** is excluded from the current evaluation not because its design is inferior — the Automerge Rust core is an excellent reference implementation [5] — but because it lacks a first-class .NET binding that covers the sync protocol surface. A native .NET CRDT implementation was rejected: the correctness maintenance burden across the edge cases the sync protocol exercises is substantial, and it diverts capacity from domain logic.
 
@@ -89,11 +89,12 @@ public sealed class ProjectDocumentService
         _engine = engine;
     }
 
-    public async Task<CrdtDocument> OpenOrCreateAsync(
-        string documentId, CancellationToken ct)
-    {
-        return await _engine.OpenOrCreateAsync(documentId, ct);
-    }
+    public ICrdtDocument CreateDocument(string documentId)
+        => _engine.CreateDocument(documentId);
+
+    public ICrdtDocument OpenFromSnapshot(
+        string documentId, ReadOnlyMemory<byte> snapshot)
+        => _engine.OpenDocument(documentId, snapshot);
 }
 ```
 
@@ -154,13 +155,13 @@ public sealed class InvoicePaymentHandler
 
     public async Task HandleAsync(InvoicePaymentReceived evt, CancellationToken ct)
     {
-        await _postingEngine.PostAsync(
-            idempotencyKey: evt.EventId,
-            postings: [
-                new Posting(AccountIds.AccountsReceivable, -evt.Amount),
-                new Posting(AccountIds.CashAndEquivalents, +evt.Amount),
-            ],
-            ct);
+        var tx = new Transaction(
+            TransactionId: Guid.NewGuid(),
+            IdempotencyKey: evt.EventId,
+            Postings: [ /* balanced debit and credit postings */ ],
+            CreatedAt: DateTimeOffset.UtcNow);
+
+        await _postingEngine.PostAsync(tx, ct);
     }
 }
 ```

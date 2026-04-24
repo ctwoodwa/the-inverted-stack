@@ -9,8 +9,6 @@
 
 This appendix provides ready-to-use worksheets for building a deployment-specific threat model for an inverted-stack system. Chapter 15 describes the full security architecture — the four defensive layers, the DEK/KEK key hierarchy, the role attestation flow, and the key compromise incident response procedure. These worksheets operationalize that architecture. Fill them in before your first production deployment, update them when the asset inventory changes, and use the incident response template whenever a key compromise is detected or suspected.
 
-Work through the sections in order. The asset inventory anchors every downstream decision: you cannot scope an actor taxonomy or an attack tree without knowing what you are protecting. The worked example in Section 3 provides a construction PM deployment as a concrete starting point. Adapt it — do not copy it. Your vertical, your regulatory requirements, and your threat actors are specific to you.
-
 ---
 
 ## Section 1 — Asset Inventory Template
@@ -28,7 +26,7 @@ Fill this table before starting the threat model exercise. Every row represents 
 | Relay ciphertext cache | Encrypted | Relay (operator-managed) | Operator | Medium (ciphertext only) |
 | MDM configuration | Internal | MDM system; node-config.json on endpoint | IT admin | Medium |
 
-**Customization guidance:** Add rows for domain-specific assets. Construction PM deployments should add bid documents, subcontractor contracts, and change order logs. Healthcare deployments should add patient records and consent forms. Legal deployments should add client communications and litigation strategy documents. Adjust sensitivity ratings to match regulatory requirements — HIPAA-covered entities must treat patient identifiers as Critical regardless of your team's internal classification.
+**Customization guidance:** Add domain-specific rows. Adjust sensitivity ratings to match regulatory requirements — HIPAA-covered entities must treat patient identifiers as Critical.
 
 **Classification definitions for this template:**
 
@@ -83,8 +81,6 @@ Add these rows to the standard asset inventory table:
 | Change order log | Compliance-grade | CRDT compliance tier (immutable) | System | Critical |
 | Project schedule | Team-internal | Local SQLCipher DB | Project manager | High |
 | Punch list items | Team-internal | Local SQLCipher DB | Field supervisor | Medium |
-
-**Note on the change order log:** Construction projects face contract disputes where the integrity of the change order record is material evidence. The compliance tier CRDT configuration makes this log append-only and cryptographically linked. Any attempt to delete or modify existing entries produces a detectable conflict. Treat this asset as Critical even though the individual entries may appear routine.
 
 ### Vertical-Specific Actor Additions
 
@@ -144,13 +140,10 @@ Execute these steps in order. Do not skip steps. Each step has a named owner and
 
 ### Data-at-Risk Scope Calculation
 
-Run this calculation to determine what to disclose in user notifications:
-
 - **Start date:** Date the compromised KEK was created. Check the keystore creation timestamp — do not rely on employee recollection.
 - **End date:** Date the revocation broadcast was confirmed at the relay.
 - **Scope:** All documents in roles protected by the compromised KEK during the window between start date and end date.
 - **Excluded from scope:** Documents in roles not protected by the compromised KEK. Documents created after the revocation date (these use the new KEK).
-- **Note on offline nodes:** A node that was offline during the revocation window will receive `ERR_KEY_REVOKED` on its next reconnect. It cannot access new documents until it re-authenticates. It could not share plaintext with the attacker during the offline window — relay payloads are encrypted end-to-end.
 
 ### User Notification Template
 
