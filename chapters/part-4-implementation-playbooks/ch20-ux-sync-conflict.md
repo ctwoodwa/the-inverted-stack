@@ -56,7 +56,7 @@ the data classes in use. Under normal conditions this indicator is invisible —
 when a threshold is close to expiring or has expired. The staleness thresholds are not
 arbitrary; they reflect the AP/CP classification from Chapter 12.
 
-`Sunfish.Foundation.LocalFirst` and `Sunfish.UI.Core` together provide `SunfishNodeHealthBar`,
+`Sunfish.Foundation.LocalFirst` and `Sunfish.UICore` together provide `SunfishNodeHealthBar`,
 which implements all three indicators. Wire it into your application shell and configure the
 thresholds; the component handles the rest. Do not build a custom status bar from scratch —
 the platform component has been hardened against edge cases that a bespoke implementation

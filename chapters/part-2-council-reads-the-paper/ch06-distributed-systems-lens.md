@@ -169,4 +169,4 @@ Convergence is a property of data structures. Correctness is a property of appli
 
 ## References
 
-[1] B. Kolbeck, M. Hogqvist, J. Stender, and F. Hupfeld, "Flease: Clash-free Lease Coordination without State Replication," in *ICDCS 2011*, Minneapolis, MN, 2011. <!-- CLAIM: verify full Flease citation — confirm it is Kolbeck et al. ICDCS 2011, not Hupfeld/Cortes FastPaxos -->
+[1] B. Kolbeck, M. Hogqvist, J. Stender, and F. Hupfeld, "Flease: Clash-free Lease Coordination without State Replication," in *Proc. 31st IEEE Int. Conf. Distrib. Comput. Syst. (ICDCS)*, Minneapolis, MN, USA, Jun. 2011, pp. 631–640.

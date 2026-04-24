@@ -248,8 +248,8 @@ Know which packages become available as you advance through phases. Do not reach
 | Package | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
 |---|---|---|---|---|
 | `Sunfish.Foundation` | Yes | Yes | Yes | Yes |
-| `Sunfish.UI.Core` | Yes | Yes | Yes | Yes |
-| `Sunfish.UI.Adapters.Blazor` | Yes | Yes | Yes | Yes |
+| `Sunfish.UICore` | Yes | Yes | Yes | Yes |
+| `Sunfish.UIAdapters.Blazor` | Yes | Yes | Yes | Yes |
 | `Sunfish.Blocks.*` | Yes | Yes | Yes | Yes |
 | `Sunfish.Foundation.LocalFirst` | Shadow read-only | Shadow + local writes | Full | Full |
 | `Sunfish.Kernel.Crdt` | No | Yes (AP domains) | Yes | Yes |

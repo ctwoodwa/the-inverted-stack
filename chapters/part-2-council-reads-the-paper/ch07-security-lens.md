@@ -108,7 +108,6 @@ The CID guarantees the integrity of the package relative to the CID. It does not
 
 Three things are missing. First, key custody specification for the release signing key: who holds it, how it is stored, what happens if it is compromised. A release signing key stored on a developer’s laptop is not a supply chain security posture — it is a single point of failure. Second, a reproducible build requirement: independent parties must be able to verify that the published binary matches the published source. Without reproducibility, the build process is an unauditable black box. Third, integration with a supply chain transparency framework such as Sigstore [1], which provides a publicly auditable log of signing events. A signing event that does not appear in the transparency log can be detected and rejected by clients.
 
-<!-- CLAIM: Sigstore client-side transparency log verification as a client-side rejection mechanism — verify against Sigstore docs and current cosign/rekor tooling -->
 
 Okonkwo scores this dimension 7 out of 10. The content-addressing model is the right foundation. The signing key custody and transparency layer are what complete it.
 

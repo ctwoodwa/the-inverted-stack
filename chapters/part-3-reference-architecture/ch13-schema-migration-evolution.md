@@ -51,7 +51,7 @@ The contract phase does not begin automatically when the compatibility window ex
 
 ### Dual-Write Safety
 
-During the expand phase, dual-write semantics must be consistent across all code paths that produce records. A code path that writes only the new field — because the developer forgot the dual-write requirement — produces records that old-schema nodes cannot interpret. The `ISchemaVersion` interface in `Sunfish.Kernel.Runtime` is where dual-write behavior is declared; the kernel enforces that all registered write paths for the affected record type comply with the current schema version’s dual-write policy before the expand phase activates. <!-- CLAIM: kernel enforcement of dual-write at ISchemaVersion registration — verify against Sunfish.Kernel.Runtime implementation -->
+During the expand phase, dual-write semantics must be consistent across all code paths that produce records. A code path that writes only the new field — because the developer forgot the dual-write requirement — produces records that old-schema nodes cannot interpret. The `ISchemaVersion` interface in `Sunfish.Kernel.Runtime` registers the schema version and its upcasting logic; dual-write consistency across all write paths is enforced by convention and code review rather than a runtime mechanism. A code path that writes only the new field produces records that old-schema nodes cannot interpret, making the expand phase unsafe to activate.
 
 ---
 
@@ -93,7 +93,7 @@ Bidirectional lenses allow two nodes at different schema versions to exchange re
 
 Lenses form a directed graph. Each directed edge between two consecutive schema versions carries a lens pair. To translate between non-adjacent versions, the sync daemon traverses the shortest path through the graph, composing lens functions in order. Version distance is a performance concern, not a correctness concern: a node that is three versions behind applies three composed lenses on receipt and transmission. The kernel caches composed lens chains per peer schema version to avoid recomputing the path on every delta.
 
-The reference design for bidirectional schema lenses is Ink and Switch’s Cambria project [1]. Cambria demonstrated that lenses can be declared as a data structure rather than hand-written code — a lens schema specifying field renames, type coercions, and structural transforms — and that the bidirectionality constraint can be checked mechanically rather than by inspection. The architecture follows the Cambria model: lenses are registered as declarative specifications through `ISchemaVersion`, and the kernel’s lens engine executes them. <!-- CLAIM: ISchemaVersion accepts declarative lens specifications in the Cambria model — verify against Sunfish.Kernel.Runtime -->
+The reference design for bidirectional schema lenses is Ink and Switch’s Cambria project [1]. Cambria demonstrated that lenses can be declared as a data structure rather than hand-written code — a lens schema specifying field renames, type coercions, and structural transforms — and that the bidirectionality constraint can be checked mechanically rather than by inspection. The architecture follows the Cambria model: lenses are registered through  as implementations of , and the kernel\'s  engine traverses and composes them. The current implementation requires lenses to be written as C# code rather than as pure declarative specifications — a pragmatic divergence from Cambria\'s data-driven approach that retains the bidirectionality and graph-composition properties.
 
 ### Lens Registration
 
