@@ -39,7 +39,7 @@ The administrator generates per-role symmetric keys, wraps each key with every q
 
 The sync daemon enforces subscription filtering before any event leaves the originating node. Non-subscribed nodes never receive events regardless of application-layer configuration or administrator error. The send-tier filtering invariant is the sync daemon's core access control gate, not an advisory policy.
 
-This layer provides protection even when the relay is compromised or colluding. A node without a subscription to a given bucket never receives events from that bucket — originating nodes refuse to send them. An attacker who compromises the relay sees only ciphertext of events that subscribing nodes requested.
+This layer provides protection even when the relay is compromised or colluding. An attacker who compromises the relay sees only ciphertext of events that subscribing nodes requested.
 
 ### Layer 4 — Circuit Breaker and Quarantine
 
@@ -104,7 +104,7 @@ Scheduled key rotation is a maintenance operation. Key compromise is an incident
 
 **DEK re-wrapping.** The system re-wraps every DEK owned by the affected role using the new KEK. The background job processes DEK blobs only, leaving document bodies unchanged. During re-wrapping, documents remain accessible to nodes that hold the current KEK. The old KEK is not discarded until all DEKs in scope are re-wrapped and new bundles are delivered to all authorized nodes.
 
-**Old KEK discard.** Once DEK re-wrapping completes and new bundles are delivered, the administrator triggers discard of the old KEK. `Sunfish.Kernel.Security` broadcasts a discard signal through the relay; each node zeros its in-memory copy of the old KEK and removes it from the OS keystore. A node that received the discard signal but has not yet received the new bundle is temporarily unable to decrypt documents in that role — this is the correct behavior. Partial access is not granted as a fallback.
+**Old KEK discard.** Once DEK re-wrapping completes and new bundles are delivered, the administrator triggers discard of the old KEK. `Sunfish.Kernel.Security` broadcasts a discard signal through the relay; each node zeros its in-memory copy of the old KEK and removes it from the OS keystore. A node that received the discard signal but has not yet received the new bundle cannot decrypt documents in that role — this is the correct behavior. Partial access is not granted as a fallback.
 
 **Revocation broadcast.** The relay receives a revocation event for the compromised key identifier. Subsequent connection attempts from any node presenting the revoked key are rejected at the handshake layer with a specific error code.
 
@@ -148,7 +148,7 @@ A local-first system that distributes application updates through a CDN has an u
 
 **Release signing key custody.** The CID must itself be signed by a legitimate release signing key. The integrity of the CID verification scheme depends entirely on the integrity of that key. The signing key is held in a hardware security module under multi-party authorization; signing operations require quorum approval. The key is never present in a CI/CD environment where build automation could extract it.
 
-**Sigstore transparency log.** All signing events are logged to Rekor, Sigstore's public transparency log [1]. A client that encounters a signed package whose signing event is absent from the transparency log rejects the package. Absence indicates either a very recent signing event that has not yet propagated — acceptable with a short hold period — or a signing event that was deliberately withheld, which indicates a rogue signing operation.
+**Sigstore transparency log.** All signing events are logged to Rekor, Sigstore's public transparency log [2]. A client that encounters a signed package whose signing event is absent from the transparency log rejects the package. Absence indicates either a very recent signing event that has not yet propagated — acceptable with a short hold period — or a signing event that was deliberately withheld, which indicates a rogue signing operation.
 
 **Reproducible builds.** Independent parties can reproduce the published binary from the published source and verify that the computed CID matches. Reproducible builds transform the signing key from the sole trust anchor into one of two independent verification paths. A compromise that modifies the binary but cannot also modify the published source is detectable by any party that performs the reproducibility check.
 
@@ -156,7 +156,7 @@ A local-first system that distributes application updates through a CDN has an u
 
 ## GDPR Article 17 and Crypto-Shredding
 
-GDPR Article 17 grants data subjects the right to erasure [1]. The compliance-tier CRDT operation log is immutable by design — tamper evidence for regulated industries depends on DAG continuity. Conventional deletion breaks the DAG. This creates a direct conflict between the architecture's integrity guarantees and Article 17's deletion obligation.
+GDPR Article 17 grants data subjects the right to erasure [3]. The compliance-tier CRDT operation log is immutable by design — tamper evidence for regulated industries depends on DAG continuity. Conventional deletion breaks the DAG. This creates a direct conflict between the architecture's integrity guarantees and Article 17's deletion obligation.
 
 The architecture resolves the tension through crypto-shredding. When an erasure request targets an operation record, the system destroys the DEK for that specific record. The operation entry remains in the log. Its content — the ciphertext — is permanently unreadable. The ciphertext becomes an unrecoverable stub: the bytes exist, but no key exists or ever will exist that can decrypt them.
 
@@ -178,7 +178,7 @@ The relay is a ciphertext router. It receives encrypted event payloads from sour
 
 **Relay and legal process.** A relay operator served with legal process can produce connection logs and message metadata. Content is not producible — the operator does not hold decryption keys. Organizations whose threat model includes legal process directed at the relay operator deploy a self-hosted relay and ensure that connection logs are subject to their own retention policies.
 
-**Traffic analysis resistance.** The current architecture does not implement constant-rate padding between nodes. Organizations whose threat model includes traffic analysis by a well-resourced adversary treat the relay as insufficient and implement application-layer obfuscation or operate the relay behind a mixnet. The architecture documents the limitation; the mitigation is an operator deployment choice outside the scope of `Sunfish.Kernel.Security`.
+**Traffic analysis resistance.** The current architecture does not implement constant-rate padding between nodes. Organizations whose threat model includes traffic analysis by a well-resourced adversary replace the relay with application-layer obfuscation or route it behind a mixnet. The architecture documents the limitation; the mitigation is an operator deployment choice outside the scope of `Sunfish.Kernel.Security`.
 
 ---
 
@@ -201,6 +201,6 @@ These properties hold under the threat model stated at the opening of this chapt
 
 [1] D. Wheeler, "Secure Programming HOWTO," ver. 3.72, 2015. [Online]. Available: https://dwheeler.com/secure-programs/
 
-[1] Sigstore Project, "Rekor: Transparency Log for Software Supply Chains," Linux Foundation, 2023. [Online]. Available: https://docs.sigstore.dev/logging/overview/
+[2] Sigstore Project, "Rekor: Transparency Log for Software Supply Chains," Linux Foundation, 2023. [Online]. Available: https://docs.sigstore.dev/logging/overview/
 
-[1] European Parliament, "Regulation (EU) 2016/679 (General Data Protection Regulation)," Official Journal of the European Union, Apr. 2016, Art. 17.
+[3] European Parliament, "Regulation (EU) 2016/679 (General Data Protection Regulation)," Official Journal of the European Union, Apr. 2016, Art. 17.

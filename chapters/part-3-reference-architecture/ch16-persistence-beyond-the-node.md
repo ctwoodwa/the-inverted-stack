@@ -11,16 +11,13 @@
 
 A node that stores data only on the device it runs on fails in three ways. First, the device fails — drives fail, phones are lost, laptops are stolen. Second, the storage budget fills — multi-gigabyte local databases are reasonable for primary work data, not for every archive, every team member's history, every binary asset ever uploaded. Third, users move to new devices without expecting to lose their work. Local-first architecture does not mean data lives only on one machine. It means the node is the authority over the data it holds; the architecture must then specify how that data survives beyond it.
 
-This chapter specifies the full persistence model for a node whose data must survive beyond the device it runs on: how storage is layered, how selective sync bounds what each node holds, how stubs represent data not yet local, how snapshots enable fast rehydration, how CRDT history is bounded, and what the user sees when any of this goes wrong.
-
-
 ---
 
 ## Five-Layer Storage Architecture
 
 The architecture composes five specialized storage tiers rather than relying on a single database system.
 
-**Tier 1 — Local encrypted database.** The primary operational store. All reads and all writes hit this layer first. The application never reads from or writes to a remote source directly; the local database is always the immediate source of truth.
+**Tier 1 — Local encrypted database.** The primary operational store. All reads and all writes hit this layer first.
 
 **Tier 2 — CRDT and event log.** An append-only log of all CRDT operations and domain events. The event log is the source of truth for sync and for audit. The local database is derived from it; the log survives the database.
 
@@ -164,13 +161,13 @@ When no valid snapshot exists — on a fresh install, after a breaking schema mi
 
 ## CRDT Growth and Garbage Collection
 
-CRDT documents grow monotonically under naive storage. Every insert, every delete, and every concurrent edit leaves a trace in the internal structure — tombstones, historical vector clock entries, and retired operation identifiers accumulate without bound. The architecture acknowledges this directly and provides three mitigation strategies rather than hiding the problem.
+CRDT documents grow monotonically under naive storage. Every insert, every delete, and every concurrent edit leaves a trace in the internal structure — tombstones, historical vector clock entries, and retired operation identifiers accumulate without bound. The architecture names the problem and specifies three mitigation strategies.
 
 **Strategy 1 — Library-level compaction.** Modern CRDT libraries perform internal garbage collection and use compact binary encodings that amortize historical state. Library selection treats compaction behavior as a first-class evaluation criterion alongside merge semantics and conflict resolution. `Sunfish.Kernel.Crdt` provides YDotNet as the current CRDT engine via `ICrdtEngine`, with Loro as the target for a future engine-agnostic transition. Both libraries expose compaction controls; the architecture leaves compaction scheduling to the engine.
 
 **Strategy 2 — Application-level document sharding.** Large logical documents are split into sub-documents keyed under a parent map. When a section is archived or retired, its key is deleted from the parent map. The CRDT engine garbage-collects the sub-document without touching the rest of the document. This strategy applies to large structured documents — boards, wikis, large project hierarchies — where sections have well-defined lifecycles.
 
-**Strategy 3 — Periodic shallow snapshots.** For document types with extreme write rates — programmatically generated logs, real-time sensor feeds, high-churn audit trails — the system periodically creates a shallow snapshot and discards old operation history. A shallow snapshot captures the current document state without the history required to merge with older versions. This strategy is reserved for document types where long-term mergeability is explicitly less critical than bounded storage. It is not a default.
+**Strategy 3 — Periodic shallow snapshots.** For document types with extreme write rates — programmatically generated logs, real-time sensor feeds, high-churn audit trails — the system periodically creates a shallow snapshot and discards old operation history. A shallow snapshot captures the current document state without the history required to merge with older versions. This strategy is reserved for document types where bounded storage takes priority over long-term mergeability. It is not a default.
 
 The default policy is conservative: full history is retained, relying on library-level compaction. Application-level purging and shallow snapshots are opt-in per document type, configured in the document schema. Teams that enable them for a document type accept the constraint that nodes holding history older than the shallow snapshot cannot merge with nodes that have discarded that history — the tradeoff is explicit and schema-bound.
 
@@ -287,7 +284,8 @@ The export directory is the user's data in a form that outlasts the application.
 
 ## Summary
 
-Persistence beyond the node is not a single mechanism but a composition of decisions made at each layer of the stack. The five-tier storage architecture separates operational state, audit history, and archival storage into distinct tiers with distinct failure modes. Sync buckets bound what each node holds to what it is authorized to hold, resolving both the storage problem and the security problem of full replication. Lazy fetch with content-hash verification gives nodes access to the full team dataset without requiring full local storage. Snapshots bound rehydration cost without sacrificing correctness. CRDT garbage collection is a spectrum from conservative full-history retention to opt-in shallow snapshots, with the default favoring correctness over compactness. The three-state backup UX translates a complex distributed state into three actionable signals. Non-technical disaster recovery returns a user to working state from a lost device without manual file management. Plain-file export ensures that the user's data outlasts any particular version of the application.
+<!-- PROSE REVIEW FLAG: Summary paragraph is 9 sentences that restate each section in sequence. Recommend cutting to the governing constraint + the user-facing consequence, e.g.: -->
+Persistence beyond the node is a composition of decisions, not a single mechanism. Each layer resolves a distinct failure mode; together they ensure the user's data survives the device, the application, and the operator.
 
 ---
 
