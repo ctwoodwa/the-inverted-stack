@@ -14,6 +14,8 @@ His options: reconstruct what he can from the email trail. Export a stale PDF fr
 
 This is not a planning failure. He planned correctly. He had his data, his team used the software, everything was in order. The failure is structural: his data lives on infrastructure he doesn't control, and when that infrastructure goes offline, his capability goes with it.
 
+This scenario repeats across industries that run on deadline-sensitive work — the attorney preparing a brief at 9 PM, the engineer updating safety documentation in the field, the physician accessing patient records before rounds. The infrastructure failure is identical; only the deadline changes.
+
 ---
 
 ## The Bundle Nobody Agreed To
@@ -54,7 +56,7 @@ Sunrise wasn't exceptional. It was typical of how software products end.
 
 The mechanism changes — acquisition, runway exhaustion, a strategic pivot, the founder taking a job somewhere larger — but the pattern is consistent. The product goes dark. Users who built their workflows around it are left with whatever they managed to export before the deadline.
 
-Salesforce acquired Quip, folded it into the Salesforce platform, and ultimately deprioritized it. Groups that used it for internal documentation found their investment in the tool's specific organizational structure — the way Quip handled threaded comments, the sidebar navigation model, the direct link between documents and spreadsheets — essentially worthless on migration, because no competing tool was designed to import and replicate it.
+Salesforce acquired Quip and deprioritized it; teams that had built workflows around its document structure found the investment worthless on migration because the structure was stored in a format only Quip controlled. That is not a product failure. It is the custody model working exactly as designed: the user's workflow lives on vendor infrastructure until it doesn't.
 
 The data export problem deserves specific attention. When a vendor announces shutdown, it typically offers an export function. What that export contains, what format it uses, and whether any other software can actually consume it are highly variable. For calendar data, iCal is reasonably standard. For project management data, vendors typically export a CSV of the task list — without the comments, without the attachment history, without the relationship structure that made the tool useful. For document collaboration, most platforms offer a PDF export, which preserves the appearance but none of the editability.
 
@@ -172,4 +174,4 @@ There is an advantage to this architecture that rarely appears in technical comp
 
 What remains is the reference architecture: how to assemble these proven components into a coherent, deployable architecture that behaves like a cloud application, passes enterprise security review, and treats user data ownership as a structural guarantee rather than a contractual one.
 
-Chapter 2 maps what the local-first community has already built with these tools, where those efforts stop short of a complete answer, and why the gap requires a full node rather than a smarter cache. Chapter 3 shows what the full node looks like.
+The building blocks are production-proven. What remains is the specific assembly that produces a node — not a smarter cache, not a thicker client, but a first-class local peer. Chapter 2 identifies exactly what that requires and where the existing work stops short. Chapter 3 draws the node.
