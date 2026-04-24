@@ -1,6 +1,6 @@
 # Appendix C — Further Reading
 
-<!-- icm/draft -->
+<!-- icm/technical-review -->
 
 <!-- Target: ~1,000 words -->
 
@@ -16,21 +16,21 @@ This appendix is an annotated bibliography, not a comprehensive literature surve
 
 The paper that named the paradigm. Required reading before this book. Kleppmann et al. define the seven ideals of local-first software — offline capability, longevity, privacy, multi-device, collaboration, author ownership, and synchronization without vendor lock-in. The seven ideals are deliberately aspirational: the paper is a manifesto, not an engineering manual. This book is the engineering manual for meeting those ideals in a commercial, multi-user, enterprise-deployable system.
 
-[2] P. van Hardenberg and M. McGranaghan, "Thinking in Ink & Switch: Lessons from experimental local-first research," Ink & Switch, 2021. [Online]. Available: https://www.inkandswitch.com/
+[2] Ink & Switch, "Local-first research project essays," Ink & Switch. [Online]. Available: https://www.inkandswitch.com/
 
-Ink & Switch publishes detailed post-mortems of real local-first projects — Pushpin (a spatial canvas), Backchat (a messaging system), and others. These are the most honest accounts of what breaks in practice when you try to build local-first software: the UX challenges of conflict resolution, the cognitive model users need, and the persistent gap between theory and production. Read this before designing your UX layer; the Backchat post-mortem is particularly instructive.
+Ink & Switch publishes detailed post-mortems of real local-first projects — Pushpin (a spatial canvas), Backchat (a messaging system), and others. These are the most honest accounts of what breaks in practice when you try to build local-first software: the UX challenges of conflict resolution, the cognitive model users need, and the persistent gap between theory and production. Read the project essays before designing your UX layer.
 
 ---
 
 ## Section 2: CRDT Libraries
 
-[3] K. Jahns and Y. Schindel, "Yjs: A CRDT for building collaborative applications," GitHub, 2015. [Online]. Available: https://github.com/yjs/yjs
+[3] K. Jahns, "Yjs: A CRDT for building collaborative applications," GitHub. [Online]. Available: https://github.com/yjs/yjs
 
-Yjs is the most mature, most widely deployed CRDT library available. Its documentation is excellent, its ecosystem (y-websocket, y-indexeddb, y-monaco) is broad, and its performance is well-characterized across a large set of production deployments. If you are building on JavaScript or can use a webview approach, Yjs is the default choice. The Sunfish reference implementation uses YDotNet — the Yjs .NET port via Rust FFI — as the current working engine.
+Yjs is the most mature, most widely deployed CRDT library available. Its documentation is excellent, its ecosystem (y-websocket, y-indexeddb, y-monaco) is broad, and its performance is well-characterized across a large set of production deployments. If you are building on JavaScript or can use a webview approach, Yjs is the default choice. The Sunfish reference implementation currently uses YDotNet — the Yjs .NET port via Rust FFI — as the working engine; Loro (ADR 0028) is the aspirational primary target once loro-cs matures.
 
 [4] Yjs Contributors, "y-crdt / yrs: The Rust port of the Yjs CRDT library," GitHub. [Online]. Available: https://github.com/y-crdt/y-crdt
 
-The Rust port of Yjs, also called yrs, and the foundation for .NET bindings (YDotNet) used in the Sunfish reference implementation. The yrs codebase is the right place to understand how Yjs encoding and garbage collection work at the byte level. Evaluate the yrs release cadence against your project timeline before committing: the Rust port and JavaScript original do not always stay in sync across minor versions.
+The Rust port of Yjs, also called yrs, and the foundation for YDotNet — the .NET bindings currently used in the Sunfish reference implementation. The yrs codebase is the right place to understand how Yjs encoding and garbage collection work at the byte level. Evaluate the yrs release cadence against your project timeline before committing: the Rust port and JavaScript original do not always stay in sync across minor versions.
 
 [5] Loro Contributors, "Loro: A CRDT library with rich text support," GitHub. [Online]. Available: https://github.com/loro-dev/loro
 
@@ -52,17 +52,17 @@ The closest intellectual ancestor to this book. Chapters 5 (replication), 8 (dis
 
 The foundational CRDT theory paper. Dense and mathematical; not required for practitioners who are assembling existing CRDT libraries. Essential for anyone implementing a new CRDT type or contributing to the CRDT engine layer directly. Read it before writing any custom merge logic. The convergent vs. commutative distinction matters when deciding whether to carry full state or operation logs across the sync wire.
 
-[9] H. Howard, M. Jelasity, and J. Crowcroft, "Flexible Paxos: Quorum intersection revisited," *arXiv:1608.06696*, Aug. 2016.
+[9] H. Howard, D. Malkhi, and A. Spiegelman, "Flexible Paxos: Quorum intersection revisited," *arXiv:1608.06696*, Aug. 2016.
 
-The theoretical basis for understanding quorum flexibility in distributed consensus. Flexible Paxos demonstrates that read and write quorums need only intersect, not be identical — which informs the lease coordination tradeoffs in Flease and similar distributed lease protocols.
+The theoretical basis for understanding quorum flexibility in distributed consensus. Flexible Paxos demonstrates that read and write quorums need only intersect, not be identical — context useful for understanding the quorum assumptions that underpin distributed lease protocols such as Flease.
 
 ---
 
 ## Section 4: Production Analogues
 
-[10] Linear, "How Linear builds a productive, joyful engineering culture," Linear Engineering Blog. [Online]. Available: https://linear.app/blog
+[10] Linear, "Scaling the Linear sync engine," Linear Engineering Blog. [Online]. Available: https://linear.app/blog
 
-Linear's architecture is the closest public analogue to the AP-first data model in this book. Their lightweight SQLite replica approach — sync everything to the client, render from local state, treat the server as a replication peer rather than the authority — validates the core design at commercial scale. Linear's blog posts on their sync engine are the most useful production account available of how this model performs under real collaborative load.
+Linear's architecture is the closest public analogue to the AP-first data model in this book. Their client-replica approach — sync everything to the client, render from local state, treat the server as a replication peer rather than the authority — validates the core design at commercial scale. Linear's blog posts on their sync engine are the most useful production account available of how this model performs under real collaborative load.
 
 [11] Actual Budget Contributors, "Actual: A local-first personal finance app," GitHub. [Online]. Available: https://github.com/actualbudget/actual
 

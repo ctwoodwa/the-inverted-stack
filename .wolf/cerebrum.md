@@ -24,6 +24,16 @@
 - **Sunfish.Foundation.LocalFirst IS a valid package** — `packages/foundation-localfirst/` exists in the Sunfish repo; `AddSunfishLocalFirst()` is a real method (takes no parameters). `LocalFirstMode` enum does NOT exist. Earlier session notes incorrectly marked this package as invalid.
 - **AddSunfishKernelSync() and AddSunfishKernelSecurity()** take no parameters — do not invent options lambdas. GossipDaemonOptions uses `RoundIntervalSeconds` (int), not `GossipInterval` (TimeSpan). `AntiEntropyEnabled` does not exist.
 - **Package names: Sunfish.UICore and Sunfish.UIAdapters.Blazor** are correct per repo PackageId values. Not `Sunfish.UI.Core` or `Sunfish.UI.Adapters.Blazor`.
+- **SyncState enum valid values:** `Healthy`, `Stale`, `Offline`, `ConflictPending`, `Quarantine`. Do NOT use Linked, Searching, Fresh, Unknown, Degraded, or Error — none exist.
+- **ILocalNodePlugin real members:** `Id` (string), `Version` (string), `Dependencies` (IReadOnlyCollection<string>), lifecycle method `OnLoadAsync(IPluginContext context, CancellationToken ct)`. Not PluginId, DependsOn, or Register(ILocalNodeBuilder).
+- **IStreamDefinition real members:** `EventTypes`, `BucketContributions` — NOT DocumentTypes, StreamId as StreamId type, or BucketPolicy.
+- **IProjectionBuilder real member:** `RebuildAsync(CancellationToken ct)` — NOT Build(IProjectionRegistry).
+- **AddSunfishPlugin<T>()** does NOT exist in Sunfish repo.
+- **GenerateFounderBundleAsync real signature:** `GenerateFounderBundleAsync(string teamName, CancellationToken ct)` — no teamId parameter.
+- **IssueJoinerAttestationAsync real signature:** `IssueJoinerAttestationAsync(byte[] teamId, byte[] joinerPublicKey, ReadOnlyMemory<byte> founderPrivateKey, ...)` — NOT GenerateJoinerBundleAsync.
+- **AttestationBundle:** No version field inside the CBOR payload — flat array of 7-field attestation records.
+- **WriteState enum:** Does NOT exist. Do not reference WriteState.Pending, WriteState.Confirmed, or WriteState.Failed.
+- **MDM node-config.json schema:** Known fields: schemaVersion, teamId, relayEndpoint, allowedBuckets, dataDirectory, logLevel, updateServerUrl, enterpriseAttestationIssuerPublicKey. `storageEncryption` field does NOT exist.
 
 ## Do-Not-Repeat
 
@@ -32,6 +42,16 @@
 - [2026-04-24] Do NOT attribute `ISchemaLens` or `LensGraph` to `Sunfish.Kernel.Runtime`. They live in `Sunfish.Kernel.SchemaRegistry`. Runtime owns upcasters (`ISchemaVersion`) only.
 - [2026-04-24] Do NOT invent ICrdtEngine methods like `OpenOrCreateAsync()`. Real API: `CreateDocument()` and `OpenDocument()` (both sync).
 - [2026-04-24] Do NOT describe loro-cs as "actively maintained with small version lag" — it's very bare bones, multi-week effort to complete bindings.
+- [2026-04-24] Do NOT use SyncState.Linked, .Searching, .Fresh, .Unknown, .Degraded, or .Error — valid values are only Healthy, Stale, Offline, ConflictPending, Quarantine.
+- [2026-04-24] Do NOT invent plugin API members (PluginId, DependsOn, Register). Use Id, Dependencies, OnLoadAsync.
+- [2026-04-24] Do NOT use WriteState enum (Pending/Confirmed/Failed) — does not exist in Sunfish repo.
+- [2026-04-24] Do NOT invent MDM config key `storageEncryption: required` — not in node-config.json schema.
+- [2026-04-24] Do NOT reference OnboardingState enum — use AnchorSessionService.IsOnboarded (bool) instead.
+- [2026-04-24] Do NOT claim AddSunfishKernelRuntime() wires sync daemon, mDNS, gossip, or ICrdtEngine — it only registers INodeHost and IPluginRegistry.
+- [2026-04-24] Do NOT claim AddSunfishKernelSecurity() loads/generates keypair or registers onboarding state machine — cryptographic services only.
+- [2026-04-24] Do NOT claim OnboardAsync persists attestation or applies snapshot in Wave 3.x — both are deferred to Wave 4.
+- [2026-04-24] SunfishNodeHealthBar lives in Sunfish.UIAdapters.Blazor, NOT Sunfish.Foundation.LocalFirst.
+- [2026-04-24] Razor illustrative marker syntax: use @* illustrative — not runnable (pre-1.0 API) *@ not HTML comment syntax inside fenced razor blocks.
 
 ## Decision Log
 

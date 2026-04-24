@@ -82,7 +82,7 @@
 
 ## chapters/part-4-implementation-playbooks/
 
-- `ch17-building-first-node.md` — Chapter 17 — Building Your First Node (~3500 words) — icm/draft: Anchor clone/build, kernel wiring, CRDT document + two-device sync, QR onboarding wire format, SunfishNodeHealthBar UX, plugin registration
+- `ch17-building-first-node.md` — Chapter 17 — Building Your First Node (~3500 words) — icm/technical-review: Anchor clone/build, kernel wiring, CRDT document + two-device sync, QR onboarding wire format, SunfishNodeHealthBar UX, plugin registration
 - `ch18-migrating-existing-saas.md` — Chapter 18 — Migrating an Existing SaaS (~3,500 words) — icm/draft: zone determination, Bridge Zone-C reference, 5 architectural decisions, 4 migration phases (shadow/local-writes/full-authority/backfill), phase gates, 5 failure modes, package availability table
 - `ch19-shipping-to-enterprise.md` — Chapter 19 — Shipping to Enterprise (~3,229 words) — icm/draft: dual-license/CLA, MSIX/MSI+PKG packaging, code signing (macOS notarytool + Windows Authenticode/WDAC), MDM pre-seeded node-config.json schema, MDM compliance at capability negotiation, SBOM CycloneDX/Syft/Grype, CVE SLA, revocation CLI, air-gap three-posture config, three required runbooks
 - `ch20-ux-sync-conflict.md` — Chapter 20 — UX, Sync, and Conflict (~3167 words) — icm/draft: complexity hiding standard, 3 status indicators, AP/CP table, optimistic write states, conflict inbox bulk resolution, 3 failure modes, first-run experience, non-technical trust gap

@@ -1,6 +1,6 @@
 # Chapter 17 — Building Your First Node
 
-<!-- icm/draft -->
+<!-- icm/technical-review -->
 
 <!-- Target: ~4,000 words -->
 <!-- Source: v13 §5, §13, §18; Sunfish accelerators/anchor/README.md -->
@@ -97,11 +97,11 @@ builder.Services.AddSunfishKernelSecurity();
 
 Each call registers a distinct layer. Their order matters.
 
-`AddSunfishEncryptedStore()` — from `Sunfish.Foundation.LocalFirst` — opens the SQLCipher database. The database file is device-local and encrypted with a key derived from the device keypair. No data leaves storage unencrypted. This call must come first because both the runtime and the security layer depend on the store.
+`AddSunfishEncryptedStore()` — from `Sunfish.Foundation.LocalFirst` — registers the encrypted store with the DI container; the key derivation and store initialization happen as part of the node startup sequence managed by the Sunfish kernel. This call must come first because both the runtime and the security layer depend on the store.
 
-`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — wires the sync daemon, the mDNS peer discovery service, and the gossip anti-entropy loop. It also registers the CRDT engine abstraction (`ICrdtEngine`). The current implementation uses YDotNet; the architecture is engine-agnostic and the interface accepts Loro when Sunfish reaches that milestone. This call must come before security registration because the runtime owns the session context that security decorates.
+`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — registers the core node host and plugin registry; additional kernel services are registered through their own extension methods. This call must come before security registration because the runtime owns the session context that security decorates.
 
-`AddSunfishKernelSecurity()` — from `Sunfish.Kernel.Security` — registers the attestation verifier (`IAttestationVerifier`), the key management service, and the onboarding state machine. It loads the device keypair from the OS keystore on startup. If no keypair exists — first launch — it generates one and persists it before continuing.
+`AddSunfishKernelSecurity()` — from `Sunfish.Kernel.Security` — registers the cryptographic services: signing, key agreement, attestation issuance and verification, and role key management.
 
 The startup sequence after these three calls runs in this order:
 
@@ -124,7 +124,7 @@ sequenceDiagram
     App->>UI: Render shell (Onboarding or Home)
 ```
 
-If `OnboardingState` is `New`, the UI shell renders `Onboarding.razor`. If it is `Onboarded`, the shell renders the main workspace. You cannot reach the workspace without a valid attestation. The kernel enforces this; the UI reflects it.
+If `AnchorSessionService.IsOnboarded` is false, the UI shell renders `Onboarding.razor`. If it is true, the shell renders the main workspace. You cannot reach the workspace without a valid attestation. The kernel enforces this; the UI reflects it.
 
 No other bootstrapping is required for the kernel itself. Plugin registration — your domain code — comes after these three calls and is covered in section 7.
 
@@ -153,7 +153,7 @@ doc.OnUpdate += (sender, update) =>
 };
 ```
 
-The document persists in the encrypted store automatically. Close the app and reopen it — `engine.OpenAsync(docId, ct)` returns the same document with all prior updates intact. You do not call save. The engine is the database.
+The document persists in the encrypted store automatically. Close the app and reopen it — the engine returns the same document with all prior updates intact. You do not call save. The engine is the database.
 
 **Running two instances on LAN.** Open a second terminal and run a second instance of the app — either on the same machine with a different profile directory or on a second device on the same network:
 
@@ -164,9 +164,9 @@ dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0 \
     --sunfish-data-dir "%LOCALAPPDATA%\SunfishAnchor2"
 ```
 
-The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration, no IP address, no port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Linked` when the peer handshake completes.
+The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration, no IP address, no port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Healthy` when the peer handshake completes.
 
-Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and fires `doc.OnUpdate` with `UpdateOrigin.Remote`. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination. Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. This is correct CRDT behavior. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
+Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and the document update handler fires with the remote change. The document converges. The order of updates does not matter — the CRDT merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination. Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. This is correct CRDT behavior. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
 
 This is the core primitive. Everything else in the platform — stream subscriptions, projections, schema migration — runs on top of this document sync loop. Chapter 12 defines the full data modeling contract.
 
@@ -187,7 +187,7 @@ Every onboarding payload is a binary blob with four fields concatenated in this 
 [M bytes: raw snapshot bytes]
 ```
 
-The 4-byte length prefix for each section lets the decoder know how many bytes to read before moving to the next field. There are no delimiters, no version byte at the outer envelope — the CBOR bundle carries its own version field inside.
+The 4-byte length prefix for each section lets the decoder know how many bytes to read before moving to the next field. There are no delimiters, no version byte at the outer envelope — the CBOR bundle carries the attestation records for all team members.
 
 The snapshot section carries the initial state of all CRDT documents the new member needs to bootstrap with. On a fresh team, this is empty or minimal. On an established team with months of history, this is a compacted snapshot of current state — not the full event log, just the merged head. Chapter 16 covers snapshot rehydration in detail.
 
@@ -254,7 +254,7 @@ var sessionService = services.GetRequiredService<AnchorSessionService>();
 await sessionService.OnboardAsync(attestation, snapshot, cancellationToken);
 ```
 
-`OnboardAsync` does three things in order: persists the attestation to the encrypted store, applies the snapshot to the CRDT engine (rehydrating all bootstrapped documents), and transitions `NodeHealth` and `DataFreshness` to `Healthy`. After this call returns, the node is a full team member. The next mDNS discovery cycle finds other team members on the LAN and begins syncing.
+`OnboardAsync` updates the node's onboarding state and coordinates the initial sync; full attestation persistence and CRDT snapshot application complete during the subsequent sync phases. After this call returns, the node transitions to `NodeHealth` `Healthy`. The next mDNS discovery cycle finds other team members on the LAN and begins syncing.
 
 The full flow:
 
@@ -267,8 +267,8 @@ flowchart LR
     E --> F{Signature valid?}
     F -->|No| G[Abort — show typed error]
     F -->|Yes| H[OnboardAsync]
-    H --> I[Persist attestation]
-    I --> J[Apply snapshot]
+    H --> I[Queue attestation sync]
+    I --> J[Begin CRDT sync]
     J --> K[NodeHealth → Healthy]
     K --> L[mDNS sync begins]
 ```
@@ -279,18 +279,18 @@ flowchart LR
 
 The status bar in Anchor always shows three indicators. They are not optional. They are not hidden behind a settings panel. Every user sees them at all times because the system's behavior changes depending on network and sync state, and the user deserves to know.
 
-`SunfishNodeHealthBar` from `Sunfish.Foundation.LocalFirst` implements all three:
+`SunfishNodeHealthBar` from `Sunfish.UIAdapters.Blazor` implements all three:
 
 | Indicator | What it measures | States |
 |-----------|-----------------|--------|
-| **Node Health** | Kernel runtime — DB open, keypair loaded, onboarding complete | Healthy / Degraded / Error |
-| **Link Status** | Active peer connections | Linked / Searching / Offline |
-| **Data Freshness** | Age of last confirmed sync with at least one peer | Fresh / Stale / Unknown |
+| **Node Health** | Kernel runtime — DB open, keypair loaded, onboarding complete | `Healthy` / `Stale` / `Offline` |
+| **Link Status** | Active peer connections | network connectivity — no dedicated `SyncState` value; inferred from sync behavior |
+| **Data Freshness** | Age of last confirmed sync with at least one peer | `Stale` / `ConflictPending` |
 
 Add it to your Blazor layout:
 
 ```razor
-<!-- illustrative — not runnable (pre-1.0 API) -->
+@* illustrative — not runnable (pre-1.0 API) *@
 <SunfishNodeHealthBar ShowLabels="true" />
 ```
 
@@ -298,18 +298,18 @@ Add it to your Blazor layout:
 
 ### Reading the States
 
-**Node Health** reflects the kernel runtime. `Healthy` means the database opened, the keypair loaded, and onboarding is complete. `Degraded` means the kernel started but one subsystem reported a non-fatal error — check the runtime log. `Error` means the node cannot function; surface an actionable message, not a generic "something went wrong."
+**Node Health** reflects the kernel runtime. `Healthy` means the database opened, the keypair loaded, and onboarding is complete. `Stale` means the kernel started but the last confirmed sync exchange has aged past the staleness threshold — check the runtime log. `Offline` means the node cannot reach peers; surface an actionable message, not a generic "something went wrong."
 
-**Link Status** reflects peer connectivity. `Linked` means at least one peer completed the sync handshake. `Searching` means mDNS is broadcasting but no peer has responded. `Offline` means the sync daemon is not running or the network interface is unreachable. A node in `Searching` or `Offline` still accepts local writes — that is the point of local-first. It cannot sync them yet, but it does not lose them.
+**Link Status** reflects peer connectivity. When at least one peer has completed the sync handshake, link health is `Healthy`. When mDNS is broadcasting but no peer has responded, the node shows `Offline` for this indicator. A node with no active peers still accepts local writes — that is the point of local-first. It cannot sync them yet, but it does not lose them.
 
-**Data Freshness** reflects the last confirmed sync event. `Fresh` means a peer acknowledged a state exchange within the staleness threshold (configurable; default five minutes). `Stale` means the threshold elapsed without a confirmed exchange. `Unknown` means the node has never completed a sync — it just onboarded, or it has been offline since install.
+**Data Freshness** reflects the last confirmed sync event. A data-fresh node shows `Healthy` — a peer acknowledged a state exchange within the staleness threshold (configurable; default five minutes). `Stale` means the threshold elapsed without a confirmed exchange. `ConflictPending` means the node has unresolved conflicts that require attention before the next sync exchange can complete cleanly.
 
 ### Optimistic Write Button States
 
 Every write in a local-first application is optimistic: apply locally first, sync asynchronously. Your UI should reflect this honestly with three states:
 
 ```razor
-<!-- illustrative — not runnable (pre-1.0 API) -->
+@* illustrative — not runnable (pre-1.0 API) *@
 @if (writeState == WriteState.Pending)
 {
     <button disabled>Saving locally…</button>
@@ -364,7 +364,7 @@ Register it in `MauiProgram.cs` after the three kernel calls:
 builder.Services.AddSunfishPlugin<ReportsPlugin>();
 ```
 
-The kernel discovers the plugin at startup, validates its dependencies, and calls `Register`. The streams and projections the plugin declares become available immediately.
+The kernel discovers the plugin at startup, validates its dependencies, and invokes the plugin lifecycle. The streams and projections the plugin declares become available immediately.
 
 ### Declaring a Stream
 
