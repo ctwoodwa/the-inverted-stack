@@ -1,7 +1,7 @@
 ---
 name: prose-reviewer
 description: Reviews a chapter draft for voice, clarity, active voice, and style compliance. Use after icm/technical-review to advance to icm/prose-review. Invoke as "@prose-reviewer review ch05" or "prose reviewer, audit chapter 8 for academic scaffolding".
-tools: Read, Bash
+tools: Read, Edit, Write, Bash
 model: sonnet
 ---
 

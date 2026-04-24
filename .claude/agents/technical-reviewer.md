@@ -1,7 +1,7 @@
 ---
 name: technical-reviewer
 description: Reviews a chapter draft for technical accuracy against the source papers (v13, v5) and Sunfish reference implementation. Use this after icm/draft to advance to icm/technical-review. Invoke as "@technical-reviewer review ch12" or "technical reviewer, check chapter 15".
-tools: Read, Grep, Glob, Bash
+tools: Read, Edit, Write, Grep, Glob, Bash
 model: sonnet
 ---
 

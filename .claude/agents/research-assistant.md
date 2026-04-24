@@ -1,7 +1,7 @@
 ---
 name: research-assistant
 description: Researches claims, finds citations, and helps brainstorm chapter arguments. Searches source papers and web for supporting evidence. Use at icm/outline or during icm/draft when a claim needs sourcing. Invoke as "@research-assistant find sources for [claim]" or "research assistant, what does the literature say about CRDT garbage collection?".
-tools: Read, Grep, Bash, WebSearch
+tools: Read, Write, Grep, Bash, WebSearch
 model: sonnet
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: council-reviewer
 description: Conducts a full Kleppmann Council adversarial review of a document, chapter, or architecture section. Embodies all five council members in sequence, produces scored reviews with BLOCK/PROCEED verdicts, and outputs consolidated action items. Use when a chapter, ADR, or paper section needs adversarial stress-testing before publication. Invoke as "@council-reviewer review [file or topic]" or "council reviewer, run Round 1 on chapter 12". Supports single-member reviews: "council reviewer, Shevchenko only on chapter 14".
-tools: Read, Grep, Glob, WebSearch
+tools: Read, Write, Grep, Glob, WebSearch
 model: opus
 ---
 
