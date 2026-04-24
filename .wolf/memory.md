@@ -8,6 +8,7 @@
 | prose-review | Style enforcement pass on Part II (Ch05–Ch10) — fixed there-is openers, passive voice, weak verbs, throat-clearing, restatement duplicates; fixed one Edit-induced duplication in ch07 | ch05–ch10 enterprise/distributed/security/product/practitioner/synthesis | ~45 targeted edits across 6 files | ~12000 |
 | session | Resolved 40 technical-review markers in ch17 | chapters/part-4-implementation-playbooks/ch17-building-first-node.md | All CLAIM/SUNFISH-API/PACKAGE markers removed; ICM advanced to icm/technical-review | ~6000 |
 | 2026-04-24 | Prose review appendix-b + appendix-d | chapters/appendices/appendix-b*.md, appendix-d*.md | 20+ edits applied; both advanced to icm/prose-review; committed c84c2cc | ~4000 |
+| 2026-04-24 | Authorial voice fix Ch17 — 2-sentence Marcus callback opens Section 1 | chapters/part-4-implementation-playbooks/ch17-building-first-node.md | committed 06fe3cf | ~800 |
 | 2026-04-24 | Fixed citation errors appendix-c | chapters/appendices/appendix-c-further-reading.md | Flexible Paxos authors corrected; fabricated co-author removed; YDotNet/Loro language fixed; ICM to icm/technical-review | ~3000 |
 | 2026-04-24 | Prose review ch17, appendix-c, preface | ch17 + appendix-c + preface | Three prose review agents launched; awaiting completion | ~2000 |
 | 2026-04-24 | Style-guide compliance pass on preface + Ch01–Ch04 | preface.md, ch01–ch04 | 6 targeted edits: 1 ch01, 2 ch02, 1 ch03, 2 ch04; no changes to preface | ~6000 |
@@ -62,3 +63,5 @@
 | 2026-04-24 | Automated pipeline complete | All 27 chapters at icm/prose-review; 27/28 pass QC-1 (preface 926/1300 is human-only); running total ~81,900 words vs ~83,500 target | Pipeline blocked on icm/voice-check (human stage); preface expansion and foreword still needed | ~5000 |
 | 06:16 | prose-review style pass: Part III Ch11–Ch16, fixed there-is openers, hedges, weak verbs, passive, restatements | ch11-node-architecture.md ch12-crdt-engine-data-layer.md ch13-schema-migration-evolution.md ch14-sync-daemon-protocol.md ch15-security-architecture.md ch16-persistence-beyond-the-node.md | ~30 targeted edits applied | ~12000 |
 | 06:44 | Expanded literary-board to 11 global critics: Reyes (LATAM/accessibility), Tanaka (APAC/Japan), Barker (Europe/Germany), Diallo (Africa) | .claude/agents/literary-board.md | committed 3bdfd33 | ~8000 |
+| 07:07 | Applied Hollis findings: Ch10 verdict-reveal fix + bridge passage, Ch17 voice restoration | ch10-synthesis.md, ch17-building-first-node.md | committed 754defa + 06fe3cf | ~6000 |
+| 07:32 | Applied remaining Hollis findings: Ch17/Ch12 implementation-state cleanup, Ch01 final polish (Marcus representativeness, Quip, closing handoff) | ch17, ch12, ch01 | committed 2142073 + 139e856 | ~5000 |
