@@ -7,6 +7,30 @@
 
 ---
 
+This chapter walks a team already running a hosted SaaS product through the migration to a hybrid local-first deployment (Zone C, Bridge accelerator) without a flag-day cutover. The architecture is one you can dismantle piece by piece while production keeps running. The migration is reversible at every phase gate below Phase 4. The cost is the engineering discipline to apply Ferreira's four-phase reversible model (introduced in Chapter 9) instead of the rewrite-everything approach that has killed more SaaS-to-local-first attempts than any technical obstacle.
+
+### Glossary (for readers entering here)
+
+**Zone C** is the hybrid architecture — local-first data plane with a SaaS control plane for signup, billing, and cross-tenant coordination. Chapter 4 defines the full decision framework across three zones. **CRDTs** (Conflict-free Replicated Data Types) are data structures that merge concurrent edits deterministically without server coordination; Chapter 12 covers the engine. **AP-class records** tolerate brief divergence across peers and merge through CRDT semantics; **CP-class records** require linearizable writes under distributed lease coordination (Chapter 14). **Hosted-node peer** is a Sunfish node that runs on server infrastructure alongside user-device nodes, participating in sync as a ciphertext-only peer — it holds encrypted deltas but holds no decryption keys.
+
+### When to Migrate: The Triggers
+
+Teams do not migrate from SaaS to local-first on aesthetic grounds. Five triggers justify the engineering investment:
+
+- **Compliance mandate received.** A customer or regulator requires that data reside on user-controlled infrastructure. RBI data localization circular (Indian BFSI payment data), DIFC Data Protection Law 2020 (foreign-cloud-prohibited regulated data for DIFC-licensed financial entities), UAE Data Protection Law 2022, GDPR Article 30 records of processing combined with Schrems II's constraint on US cloud providers (EU personal data), India's DPDP Act 2023, China's PIPL (2021) with MLPS 2.0 cybersecurity categorization, Japan's APPI (revised 2022), South Korea's PIPA with ISMS-P certification, Brazil's LGPD, Mexico's LFPDPPP, Nigeria's NDPR, South Africa's POPIA, Kenya's Data Protection Act 2019, or Russia's Federal Law 242-FZ (enacted 2015, predating GDPR by two years). Any one of these can turn "nice to have" into "ship by the next procurement cycle or lose the account."
+
+- **Data residency objection appearing in enterprise sales.** The sales team is losing deals at the data-sovereignty review. The architecture's relay-ciphertext-only guarantee answers this structurally rather than contractually.
+
+- **SaaS vendor reliability event or service termination.** In 2022, Adobe, Autodesk, Microsoft, Figma, and dozens of other Western SaaS vendors suspended or terminated service across Russia and CIS markets under sanctions enforcement; hundreds of thousands of organizations lost access to their own operational workflows with days of notice. Organizations under import substitution mandates or operating in jurisdictions where vendor-level compelled access is a documented threat model treat this as Failure Mode 0 — the vendor suspends service, and your customers need an architecture that survives it.
+
+- **Customer churn driven by data sovereignty.** Repeated loss of accounts citing "the data lives on your servers" as a concrete objection, not a hypothetical one.
+
+- **Enterprise procurement review blocking adoption.** Procurement due diligence requires that the vendor relationship be replaceable without data migration. A managed relay that can be self-hosted — and a data plane that already is — passes this test. A cloud-first SaaS does not.
+
+Run all five against your actual customer conversations before you clone anything. The migration is substantial. The justification must be real.
+
+---
+
 ## Determine Your Zone Before You Write a Line of Code
 
 Run the five-filter framework from Chapter 4. Every filter asks the same underlying question: does the value of this feature depend on coordinating state across users simultaneously, or does it depend on a single team managing their own data well?
@@ -95,22 +119,27 @@ The migration runs in four phases. You can pause at the end of any phase indefin
 
 ```csharp
 // illustrative — not runnable (pre-1.0 API)
-// AddSunfishLocalFirst() registers the local-first node in shadow read-only mode;
-// mode configuration API is pre-1.0 and subject to change before release
+// AddSunfishLocalFirst() registers the local-first node. The mode — ShadowRead,
+// ShadowDual, FullAuthority — is set through appsettings.json and read by the
+// foundation layer at startup. The API below is illustrative; the configuration
+// shape is stable even if the extension method signature evolves.
 builder.Services.AddSunfishLocalFirst();
+// appsettings.json: { "Sunfish": { "LocalFirst": { "Mode": "ShadowRead" } } }
 ```
 
 The foundation layer populates a local SQLite replica from your existing Postgres read model. Shift UI read paths to the local replica. Write paths stay on the server API unchanged.
 
-Wire a feature flag before shipping to production:
+Wire a feature flag before shipping to production. The flag evaluates through the same mechanism your application already uses — standard .NET `IFeatureManager` (Microsoft.FeatureManagement) reads from `appsettings.json`, Azure App Configuration, AWS AppConfig, LaunchDarkly, or whatever flag provider the team runs. Sunfish does not ship a proprietary flag system; it expects the flag to be readable at the application layer and consulted by the foundation package before it switches reads to the local replica. The flag key `LocalFirst.ShadowMode` is a convention, not a reserved name:
 
 ```csharp
 // illustrative — not runnable (pre-1.0 API)
-// Feature flag "LocalFirst.ShadowMode" gates shadow mode; registration API is pre-1.0
-builder.Services.AddSunfishFeatureManagement();
+// Register standard .NET feature management; Sunfish.Foundation.LocalFirst
+// consults the IFeatureManager at startup to determine whether shadow mode is live.
+builder.Services.AddFeatureManagement();
+// appsettings.json: { "FeatureManagement": { "LocalFirst.ShadowMode": true } }
 ```
 
-This flag is your instant rollback path. If shadow mode causes a performance regression or data inconsistency, flip it off without a deployment.
+This flag is your instant rollback path. If shadow mode causes a performance regression or data inconsistency, flip the configuration value off without a deployment.
 
 **Success criteria.** P95 read latency drops by at least 20%. No regressions in write consistency. The local replica stays within your AP staleness window — 30 seconds is a reasonable baseline for most task-management domains.
 
@@ -193,6 +222,27 @@ public class TaskBodyMigrationJob : IWorkspaceMigrationJob
         _differ.AssertEquivalent(postgresProjection, crdtProjection);
     }
 }
+
+// The equivalence contract for _differ.AssertEquivalent, in the team's
+// domain layer:
+//   - All field values equal under domain-type comparison (strings exact,
+//     numerics within a declared epsilon, booleans exact)
+//   - Collection membership equal (set equality for unordered collections,
+//     sequence equality for ordered lists; ordering differences in
+//     list-of-task-comments are normalized before comparison using
+//     causal ordering in the CRDT projection)
+//   - Type coercions normalized: PostgreSQL timestamp with time zone
+//     compared to DateTimeOffset under UTC; JSONB fields compared after
+//     parsing to a common DOM
+//   - Fails fast on the first divergence, with a diff object the caller
+//     logs and surfaces to the migration dashboard
+//
+// If AssertEquivalent fails: hold the workspace at Phase 2, do not proceed
+// to the authority switch. Investigate the delta using the Sunfish migration
+// diagnostic CLI (`sunfish migrate diff --workspace <id> --aggregate TaskBody`),
+// which surfaces per-record divergences with the original and transformed
+// events side by side. The repair path is typically a corrected transformer
+// function; re-run the migration job idempotently until the diff is empty.
 ```
 
 Run the diff validation before switching the write path. Switch only after the diff passes. Disable the Postgres write path for that workspace's AP-class domains. Run the workspace on Phase 3 for 30 days before treating the migration as stable.
