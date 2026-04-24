@@ -199,6 +199,60 @@ CHAPTER_FILES = [
 
 CHUNK_CHAR_BUDGET = 1400  # target per-request size in characters
 
+# Mapping from dot count to silence duration (seconds). Empirically, Kokoro
+# treats consecutive periods as ~one sentence terminator regardless of count
+# — six dots produce ~0.7s, the same as one period. To get the long pauses
+# the prose design intended (H1 chapter break, H2 section break, em-dash
+# apposition), we render dot-only chunks as explicit silence MP3 segments
+# rather than sending them to the TTS.
+PAUSE_DURATIONS = {
+    2: 0.30,   # rare; treat as a beat
+    3: 0.70,   # ... — em-dash apposition
+    4: 1.20,   # .... — H2 section break
+    5: 1.50,
+    6: 1.80,   # ...... — H1 chapter break
+    7: 2.00,
+    8: 2.20,
+}
+
+# Cache silence MP3 segments by duration (in 100ms buckets). 24kHz mono
+# 128kbps to match Kokoro's raw output format — concatenation requires
+# identical sample rate and channel layout.
+_SILENCE_CACHE: dict[int, bytes] = {}
+
+
+def _is_pause_only(text: str) -> int:
+    """Return the dot count if the chunk contains only dots and whitespace,
+    otherwise 0. Used to identify pause markers in sentence-mode chunking."""
+    s = text.strip()
+    if not s:
+        return 0
+    if all(c in ". \t\n" for c in s):
+        return s.count(".")
+    return 0
+
+
+def silence_mp3(duration_s: float) -> bytes:
+    """Return an MP3 byte string of the given duration in 24kHz mono 128kbps,
+    matching Kokoro's raw output format. Cached by 100ms bucket."""
+    import imageio_ffmpeg
+    import subprocess
+    bucket_ms = int(round(duration_s * 10)) * 100  # 100ms buckets
+    if bucket_ms in _SILENCE_CACHE:
+        return _SILENCE_CACHE[bucket_ms]
+    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    duration = bucket_ms / 1000.0
+    cmd = [
+        ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+        "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+        "-t", f"{duration:.3f}",
+        "-c:a", "libmp3lame", "-b:a", "128k",
+        "-f", "mp3", "pipe:1",
+    ]
+    proc = subprocess.run(cmd, capture_output=True, check=True)
+    _SILENCE_CACHE[bucket_ms] = proc.stdout
+    return proc.stdout
+
 
 _ORDINAL_WORDS = {
     1: "First", 2: "Second", 3: "Third", 4: "Fourth", 5: "Fifth",
@@ -398,14 +452,20 @@ _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'(])")
 
 
 def chunk_sentences(text: str) -> list[str]:
-    """Split into one chunk per sentence, preserving paragraph breaks as
-    standalone empty entries. Used by --per-sentence synthesis. Each
-    chunk is small (~50-300 chars typical), giving Kokoro fresh prosody
-    on every utterance at the cost of more API calls."""
+    """Split into one chunk per sentence, preserving dot-only chunks
+    (`...`, `....`, `......`) as pause markers — the render layer detects
+    these via _is_pause_only() and emits silence MP3 instead of calling TTS.
+    Used by --per-sentence synthesis. Speech chunks are small (~50-300
+    chars typical), giving Kokoro fresh prosody on every utterance at the
+    cost of more API calls."""
     chunks: list[str] = []
     for para in re.split(r"\n{2,}", text):
         para = para.strip()
         if not para:
+            continue
+        # Preserve dot-only paragraphs as pause markers.
+        if _is_pause_only(para):
+            chunks.append(para)
             continue
         for sent in _SENT_SPLIT.split(para):
             sent = sent.strip()
@@ -415,12 +475,24 @@ def chunk_sentences(text: str) -> list[str]:
 
 
 def chunk_text(text: str, budget: int = CHUNK_CHAR_BUDGET) -> list[str]:
-    """Split text into ~budget-sized chunks at paragraph and sentence boundaries."""
+    """Split text into ~budget-sized chunks at paragraph and sentence boundaries.
+
+    Dot-only paragraphs (pause markers) are preserved as standalone chunks
+    so the render layer can emit explicit silence instead of sending them
+    to Kokoro. This makes chunk and sentence modes produce the same pause
+    structure — the only difference is speech-chunk granularity."""
     chunks: list[str] = []
     buf = ""
     for para in re.split(r"\n{2,}", text):
         para = para.strip()
         if not para:
+            continue
+        if _is_pause_only(para):
+            # Pause marker — flush buffer, then append the marker on its own.
+            if buf:
+                chunks.append(buf.strip())
+                buf = ""
+            chunks.append(para)
             continue
         if len(para) > budget:
             # Split long paragraph by sentence
@@ -526,13 +598,22 @@ def render_chapter(
     t0 = time.time()
     with out_path.open("wb") as f:
         for i, chunk in enumerate(chunks, 1):
-            mp3 = synth_chunk(client, voice, chunk, speed)
+            dots = _is_pause_only(chunk)
+            if dots >= 2:
+                # Emit explicit silence instead of sending dots to Kokoro.
+                # Default to the 6-dot duration if dot count exceeds the map.
+                duration = PAUSE_DURATIONS.get(dots, PAUSE_DURATIONS[6])
+                mp3 = silence_mp3(duration)
+                tag = f"PAUSE {duration:.2f}s"
+            else:
+                mp3 = synth_chunk(client, voice, chunk, speed)
+                tag = f"{len(chunk):4d} chars"
             if i > 1:
                 mp3 = strip_id3v2(mp3)
             f.write(mp3)
             pct = 100 * i / len(chunks)
             elapsed = time.time() - t0
-            print(f"    [{i:3d}/{len(chunks)}] {pct:5.1f}%  {len(chunk):4d} chars  {elapsed:6.1f}s", flush=True)
+            print(f"    [{i:3d}/{len(chunks)}] {pct:5.1f}%  {tag:14s}  {elapsed:6.1f}s", flush=True)
     return {
         "source": str(md_path.relative_to(REPO).as_posix()),
         "output": str(out_path.relative_to(REPO).as_posix()),
