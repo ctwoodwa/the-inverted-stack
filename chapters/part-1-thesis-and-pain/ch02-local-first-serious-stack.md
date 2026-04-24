@@ -173,6 +173,8 @@ The regulatory pressure is now global, and the laws cluster by region. European 
 
 The existing implementations — Automerge, Actual Budget, Linear's sync engine, Obsidian's local storage — each solve one part of this problem correctly. CRDTs handle concurrent merge. Local storage handles offline reads. Plain-file formats handle long-term portability. Fast local replicas handle perceived performance. None of them addresses the full set, and none provides the composition.
 
+The seven properties define target state. They do not tell you how to get there — what phases to sequence, what assumptions to validate, what to trade when two properties conflict, what to verify when you claim you are done. This book is the plan that sits under the properties: phases in the five-layer stack and the deployment zones (Chapter 3, Chapter 4), adversarial validation in the council chapters (Part II), verification specification (Part III), and execution playbooks (Part IV).
+
 This book's contribution is the composition. Not new primitives — every component in this architecture has a production analogue. The CRDT merge semantics come from the Automerge and Yjs lineage. The gossip anti-entropy protocol comes from Cassandra and DynamoDB. The desktop shell plus local server pattern comes from VS Code and 1Password. The declarative partial sync model comes from PowerSync and ElectricSQL. The container-as-background-service model comes from Docker Desktop and Tailscale. The bidirectional schema lenses come from Ink & Switch's Cambria work.
 
 What this book assembles from those proven components:
