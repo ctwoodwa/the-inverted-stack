@@ -141,9 +141,23 @@ Upload the `.pkg` to Jamf Pro as a package. Create a policy scoped to a smart co
 launchctl list | grep com.sunfish.local-node-host && echo "installed" || exit 1
 ```
 
+### SOTI MobiControl
+
+SOTI MobiControl is the dominant MDM platform in GCC enterprise fleets — UAE/DIFC-licensed financial firms, Saudi Arabian public sector, Qatari telecoms — and a significant presence in Sub-Saharan African enterprise. Create a SOTI Advanced Application Package (AAP) from the `.msi` payload, add the same Windows Service registry detection rule as Intune (SOTI reads it identically), and target by device group. SOTI profiles deploy `node-config.json` to `%ProgramData%\Sunfish\` using the File Sync component; ensure the file is marked as MDM-managed so subsequent node reads pick up the pre-seeded configuration rather than generating a default.
+
+### IBM MaaS360
+
+IBM MaaS360 covers GCC, Indian BFSI (RBI-regulated entities), APAC enterprise, and African financial services. Upload the `.msi` as a Windows app distribution, configure the same Service detection check, and scope to a Smart Group by device. Pre-seeded configuration deploys through MaaS360's Corporate Doc Content module, which handles the same `node-config.json` file placement with MDM-managed read-only attributes.
+
+### Ivanti Endpoint Manager
+
+Ivanti EPM is common in APAC (Japan excluded) and in African financial services. Package the `.msi` as an Ivanti Application with the standard detection method. Pre-seeded configuration deploys via Ivanti Environment Manager Policy to `%ProgramData%\Sunfish\node-config.json`.
+
+The underlying attestation mechanism is MDM-platform-agnostic. `Sunfish.Kernel.Security` verifies the enterprise attestation issuer public key against the value pre-seeded in `node-config.json` regardless of which platform deployed the config. Adding a new MDM platform is a packaging and detection-rule exercise; it does not require changes to the architecture or the kernel.
+
 ### Pre-Seeded Configuration
 
-Both Intune and Jamf can deploy configuration files alongside the package. Use this to pre-seed `node-config.json` before the application first runs. The config file location by platform:
+All six MDM platforms can deploy configuration files alongside the package. Use this to pre-seed `node-config.json` before the application first runs. The config file location by platform:
 
 | Platform | Path |
 |---|---|
@@ -224,18 +238,18 @@ Run both commands in CI as a required gate before producing a release artifact. 
 
 Publish the SBOM alongside the release artifact. The internal update server serves it at a predictable URL (see Air-Gap Deployment below). Enterprise security teams will fetch it automatically; make that fetch reliable.
 
-**CVE Response SLA.** State this explicitly in your security policy document and reference it in the procurement response:
+**CVE Response SLA.** State this explicitly in your security policy document and reference it in the procurement response. These commitments match the architecture's security policy as specified in Chapter 5:
 
 | Severity | Response commitment |
 |---|---|
-| Critical (CVSS ≥ 9.0) | Patch released within 24 hours |
-| High (CVSS 7.0–8.9) | Patch released within 7 days |
+| Critical (CVSS ≥ 9.0) | Public advisory within 48 hours of disclosure; patch released within 14 days |
+| High (CVSS 7.0–8.9) | Patch released within 30 days |
 | Medium (CVSS 4.0–6.9) | Included in next scheduled release |
 | Low | Tracked; addressed in maintenance releases |
 
-Enterprise security teams do not negotiate the SLA. They compare it to their internal policy. If your critical SLA is longer than 24 hours, some organizations will not sign. Publish the SLA before anyone asks.
+Enterprise security teams do not negotiate the SLA; they compare it to their internal policy. The 14-day critical patch window with a 48-hour advisory is defensible for a supported open-source core because it is achievable in practice — open-source maintainers who promise 24-hour critical patches either have dedicated security-engineering capacity most projects cannot sustain, or they are setting a bar they will miss. Publish the SLA before anyone asks; meet it reliably; escalate to emergency out-of-band releases when critical CVEs land in widely-used transitive dependencies (these cases justify advisory-plus-workaround within 48 hours and patch-released in under 7 days).
 
-When a critical CVE lands between releases, rehearse the patch-release process before you need it. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, and IT operations. If the first time you run it is during a live incident, you will miss the 24-hour window. Run a dry-fire drill during your first sprint after GA: create a test release, promote it through the entire pipeline, and measure the elapsed time. Shorten every step that takes longer than it should.
+When a critical CVE lands between releases, rehearse the patch-release process before you need it. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, and IT operations. If the first time you run it is during a live incident, you will miss the 14-day window. Run a dry-fire drill during your first sprint after GA: create a test release, promote it through the entire pipeline, and measure the elapsed time. Shorten every step that takes longer than it should.
 
 ---
 
@@ -337,6 +351,32 @@ The safe-to-block list for air-gap environments:
 | Telemetry endpoint | Diagnostics | Yes |
 | OCSP / CRL responders | TLS validation | **No — configure internal OCSP** |
 
+### Self-Hosted Bridge Relay — Deployment Details
+
+Ch16 specifies the Bridge relay architecture in full; this section covers the operational details an enterprise IT team needs to deploy it. The relay ships as a single statically-compiled binary and as an OCI container image (`sunfish/bridge-relay`). Resource profile for a 50-person team: 512 MiB RAM, 2 vCPU, 10 GiB disk for operational logs, no persistent state required beyond the subscription routing table. A 500-person enterprise deployment runs on 2 GiB RAM, 4 vCPU with a horizontal-scaling configuration behind a TLS-terminating load balancer. The relay listens on port 443 (TLS 1.3 required), authenticates connections against Ed25519 public keys registered in `enterpriseAttestationIssuerPublicKey`, and forwards CRDT operation frames at the network layer without access to payload content.
+
+Jurisdictional deployment matters. For compliance-mandated markets — DIFC-licensed firms under UAE DPL 2022 and DIFC DPL 2020; Indian BFSI under RBI data localization; EU organizations under Schrems II; CIS organizations under Russia Federal Law 242-FZ and import substitution mandates; Chinese deployments under PIPL and MLPS 2.0 cybersecurity categorization; Nigerian NDPR and South African POPIA deployments — the self-hosted Bridge relay must run on infrastructure within the required jurisdiction (on-premise VM, sovereign cloud, or domestic data center). This is not a preference. It is the compliance configuration that makes the relay-sovereignty guarantee legally defensible. Two-node HA deployment is the minimum for production use; three-node with automatic failover is the recommended profile for enterprise SLAs.
+
+The 2022 SaaS service terminations (Adobe, Autodesk, Microsoft, Figma, and dozens of others suspending service across Russia and CIS markets under sanctions enforcement) are the documented historical demonstration of why self-hosted relay matters: organizations whose relay infrastructure was a vendor-operated SaaS lost access to their own data when the vendor was directed to stop serving them. The self-hosted Bridge relay is the architectural answer — not a theoretical safeguard but the specific infrastructure deployment posture that converts a survivable-by-SLA problem into a non-problem.
+
+### Power-Interruption Resilience
+
+Chapter 5's Voss checklist names power-interruption resilience as a non-negotiable: "abrupt power loss — load-shedding in Lagos, a grid event in rural Chennai, a generator transfer failure in Nairobi — does not corrupt the local data store." Enterprise deployments in Sub-Saharan Africa, rural India, parts of the GCC during peak summer load, and anywhere with daily scheduled load-shedding must operationalize this property explicitly.
+
+On abrupt power loss, the sync daemon's in-flight writes are durable. Layer 2's append-only event log fsync's (POSIX) or FlushFileBuffers's (Windows) each append before acknowledging to the application — see Chapter 12 for the durability specification. On cold restart, the sync daemon reads the event log, reconstructs the in-memory state, resumes gossip, and replays any buffered outbound deltas. MDM compliance re-attests on first successful handshake with the relay, using the attestation bundle pre-seeded in `node-config.json`. The deployment requirement: endpoints in load-shedding environments should be specified with local UPS (30-minute runtime minimum to cover brief grid events and allow graceful shutdown on extended outages) and SSDs with power-loss-protection (PLP) capacitors for the local SQLCipher database path. Enterprise MDM fleets in Lagos, Nairobi, rural Indian BFSI branches, and GCC construction sites specify this as a hardware baseline, not an optional upgrade.
+
+### Compliance Documentation Pipeline
+
+Producing the documentation enterprise regulators require is itself an operational workflow. The architecture provides the raw evidence; the pipeline assembles it into the specific artifacts each compliance regime accepts.
+
+**SOC 2 Type II evidence package.** The node's audit log (Chapter 15 specifies the tamper-evident structure) is the operational evidence source for access-control and data-handling SOC 2 controls. Export the audit log monthly with the `sunfish admin audit-export --from <date> --to <date>` command; the export produces a CSV-and-JSON bundle that maps directly onto the SOC 2 Trust Services Criteria (CC6 for logical access, CC7 for system operations, CC8 for change management). The SBOM + Grype CVE report + MDM compliance attestation report together satisfy CC7.2 vulnerability management.
+
+**GDPR Article 30 records of processing activities.** Assemble from the bucket definitions (what categories of personal data the node processes), the node-config.json (where data is stored and for what purpose), the SBOM (what processing tools are used), and the MDM deployment manifest (which endpoints hold which data categories). A quarterly rollup of these into a GDPR Article 30 document satisfies EU controller obligations; add the Bridge relay's data processing agreement (naming the relay operator as an Article 28 processor and stating the supplementary measures under Schrems II) for any cross-border deployment.
+
+**EU Cyber Resilience Act SBOM obligations.** The CRA entered into force October 2024 with a 36-month transition for product-specific SBOM obligations. Syft-generated CycloneDX SBOMs signed and attested under SLSA Level 3 satisfy the operative CRA requirements for software products sold in EU markets. Publish the signed SBOM at a predictable URL so EU enterprise buyers can verify before procurement completes.
+
+**DIFC DPL 2020, India DPDP, Russia 242-FZ, China PIPL, Nigeria NDPR, South Africa POPIA, Kenya DPA, Brazil LGPD, Japan APPI, South Korea PIPA.** Each regime has its own documentation format but shares a common evidence substrate: what data the architecture handles, where it lives jurisdictionally, who has access, and what happens on incident. The artifacts above (audit log export, SBOM, MDM compliance manifest, Bridge relay jurisdictional configuration) compose into every regime's required documentation with regime-specific formatting. The underlying evidence is the same because the architecture is the same.
+
 ---
 
 ## The Operational Runbook Minimum
@@ -357,6 +397,29 @@ Enterprise customers require runbooks before they sign. Deliver three runbooks b
 6. Archive the audit log entries for this user for the retention period required by your compliance framework.
 
 **Expected duration:** Under 15 minutes from trigger to confirmed wipe.
+
+### Runbook 0: Node Onboarding (New Employee)
+
+**Trigger:** A new employee joins the organization and needs a provisioned Sunfish node.
+
+**Steps:**
+
+1. Confirm the employee's role and team membership in the identity provider. The role determines which attestation bundle the administrator issues.
+2. The administrator runs the founder-to-joiner attestation issuance — per the `Sunfish.Kernel.Security` surface, this is `IssueJoinerAttestationAsync(teamId, joinerPublicKey, founderPrivateKey, ct)`. The joiner public key comes from the node's first-run key generation; the administrator receives it through the onboarding QR code or paste-bundle flow specified in Chapter 17.
+3. Pre-seed `node-config.json` on the target device via MDM, with `teamId`, `relayEndpoint` (pointing at the jurisdictional self-hosted Bridge relay), `allowedBuckets` scoped to the role's authorized record types, and `enterpriseAttestationIssuerPublicKey` set to the team's issuer public key.
+4. Deploy the signed installer through Intune, Jamf, SCCM, SOTI, MaaS360, or Ivanti per the MDM section above. The daemon starts automatically on install, reads the pre-seeded config, and presents the onboarding paste-bundle surface on first user login.
+5. The new employee pastes the attestation bundle; the node validates the signature against the `enterpriseAttestationIssuerPublicKey`, stores role keys in the OS-native keystore, and initiates first sync with the relay.
+6. Verify successful onboarding: the administrator checks the team audit log for a `NodeJoined` event with the correct role attestation and the expected peer node identity. Expected output:
+
+   ```
+   $ sunfish admin audit-tail --team acme --filter NodeJoined
+   [2026-04-24T14:32:11Z] NodeJoined team=acme role=member node=ed25519:a3f1…
+     attestation-issuer=a7b2…  buckets=[reports.v1, notes.v1]  first-sync=2.3s
+   ```
+
+**Expected duration:** Under 30 minutes from IdP provisioning to first successful sync, dominated by MDM deployment latency rather than Sunfish operations.
+
+**Failure modes:** If the paste-bundle fails signature verification, the node surfaces `ERR_ATTESTATION_REQUIRED` and does not proceed to first sync. If the administrator's private key is not correctly scoped to issue the role, `IssueJoinerAttestationAsync` returns an authorization error before emitting a bundle; check the administrator's own attestation scope in the team audit log before retrying.
 
 ### Runbook 2: Incident Response — Node or Key Compromise
 
