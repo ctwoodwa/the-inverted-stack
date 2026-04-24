@@ -306,6 +306,10 @@ Add it to your Blazor layout:
 
 **Data Freshness** reflects the last confirmed sync exchange. A data-fresh node shows `Healthy` — a peer acknowledged a sync exchange within the staleness threshold (configurable; default five minutes). `Stale` means the threshold elapsed without a confirmed exchange. `ConflictPending` means the node has unresolved conflicts that require attention before the next sync exchange can complete cleanly.
 
+The staleness threshold deserves deliberate configuration. The default of five minutes is conservative — suitable for low-frequency collaborative workflows where document freshness is not time-critical. For applications where peers write to shared records frequently, a sixty-second threshold makes the UI more responsive to connectivity changes. For applications used in intermittent-connectivity environments — field crews, remote sites — a longer threshold (thirty or sixty minutes) prevents the indicator from flashing amber every time a user steps away from the office. The threshold is a product decision, not a system constraint. Set it before your first user-facing deploy; changing it mid-deployment changes what users have learned to expect from the indicator.
+
+One debugging pattern worth knowing: when `Node Health` is `Healthy` but `Data Freshness` is persistently `Stale`, the node is running and the local database is open, but no peer has responded to gossip. The most common cause is a firewall or network policy blocking the mDNS multicast address. Check that UDP port 5353 is open on the local network segment. The second most common cause is two instances running on the same machine sharing the same mDNS service record — the second instance suppresses the first's advertisement. Use separate `--sunfish-data-dir` paths when running multiple instances on a single machine.
+
 ### Optimistic Write Button States
 
 Every write in a local-first application is optimistic: apply locally first, sync asynchronously. Your UI should reflect this honestly with three states:
@@ -337,6 +341,10 @@ Do not surface sync delays as write errors — users who have experienced cloud 
 Anchor's shell is ready. Now you add your domain.
 
 Every domain feature in a local-first node registers as a plugin. The plugin system is the boundary between the platform and your application. Do not bypass it by writing directly against the kernel services — the plugin contract is the stability boundary; the kernel services below it are pre-1.0 and will change.
+
+The plugin lifecycle has two phases. In the load phase, the kernel calls `OnLoadAsync` on every registered plugin in dependency order. A plugin that declares dependencies in `Dependencies` does not load until its dependencies have loaded successfully — the registry performs a topological sort and raises `PluginMissingDependencyException` if a declared dependency is not registered. If a plugin's `OnLoadAsync` throws, the exception propagates and the node fails to start; all plugins load or none do. In the unload phase, when the node shuts down cleanly, the kernel calls `OnUnloadAsync` in reverse load order so that downstream plugins tear down before the services they depend on. Unload failures are logged and swallowed — partial unload does not block subsequent restarts. This sequencing is automatic; you do not call it.
+
+The `Id` and `Version` properties on `ILocalNodePlugin` are logged at load time for diagnostics. Use a reverse-DNS style identifier (e.g., `com.yourorg.reports`) — `Id` is the key the dependency system uses to resolve `Dependencies` declarations. Use semantic versioning for `Version` so that log output identifies exactly which plugin build is running when diagnosing a startup failure.
 
 ### Registering Your First Plugin
 

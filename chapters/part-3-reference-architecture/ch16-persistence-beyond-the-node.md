@@ -157,6 +157,8 @@ When no valid snapshot exists — on a fresh install, after a breaking schema mi
 
 **Interaction with schema migrations.** Snapshots are epoch-scoped and schema-scoped. After a breaking migration, old snapshots are discarded. The system rehydrates from the most recent pre-migration snapshot that still falls within the log, applies schema lenses to bring events forward to the new schema shape, and writes a new snapshot tagged with the current epoch and schema version. The migration runbook in Chapter 13 specifies the sequencing required to keep this process safe under concurrent writes.
 
+**Snapshot scheduling policy.** The system writes a new snapshot after three triggers: rehydration completes (to amortize future replay cost), the event log crosses a configurable operation-count threshold (default: 5,000 operations since the last snapshot), and explicit snapshot creation is requested via `Sunfish.Kernel.Buckets` at application shutdown. The operation-count threshold is the primary driver in practice. An aggregate that accumulates operations quickly generates snapshots frequently; a rarely-modified aggregate may hold a single snapshot for months. The threshold is per document type, not per deployment. Teams with high-frequency write patterns reduce the threshold; teams prioritizing storage efficiency raise it. The cost of an incorrect threshold is measured in rehydration latency, not correctness — the event log remains intact regardless of snapshot frequency.
+
 ---
 
 ## CRDT Growth and Garbage Collection
@@ -196,6 +198,8 @@ stateDiagram-v2
 This model is intentionally non-technical. "Your data is protected" requires no understanding of sync daemons or replication factors. "You are at risk" requires only the user's attention. The three states map directly to the three things a user can do: nothing, back up now, or acknowledge an emergency.
 
 The backup status is surfaced in `Sunfish.Foundation` as a typed state that the host application renders. The package provides the state machine; the application provides the UI. No backup UI is prescribed — the state model is the contract, not the presentation.
+
+**BYOC backup destination.** The Tier 3 backup adapter is not bound to a specific cloud provider. The architecture specifies a generic object storage interface; operator deployments configure the destination. The backup object contains a full encrypted snapshot of the node's CRDT event log and the current snapshot tier — not a database file, not a ZIP archive, but the serialized event log the system already maintains as Tier 2. The encryption key for the backup is derived from the same DEK/KEK hierarchy that protects the local database. A backup stored in an untrusted object store is still encrypted under the user's key material. The storage provider cannot read it. If the user loses their key, they lose access to the backup — the same tradeoff that governs the local store. The adapter configuration accepts any object storage endpoint that speaks the S3 API, including self-hosted MinIO, Azure Blob via compatibility adapter, and Google Cloud Storage. Teams that cannot use any external storage configure the adapter to write to a network share or a locally mounted drive.
 
 ---
 
@@ -280,12 +284,18 @@ The export directory is the user's data in a form that outlasts the application.
 
 `Sunfish.Foundation` exposes the export pipeline as a background task. The host application provides a destination path and receives progress events; the package handles serialization, format selection, and README generation. The export format specification is versioned separately from the application — a document exported today must be parseable by any future export reader that supports the same format version.
 
+The format version is recorded in the `README.txt` and in a machine-readable `manifest.json` at the root of the export directory. The manifest records the format version, the export timestamp, the node identifier, the list of included document types, and the count of stubs versus full records. A future import or recovery tool reads the manifest first to determine compatibility before touching the data files. This versioning contract makes the export durable across application updates — a reader built years from now can inspect the manifest version and apply the appropriate parsing logic without guessing at the structure.
+
+Regulated industries treat the plain-file export as a retention artifact, not just a convenience. HIPAA requires patient record retention periods measured in years. GDPR Article 17 requires erasure on request — but only after the retention period expires. The export format must survive both obligations: it must be readable long after the application that produced it is gone, and the content hash in every exported stub must remain verifiable so that a regulator can confirm that no content was silently omitted. The hash is in the export; the format version is in the manifest; the manifest is in the directory. No application-specific tooling is required to verify any of it.
+
 ---
 
 ## Summary
 
 <!-- PROSE REVIEW FLAG: Summary paragraph is 9 sentences that restate each section in sequence. Recommend cutting to the governing constraint + the user-facing consequence, e.g.: -->
 Persistence beyond the node is a composition of decisions, not a single mechanism. Each layer resolves a distinct failure mode; together they ensure the user's data survives the device, the application, and the operator.
+
+The governing constraint across all five layers is the same: the user's data must remain in the user's control and in a form the user can verify. Bucket access control enforces minimization at the protocol layer, not the application layer. Backup destinations are user-controlled and provider-agnostic. Snapshots are performance optimizations over an event log the user can read. Export produces formats that require no vendor cooperation to open. The three-state backup UX surfaces risk honestly rather than hiding it behind a perpetually green indicator. None of these properties are incidental. Each is a design decision made in favor of the person who owns the data.
 
 ---
 

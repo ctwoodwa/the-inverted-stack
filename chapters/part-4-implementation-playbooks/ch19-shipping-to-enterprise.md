@@ -170,6 +170,16 @@ The `enterpriseAttestationIssuerPublicKey` field is the base64-encoded Ed25519 p
 
 The host refuses to start if the config file fails schema validation. It does not silently ignore invalid configuration or fall back to defaults. It logs the validation error and exits. This is intentional — a misconfigured node that starts anyway and fails at runtime is harder to diagnose than a node that refuses to start with a clear error message.
 
+### Post-Install Health Verification
+
+After the MDM push completes, verify installation health before declaring the deployment successful. The two failure modes to check immediately:
+
+**Daemon not running.** A silent MSI install can succeed at the OS level while the Windows Service fails to start — typically because the service account lacks read access to the `dataDirectory` path. Check the Event Viewer under `Windows Logs > Application` for `SunfishLocalNode` source errors. The most common resolution is granting `NT AUTHORITY\NetworkService` (or your chosen service account) full control over `C:\ProgramData\Sunfish`.
+
+**Config file not found.** The application reads `node-config.json` at startup and fails fast if it is missing or malformed. Pre-seeded config deployment via Intune is a separate assignment from the application package; if the sequencing is wrong, the app installs before the config arrives. Use an Intune Proactive Remediation script to verify the file exists and contains valid JSON before the app assignment runs. On Jamf, use a policy ordering dependency: the configuration policy must succeed before the app policy triggers.
+
+Both failure modes produce clear error logs. Neither requires a technician visit to diagnose once you know what to look for — a remote log pull via MDM resolves both within minutes.
+
 ### Compliance Check at Capability Negotiation
 
 MDM compliance is not a one-time installation gate. A node that was compliant at install time can fall out of compliance mid-session: the MDM policy updates, the certificate expires, or the config file is modified outside the MDM channel. The compliance check runs at capability negotiation — the handshake that happens before a node touches any data. A node that fails the compliance check during an active session receives a rejection at the next handshake boundary. It does not retain access until the session ends.
@@ -224,6 +234,8 @@ Publish the SBOM alongside the release artifact. The internal update server serv
 | Low | Tracked; addressed in maintenance releases |
 
 Enterprise security teams do not negotiate the SLA. They compare it to their internal policy. If your critical SLA is longer than 24 hours, some organizations will not sign. Publish the SLA before anyone asks.
+
+When a critical CVE lands between releases, the patch-release process must be rehearsed before it is needed. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, and IT operations. If the first time you run it is during a live incident, you will miss the 24-hour window. Run a dry-fire drill during your first sprint after GA: create a test release, promote it through the entire pipeline, and measure the elapsed time. Shorten every step that takes longer than it should.
 
 ---
 

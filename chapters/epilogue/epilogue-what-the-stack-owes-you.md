@@ -83,11 +83,17 @@ Community governance must be decided before the repository opens to external con
 
 The three highest-value areas for community contribution are the sync daemon protocol specification, the relay hardening work for high-risk verticals, and the formal merge invariant modeling for domain-level constraints. These are also the three areas where the architecture most needs people who bring expertise the core team does not have — distributed systems protocol experience, healthcare and legal compliance knowledge, and formal verification methods. If you have read this book and you have one of those backgrounds, the contribution that matters is not another feature. It is the specification work that unlocks the implementation.
 
+One contribution that often goes overlooked: deployment experience. Every organization that runs a local-first node in production and writes down what failed — what the MDM edge case was, what the mDNS multicast issue turned out to be, what the enterprise security team asked that the architecture document did not answer — adds more durable value to the community than a new feature. The feature ships and gets superseded. The deployment experience accumulates. Runbooks, post-mortems, and annotated deployment guides are primary source material for the next engineer who attempts the same path. A practitioner book without practitioners who write back is a monologue.
+
 ---
 
 ## The Closing
 
 The enabling technologies are mature. The components are individually production-validated. The remaining work is engineering: assembling what is known into a coherent, deployable system with the UX polish that makes distributed complexity invisible to the people who should never have to think about it.
+
+What this architecture asks of the people who build with it is different from what a managed SaaS asks. A SaaS vendor asks you to trust that they will keep the data safe, keep the service available, and not change the terms. The inverted stack asks you to take responsibility for the data — to run the backup, to manage the keys, to issue the attestations, to maintain the runbooks. That is a larger surface of responsibility. It is also a surface you actually control. The difference is not a trade of convenience for security. It is a trade of dependency for agency. Whether that trade is worth making depends on what you are building and who you are building it for.
+
+For the use cases this book describes — field operations, regulated industries, disconnected worksites, organizations with strong data sovereignty requirements — the trade is straightforward. The infrastructure model matches the environment. The architecture is not fighting the deployment context; it is designed for it.
 
 It is tractable, with known unknowns and a clear path through them. The stack knows what it owes. Now it has to deliver.
 
