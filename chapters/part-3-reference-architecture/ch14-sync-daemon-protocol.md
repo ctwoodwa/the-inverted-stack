@@ -43,7 +43,7 @@ flowchart TD
 
 **Tier 2 — Mesh VPN.** Peers on different networks connect through a WireGuard-based mesh VPN layer. The mesh handles NAT traversal automatically; no port forwarding is required on either side. The daemon treats mesh VPN peers identically to LAN peers once the VPN tunnel is established — the same handshake sequence, the same subscription model, the same gossip protocol. The mesh VPN layer also provides in-transit encryption independent of the sync protocol's own message authentication. The two layers are complementary: the mesh secures the transport, the protocol authenticates the operations.
 
-**Tier 3 — Managed Relay.** For deployments where direct peer-to-peer connectivity is not viable — restrictive corporate firewalls, mobile devices on carrier NAT, cross-organizational connections — the daemon connects to a managed relay. The relay is a lightweight proxy: it forwards delta streams between peers without decrypting them. All relay-forwarded messages carry the same device-key authentication as direct connections. The relay cannot read content and cannot inject operations.
+**Tier 3 — Managed Relay.** For deployments where direct peer-to-peer connectivity is not viable — restrictive corporate firewalls, mobile devices on carrier NAT, cross-organizational connections, and for the majority of the book's most relevant markets, field operations in rural India (3G baseline outside Tier-1 cities), rural Sub-Saharan Africa (load-shedding with 3G/2G substrate), rural Latin America (2G-3G outside Tier-1 cities), and rural GCC construction sites — the daemon connects to a managed relay. For these deployment contexts, Tier 3 is the primary operational tier, not a fallback. The relay is a lightweight proxy: it forwards delta streams between peers without decrypting them. All relay-forwarded messages carry the same Ed25519 device-key signatures as direct connections; the receiving daemon verifies each signature before applying any operation, so a compromised relay cannot inject messages nor silently modify them in transit. The relay cannot read content and cannot inject operations.
 
 The daemon selects the lowest-latency path to each known peer. If a peer is reachable via both mDNS and mesh VPN, the daemon uses the mDNS path and keeps the VPN path as a hot standby. Path selection updates dynamically as network conditions change.
 
@@ -82,7 +82,30 @@ sequenceDiagram
 
 ## Gossip Anti-Entropy
 
-The DELTA_STREAM handles real-time operation propagation. Gossip anti-entropy handles convergence — operations missed during a partition propagate on reconnect.
+The DELTA_STREAM handles real-time operation propagation. The protocol specifies that receiving nodes apply inbound operations to their local CRDT document store and update their vector clock accordingly; in the current Sunfish reference implementation, delta receipt and vector-clock exchange are wired, but delta apply-back into `ICrdtDocument` is the Wave 2.6 integration work that completes end-to-end convergence. The specification is the target; the integration gap is named here so readers distinguish protocol behavior from present implementation state. Gossip anti-entropy handles convergence — operations missed during a partition propagate on reconnect.
+
+### Wire Format — Message Field Reference
+
+The protocol uses CBOR (RFC 8949) canonical encoding for all wire messages. The HELLO and CAPABILITY_NEG fields below are mandatory except where marked optional; unknown fields are ignored for forward compatibility. Binary encoding is length-prefixed: a 4-byte big-endian length precedes each CBOR payload, with individual frames capped at 16 MiB.
+
+| Message | Field | Type | Required | Description |
+|---|---|---|---|---|
+| HELLO | `node_id` | bytes (32) | yes | Ed25519 public key hash |
+| HELLO | `schema_version` | uint | yes | Highest supported schema version |
+| HELLO | `public_key` | bytes (32) | yes | Ed25519 public key |
+| HELLO | `sent_at` | uint | yes | Unix timestamp; ±30-second replay window |
+| HELLO | `signature` | bytes (64) | yes | Ed25519 signature over canonical `[node_id, schema_version, public_key, sent_at]` |
+| CAPABILITY_NEG | `workspace_ids` | array of bytes | yes | Workspaces the peer participates in |
+| CAPABILITY_NEG | `attestations` | array of attestation | yes | Role attestations (per-workspace) |
+| CAPABILITY_NEG | `min_schema_version` | uint | yes | Lowest version the peer can decode |
+| CAPABILITY_NEG | `mdm_compliance` | attestation | optional | MDM compliance attestation if required |
+| ACK | `accepted` | array of bytes | yes | Workspace IDs granted |
+| ACK | `rejected` | array of rejection | yes | Per-workspace rejection reason (MISSING_ATTESTATION, EXPIRED_ATTESTATION, INVALID_SIGNATURE) |
+| DELTA_STREAM | frame type | uint | yes | Operation frame identifier |
+| DELTA_STREAM | operations | array of CRDT op | yes | Signed CRDT operations |
+| DELTA_STREAM | vector_clock_tail | uint | yes | Source peer's clock position after these ops |
+| GOSSIP_PING | `membership_entries` | array of member | yes | Peer node_id + reachability state |
+| GOSSIP_PING | `vector_clocks` | map | yes | Known peer clocks for anti-entropy comparison |
 
 Each node maintains a membership list. Each entry records a peer's node ID, its last known address for each discovery tier, its current reachability state (active, suspected, or failed), and the vector clock the local node last received from that peer.
 
@@ -120,6 +143,8 @@ The membership list propagates through gossip. When Node A sends a GOSSIP_PING t
 The sync daemon enforces subscription scope at the stream level, before operations leave the node. This is the data minimization invariant: a node never receives CRDT operations for documents or fields it is not authorized to hold.
 
 This is architecturally different from filtering at the application layer. An application that loads all data and hides unauthorized fields in the UI does not provide data minimization — the unauthorized data resides on the device and is available to anyone with physical or privileged-process access. The daemon's approach ensures that unauthorized data never reaches the device at all.
+
+The send-tier invariant operationalizes data minimization requirements under every major regulatory framework the book addresses: GDPR Article 5(1)(c); the 2020 Schrems II ruling's transfer-safeguard requirements for EU personal data (the relay routes only ciphertext; local key management means no foreign-operator-accessible payload is created); India's DPDP Act 2023 and RBI data localization circular; UAE Data Protection Law 2022 and DIFC DPL 2020; Japan's PIPA (revised 2022); South Korea's PIPA with ISMS-P certification documentation; China's PIPL (2021); Brazil's LGPD; Mexico's LFPDPPP; Colombia's Ley 1581; Nigeria's NDPR; South Africa's POPIA; Kenya's Data Protection Act 2019; and Russia's Federal Law 242-FZ — when the relay is deployed within-jurisdiction, the architecture's combination of data minimization and end-to-end encryption satisfies the server-location requirement. A distinct threat model operates in parallel across multiple jurisdictions: state-mandated data access to cloud-hosted infrastructure. End-to-end encryption with local key management addresses it architecturally — the relay cannot produce decryptable content under legal compulsion because the relay does not possess decryptable content. This is a deployment consideration relevant across CIS, EU (post-Schrems II), and parts of Asia, not a political judgment about any specific government's policy. Organizations replacing Western SaaS under import substitution mandates find the architecture directly aligned: no Western cloud infrastructure dependency, optional in-jurisdiction relay, data and keys under local control.
 
 ```mermaid
 flowchart TD
