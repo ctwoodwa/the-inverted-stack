@@ -14,6 +14,8 @@ Three times, she has watched a promising rollout collapse not because of technic
 
 That is her lens. Not whether this is interesting, but whether it will survive a real procurement committee. Not whether the security story sounds plausible, but whether IT can actually operate this, audit it, and respond when something goes wrong.
 
+The pattern she watches for has a canonical recent example. In 2022, Adobe, Autodesk, Microsoft, Figma, and dozens of other Western SaaS vendors suspended service across Russia and CIS markets under sanctions enforcement. Hundreds of thousands of organizations that had survived every previous procurement review — SOC 2, ISO 27001, vendor risk assessment — lost access with days of notice. The failure mode was not technical. It was jurisdictional. No security questionnaire in standard use at the time asked "what happens if your vendor is directed to stop serving our jurisdiction?" It should have.
+
 She read the paper expecting to find another promising pitch that would fail the first security review. What she found was more complicated.
 
 ---
@@ -28,7 +30,9 @@ The MDM integration earned that score. The paper names Intune, Jamf, and SCCM �
 
 That is architecturally correct. Most MDM-compatible software validates compliance once at installation and then assumes the device remains compliant. The inverted stack validates it continuously at the point of access. Voss commended this directly: a compromised non-compliant node is rejected before it touches data, not after.
 
-The SBOM commitment also earned strong marks. The architecture commits to publishing a Software Bill of Materials with each release — the list of every software component in the product, their versions, and their provenance. This is now a requirement for many enterprise procurement conversations and a baseline expectation for any software sold into regulated industries. The signed and notarized installer language — Apple Developer ID on macOS, Authenticode signing with App Control for Business (WDAC) integration on Windows — is procurement-ready. An IT administrator reading that section can translate it directly into a policy: this software can be added to the trusted-publisher list, deployed silently via Intune, and installed without user elevation.
+Voss flagged one regional scoping note: Intune, Jamf, and SCCM dominate US and Western European enterprise fleets, but GCC, Indian BFSI, and APAC enterprises frequently run SOTI MobiControl, IBM MaaS360, or Ivanti Endpoint Manager instead. The MDM compliance attestation protocol must be platform-agnostic at the architecture level, with documented integration patterns for the regional platforms that Western-centric MDM documentation tends to omit. The paper named three platforms; procurement-ready documentation names at least six.
+
+The SBOM commitment also earned strong marks. The architecture commits to publishing a Software Bill of Materials with each release — the list of every software component in the product, their versions, and their provenance. As of the October 2024 entry-into-force of the EU Cyber Resilience Act, SBOM publication for software products sold in EU markets is a legal requirement, not merely an enterprise best practice. This is now a requirement for many enterprise procurement conversations and a baseline expectation for any software sold into regulated industries. The signed and notarized installer language — Apple Developer ID on macOS, Authenticode signing with App Control for Business (WDAC) integration on Windows — is procurement-ready. An IT administrator reading that section can translate it directly into a policy: this software can be added to the trusted-publisher list, deployed silently via Intune, and installed without user elevation.
 
 SBOM plus signed installer plus MDM integration is a coherent governance story. For most local-first pitches, which typically arrive to procurement with a GitHub link and a request to run as administrator, this was a meaningful departure from the standard.
 
@@ -60,9 +64,9 @@ Voss scored a domain average of 7.1 out of 10 and issued PROCEED WITH CONDITIONS
 
 ## What Changed Between Rounds
 
-The revision addressed the blocking issue directly and without hedging.
+Voss read the revision over three sessions, flagging anything she would need to verify in Round 2. The authors addressed the blocking issue directly and without hedging.
 
-The incident response runbook became a companion document to the architecture. It specifies four triggering events: suspected unauthorized access to a local node, detection of an unauthorized device in the sync mesh, a key compromise or suspected key exposure, and a data exfiltration event involving relay traffic. For each trigger, the runbook defines the artifact collection sequence — which logs to preserve, from which systems, in what order — and the chain of custody procedure for those artifacts. It specifies the escalation path: IT administrator notifies the CISO within one hour, legal counsel within four hours if personal data may be involved, and any applicable regulators within the timeframes mandated by the relevant compliance framework.
+The incident response runbook became a companion document to the architecture. It specifies four triggering events: suspected unauthorized access to a local node, detection of an unauthorized device in the sync mesh, a key compromise or suspected key exposure, and a data exfiltration event involving relay traffic. For each trigger, the runbook defines the artifact collection sequence — which logs to preserve, from which systems, in what order — and the chain of custody procedure for those artifacts. It specifies the escalation path: IT administrator notifies the CISO within one hour; legal counsel within four hours if personal data may be involved; and applicable regulators within jurisdiction-specific windows — GDPR Article 33 requires supervisory authority notification within 72 hours of awareness for EU personal data; HIPAA requires covered-entity notice without unreasonable delay and no later than 60 days; India's DPDP Rules, Nigeria's NDPR, South Africa's POPIA, Brazil's LGPD, and Russia's 242-FZ each impose jurisdiction-specific reporting windows that the runbook enumerates by region. The 2020 Schrems II ruling adds a procedural layer: breach notification for EU personal data must account for whether supplemental safeguards for cross-border transfer were in place at the time of incident. Voss read the enumeration twice and marked it complete.
 
 The SBOM toolchain was named. Syft generates the SBOM at build time from source — not assembled post-install, but produced from the dependency graph before the installer is built. Grype scans the SBOM against the NVD and OSS vulnerability databases as part of the CI pipeline. The CVE response SLA commits to critical vulnerabilities being addressed within fourteen days of disclosure, with a public advisory posted within forty-eight hours of the patch release.
 
@@ -71,6 +75,8 @@ Relay traffic was confirmed to route exclusively over port 443 with TLS 1.3. The
 The zero-downtime update path was specified: a rolling update with a health-check gate. The container orchestration layer applies the new image to one replica, runs the health check sequence, and only rotates the remaining replicas if the first reports healthy. If the update fails, the orchestration layer automatically rolls back to the previous image. The entire sequence completes without a maintenance window for typical updates.
 
 The MDM compliance check at capability negotiation — already the strongest enterprise-governance feature in the architecture — was retained verbatim. Voss had commended it in Round 1 and it required no revision.
+
+Each change passed the test that had set Round 1's verdict. She kept her evaluation rubric intact and opened Round 2.
 
 ---
 
@@ -134,7 +140,7 @@ Voss scored the procurement dimension at a six — the lowest score in her Round
 
 Voss Round 2 domain average was 7.2 — a marginal improvement over Round 1 7.1, with the blocking issue resolved and scores redistributed across the stronger governance narrative.
 
-The five conditions — C1 through C5, detailed in the sections above — require no changes to the sync protocol, the CRDT data model, the security architecture, or the deployment model. They are governance documentation, operational tooling descriptions, and a commercial licensing decision. The architecture cleared the review; the conditions govern how it is packaged, licensed, and operated.
+The five conditions — C1 through C5, detailed in the sections above — require no changes to the sync protocol, the CRDT data model, the security architecture, or the deployment model. They are governance documentation, operational tooling descriptions, and a commercial licensing decision. All five are pre-GA requirements — they must be resolved before the first enterprise deployment, not deferred to a post-GA roadmap. The architecture cleared the review; the conditions govern how it is packaged, licensed, and operated.
 
 ---
 
@@ -144,7 +150,7 @@ The review across two rounds produced something more durable than a verdict: a c
 
 These are not negotiating positions. An architecture that does not meet them will not reach the procurement committee — it will be rejected at the IT security pre-screening that happens before the formal review.
 
-**MDM-compatible installation.** Silent deployment via Intune on Windows and Jamf on macOS. No user interaction required. Configuration pre-seeded via MDM profile. If IT cannot deploy and configure the software without touching each endpoint individually, they cannot manage a fleet of them.
+**MDM-compatible installation.** Silent deployment via the organization's MDM platform — Intune, Jamf, or SCCM in Western markets; SOTI MobiControl, IBM MaaS360, or Ivanti Endpoint Manager in GCC, India, APAC, and African enterprise fleets. No user interaction required. Configuration pre-seeded via MDM profile. If IT cannot deploy and configure the software without touching each endpoint individually, they cannot manage a fleet of them.
 
 **Signed and notarized binaries.** Apple Developer ID with notarization on macOS. Authenticode signing with trusted-publisher compatibility for App Control for Business (WDAC) on Windows. Unsigned software cannot be deployed on managed endpoints without disabling security policies that exist for good reasons. Requiring that exception is a non-starter.
 
@@ -156,6 +162,6 @@ These are not negotiating positions. An architecture that does not meet them wil
 
 **Clear licensing terms for enterprise customization.** An AGPLv3 copyleft clause creates legal uncertainty for enterprise customers who customize the software. The resolution — dual licensing with a commercial option for organizations that cannot accept copyleft — must be decided before the first enterprise procurement conversation.
 
-The architecture this book describes satisfies all of these requirements. The council review process documented in the chapters that follow is the evidence. But the checklist has value independent of this particular architecture: it applies to any local-first system that intends to be deployed on managed enterprise endpoints, sold to organizations with real compliance obligations, and operated by IT departments that did not build the software and cannot be assumed to understand its internals.
+**Power-interruption resilience.** Local writes commit to durable storage before acknowledgment. Abrupt power loss — load-shedding in Lagos, a grid event in rural Chennai, a generator transfer failure in Nairobi — does not corrupt the local data store. The sync daemon survives app restart; it also survives cold restart after unexpected shutdown. Enterprise deployments outside North American and Western European grid-stable environments require this property as a baseline, not an edge case.
 
-An architecture that makes IT job easier — that reduces rather than increases the surface area IT must understand, audit, and respond to — earns a different kind of conversation than one that asks IT to make exceptions. The conditions attached in Round 2 specify what completing that work requires. The architecture cleared the review. The checklist is how it stays cleared.
+Any local-first architecture that intends to be deployed on managed endpoints must satisfy this checklist. The one this book describes cleared Voss's review with five governance conditions; the chapters that follow are how the other five council members tested it against their own non-negotiable lists.
