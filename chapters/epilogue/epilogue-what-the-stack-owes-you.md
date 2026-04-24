@@ -1,6 +1,6 @@
 # Epilogue — What the Stack Owes You
 
-<!-- icm/draft -->
+<!-- icm/prose-review -->
 
 <!-- Target: ~2,500 words -->
 <!-- Source: v13 §20, v5 §9-10, Ch10 synthesis -->
