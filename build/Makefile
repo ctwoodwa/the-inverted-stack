@@ -74,6 +74,8 @@ audiobook:
 m4b:
 	python build/m4b.py
 
+# audio-copy: run alone, with stability check on (protects against picking
+# up in-flight files when an audiobook render is happening in another shell).
 .PHONY: audio-copy
 audio-copy:
 	python build/copy-to-dropbox.py
@@ -84,6 +86,8 @@ audio-copy-all:
 
 # audiobook-deploy is the full pipeline: regen MP3s, bundle .m4b, copy
 # everything to Dropbox. This is the canonical "ship the audiobook" target.
+# --no-stability-check is safe here because m4b.py is synchronous — by the
+# time the copy step runs, the .m4b is fully written.
 .PHONY: audiobook-deploy
 audiobook-deploy: audiobook m4b-deploy
 
@@ -92,12 +96,13 @@ audiobook-deploy: audiobook m4b-deploy
 # the bundle needs (re)generation + deploy.
 .PHONY: m4b-deploy
 m4b-deploy: m4b
-	python build/copy-to-dropbox.py --include-m4b
+	python build/copy-to-dropbox.py --include-m4b --no-stability-check
 
 # audiobook-deploy-mp3 is the lighter variant: regen MP3s and copy them
 # without rebuilding the .m4b. Useful for iteration on individual chapters.
 .PHONY: audiobook-deploy-mp3
-audiobook-deploy-mp3: audiobook audio-copy
+audiobook-deploy-mp3: audiobook
+	python build/copy-to-dropbox.py --no-stability-check
 
 .PHONY: chapter-pdf
 chapter-pdf: $(OUT_DIR)
