@@ -74,6 +74,21 @@ audiobook:
 m4b:
 	python build/m4b.py
 
+.PHONY: audio-copy
+audio-copy:
+	python build/copy-to-dropbox.py
+
+.PHONY: audio-copy-all
+audio-copy-all:
+	python build/copy-to-dropbox.py --include-m4b --include-scripts
+
+.PHONY: audiobook-deploy
+audiobook-deploy: audiobook audio-copy
+
+.PHONY: m4b-deploy
+m4b-deploy: m4b
+	python build/copy-to-dropbox.py --include-m4b
+
 .PHONY: chapter-pdf
 chapter-pdf: $(OUT_DIR)
 	@test -n "$(ch)" || (echo "Usage: make chapter-pdf ch=ch01" && exit 1)
