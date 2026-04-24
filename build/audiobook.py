@@ -359,6 +359,14 @@ def narratable_text(md: str) -> str:
     for pat, repl in PROPER_NOUN_FIXES.items():
         t = re.sub(pat, repl, t)
 
+    # Collapse soft newlines (single newlines inside a paragraph) into
+    # spaces before guaranteeing terminal punctuation. Markdown soft-wraps
+    # paragraphs at column 80; without this collapse, _ensure_period
+    # incorrectly inserts periods at every wrap point, producing spurious
+    # sentence breaks like "Reading those. verdicts was not...".
+    # Paragraph breaks (\n\n) are preserved.
+    t = re.sub(r"(?<!\n)\n(?!\n)", " ", t)
+
     # Guarantee terminal punctuation on every non-empty line so sentence
     # prosody doesn't run past headings and stripped list items.
     def _ensure_period(line: str) -> str:
