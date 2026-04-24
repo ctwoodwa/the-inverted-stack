@@ -27,3 +27,6 @@ Thumbs.db
 # Python bytecode cache
 __pycache__/
 *.pyc
+
+# OpenWolf runtime session state (regenerated each session)
+.wolf/hooks/_session.json

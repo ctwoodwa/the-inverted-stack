@@ -461,3 +461,9 @@
 | 17:34 | Edited chapters/appendices/appendix-d-testing-the-inverted-stack.md | expanded (+12 lines) | ~1055 |
 | 17:36 | Edited chapters/appendices/appendix-e-citation-style.md | expanded (+28 lines) | ~379 |
 | 17:37 | Edited chapters/appendices/appendix-e-citation-style.md | added error handling | ~837 |
+| 17:38 | Session end: 47 writes across 8 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 8 reads | ~29346 tok |
+| 18:15 | Session end: 47 writes across 8 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 8 reads | ~29346 tok |
+| 18:16 | Session end: 47 writes across 8 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 8 reads | ~29346 tok |
+| 18:17 | Edited .gitignore | 5→9 lines | ~24 |
+| 18:18 | Session end: 48 writes across 9 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 9 reads | ~29372 tok |
+| 18:20 | Edited .gitignore | 3→6 lines | ~35 |

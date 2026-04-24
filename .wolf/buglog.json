@@ -1,4 +1,677 @@
 {
   "version": 1,
-  "bugs": []
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-04-24T12:10:36.390Z",
+      "error_message": "Wrong reference: eleven should be twelve",
+      "file": ".claude/agents/literary-board.md",
+      "root_cause": "Used \"eleven\" instead of \"twelve\"",
+      "fix": "Changed eleven → twelve",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T12:10:36.390Z"
+    },
+    {
+      "id": "bug-002",
+      "timestamp": "2026-04-24T13:09:20.610Z",
+      "error_message": "Wrong reference: Five should be Six",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Used \"Five\" instead of \"Six\"",
+      "fix": "Changed Five → Six",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-24T13:10:01.198Z"
+    },
+    {
+      "id": "bug-003",
+      "timestamp": "2026-04-24T13:10:07.565Z",
+      "error_message": "Wrong reference: 000 should be 500",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Used \"000\" instead of \"500\"",
+      "fix": "Changed 000 → 500",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T13:10:07.565Z"
+    },
+    {
+      "id": "bug-004",
+      "timestamp": "2026-04-24T13:10:54.999Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 17→31 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T13:10:54.999Z"
+    },
+    {
+      "id": "bug-005",
+      "timestamp": "2026-04-24T13:11:17.774Z",
+      "error_message": "Wrong reference: 000 should be 500",
+      "file": "book-structure.md",
+      "root_cause": "Used \"000\" instead of \"500\"",
+      "fix": "Changed 000 → 500",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T13:11:17.774Z"
+    },
+    {
+      "id": "bug-006",
+      "timestamp": "2026-04-24T13:35:58.022Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had 's NDPR enforced by the NDPC, and Japan'",
+      "fix": "Changed to 's NDPR enforced by the NDPC, Japan'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T13:35:58.022Z"
+    },
+    {
+      "id": "bug-007",
+      "timestamp": "2026-04-24T13:36:03.599Z",
+      "error_message": "Wrong reference: correct should be deterministically",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Used \"correct\" instead of \"deterministically\"",
+      "fix": "Changed correct → deterministically",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T13:36:03.599Z"
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-04-24T14:00:41.454Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had 's AI services a national security supply-chain ri",
+      "fix": "Changed to 's AI services a national security supply-chain ri",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-24T14:01:07.711Z"
+    },
+    {
+      "id": "bug-009",
+      "timestamp": "2026-04-24T14:02:04.617Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Had 's 2020 Schrems II ruling constrained EU organizat",
+      "fix": "Changed to 's 2020 Schrems II ruling constrained EU organizat",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T14:02:04.617Z"
+    },
+    {
+      "id": "bug-010",
+      "timestamp": "2026-04-24T14:19:58.944Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had 's Protection of Personal Information Act (POPIA, ",
+      "fix": "Changed to 's Ley 1581, Argentina'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T14:19:58.944Z"
+    },
+    {
+      "id": "bug-011",
+      "timestamp": "2026-04-24T14:20:24.381Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Had 's CNIL. Russia'",
+      "fix": "Changed to 's CNIL. In the CIS, Russia'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T14:20:24.381Z"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-04-24T14:51:07.544Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
+      "root_cause": "Had 's servers throughout. Concurrent edits go through",
+      "fix": "Changed to 's servers throughout; concurrent edits go through",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T14:51:07.544Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-04-24T14:51:26.458Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 13→3 lines (6 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T14:51:26.458Z"
+    },
+    {
+      "id": "bug-014",
+      "timestamp": "2026-04-24T15:02:38.004Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
+      "root_cause": "Had 's Data Protection Act — data residency and consen",
+      "fix": "Changed to 's Data Protection Act, and Russia'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T15:02:38.004Z"
+    },
+    {
+      "id": "bug-015",
+      "timestamp": "2026-04-24T16:13:52.561Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md",
+      "root_cause": "7 lines replaced/restructured",
+      "fix": "Rewrote 13→5 lines (7 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:13:52.561Z"
+    },
+    {
+      "id": "bug-016",
+      "timestamp": "2026-04-24T16:20:21.128Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md",
+      "root_cause": "Had 's Ley 1581, Argentina'",
+      "fix": "Changed to 's Ley 1581, and Argentina'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:20:21.128Z"
+    },
+    {
+      "id": "bug-017",
+      "timestamp": "2026-04-24T16:32:11.124Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 5→5 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:32:11.124Z"
+    },
+    {
+      "id": "bug-018",
+      "timestamp": "2026-04-24T16:38:26.189Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+      "root_cause": "Had 's DPDP Rules, Nigeria'",
+      "fix": "Changed to 's DPDP Rules, Japan'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:38:26.189Z"
+    },
+    {
+      "id": "bug-019",
+      "timestamp": "2026-04-24T16:38:39.870Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 5→3 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:38:39.870Z"
+    },
+    {
+      "id": "bug-020",
+      "timestamp": "2026-04-24T16:46:39.518Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:46:39.518Z"
+    },
+    {
+      "id": "bug-021",
+      "timestamp": "2026-04-24T16:51:57.725Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md",
+      "root_cause": "Had 's NDPR, South Africa'",
+      "fix": "Changed to 's LGPD, Mexico'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T16:51:57.725Z"
+    },
+    {
+      "id": "bug-022",
+      "timestamp": "2026-04-24T17:28:29.883Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 13→7 lines (6 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T17:28:29.883Z"
+    },
+    {
+      "id": "bug-023",
+      "timestamp": "2026-04-24T17:34:51.323Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md",
+      "root_cause": "Had 's DPDP Act 2023 and RBI data localization circula",
+      "fix": "Changed to 's BSI and France'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T17:34:51.323Z"
+    },
+    {
+      "id": "bug-024",
+      "timestamp": "2026-04-24T17:47:00.471Z",
+      "error_message": "Wrong reference: Five should be Six",
+      "file": "chapters/part-2-council-reads-the-paper/ch10-synthesis.md",
+      "root_cause": "Used \"Five\" instead of \"Six\"",
+      "fix": "Changed Five → Six",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T17:47:00.471Z"
+    },
+    {
+      "id": "bug-025",
+      "timestamp": "2026-04-24T19:03:32.605Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch11-node-architecture.md",
+      "root_cause": "Had `loro-cs`",
+      "fix": "Changed to `Sunfish.Kernel.Crdt`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T19:03:32.605Z"
+    },
+    {
+      "id": "bug-026",
+      "timestamp": "2026-04-24T19:10:16.633Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch11-node-architecture.md",
+      "root_cause": "Had 's relay-is-ciphertext-only design directly addres",
+      "fix": "Changed to 's relay-is-ciphertext-only design directly addres",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T19:10:16.633Z"
+    },
+    {
+      "id": "bug-027",
+      "timestamp": "2026-04-24T19:24:44.152Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/Makefile",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 9→18 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "unknown"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T19:24:44.152Z"
+    },
+    {
+      "id": "bug-028",
+      "timestamp": "2026-04-24T19:43:05.168Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Had \"wrapped\"",
+      "fix": "Changed to `getrandom(2)`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-24T19:44:03.076Z"
+    },
+    {
+      "id": "bug-029",
+      "timestamp": "2026-04-24T20:00:18.083Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 10→16 lines (2 removed) | Also: def synth_chunk(client: OpenAI, voice: str, text: ; with client.audio.speech.with_streaming_response.c | Also: ap.add_argument(\"--voice\", default=\"af_sky+af_bell; manifest: dict = {\"voice\": args.voice, \"chapters\": | Also: raw = md_path.read_text(encoding=\"utf-8\"); chunks = chunk_text(narratable_text(raw))",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-04-24T20:01:18.106Z"
+    },
+    {
+      "id": "bug-030",
+      "timestamp": "2026-04-24T20:13:14.704Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-4-implementation-playbooks/ch17-building-first-node.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 10→11 lines (3 removed) | Also: @if (writeState == WriteState.Pending); else if (writeState == WriteState.Confirmed) | Also: Implement `ILocalNodePlugin` from `Sunfish.Kernel.; public string PluginId => \"com.yourorg.reports\";",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-04-24T20:14:40.586Z"
+    },
+    {
+      "id": "bug-031",
+      "timestamp": "2026-04-24T20:18:06.102Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 12→31 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T20:18:06.102Z"
+    },
+    {
+      "id": "bug-032",
+      "timestamp": "2026-04-24T20:23:06.440Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-4-implementation-playbooks/ch18-migrating-existing-saas.md",
+      "root_cause": "6 lines replaced/restructured",
+      "fix": "Rewrote 17→22 lines (6 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T20:23:06.440Z"
+    },
+    {
+      "id": "bug-033",
+      "timestamp": "2026-04-24T20:24:20.573Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 4→14 lines (4 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T20:24:20.573Z"
+    },
+    {
+      "id": "bug-034",
+      "timestamp": "2026-04-24T20:29:53.661Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 12→12 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T20:29:53.661Z"
+    },
+    {
+      "id": "bug-035",
+      "timestamp": "2026-04-24T20:43:10.899Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 6→11 lines (5 removed) | Also: ## The Non-Technical Trust Gap; Architecture does not sell itself. A legal practic",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-24T20:44:12.996Z"
+    },
+    {
+      "id": "bug-036",
+      "timestamp": "2026-04-24T20:55:34.212Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/front-matter/preface.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→3 lines (2 removed) | Also: I spent a year designing a local-node architecture; What emerged from Round 2 was an architecture I co",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-24T20:55:50.534Z"
+    },
+    {
+      "id": "bug-037",
+      "timestamp": "2026-04-24T21:04:17.916Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/epilogue/epilogue-what-the-stack-owes-you.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 13→25 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T21:04:17.916Z"
+    },
+    {
+      "id": "bug-038",
+      "timestamp": "2026-04-24T21:10:19.258Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 5→9 lines (2 removed) | Also: The maximum allowed body size is 4,194,304 bytes (; Every CBOR body is a CBOR map. Every map contains  | Also: **Founder bundles:** `issuer_public_key` equals `s; `snapshot` is an opaque byte sequence produced by  | Also: 4. A message carrying `protocol_version` greater t; 5. The `supported_versions` array in HELLO enables",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-04-24T21:13:33.608Z"
+    },
+    {
+      "id": "bug-039",
+      "timestamp": "2026-04-24T21:12:11.270Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T21:12:11.270Z"
+    },
+    {
+      "id": "bug-040",
+      "timestamp": "2026-04-24T21:18:25.195Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/appendices/appendix-b-threat-model-worksheets.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→4 lines (2 removed) | Also: | Former team member (post-revocation) | None afte; **Customization guidance:** Add actors specific to | Also: > Your access credentials for [team name] have bee; > Documents in [role name] from [start date] to [e",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-04-24T21:19:55.596Z"
+    },
+    {
+      "id": "bug-041",
+      "timestamp": "2026-04-24T21:32:50.039Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/appendices/appendix-d-testing-the-inverted-stack.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→8 lines (2 removed) | Also: | Storage extraction without credentials | A runni; | Key rotation blocks former member | A team with  | Also: Configure CI in four tiers that reflect the cost a; **Per pull request:** Run Level 1 (property-based)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-04-24T21:34:59.517Z"
+    },
+    {
+      "id": "bug-042",
+      "timestamp": "2026-04-24T21:37:06.891Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/appendices/appendix-e-citation-style.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-24T21:37:06.891Z"
+    }
+  ]
 }
