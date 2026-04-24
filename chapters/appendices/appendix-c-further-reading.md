@@ -50,7 +50,7 @@ The closest intellectual ancestor to this book. Chapters 5 (replication), 8 (dis
 
 [8] M. Shapiro, N. Preguiça, C. Baquero, and M. Zawirski, "A comprehensive study of convergent and commutative replicated data types," INRIA, Tech. Rep. RR-7506, Jan. 2011.
 
-The foundational CRDT theory paper. Dense and mathematical; not required for practitioners who are assembling existing CRDT libraries. Essential for anyone implementing a new CRDT type or contributing to the CRDT engine layer directly. Read this before writing any custom merge logic, and particularly before designing a new collection type. The convergent vs. commutative distinction matters when you are deciding whether to carry full state or operation logs across the sync wire.
+The foundational CRDT theory paper. Dense and mathematical; not required for practitioners who are assembling existing CRDT libraries. Essential for anyone implementing a new CRDT type or contributing to the CRDT engine layer directly. Read it before writing any custom merge logic. The convergent vs. commutative distinction matters when deciding whether to carry full state or operation logs across the sync wire.
 
 [9] H. Howard, M. Jelasity, and J. Crowcroft, "Flexible Paxos: Quorum intersection revisited," *arXiv:1608.06696*, Aug. 2016.
 
@@ -62,7 +62,7 @@ The theoretical basis for understanding quorum flexibility in distributed consen
 
 [10] Linear, "How Linear builds a productive, joyful engineering culture," Linear Engineering Blog. [Online]. Available: https://linear.app/blog
 
-Linear's architecture is the closest public analogue to the AP-first data model in this book. Their lightweight SQLite replica approach — sync everything to the client, render from local state, treat the server as a replication peer rather than the authority — validates the core design at commercial scale. Linear's blog posts on their sync engine are the most useful production account available of how this model performs under real collaborative load. Read these before finalizing your sync bucket design.
+Linear's architecture is the closest public analogue to the AP-first data model in this book. Their lightweight SQLite replica approach — sync everything to the client, render from local state, treat the server as a replication peer rather than the authority — validates the core design at commercial scale. Linear's blog posts on their sync engine are the most useful production account available of how this model performs under real collaborative load.
 
 [11] Actual Budget Contributors, "Actual: A local-first personal finance app," GitHub. [Online]. Available: https://github.com/actualbudget/actual
 
@@ -74,4 +74,4 @@ The closest commercial analogue to Zone A (pure local-first node). Actual stores
 
 [12] Ink & Switch, "Cambria: Translate your data with lenses," Ink & Switch, 2021. [Online]. Available: https://www.inkandswitch.com/cambria/
 
-The Cambria paper introduces bidirectional schema lenses for CRDTs — the conceptual foundation for the schema migration approach in Chapter 13. A lens describes how to translate a document from schema version N to version N+1 and back, which is the property you need to maintain backward compatibility across a heterogeneous fleet of nodes running different software versions. The Cambria library is available for JavaScript. A .NET port does not yet exist; implementers should treat the paper as the specification for the lens abstraction and implement their own lens types for their document schemas.
+The Cambria paper introduces bidirectional schema lenses for CRDTs — the conceptual foundation for the schema migration approach in Chapter 13. A lens describes how to translate a document from schema version N to version N+1 and back, which is the property you need to maintain backward compatibility across a heterogeneous fleet of nodes running different software versions. The Cambria library is available for JavaScript. No .NET port exists; treat the paper as the specification for the lens abstraction and implement lens types for your document schemas.

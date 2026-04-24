@@ -9,7 +9,7 @@
 
 ## A.1 Overview
 
-The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later, where kernel-level Unix domain socket support was introduced. All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming. The daemon initiates with HELLO, negotiates capabilities with CAPABILITY_NEG, and receives an ACK from the relay or peer before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
+The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later. All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming. The daemon initiates with HELLO, negotiates capabilities with CAPABILITY_NEG, and receives an ACK from the relay or peer before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
 
 ---
 
