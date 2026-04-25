@@ -56,6 +56,8 @@ total_target = 0
 rows = []
 
 for root, dirs, files in os.walk(CHAPTERS_DIR):
+    # Skip the gitignored voice-pass drafts directory; only count source.
+    dirs[:] = [d for d in dirs if not d.startswith("_")]
     for fname in sorted(files):
         if not fname.endswith(".md"):
             continue
