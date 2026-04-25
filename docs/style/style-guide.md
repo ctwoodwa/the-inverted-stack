@@ -114,6 +114,30 @@ Both Sinek and Clear use repeatable frameworks — "The Golden Circle," "The 4 L
 - **Name the pattern, then use that name consistently.** If it's a "Boundary Service," call it that everywhere — in code, docs, and conversation.
 - **Do not synonym-cycle.** Calling the same thing "the gateway," "the proxy," "the router," and "the middleware" in the same document is not stylistic variation — it is confusion.
 
+### Define Acronyms and Products on First Use
+
+Every acronym, initialism, or named product gets defined on its first use **per chapter**. Readers may enter at any chapter; an undefined term costs them comprehension immediately.
+
+**Acronyms and initialisms** — spell out the full form on first use, with the abbreviation in parentheses:
+
+- "The General Data Protection Regulation (GDPR)" — not bare "GDPR"
+- "Conflict-free Replicated Data Types (CRDTs)" — not bare "CRDTs"
+- "Mobile Device Management (MDM)" — not bare "MDM"
+
+Subsequent uses within the same chapter use the abbreviation alone.
+
+**Products, projects, and named tools** — establish a brief identifier on first use: what it is, and where to find it (link or short description):
+
+- "Linear ([linear.app](https://linear.app/), the issue tracker)"
+- "Figma ([figma.com](https://www.figma.com/), the design tool)"
+- "Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish))"
+
+After first introduction, use the bare name within the chapter.
+
+**The rule is per-chapter, not per-book.** A reader who jumps to Chapter 14 should not have to flip back to Chapter 2 for a definition. The cost of one repeated spell-out across chapters is much smaller than the cost of one undefined acronym at a chapter boundary.
+
+**Headings exempt.** Acronyms in section headings or table column headers do not count as first use; spell them out at the first prose occurrence in the section instead.
+
 ### Transformational Vocabulary
 Robbins' emphasis on vocabulary that shifts mental states maps to a subtle but powerful writing choice: **replace passive/victim vocabulary with agency vocabulary** in technical writing.
 
