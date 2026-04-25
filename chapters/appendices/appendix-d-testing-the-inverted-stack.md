@@ -131,7 +131,7 @@ The mid-write quarantine behavior is critical. A partial write that is silently 
 
 ### Security
 
-Scenarios below produce evidence directly usable in GDPR/Schrems II, DIFC, RBI, DPDP, POPIA, NDPR, LGPD, Japan PIPA, Korea PIPA/ISMS-P, PIPL, and MLPS 2.0 compliance reviews. The parenthetical regulatory citations name the most common audit contexts where each scenario's evidence is requested.
+Scenarios below produce evidence directly usable in the major regulatory regimes — GDPR/Schrems II, DIFC, RBI, India's DPDP, and the broader Appendix F coverage matrix. The parenthetical regulatory citations name the most common audit contexts where each scenario's evidence is requested.
 
 | Scenario | Setup | Action | Expected Outcome |
 |---|---|---|---|
