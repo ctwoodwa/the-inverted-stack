@@ -104,7 +104,13 @@ def promote_chapter(
 
 
 def log_rejection(chapter_stem: str, reason: str, rejected_at_iso: str, rejecter: str) -> None:
-    """Append a REJECT decision to chapters/_voice-drafts/_rejections.jsonl."""
+    """Append a REJECT decision to chapters/_voice-drafts/_rejections.jsonl.
+
+    Single-writer assumed. Phase 4 is human-driven, one chapter at a time;
+    no concurrent writers are expected. The append-mode open() is atomic for
+    typical JSON-lines records under the OS write buffer (well under 4KB) but
+    is not portably guaranteed under concurrent writers.
+    """
     REJECTION_LOG.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         "chapter": chapter_stem,

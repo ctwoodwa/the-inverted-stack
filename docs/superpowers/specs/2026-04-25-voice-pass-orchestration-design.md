@@ -476,20 +476,26 @@ The single largest unowned risk the council found: **the agent that voiced the b
 ```json
 {
   "chapter": "ch01-when-saas-fights-reality",
+  "pass_num": 2,
   "input_sha256": "<sha of chapters/<part>/<ch>.md at time of pass>",
   "output_sha256": "<sha of _voice-drafts/final/<ch>.md immediately after pass>",
   "promoted_sha256": "<sha of chapters/<part>/<ch>.md after promotion (must equal output_sha256)>",
-  "agent_path": "agents/voice-sinek.md",
+  "agent_path": ".claude/agents/voice-sinek.md",
   "agent_sha256": "<sha of agent file at time of pass>",
   "claude_cli_version": "<output of claude --version>",
-  "model_name": "claude-sonnet-4-6",
+  "model": "claude-sonnet-4-6",
   "prompt_mode": "polish",
+  "exit_code": 0,
+  "duration_s": 12.5,
   "wall_clock_start_iso": "2026-05-02T14:23:11Z",
+  "wall_clock_end_iso": "2026-05-02T14:23:24Z",
   "promoted_at_iso": "2026-05-02T15:08:42Z",
   "promoter": "Chris Wood <ctwoodwa@gmail.com>",
   "manual_edit": false
 }
 ```
+
+The manifest is the union of (a) the Phase 3 per-invocation log entry plus (b) the four promotion-time fields (`promoted_sha256`, `promoted_at_iso`, `promoter`, `manual_edit`). Forensic fields from Phase 3 (`exit_code`, `duration_s`, `wall_clock_end_iso`, `pass_num`) carry through into the manifest as additional context — useful for incident response when a chapter's prose is later questioned.
 
 ### Reproducibility procedure
 
