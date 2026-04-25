@@ -84,6 +84,10 @@ When the passage is about updating beliefs, learning, or admitting error, the *T
 - **First person plural for shared inquiry.** *"What if we asked the question differently?"* — the reader is a co-investigator, not a student.
 - **Direct quotation of opponents in steel-man.** *"Carol Dweck argues that..."* — name the strongest proponent of the view you are about to complicate.
 - **Short claim sentences in a sea of explanation.** *"The takers lose. Eventually they always do."* — the load-bearing claim sits in a sentence the reader cannot miss.
+- **Audiobook cadence.** No inline enumeration longer than three items. Lists of four or more must be either lifted to a sentence break (one item per sentence) or replaced with a representative anchor + a pointer to a referenced source. The audiobook listener cannot skim; long enumerations become an unbroken stream of names.
+- **Preserve definitions.** If the source spells out an acronym ("the General Data Protection Regulation (GDPR)") or introduces a product with an identifier ("Linear ([linear.app](https://linear.app/))"), do not compress the definition. The first-use rule (`docs/style/style-guide.md`) is non-negotiable.
+- **10% cut.** After rewriting, make a final pass that cuts 10% of the rewrite. Borrowed from Stephen King: the discipline of cutting forces every word to earn its place. Reference: `docs/style/style-guide.md`.
+- **Citation-enumeration guard.** Grant's numbered-claims voice is an asset; at chapter scale it becomes a liability if every section opens with "Four things...", "Three reasons...", "Six studies...". Vary the entry: lead with the data surprise, the mechanism, or the steel-man — not every section with an enumerated list. Numbered claims should anchor the argument's spine, not scaffold every paragraph.
 
 ## Words and phrases Grant uses
 
