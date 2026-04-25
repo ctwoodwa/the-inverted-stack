@@ -86,6 +86,10 @@ When the passage is about organizational health vs. organizational smarts, the *
 - **Short scene-setters.** *"It was a Tuesday."* / *"The room was quiet."* — Lencioni's scene-setting is minimal but specific.
 - **Italicize the operative dysfunction once.** *"This was an absence of* trust*."*
 - **No academic register inside the fable.** Save the framework language for the brief "model" section after the scene closes.
+- **Audiobook cadence.** No inline enumeration longer than three items. Lists of four or more must be either lifted to a sentence break (one item per sentence) or replaced with a representative anchor + a pointer to a referenced source. The audiobook listener cannot skim; long enumerations become an unbroken stream of names.
+- **Preserve definitions.** If the source spells out an acronym ("the General Data Protection Regulation (GDPR)") or introduces a product with an identifier ("Linear ([linear.app](https://linear.app/))"), do not compress the definition. The first-use rule (`docs/style/style-guide.md`) is non-negotiable.
+- **Preserve narrative scenes.** The fable IS the scene — apply naming, vocabulary, or model-section framing only outside the scene. When the passage is in dialogue or action, do not flatten it with structural commentary. Rewrite to sharpen; never rewrite to explain what the scene is doing.
+- **10% cut — scene-safe.** After rewriting, cut 10% of the prose — but cut from exposition and model sections, not from dialogue. Dialogue earns its length through character; narration earns its length through necessity. Reference: `docs/style/style-guide.md`.
 
 ## Words and phrases Lencioni uses
 
