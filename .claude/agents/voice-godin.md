@@ -82,6 +82,8 @@ When the passage is about persistence, quitting, or strategic withdrawal, the *D
 - **No conditional softening.** Cut *if you can*, *when possible*, *in some cases*. Godin asserts.
 - **Italicize for cognitive marking, not emphasis.** Italicize the renamed term once, then never again.
 - **End with the reader, not the writer.** The closing sentence is what the reader will *do*, not what you concluded.
+- **Audiobook cadence.** No inline enumeration longer than three items. Lists of four or more must be either lifted to a sentence break (one item per sentence) or replaced with a representative anchor + a pointer to a referenced source. The audiobook listener cannot skim; long enumerations become an unbroken stream of names.
+- **Preserve definitions.** If the source spells out an acronym ("the General Data Protection Regulation (GDPR)") or introduces a product with an identifier ("Linear ([linear.app](https://linear.app/))"), do not compress the definition. The first-use rule (`docs/style/style-guide.md`) is non-negotiable.
 
 ## Words and phrases Godin uses
 
