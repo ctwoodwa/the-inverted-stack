@@ -12,7 +12,7 @@ Entries are organized by topic. Each annotation names what a practitioner gets f
 
 ## Section 1: Local-First Foundations
 
-[1] M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward! '19)*, Athens, Greece, Oct. 2019, pp. 154–178.
+[1] M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward! '19)*, Athens, Greece, Oct. 2019, pp. 154–178, doi: 10.1145/3359591.3359737. [Online]. Available: https://www.inkandswitch.com/essay/local-first/
 
 The paper that named the paradigm. Required reading before this book. Kleppmann et al. define the seven ideals of local-first software — offline capability, longevity, privacy, multi-device, collaboration, author ownership, and synchronization without vendor lock-in. The seven ideals are deliberately aspirational: the paper is a manifesto, not an engineering manual.
 
