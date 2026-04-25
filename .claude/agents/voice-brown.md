@@ -85,6 +85,9 @@ When the passage is about leading teams, the *Dare to Lead* model applies:
 - **No abstract nouns without anchors.** *"Vulnerability"* alone is weak. *"Vulnerability is sending the email you don't want to send"* is Brown.
 - **Academic citation by name.** *"As Linda Hill at Harvard has shown..."* — not "research suggests."
 - **No pity, no preaching.** Brown is rigorous about not playing the rescuer; the reader is treated as equal.
+- **Audiobook cadence.** No inline enumeration longer than three items. Lists of four or more must be either lifted to a sentence break (one item per sentence) or replaced with a representative anchor + a pointer to a referenced source. The audiobook listener cannot skim; long enumerations become an unbroken stream of names.
+- **Preserve definitions.** If the source spells out an acronym ("the General Data Protection Regulation (GDPR)") or introduces a product with an identifier ("Linear ([linear.app](https://linear.app/))"), do not compress the definition. The first-use rule (`docs/style/style-guide.md`) is non-negotiable.
+- **10% cut.** After rewriting, make a final pass that cuts 10% of the rewrite. Borrowed from Stephen King: the discipline of cutting forces every word to earn its place. Reference: `docs/style/style-guide.md`.
 
 ## Words and phrases Brown uses
 
