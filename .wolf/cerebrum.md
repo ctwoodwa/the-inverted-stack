@@ -80,3 +80,50 @@
 **Decision: ORIGINAL PLAN stands.** Phase 0.5 methodology test produced a fresh Gladwell pass-1 on cleaned Ch01 (`chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md`, 5,447 words). Author's verdict: "the ch01 reality check looks good" — confirming pass-1 did not regress after Phase 0a; pass-2 (Sinek polish over Gladwell) is still needed for the book's house voice.
 
 **Phase 1 scope unchanged:** tune all six voice agents (sinek + 5 guests). Polish/normalize tier system as planned.
+
+## GitButler state — 2026-04-25
+
+GitButler was set up earlier in the session and torn down via `but teardown`
+after a workspace-conflict error during `but setup` retry. Current state:
+
+- `.git/gitbutler` directory still exists (residual)
+- `gitbutler/target` and `gitbutler/workspace` branches still exist locally
+  with leftover commits (b244d05, adef29e, db4a0a1)
+- Working in plain git mode on `main`; no GitButler hooks active
+- All work since teardown has been clean linear commits on `main`
+
+**Implication for future sessions:** the user's global GitButler detection
+(`test -d .git/gitbutler`) will return "GitButler-managed" and trigger the
+`use-gitbutler.md` workflow. But `but` commands will fail until either:
+(a) the leftover gitbutler/* branches are cleaned and `but setup` re-run,
+or (b) the .git/gitbutler directory is removed to make the repo look like
+plain git again.
+
+User has not asked for cleanup — leaving as-is. If a future session
+hits `but` errors, surface this state immediately rather than retrying.
+
+## Phase 1 → Phase 2 transition — 2026-04-25
+
+Phase 1 closed at commit `af4e113`. Six voice agents tuned per the
+ORIGINAL PLAN (Phase 0.5 decision):
+- voice-sinek: chapter-scale calibration, scene preservation, audiobook
+  cadence, register variation, 10% cut, preserve definitions, second
+  canonical example (chapter-opening register)
+- voice-gladwell, voice-brown: universal tunes (audiobook + preserve
+  definitions) + 10% cut
+- voice-grant: universal tunes + 10% cut + citation-enumeration guard
+  (Grant-specific compounding pattern)
+- voice-godin: universal tunes only (existing brevity rule already
+  prevents Sinek-style compounding)
+- voice-lencioni: universal tunes + preserve-narrative-scenes (fable
+  agent needs scene preservation more than others) + scene-safe 10% cut
+
+Per-invocation logging (B3/C9) added to voice-pass.py: every voice-pass
+run now writes a JSON audit entry to chapters/_voice-drafts/_log/.
+
+Phase 2 dispatched as background process bzduwnh42 — 4 pilots serial
+(Ch04, Ch05, Ch11, Ch01), ~40 min wall-clock. Grading template at
+docs/superpowers/specs/2026-04-25-phase2-pilot-grading.md.
+
+In parallel: promote.py (Phase 4 prep) dispatched as subagent — TDD
+work, ~20 min, non-overlapping with pilot run.

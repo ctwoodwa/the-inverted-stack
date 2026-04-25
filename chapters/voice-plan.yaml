@@ -49,3 +49,6 @@ appendix-b-threat-model-worksheets:     sinek
 appendix-c-further-reading:             sinek
 appendix-d-testing-the-inverted-stack:  sinek
 appendix-e-citation-style:              sinek
+# appendix-f-regulatory-coverage         INTENTIONALLY OMITTED — coverage-map
+#   appendix; pure tabular reference content with no narrative prose for voice
+#   agents to operate on. Per spec §4.3 (Phase 3 code-changes section).
