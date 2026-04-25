@@ -1,12 +1,23 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-24T22:20:18.093Z
-> Files: 39 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-25T16:27:05.678Z
+> Files: 66 tracked | Anatomy hits: 0 | Misses: 0
+
+## ../../Users/Chris/.claude/agents/
+
+- `voice-brown.md` — Brown's voice in one sentence (~2792 tok)
+- `voice-gladwell.md` — Gladwell's voice in one sentence (~2644 tok)
+- `voice-godin.md` — Godin's voice in one sentence (~2903 tok)
+- `voice-grant.md` — Grant's voice in one sentence (~3017 tok)
+- `voice-lencioni.md` — Lencioni's voice in one sentence (~3265 tok)
+- `voice-sinek.md` — Sinek's voice in one sentence (~2289 tok)
 
 ## ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/
 
-- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~152 tok)
+- `feedback_voice_sinek_calibration.md` (~457 tok)
+- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~255 tok)
 - `project_failure_mode_taxonomy.md` (~434 tok)
+- `reference_gitbutler_workflow.md` (~494 tok)
 
 ## ../Sunfish/docs/
 
@@ -15,15 +26,18 @@
 
 ## ./
 
-- `.gitignore` — Git ignore rules (~107 tok)
+- `.gitignore` — Git ignore rules (~130 tok)
 - `book-structure.md` — BOOK-STRUCTURE (~6016 tok)
+- `LICENSE` (~204 tok)
+- `pytest.ini` (~34 tok)
 
 ## .claude/
 
 
 ## .claude/agents/
 
-- `literary-board.md` — The Book (~8184 tok)
+- `literary-board.md` — The Book (~8186 tok)
+- `voice-sinek.md` — Sinek's voice in one sentence (~3058 tok)
 
 ## .claude/commands/
 
@@ -37,9 +51,25 @@
 
 ## build/
 
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~5486 tok)
-- `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~1622 tok)
-- `Makefile` — The Inverted Stack — Build Targets (~1208 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~9474 tok)
+- `copy-to-dropbox.py` — Copy generated audiobook files to a destination folder (typically Dropbox). (~1655 tok)
+- `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
+- `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
+- `Makefile` — The Inverted Stack — Build Targets (~2050 tok)
+- `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~1932 tok)
+- `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~4220 tok)
+
+## chapters/
+
+- `voice-plan.yaml` — Voice-pass plan: chapter -> primary voice agent (pass 1) (~600 tok)
+
+## chapters/_voice-drafts/final/
+
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9218 tok)
+
+## chapters/_voice-drafts/pass1/
+
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9218 tok)
 
 ## chapters/appendices/
 
@@ -55,7 +85,7 @@
 
 ## chapters/front-matter/
 
-- `preface.md` — Preface (~2026 tok)
+- `preface.md` — Preface (~2175 tok)
 
 ## chapters/part-1-thesis-and-pain/
 
@@ -94,9 +124,20 @@
 
 ## docs/style/
 
+- `style-guide.md` — Unified Technical Writing Style Guide (~3444 tok)
+
+## docs/superpowers/plans/
+
+- `2026-04-25-voice-pass-orchestration.md` — Voice-Pass Orchestration Implementation Plan (~18338 tok)
+
+## docs/superpowers/specs/
+
+- `2026-04-25-voice-pass-orchestration-design.council-review.md` — SEAT 1 — Dr. Marguerite Voss (Plan-as-infrastructure) (~5492 tok)
+- `2026-04-25-voice-pass-orchestration-design.md` — Voice-pass Orchestration for the Entire Book — Design (~10348 tok)
 
 ## prospectus/
 
+- `prospectus.md` — Book Prospectus (~4256 tok)
 
 ## reviews/
 
@@ -107,3 +148,13 @@
 
 ## templates/
 
+
+## tests/
+
+- `__init__.py` — tests/__init__.py (~6 tok)
+- `audio-fixtures.md` — Audio QA Fixtures (~1440 tok)
+- `conftest.py` — Shared pytest fixtures. (~350 tok)
+
+## tests/build/
+
+- `__init__.py` — tests/build/__init__.py (~8 tok)

@@ -2,6 +2,8 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 15:30 | pytest scaffolding (Task 0) — created pytest.ini, tests/__init__.py, tests/build/__init__.py, tests/conftest.py | pytest.ini, tests/ | 0 items collected, no errors; committed db4a0a1 via GitButler on cw-branch-1 | ~1500 |
+| 2026-04-25 | voice-sinek rewrite of ch01-when-saas-fights-reality | chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md | Rewrote pass1 draft in Sinek voice (Why→How→What, deliberate pacing, repetition loops, clarity bridging, emotion-first framing). Created final/ directory. ~5,100 words. | ~12000 |
 | 2026-04-24 | Appendix E lightweight consistency pass | chapters/appendices/appendix-e-citation-style.md | Added 5 missing formats (Technical Report / arXiv pre-print / IETF RFC / Legal Decision / Statute/Regulation + EU Regulation variant) now that Appendix C cites all these types. Examples table expanded from 2 illustrative citations to 10 covering every format class (Kleppmann Onward! / DDIA / Shapiro INRIA RR-7506 / Flexible Paxos arXiv / RFC 8032 / Noise Protocol spec / Schrems II C-311/18 / GDPR Reg 2016/679 / DPDP Act 2023 / Linear engineering blog). New Assembly Guidance section with 5-step final-manuscript citation audit protocol; 1,066 words | ~2500 |
 | 2026-04-24 | Appendix D pass-1 resolution (6.3 POLISH → 5 priority items) | chapters/appendices/appendix-d-testing-the-inverted-stack.md | Opening stakes hook added; 4 CRDT properties as bulleted list + state-based vs op-based commutativity qualifier + Shapiro citation; 10,000-sequence rationale stated; Level 4 MVP harness design spec (4 components + 1-3 engineer-week estimate); Level 5 chaos tooling named (Pumba/Gremlin/toxiproxy); NEW scenarios added — Extended-offline-baseline 90 days, Abrupt-power-interruption WAL SIGKILL, Air-gapped 30-day, Historical-document-re-keying, Data-boundary-relay-disabled (Schrems II/DIFC/RBI/NDPR/PIPL/242-FZ), Relay-operator-cannot-decrypt (state-actor threat model), Attestation-validation-and-revocation, Audit-trail-completeness (Japan PIPA/Korea ISMS-P/PIPL/SOX/HIPAA); Low-resource-variant (2 GB RAM / 16 GB storage); Regulatory citations parenthetical per security scenario; Section 4 restructured as CI tier table (Tier/Levels/Trigger/Time budget/Severity/Purpose); Test artefact capture requirements (test report/evidence/harness config/SBOM); Accessibility announcement testing (WCAG 2.1 AA / EU EAA 2025 / Section 508 / UK Equality Act); 3,663 words | ~6000 |
 | 2026-04-24 | Appendix C pass-1 resolution (4.3 REVISE → 5 priority items) | chapters/appendices/appendix-c-further-reading.md | Expanded from 12 entries / 5 sections to 38 entries / 9 sections. New Section 4 Cryptography (Noise RFC 34, SQLCipher, libsodium, Argon2id RFC 9106, Ed25519 RFC 8032); new Section 5 Regulatory primary sources (GDPR, Schrems II C-311/18, DPDP 2023, PIPL, Japan PIPA, Korea PIPA + ISMS-P, UAE DPL + DIFC DPL, POPIA + NDPA, LGPD, 242-FZ); new Section 8 Vendor Dependency Case Studies (2022 CIS terminations composite); new Section 9 Reference Implementation (Sunfish repo + ADR pointers). Section 3 expanded with Raft (Ongaro-Ousterhout USENIX ATC 2014), Brewer CAP PODC 2000, Gilbert-Lynch SIGACT 2002, Saito-Shapiro ACM CS 2005, Lamport CACM 1978. Section 6 production analogues: Linear URL anchored to "Scaling Linear sync engine" post, M-PESA, FarmerLine, Nubank, CouchDB/PouchDB added. CRDT platform note (Android/Kotlin + .NET alongside JS). Cambria annotation tightened (practitioner-action leading). 3,288 words | ~6000 |
@@ -467,3 +469,246 @@
 | 18:17 | Edited .gitignore | 5→9 lines | ~24 |
 | 18:18 | Session end: 48 writes across 9 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 9 reads | ~29372 tok |
 | 18:20 | Edited .gitignore | 3→6 lines | ~35 |
+| 18:20 | Session end: 49 writes across 9 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 9 reads | ~29409 tok |
+| 18:22 | Session end: 49 writes across 9 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 9 reads | ~29409 tok |
+| 18:29 | Edited build/audiobook.py | 12→17 lines | ~137 |
+| 18:30 | Edited build/audiobook.py | modified _heading_sub() | ~291 |
+| 18:30 | Edited build/audiobook.py | modified items() | ~237 |
+| 18:30 | Edited build/audiobook.py | modified synth_chunk() | ~140 |
+| 18:30 | Edited build/audiobook.py | 3→6 lines | ~138 |
+| 18:30 | Edited build/audiobook.py | 8→10 lines | ~197 |
+| 18:30 | Session end: 55 writes across 10 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 10 reads | ~36035 tok |
+| 18:32 | Edited build/audiobook.py | expanded (+14 lines) | ~228 |
+| 18:32 | Session end: 56 writes across 10 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 10 reads | ~36263 tok |
+| 18:39 | Session end: 56 writes across 10 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 10 reads | ~36263 tok |
+| 18:44 | Session end: 56 writes across 10 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 10 reads | ~36263 tok |
+| 18:47 | Edited build/audiobook.py | expanded (+9 lines) | ~252 |
+| 18:48 | Edited build/audiobook.py | 14→18 lines | ~415 |
+| 18:48 | Session end: 58 writes across 10 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 10 reads | ~36930 tok |
+| 18:51 | Session end: 58 writes across 10 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 10 reads | ~36930 tok |
+| 18:56 | Created build/copy-to-dropbox.py | — | ~1500 |
+| 18:56 | Edited build/Makefile | expanded (+15 lines) | ~110 |
+| 18:57 | Edited build/copy-to-dropbox.py | 2→2 lines | ~21 |
+| 18:58 | Session end: 61 writes across 12 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 11 reads | ~39777 tok |
+| 19:06 | Session end: 61 writes across 12 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 11 reads | ~39777 tok |
+| 19:12 | Edited build/Makefile | expanded (+10 lines) | ~188 |
+| 19:14 | Session end: 62 writes across 12 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 11 reads | ~39979 tok |
+| 19:15 | Session end: 62 writes across 12 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 11 reads | ~39979 tok |
+| 19:20 | Edited build/Makefile | 24→29 lines | ~326 |
+| 19:21 | Session end: 63 writes across 12 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 11 reads | ~40328 tok |
+| 19:30 | Edited build/m4b.py | 5→6 lines | ~80 |
+| 19:30 | Edited build/m4b.py | 2→4 lines | ~86 |
+| 19:31 | Edited build/audiobook.py | expanded (+46 lines) | ~854 |
+| 19:32 | Edited build/audiobook.py | modified items() | ~792 |
+| 19:32 | Edited build/audiobook.py | modified _ordinal_word() | ~535 |
+| 19:33 | Edited build/audiobook.py | modified chunk_sentences() | ~213 |
+| 19:33 | Edited build/audiobook.py | modified render_chapter() | ~165 |
+| 19:33 | Edited build/audiobook.py | 2→5 lines | ~97 |
+| 19:33 | Edited build/audiobook.py | 5→6 lines | ~95 |
+| 19:33 | Edited build/audiobook.py | 6→9 lines | ~151 |
+| 19:34 | Edited build/audiobook.py | 1→2 lines | ~20 |
+| 19:34 | Created build/normalize.py | — | ~1932 |
+| 19:35 | Edited build/copy-to-dropbox.py | 2→3 lines | ~39 |
+| 19:35 | Edited build/copy-to-dropbox.py | 6→10 lines | ~196 |
+| 19:35 | Edited build/copy-to-dropbox.py | modified exists() | ~139 |
+| 19:35 | Edited build/Makefile | expanded (+26 lines) | ~596 |
+| 19:36 | Created tests/audio-fixtures.md | — | ~1536 |
+| 19:38 | Session end: 80 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~49629 tok |
+| 19:41 | Session end: 80 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~49629 tok |
+| 19:42 | Edited build/audiobook.py | modified _ensure_period() | ~246 |
+| 19:44 | Session end: 81 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~49875 tok |
+| 19:52 | Edited build/audiobook.py | modified _is_pause_only() | ~600 |
+| 19:52 | Edited build/audiobook.py | modified chunk_sentences() | ~250 |
+| 19:52 | Edited build/audiobook.py | modified enumerate() | ~267 |
+| 19:53 | Edited build/audiobook.py | modified chunk_text() | ~252 |
+| 19:55 | Session end: 85 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~51244 tok |
+| 20:35 | Session end: 85 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~51244 tok |
+| 21:02 | Session end: 85 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~51244 tok |
+| 21:06 | Session end: 85 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~51244 tok |
+| 21:12 | Session end: 85 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~51244 tok |
+| 21:29 | Edited build/m4b.py | 4→5 lines | ~67 |
+| 21:29 | Edited build/m4b.py | expanded (+6 lines) | ~295 |
+| 21:29 | Edited build/m4b.py | modified exists() | ~356 |
+| 21:30 | Edited build/Makefile | 17→18 lines | ~218 |
+| 21:38 | Session end: 89 writes across 15 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 12 reads | ~52273 tok |
+| 21:53 | Created build/embed-cover.py | — | ~1324 |
+| 21:53 | Edited build/m4b.py | inline fix | ~15 |
+| 21:53 | Edited build/Makefile | inline fix | ~12 |
+| 21:53 | Edited build/Makefile | expanded (+6 lines) | ~91 |
+| 21:53 | Edited build/Makefile | 6→6 lines | ~98 |
+| 21:53 | Edited build/Makefile | 5→6 lines | ~80 |
+| 21:53 | Edited build/Makefile | 5→6 lines | ~85 |
+| 21:55 | Session end: 96 writes across 16 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 14 reads | ~54002 tok |
+| 22:02 | Session end: 96 writes across 16 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 14 reads | ~54002 tok |
+| 22:44 | Edited build/m4b.py | "Chris Woodward" → "Chris Wood" | ~8 |
+| 22:44 | Edited build/Makefile | inline fix | ~3 |
+| 22:44 | Edited LICENSE | inline fix | ~8 |
+| 22:44 | Edited prospectus/prospectus.md | inline fix | ~6 |
+| 22:45 | Edited build/embed-cover.py | modified chapter_title_from_md() | ~385 |
+| 22:45 | Edited build/embed-cover.py | modified embed() | ~442 |
+| 22:46 | Edited build/m4b.py | "Chris Wood" → "Christopher Wood" | ~10 |
+| 22:46 | Edited build/embed-cover.py | "Chris Wood" → "Christopher Wood" | ~10 |
+| 22:46 | Edited build/Makefile | inline fix | ~5 |
+| 22:46 | Edited LICENSE | inline fix | ~10 |
+| 22:46 | Edited prospectus/prospectus.md | inline fix | ~8 |
+| 22:46 | Edited chapters/front-matter/preface.md | 5→9 lines | ~400 |
+| 05:54 | Edited .claude/agents/literary-board.md | inline fix | ~8 |
+| 05:54 | Edited build/Makefile | "2026-04-24" → "2026-04-25" | ~9 |
+| 05:56 | Session end: 110 writes across 19 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 17 reads | ~65555 tok |
+| 05:58 | Created .claude/agents/voice-sinek.md | — | ~3262 |
+| 05:59 | Session end: 111 writes across 20 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 17 reads | ~69050 tok |
+| 06:07 | Edited build/embed-cover.py | modified enumerate() | ~444 |
+| 06:09 | Created ../../Users/Chris/.claude/agents/voice-sinek.md | — | ~2442 |
+| 06:17 | Created ../../Users/Chris/.claude/agents/voice-gladwell.md | — | ~2820 |
+| 06:19 | Created ../../Users/Chris/.claude/agents/voice-brown.md | — | ~2978 |
+| 06:20 | Created ../../Users/Chris/.claude/agents/voice-grant.md | — | ~3218 |
+| 06:23 | Created ../../Users/Chris/.claude/agents/voice-godin.md | — | ~3096 |
+| 06:25 | Created ../../Users/Chris/.claude/agents/voice-lencioni.md | — | ~3482 |
+| 06:25 | Edited build/embed-cover.py | modified build_chapter_title_map() | ~235 |
+| 06:25 | Edited build/embed-cover.py | 2→2 lines | ~24 |
+| 06:26 | Edited build/embed-cover.py | 6→10 lines | ~140 |
+| 06:27 | Session end: 121 writes across 25 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 19 reads | ~94168 tok |
+| 06:33 | Session end: 121 writes across 25 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 19 reads | ~94168 tok |
+| 06:40 | Created chapters/voice-plan.yaml | — | ~600 |
+| 06:41 | Created build/voice-pass.py | — | ~3159 |
+| 06:41 | Edited .gitignore | 3→6 lines | ~35 |
+| 06:41 | Edited build/Makefile | expanded (+21 lines) | ~231 |
+| 06:43 | Session end: 125 writes across 27 files (ch20-ux-sync-conflict.md, preface.md, epilogue-what-the-stack-owes-you.md, appendix-a-sync-daemon-wire-protocol.md, appendix-b-threat-model-worksheets.md) | 19 reads | ~98212 tok |
+
+## Session: 2026-04-25 06:45
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 06:55 | Created chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md | — | ~10092 |
+
+## Session: 2026-04-25 06:55
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 06:59 | Created chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md | — | ~10094 |
+| 07:00 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 1 reads | ~20275 tok |
+| 07:01 | Edited build/voice-pass.py | 13→18 lines | ~282 |
+| 07:01 | Edited build/voice-pass.py | modified RULES() | ~141 |
+| 07:02 | Session end: 3 writes across 2 files (ch01-when-saas-fights-reality.md, voice-pass.py) | 1 reads | ~20698 tok |
+| 07:11 | Session end: 3 writes across 2 files (ch01-when-saas-fights-reality.md, voice-pass.py) | 1 reads | ~20698 tok |
+| 07:19 | Edited build/voice-pass.py | modified RULES() | ~611 |
+
+## Session: 2026-04-25 07:19
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-25 07:29
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 07:40 | Edited build/voice-pass.py | modified run_voice_pass() | ~543 |
+| 07:40 | Edited build/voice-pass.py | 1→2 lines | ~40 |
+| 07:40 | Edited build/voice-pass.py | 2→5 lines | ~106 |
+
+## Session: 2026-04-25 07:40
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 07:49 | Created chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md | — | ~9636 |
+| 07:50 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~19323 tok |
+
+## Session: 2026-04-25 07:50
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 08:02 | Created chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md | — | ~9603 |
+| 08:02 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~32181 tok |
+| 08:05 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~32181 tok |
+| 08:13 | Edited build/voice-pass.py | modified RULES() | ~681 |
+
+## Session: 2026-04-25 08:13
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 08:23 | Created chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md | — | ~9833 |
+| 08:23 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~19534 tok |
+
+## Session: 2026-04-25 08:23
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 08:32 | Created chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md | — | ~9832 |
+| 08:33 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~31813 tok |
+| 08:36 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~31813 tok |
+
+## Session: 2026-04-25 09:57
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-25 09:58
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 10:22 | Created ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/feedback_voice_sinek_calibration.md | — | ~473 |
+| 10:22 | Edited ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md | 1→2 lines | ~111 |
+| 10:22 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 5 reads | ~17722 tok |
+| 10:27 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 5 reads | ~17722 tok |
+| 10:31 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 5 reads | ~17722 tok |
+| 10:34 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 5 reads | ~17722 tok |
+| 10:37 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 5 reads | ~17722 tok |
+| 10:49 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 6 reads | ~17722 tok |
+| 10:55 | Session end: 2 writes across 2 files (feedback_voice_sinek_calibration.md, MEMORY.md) | 6 reads | ~17722 tok |
+| 10:59 | Edited docs/style/style-guide.md | 8→8 lines | ~219 |
+| 10:59 | Edited docs/style/style-guide.md | 1→3 lines | ~209 |
+| 10:59 | Edited docs/style/style-guide.md | 1→2 lines | ~194 |
+| 10:59 | Edited docs/style/style-guide.md | 1→2 lines | ~68 |
+| 10:59 | Edited docs/style/style-guide.md | 1→3 lines | ~80 |
+
+| 2026-04-25 | Updated docs/style/style-guide.md with King influence | docs/style/style-guide.md | Added 2 bullets (10% cut + trust reader) to Clarity section, 1 bullet (cut adverbs) to Certainty section, King row to per-author table, 2 new summary principles. Title and Overview updated to reflect 5 authors. | ~2500 |
+| 11:00 | Session end: 7 writes across 3 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md) | 7 reads | ~18546 tok |
+| 11:03 | Session end: 7 writes across 3 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md) | 7 reads | ~18546 tok |
+| 11:12 | Session end: 7 writes across 3 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md) | 7 reads | ~18546 tok |
+| 11:16 | Session end: 7 writes across 3 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md) | 7 reads | ~18546 tok |
+| 11:23 | Created docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | — | ~6252 |
+| 11:25 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 3→5 lines | ~98 |
+| 11:25 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | modified paragraphs() | ~148 |
+| 11:25 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 5→10 lines | ~267 |
+| 11:25 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 4→6 lines | ~94 |
+| 11:26 | Session end: 12 writes across 4 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md) | 8 reads | ~31758 tok |
+| 11:27 | Created docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md | — | ~5858 |
+| 11:28 | Session end: 13 writes across 5 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 9 reads | ~43526 tok |
+| 11:36 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 5→7 lines | ~154 |
+| 11:36 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 1→3 lines | ~284 |
+| 11:36 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | expanded (+10 lines) | ~250 |
+| 11:36 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | expanded (+27 lines) | ~567 |
+| 11:37 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 3→7 lines | ~238 |
+| 11:37 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | modified agent() | ~262 |
+| 11:37 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | expanded (+10 lines) | ~299 |
+| 11:37 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 10→14 lines | ~558 |
+| 11:38 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 14→19 lines | ~471 |
+| 11:38 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 9→11 lines | ~464 |
+| 11:39 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | modified 3() | ~1107 |
+| 11:39 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | modified retunes() | ~290 |
+| 11:39 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | modified prohibition() | ~227 |
+| 11:40 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | expanded (+50 lines) | ~693 |
+| 11:40 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 13 → 14 | ~11 |
+| 11:40 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | 14 → 15 | ~11 |
+| 11:40 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | expanded (+14 lines) | ~449 |
+| 11:41 | Session end: 30 writes across 5 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 9 reads | ~50311 tok |
+| 11:59 | Created docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md | — | ~19360 |
+| 11:59 | Session end: 31 writes across 6 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 9 reads | ~71053 tok |
+| 12:03 | Session end: 31 writes across 6 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 9 reads | ~71053 tok |
+| 12:09 | Session end: 31 writes across 6 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 9 reads | ~71053 tok |
+| 12:13 | Created pytest.ini | — | ~34 |
+| 12:13 | Created tests/__init__.py | — | ~6 |
+| 12:13 | Created tests/build/__init__.py | — | ~8 |
+| 12:13 | Created tests/conftest.py | — | ~353 |
+| 12:17 | Session end: 35 writes across 9 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~90007 tok |
+| 12:26 | Edited docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md | 8→7 lines | ~36 |
+| 12:26 | Edited docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md | expanded (+7 lines) | ~251 |
+| 12:26 | Edited tests/conftest.py | 6→5 lines | ~30 |
+| 12:26 | Created ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/reference_gitbutler_workflow.md | — | ~513 |
+| 12:27 | Edited ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md | 1→2 lines | ~110 |
+| 12:27 | Session end: 40 writes across 10 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~91012 tok |
+| 12:29 | Session end: 40 writes across 10 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~91012 tok |
+| 12:35 | Session end: 40 writes across 10 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~91012 tok |
+| 12:36 | Session end: 40 writes across 10 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~91012 tok |
+| 12:38 | Session end: 40 writes across 10 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~91012 tok |
+| 12:45 | Session end: 40 writes across 10 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 17 reads | ~91012 tok |
