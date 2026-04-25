@@ -55,6 +55,7 @@ epub: $(OUT_DIR)
 		--to epub3 \
 		--toc --toc-depth=2 \
 		--split-level=1 \
+		--epub-cover-image=assets/cover.jpg \
 		--metadata title="The Inverted Stack: Local-First Nodes in a SaaS World" \
 		--metadata subtitle="A Practitioner's Guide to Building for the Offline-First Era" \
 		--metadata author="Chris Woodward" \

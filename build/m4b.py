@@ -26,6 +26,7 @@ REPO = Path(__file__).resolve().parent.parent
 AUDIO_DIR = REPO / "build" / "output" / "audiobook"
 MANIFEST = AUDIO_DIR / "manifest.json"
 DEFAULT_OUT = AUDIO_DIR / "the-inverted-stack.m4b"
+DEFAULT_COVER = REPO / "assets" / "cover.jpg"
 
 BOOK_TITLE = "The Inverted Stack: Local-First Nodes in a SaaS World"
 BOOK_AUTHOR = "Chris Woodward"
@@ -76,6 +77,12 @@ def main() -> None:
                     help="AAC bitrate (default: 96k — audiobook quality floor; "
                          "Audible accepts 64-320k, but 96k is the threshold below "
                          "which speech artifacts become audible on critical listening)")
+    ap.add_argument("--cover", type=Path, default=DEFAULT_COVER,
+                    help=f"cover image (jpg/png) embedded as MP4 attached_pic "
+                         f"(default: {DEFAULT_COVER.relative_to(REPO).as_posix()}). "
+                         f"Pass --no-cover to skip embedding.")
+    ap.add_argument("--no-cover", action="store_true",
+                    help="skip cover-art embedding even if a default exists")
     ap.add_argument("--keep-temp", action="store_true",
                     help="keep intermediate concat-list.txt and ffmetadata.txt")
     args = ap.parse_args()
@@ -127,12 +134,32 @@ def main() -> None:
             f.write(f"END={e['end_ms']}\n")
             f.write(f"title={escape_metadata(e['title'])}\n")
 
+    cover_path: Path | None = None if args.no_cover else args.cover
+    if cover_path and not cover_path.exists():
+        print(f"  cover not found at {cover_path}, skipping embed", file=sys.stderr)
+        cover_path = None
+
     cmd = [
         ffmpeg, "-y", "-hide_banner", "-loglevel", "warning",
         "-f", "concat", "-safe", "0", "-i", str(list_file),
         "-i", str(metadata_file),
+    ]
+    if cover_path:
+        cmd += ["-i", str(cover_path)]
+
+    cmd += [
         "-map_metadata", "1",
         "-map", "0:a",
+    ]
+    if cover_path:
+        cmd += [
+            "-map", "2:v",
+            "-c:v:0", "mjpeg",
+            "-disposition:v:0", "attached_pic",
+            "-metadata:s:v:0", "title=Cover",
+            "-metadata:s:v:0", "comment=Cover (front)",
+        ]
+    cmd += [
         "-c:a", "aac", "-b:a", args.bitrate, "-ac", "1",
         "-movflags", "+faststart",
         str(args.out),
@@ -140,6 +167,8 @@ def main() -> None:
     print(f"Concatenating {len(entries)} chapters -> {args.out.relative_to(REPO).as_posix()}")
     print(f"  total duration: {cursor_ms/1000/3600:.2f} hours")
     print(f"  ffmpeg: {Path(ffmpeg).name}")
+    if cover_path:
+        print(f"  cover: {cover_path.relative_to(REPO).as_posix()}")
     subprocess.run(cmd, check=True)
 
     if not args.keep_temp:
