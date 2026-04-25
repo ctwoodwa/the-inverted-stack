@@ -15,7 +15,7 @@ The sync daemon communicates over Unix domain sockets on Linux, macOS, and Windo
 
 All messages use binary CBOR encoding with a 4-byte length prefix. The protocol defines five message types that participate in the handshake sequence; once the handshake completes, the connection transitions to continuous delta streaming. The daemon sends HELLO, negotiates capabilities with CAPABILITY_NEG, and the relay sends ACK before streaming begins. DELTA_STREAM messages carry CRDT operations for the lifetime of the connection. GOSSIP_PING messages flow on a 30-second interval to maintain membership state. Error messages terminate or pause a connection at any point in the lifecycle.
 
-Relay deployment jurisdiction determines data-transit exposure. For deployments under data-localization mandates (Russia 242-FZ, India DPDP, UAE DPL, PIPL in China), on-premise relay deployment keeps all protocol traffic within the local deployment boundary.
+Relay deployment jurisdiction determines data-transit exposure. For deployments under data-localization mandates (Russia 242-FZ, India DPDP, UAE DPL, PIPL — see Appendix F for the full coverage matrix), on-premise relay deployment keeps all protocol traffic within the local deployment boundary.
 
 ---
 
