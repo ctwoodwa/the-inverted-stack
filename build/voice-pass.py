@@ -105,7 +105,9 @@ TASK
 4. Write the rewritten markdown to {rel_dst} (create parent directories if needed).
 
 PRESERVATION RULES (do not rewrite these — copy them through verbatim):
-- YAML frontmatter at the top of the file
+- YAML frontmatter at the top of the file IF AND ONLY IF the source already has it.
+  Do NOT invent or add YAML frontmatter when the source has none. The presence of
+  HTML comments at the top is not frontmatter.
 - HTML comments (<!-- ... -->)
 - Fenced code blocks (```...```)
 - Fenced mermaid diagrams (```mermaid...```)
@@ -140,7 +142,12 @@ def run_voice_pass(
             capture_output=True, text=True, cwd=REPO, timeout=timeout_s,
         )
     except subprocess.TimeoutExpired:
-        return False, f"timeout after {timeout_s}s"
+        # Check whether the agent wrote the file before being killed —
+        # claude -p sometimes lingers after the agent's tool calls return,
+        # producing a false-positive timeout while the actual work is done.
+        if output.exists() and output.stat().st_size > 0:
+            return True, f"timeout-but-output-written ({output.stat().st_size} bytes)"
+        return False, f"timeout after {timeout_s}s, no output written"
     if proc.returncode != 0:
         return False, f"claude exited {proc.returncode}: {proc.stderr.strip()[:240]}"
     if not output.exists() or output.stat().st_size == 0:
