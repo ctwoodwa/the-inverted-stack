@@ -6,6 +6,10 @@
 
 ---
 
+> **A note on the council:** The five members are composite characters — fictional practitioners constructed to embody real domains and real objections. The objections are real. The names are not.
+
+---
+
 Dr. Marguerite Voss spent twenty-two years watching innovative software die in procurement. Not because the technology was wrong. Because the people who built it had never sat through an IT security review.
 
 She has her own shorthand for the pattern: a team builds something genuinely useful, a forward-thinking IT manager shepherds it to a procurement committee, and the first question from legal or InfoSec kills it on the spot. Not whether it works — everyone in the room can see it works. The question is where the data goes when an endpoint is compromised. Or what is the incident response procedure. Or, most often, does this run as root.
