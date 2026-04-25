@@ -1,11 +1,11 @@
 # Unified Technical Writing Style Guide
-### Synthesized from Sinek, Luhn, Clear, and Robbins
+### Synthesized from Sinek, Luhn, Clear, Robbins, and King
 
 ***
 
 ## Overview
 
-This guide consolidates the most transferable elements from four distinct communicator voices — Simon Sinek, Matthew Luhn, James Clear, and Tony Robbins — into a coherent, practical writing style for technical documentation, architecture decision records, specifications, API docs, and engineering blog posts. The synthesis strips out delivery-dependent tactics (Robbins' physiology, Sinek's dramatic pauses) and distills what works in *written* technical communication: purpose clarity, narrative structure, actionable precision, and vocabulary designed to shift mental states from confusion to confidence.
+This guide consolidates the most transferable elements from five distinct communicator voices — Simon Sinek, Matthew Luhn, James Clear, Tony Robbins, and Stephen King — into a coherent, practical writing style for technical documentation, architecture decision records, specifications, API docs, and engineering blog posts. The synthesis strips out delivery-dependent tactics (Robbins' physiology, Sinek's dramatic pauses) and distills what works in *written* technical communication: purpose clarity, narrative structure, actionable precision, vocabulary designed to shift mental states from confusion to confidence, and the revision discipline that separates a draft from prose worth a reader's time.
 
 ***
 
@@ -37,6 +37,8 @@ Clarity is not something added at the end. It is the design constraint. Every se
 - **Prefer active voice.** "The gateway routes requests to downstream services" beats "Requests are routed to downstream services by the gateway."
 - **One idea per paragraph.** Each paragraph should have a single controlling assertion, followed by its support. Readers should be able to scan topic sentences and understand the document's spine.
 - **Cut ruthlessly.** If removing a sentence does not change the reader's understanding, remove it.
+- **Second draft = first draft minus ten percent.** Borrowed from Stephen King's *On Writing*. After every chapter, section, or document is "done," cut ten percent. Not the worst ten percent — *any* ten percent. The discipline of cutting forces the question every word should answer: does this earn its place? If you cannot find ten percent to cut, you have not finished revising.
+- **Trust the reader.** Describe just enough to put the picture in the reader's head, then stop. Over-description is not generosity; it is distrust. The reader who is given the load-bearing details and the room to assemble them will stay engaged longer than the reader who is handed every conclusion.
 
 ### Certainty in Tone, Precision in Claim
 **Borrowed from: Robbins (primary), Clear (supporting)**
@@ -46,6 +48,7 @@ Robbins' defining quality is that his voice conveys *conviction without shouting
 - **Make recommendations, not inventories.** Do not list five equally weighted options when the situation clearly favors one. State the recommendation first, then provide the alternatives for context.
 - **Use strong, specific verbs.** "Configure," "isolate," "emit," "propagate" — not "set up," "deal with," "send," "handle."
 - **Avoid uncertainty language as a default register.** "This could potentially result in performance degradation under certain conditions" becomes "This increases latency under high concurrency — benchmark above 500 RPS before deploying."
+- **Cut adverbs aggressively.** Borrowed from King: an adverb is usually a sign that the verb underneath it is weak. "The build runs slowly" is weaker than "the build crawls." "The system fails intermittently" is weaker than "the system drops connections under load." When you reach for an adverb, replace the noun-verb pair instead. Adverbs that survive should be load-bearing — they should change the meaning of the sentence, not redundantly emphasize what the verb already implies.
 
 ### Emotional Authenticity and Relatable Struggle
 **Borrowed from: Luhn (primary), Sinek (supporting)**
@@ -174,6 +177,7 @@ The synthesized voice sits at the intersection of:
 | **Matthew Luhn** | Narrative arc (Story Spine); emotional authenticity; documenting failure states |
 | **James Clear** | Radical clarity; systems thinking; named frameworks; active verb discipline |
 | **Tony Robbins** | Certainty of tone; agency vocabulary; recommendation-first delivery; contrast as a persuasion tool |
+| **Stephen King** | Adverb discipline; the 10% revision cut; trust the reader to assemble the picture from load-bearing details |
 
 ***
 
@@ -186,4 +190,6 @@ The synthesized voice sits at the intersection of:
 5. **Show the anti-pattern.** A bad example is worth a thousand words of description.
 6. **Document the failure path.** It is not optional.
 7. **Use agency vocabulary.** The system does things; things do not happen to the system.
-8. **Cut what doesn't earn its place.** Clarity is a structural obligation.
+8. **Cut what doesn't earn its place.** Clarity is a structural obligation. Second draft = first draft minus ten percent.
+9. **Trust the reader.** Describe just enough to put the picture in their head; then stop.
+10. **Adverbs are usually a tell that the verb is weak.** Replace the noun-verb pair.
