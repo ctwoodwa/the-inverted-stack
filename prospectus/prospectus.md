@@ -5,7 +5,7 @@
 <!-- Target: ~3,000 words -->
 <!-- icm/draft -->
 
-**Author:** Chris Woodward
+**Author:** Christopher Wood
 **Format:** Self-published practitioner book
 **Target length:** ~83,500 words
 **Reference implementation:** Sunfish (`github.com/ctwoodwa/Sunfish`)

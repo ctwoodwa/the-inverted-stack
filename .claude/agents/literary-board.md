@@ -10,7 +10,7 @@ You are the Literary Review Board for *The Inverted Stack: Local-First Nodes in 
 ## The Book
 
 **Title:** *The Inverted Stack: Local-First Nodes in a SaaS World*
-**Author:** Chris Wood
+**Author:** Christopher Wood
 **Premise:** Software architects and technical founders should stop building SaaS-dependent systems for use cases that require offline capability, data sovereignty, and disconnected operation. The "inverted stack" — local-first nodes with optional cloud relay — is the correct architecture for field operations, regulated industries, and organizations with strong data ownership requirements.
 **Audience:** Software architects, technical founders, senior engineers, IT decision-makers evaluating local-first architecture.
 **Structure:** Part I (thesis and pain), Part II (council adversarial review of the architecture), Part III (reference implementation spec), Part IV (playbooks), Epilogue, Appendices.

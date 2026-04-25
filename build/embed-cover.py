@@ -31,7 +31,39 @@ import imageio_ffmpeg
 
 REPO = Path(__file__).resolve().parent.parent
 AUDIO_DIR = REPO / "build" / "output" / "audiobook"
+CHAPTERS_DIR = REPO / "chapters"
+MANIFEST = AUDIO_DIR / "manifest.json"
 DEFAULT_COVER = REPO / "assets" / "cover-square.jpg"
+
+BOOK_TITLE = "The Inverted Stack: Local-First Nodes in a SaaS World"
+BOOK_AUTHOR = "Christopher Wood"
+BOOK_DATE = "2026"
+BOOK_GENRE = "Audiobook"
+
+
+def chapter_title_from_md(md_path: Path) -> str:
+    """Pull the first H1 out of the chapter markdown as the chapter title."""
+    for line in md_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line.startswith("# "):
+            return line[2:].strip()
+    return md_path.stem
+
+
+def build_chapter_title_map() -> dict[str, str]:
+    """MP3 stem -> chapter title from the markdown source. Reads the audiobook
+    manifest if present (preserves original chapter ordering and titles);
+    falls back to scanning chapters/ when manifest is missing."""
+    titles: dict[str, str] = {}
+    if MANIFEST.exists():
+        import json
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        for c in manifest.get("chapters", []):
+            mp3_stem = Path(c["output"]).stem
+            md_path = REPO / c["source"]
+            if md_path.exists():
+                titles[mp3_stem] = chapter_title_from_md(md_path)
+    return titles
 
 
 def has_attached_pic(ffmpeg: str, mp3: Path) -> bool:
@@ -43,8 +75,20 @@ def has_attached_pic(ffmpeg: str, mp3: Path) -> bool:
     return "attached pic" in proc.stderr.lower()
 
 
-def embed(ffmpeg: str, src: Path, cover: Path) -> None:
-    """Embed cover into src in place via temp file + atomic rename."""
+def embed(ffmpeg: str, src: Path, cover: Path, chapter_title: str,
+          track_n: int | None = None, total_tracks: int | None = None) -> None:
+    """Embed cover + full ID3v2 metadata into src in place via temp + rename.
+
+    Writes:
+      - APIC (attached_pic) cover image
+      - title  (chapter title)
+      - artist (book author)
+      - album_artist (book author)
+      - album  (book title)
+      - genre  (Audiobook)
+      - date   (book year)
+      - track  (NN/TOTAL) when provided
+    """
     tmp = src.with_name(src.stem + ".__cover_tmp__.mp3")
     cmd = [
         ffmpeg, "-y", "-hide_banner", "-loglevel", "warning",
@@ -54,11 +98,20 @@ def embed(ffmpeg: str, src: Path, cover: Path) -> None:
         "-map", "1",
         "-c", "copy",
         "-id3v2_version", "3",
+        "-write_id3v1", "1",
         "-disposition:v:0", "attached_pic",
         "-metadata:s:v:0", "title=Cover",
         "-metadata:s:v:0", "comment=Cover (front)",
-        str(tmp),
+        "-metadata", f"title={chapter_title}",
+        "-metadata", f"artist={BOOK_AUTHOR}",
+        "-metadata", f"album_artist={BOOK_AUTHOR}",
+        "-metadata", f"album={BOOK_TITLE}",
+        "-metadata", f"genre={BOOK_GENRE}",
+        "-metadata", f"date={BOOK_DATE}",
     ]
+    if track_n and total_tracks:
+        cmd += ["-metadata", f"track={track_n}/{total_tracks}"]
+    cmd.append(str(tmp))
     try:
         subprocess.run(cmd, check=True)
         shutil.move(str(tmp), str(src))

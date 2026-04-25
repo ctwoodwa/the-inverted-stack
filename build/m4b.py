@@ -29,7 +29,7 @@ DEFAULT_OUT = AUDIO_DIR / "the-inverted-stack.m4b"
 DEFAULT_COVER = REPO / "assets" / "cover-square.jpg"
 
 BOOK_TITLE = "The Inverted Stack: Local-First Nodes in a SaaS World"
-BOOK_AUTHOR = "Chris Woodward"
+BOOK_AUTHOR = "Christopher Wood"
 BOOK_DATE = "2026"
 BOOK_DESCRIPTION = (
     "A practitioner's guide to local-first architecture for software "
