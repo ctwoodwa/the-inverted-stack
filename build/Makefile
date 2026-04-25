@@ -195,3 +195,7 @@ template: $(OUT_DIR)
 .PHONY: clean
 clean:
 	rm -rf $(OUT_DIR)
+
+.PHONY: check-audit
+check-audit:
+	python build/check_audit.py
