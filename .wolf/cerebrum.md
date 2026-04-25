@@ -59,3 +59,18 @@
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
+
+## Decision Log — 2026-04-25 — Phase 0.0 timing pilot
+
+**Decision: skip Task 2 (MED-tier pilot); proceed to Phase 0 sweep without timing data.**
+
+**Reasoning:** Author has stated the project has no deadline and will take as long as it takes. Real timing data is therefore not load-bearing for the continue/abort decision. Use a conservative estimate as a sanity check rather than a budget.
+
+**Conservative estimate for Phase 0** (assuming Claude does the compression with author review):
+- 12 HIGH-severity paragraphs × ~5 min Claude generation + ~5 min author review = 2 hours
+- ~30 MED-severity paragraphs × ~3 min generation + ~3 min review = 3 hours
+- Appendix F creation (Task 6) = ~4 hours (substantive compilation work)
+- Disclosures + verification + commit hygiene = ~2 hours
+- **Conservative total: ~11 hours.** Well within the original 24-48h budget; no need to invoke Alternative A or B.
+
+**Decision: CONTINUE with Phase 0 sweep.** Plan Task 3 (the projection gate) is satisfied: projection ≤48h, continue.

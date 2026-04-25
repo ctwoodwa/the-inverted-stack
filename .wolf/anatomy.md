@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-25T16:27:05.678Z
-> Files: 66 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-25T17:26:09.872Z
+> Files: 68 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -51,6 +51,7 @@
 
 ## build/
 
+- `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
 - `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~9474 tok)
 - `copy-to-dropbox.py` — Copy generated audiobook files to a destination folder (typically Dropbox). (~1655 tok)
 - `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
@@ -89,7 +90,7 @@
 
 ## chapters/part-1-thesis-and-pain/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8999 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8701 tok)
 - `ch02-local-first-serious-stack.md` — Chapter 2 — Local-First: From Sync Toy to Serious Stack (~7791 tok)
 - `ch03-inverted-stack-one-diagram.md` — Chapter 3 — The Inverted Stack in One Diagram (~6573 tok)
 - `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5955 tok)
@@ -132,6 +133,7 @@
 
 ## docs/superpowers/specs/
 
+- `2026-04-25-phase0a-review.md` — Phase 0a HIGH-Tier Compression Review (~3057 tok)
 - `2026-04-25-voice-pass-orchestration-design.council-review.md` — SEAT 1 — Dr. Marguerite Voss (Plan-as-infrastructure) (~5492 tok)
 - `2026-04-25-voice-pass-orchestration-design.md` — Voice-pass Orchestration for the Entire Book — Design (~10348 tok)
 

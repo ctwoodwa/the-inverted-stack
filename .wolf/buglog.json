@@ -1024,6 +1024,22 @@
       "related_bugs": [],
       "occurrences": 7,
       "last_seen": "2026-04-25T15:40:34.765Z"
+    },
+    {
+      "id": "bug-065",
+      "timestamp": "2026-04-25T16:59:48.089Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had 's GDPR established that personal data of EU resid",
+      "fix": "Changed to 's Schrems II ruling, India'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T16:59:48.089Z"
     }
   ]
 }
