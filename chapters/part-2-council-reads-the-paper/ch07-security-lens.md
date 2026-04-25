@@ -220,7 +220,7 @@ What a practitioner carries forward from Okonkwo's review:
 - **Supply-chain transparency is signed, reproducible, and attestable.** Release signing key custody is documented; reproducible builds are required for release artifacts; Sigstore or equivalent attestations ship with every release; SBOM accompanies the binary.
 - **Relay is ciphertext-only with a self-hosted path for metadata-sensitive deployments.** Compelled-access and traffic-analysis threat models are named explicitly; self-hosted relay operation is a supported configuration, not a fork.
 - **Credential recovery offers at least one artifact-based path.** Recovery-key file, administrator-held wrapped KEK escrow, or MDM re-enrollment plus relay-assisted re-sync — organizations must choose and test one before production. The no-artifact case (permanent loss possible) is disclosed to users at onboarding.
-- **Right-to-erasure is implemented via crypto-shredding with documented metadata residue.** DEK destruction makes operation content unrecoverable; operation metadata remains and must be disclosed to the data protection officer; the pattern applies uniformly to GDPR, LGPD, POPIA, NDPR, Kenya DPA, DPDP, and PIPA obligations.
+- **Right-to-erasure is implemented via crypto-shredding with documented metadata residue.** DEK destruction makes operation content unrecoverable; operation metadata remains and must be disclosed to the data protection officer; the pattern applies uniformly to GDPR, India's DPDP, and Brazil's LGPD obligations — and to the parallel right-to-erasure regimes named in Appendix F.
 
 ---
 
