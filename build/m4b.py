@@ -26,7 +26,7 @@ REPO = Path(__file__).resolve().parent.parent
 AUDIO_DIR = REPO / "build" / "output" / "audiobook"
 MANIFEST = AUDIO_DIR / "manifest.json"
 DEFAULT_OUT = AUDIO_DIR / "the-inverted-stack.m4b"
-DEFAULT_COVER = REPO / "assets" / "cover.jpg"
+DEFAULT_COVER = REPO / "assets" / "cover-square.jpg"
 
 BOOK_TITLE = "The Inverted Stack: Local-First Nodes in a SaaS World"
 BOOK_AUTHOR = "Chris Woodward"
