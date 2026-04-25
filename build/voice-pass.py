@@ -29,10 +29,13 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import shutil
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -174,14 +177,77 @@ Output nothing else. Do not explain. Do not summarize the rewrite.
 """
 
 
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def log_invocation(
+    log_dir: Path,
+    chapter: str,
+    pass_num: int,
+    source: Path,
+    output: Path,
+    agent_path: Path,
+    cli_version: str,
+    model: str,
+    mode: str,
+    exit_code: int,
+    duration_s: float,
+    start_iso: str,
+    end_iso: str,
+) -> Path:
+    """Write a per-invocation log file in chapters/_voice-drafts/_log/.
+
+    Returns the path of the written log file."""
+    log_dir.mkdir(parents=True, exist_ok=True)
+    safe_start = start_iso.replace(":", "").replace("-", "")
+    log_path = log_dir / f"{safe_start}-{chapter}-pass{pass_num}.json"
+    payload = {
+        "chapter": chapter,
+        "pass_num": pass_num,
+        "input_sha256": _sha256(source),
+        "output_sha256": _sha256(output) if output.exists() else None,
+        "agent_path": (
+            agent_path.relative_to(REPO).as_posix()
+            if agent_path.is_absolute() and str(agent_path).startswith(str(REPO))
+            else str(agent_path)
+        ),
+        "agent_sha256": _sha256(agent_path),
+        "claude_cli_version": cli_version,
+        "model": model,
+        "prompt_mode": mode,
+        "exit_code": exit_code,
+        "duration_s": duration_s,
+        "wall_clock_start_iso": start_iso,
+        "wall_clock_end_iso": end_iso,
+    }
+    log_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return log_path
+
+
+def _claude_cli_version(claude_path: str) -> str:
+    """Best-effort capture of `claude --version`. Returns 'unknown' on failure."""
+    try:
+        result = subprocess.run(
+            [claude_path, "--version"], capture_output=True, text=True, timeout=10
+        )
+        return result.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
 def run_voice_pass(
     claude: str, voice: str, source: Path, output: Path,
+    pass_num: int, mode: str = "normalize",
     timeout_s: int = 900, force: bool = False,
 ) -> tuple[bool, str]:
     """Dispatch one voice-pass via headless Claude Code. Returns
     (success, message). On success the output file is written by the
     agent itself; the orchestrator verifies the file's mtime is newer
     than the start of this run.
+
+    Writes a per-invocation log entry to chapters/_voice-drafts/_log/
+    regardless of success or failure (council B3/C9).
 
     When force=True, any existing output file is deleted before invoking
     so "exists after run" unambiguously means "agent wrote during this
@@ -191,16 +257,41 @@ def run_voice_pass(
     if force and output.exists():
         output.unlink()
     prompt = build_prompt(voice, source, output)
+    start_dt = datetime.now(timezone.utc)
     start_time = time.time()
+    cli_version = _claude_cli_version(claude)
+    agent_path = REPO / ".claude" / "agents" / f"voice-{voice}.md"
+    proc = None
+    exit_code = -1
     try:
         proc = subprocess.run(
             [claude, "-p", prompt],
             capture_output=True, text=True, cwd=REPO, timeout=timeout_s,
         )
+        exit_code = proc.returncode
     except subprocess.TimeoutExpired:
-        # claude -p sometimes lingers after the agent's tool calls return.
-        # If the output file's mtime is newer than this run's start, the
-        # agent did the work before the subprocess hung — treat as success.
+        exit_code = -1
+    end_dt = datetime.now(timezone.utc)
+    duration = time.time() - start_time
+
+    # Write the log regardless of success
+    log_invocation(
+        log_dir=DRAFTS / "_log",
+        chapter=source.stem,
+        pass_num=pass_num,
+        source=source,
+        output=output,
+        agent_path=agent_path,
+        cli_version=cli_version,
+        model="claude-sonnet-4-6",
+        mode=mode,
+        exit_code=exit_code,
+        duration_s=duration,
+        start_iso=start_dt.isoformat().replace("+00:00", "Z"),
+        end_iso=end_dt.isoformat().replace("+00:00", "Z"),
+    )
+
+    if proc is None:
         if output.exists() and output.stat().st_mtime > start_time:
             return True, f"timeout-but-output-written ({output.stat().st_size} bytes)"
         return False, f"timeout after {timeout_s}s, no fresh output"
@@ -302,6 +393,7 @@ def main() -> None:
                 continue
             t0 = time.time()
             ok, msg = run_voice_pass(claude, voice, src, dst,
+                                     pass_num=1,
                                      timeout_s=args.timeout, force=args.force)
             dt = time.time() - t0
             status = "OK" if ok else "FAIL"
@@ -337,7 +429,8 @@ def main() -> None:
                 print(f"  WOULD-RUN {label}")
                 continue
             t0 = time.time()
-            ok, msg = run_voice_pass(claude, "sinek", src, dst, timeout_s=args.timeout)
+            ok, msg = run_voice_pass(claude, "sinek", src, dst,
+                                     pass_num=2, timeout_s=args.timeout)
             dt = time.time() - t0
             status = "OK" if ok else "FAIL"
             print(f"  [{status}] {ch:<48} ({dt:5.1f}s) {msg[:80]}")
