@@ -120,6 +120,52 @@ REWRITE TARGETS:
 - Prose-style headings (titles, section labels)
 - Prose list items (when the bullet contains sentences, not just citations)
 
+DISCIPLINE RULES (these apply on top of the agent's voice instructions):
+
+1. NO STRUCTURAL FORMAT CHANGES. If the source uses bold-led list items
+   (**Term.** Description...), keep them bold-led. If it uses numbered
+   prose (The first is X. The second is Y.), keep that. If it uses
+   bulleted lists, keep them bulleted. Voice changes prose. Voice does
+   NOT change list formats, paragraph order within a section, or heading
+   levels. The structure the author built is intentional. STRICT.
+
+2. NO NEW ARGUMENTS — BUT NEW IMAGERY IS WELCOME.
+
+   What you may NOT do:
+   - Introduce a genuinely new opening hook or closing kicker for the
+     chapter or any section. The first and last sentences of the chapter
+     and of every section must clearly derive from a sentence already
+     present in the source for that location. You may sharpen, split,
+     merge, or reorder; you may not invent a fresh entry or exit line.
+   - Add a new claim, a new argument, a new rhetorical question, or a
+     new call to action that the source does not already make.
+
+   What you MAY do (this is what voice-pass is FOR):
+   - Add concrete imagery, sensory detail, scene-anchoring, or
+     clarity-bridging metaphors INSIDE existing paragraphs to make an
+     existing claim land more vividly. (Example: if the source says
+     "vendors share infrastructure," you may add "all four sitting on
+     the same physical concrete floor" as illustration — the claim is
+     unchanged, the imagery is new.)
+   - Add a new memorable beat (a short emphatic sentence, a parallel
+     triplet, an em-dash apposition) inside a section, where it serves
+     the existing argument and does not displace the author's own
+     beats.
+
+3. PRESERVE THE AUTHOR'S PROSE PATTERNS WHEN PRESENT — ADD YOUR OWN ON
+   TOP, NEVER IN PLACE OF.
+
+   If the source already uses parallel construction ("not X, not Y, but
+   Z"), triplets ("A, B, C"), em-dash apposition, or repeated phrases
+   for rhetorical effect, those are the author's voice work. Keep them.
+   Do not flatten them, do not delete them, do not substitute your own
+   rhythm for theirs.
+
+   You MAY add new prose patterns of your own where the source has
+   none. The rule is asymmetric: voice-pass ADDS to the author's
+   craft; it does not OVERWRITE it. When in doubt about a passage where
+   the author already wrote with intent, keep what they wrote.
+
 OUTPUT TO STDOUT:
 After successfully writing the file, output a single line of the form:
 DONE: <output-path> (<word-count> words)
@@ -129,29 +175,40 @@ Output nothing else. Do not explain. Do not summarize the rewrite.
 
 def run_voice_pass(
     claude: str, voice: str, source: Path, output: Path,
-    timeout_s: int = 600,
+    timeout_s: int = 900, force: bool = False,
 ) -> tuple[bool, str]:
     """Dispatch one voice-pass via headless Claude Code. Returns
     (success, message). On success the output file is written by the
-    agent itself; the orchestrator just verifies the file exists."""
+    agent itself; the orchestrator verifies the file's mtime is newer
+    than the start of this run.
+
+    When force=True, any existing output file is deleted before invoking
+    so "exists after run" unambiguously means "agent wrote during this
+    run" rather than "stale draft from a prior run survived."
+    """
     output.parent.mkdir(parents=True, exist_ok=True)
+    if force and output.exists():
+        output.unlink()
     prompt = build_prompt(voice, source, output)
+    start_time = time.time()
     try:
         proc = subprocess.run(
             [claude, "-p", prompt],
             capture_output=True, text=True, cwd=REPO, timeout=timeout_s,
         )
     except subprocess.TimeoutExpired:
-        # Check whether the agent wrote the file before being killed —
-        # claude -p sometimes lingers after the agent's tool calls return,
-        # producing a false-positive timeout while the actual work is done.
-        if output.exists() and output.stat().st_size > 0:
+        # claude -p sometimes lingers after the agent's tool calls return.
+        # If the output file's mtime is newer than this run's start, the
+        # agent did the work before the subprocess hung — treat as success.
+        if output.exists() and output.stat().st_mtime > start_time:
             return True, f"timeout-but-output-written ({output.stat().st_size} bytes)"
-        return False, f"timeout after {timeout_s}s, no output written"
+        return False, f"timeout after {timeout_s}s, no fresh output"
     if proc.returncode != 0:
         return False, f"claude exited {proc.returncode}: {proc.stderr.strip()[:240]}"
     if not output.exists() or output.stat().st_size == 0:
         return False, f"agent did not write {output.relative_to(REPO).as_posix()}"
+    if output.stat().st_mtime < start_time:
+        return False, f"output is stale (not touched during this run)"
     last_line = (proc.stdout.strip().splitlines() or [""])[-1]
     return True, last_line[:160]
 
@@ -180,8 +237,11 @@ def main() -> None:
                     help="show plan and what would run without invoking Claude")
     ap.add_argument("--plan-only", action="store_true",
                     help="print the parsed plan and exit")
-    ap.add_argument("--timeout", type=int, default=600,
-                    help="per-chapter timeout in seconds (default: 600)")
+    ap.add_argument("--timeout", type=int, default=900,
+                    help="per-chapter timeout in seconds (default: 900). "
+                         "claude -p may linger after the agent's Write tool "
+                         "completes; the orchestrator detects this via mtime "
+                         "and reports 'timeout-but-output-written' as success.")
     args = ap.parse_args()
 
     if not PLAN.exists():
@@ -240,7 +300,8 @@ def main() -> None:
                 print(f"  WOULD-RUN {label}")
                 continue
             t0 = time.time()
-            ok, msg = run_voice_pass(claude, voice, src, dst, timeout_s=args.timeout)
+            ok, msg = run_voice_pass(claude, voice, src, dst,
+                                     timeout_s=args.timeout, force=args.force)
             dt = time.time() - t0
             status = "OK" if ok else "FAIL"
             print(f"  [{status}] {ch:<48} ({dt:5.1f}s) {msg[:80]}")
