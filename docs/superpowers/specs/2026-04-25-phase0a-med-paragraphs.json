@@ -1,0 +1,74 @@
+[
+  {
+    "path": "chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
+    "para": 8,
+    "words": 32,
+    "text": "Relay deployment jurisdiction determines data-transit exposure. For deployments under data-localization mandates (Russia 242-FZ, India DPDP, UAE DPL, PIPL in China), on-premise relay deployment keeps all protocol traffic within the local deployment boundary."
+  },
+  {
+    "path": "chapters/appendices/appendix-b-threat-model-worksheets.md",
+    "para": 17,
+    "words": 79,
+    "text": "**Customization guidance:** Add actors specific to your vertical. Healthcare deployments should add \"unauthorized staff member with workstation access\" and \"patient with provider relationship.\" Legal deployments should add \"opposing counsel seeking discovery advantage.\" Government and defense deployments should add nation-state actors and insider threat programs as distinct entries with appropriate capability levels. Deployments in regulated markets (DIFC, RBI-supervised BFSI, PIPL-scoped, POPIA-scoped, GDPR-scoped) should extend the statutory-access actor with jurisdiction-specific inspection rights and document the regulatory basis in the capability notes."
+  },
+  {
+    "path": "chapters/front-matter/preface.md",
+    "para": 22,
+    "words": 1,
+    "text": "---"
+  },
+  {
+    "path": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+    "para": 41,
+    "words": 157,
+    "text": "Intermittent connectivity is not a US edge case — it is the global operational baseline. In Nigeria and South Africa, scheduled load-shedding cuts power for six to twelve hours daily; when electricity goes, routers and base stations go with it, and connectivity fails regardless of coverage quality. Hundreds of millions of enterprise workers in those economies plan their workdays around outage schedules, not around the assumption that the network is always available. In India, the 4G/3G/2G coverage gradient means that enterprise field operations — agricultural services, construction, financial services, healthcare — routinely run on intermittent connectivity across large portions of Tier 2 and Tier 3 cities and rural areas. Rural Brazil, rural Mexico, and most of Southeast Asia present comparable patterns at comparable scale. A SaaS platform that cannot function without a persistent connection does not have a niche offline problem. It has an architecture that excludes the majority of the world's enterprise users from full functionality."
+  },
+  {
+    "path": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+    "para": 62,
+    "words": 142,
+    "text": "The authority can act on the customer. Russia's Federal Law 242-FZ — among the first general-purpose data localization laws globally, predating GDPR by two years — has required since 2015 that personal data of Russian citizens be stored on servers located within Russia; organizations using Western SaaS found themselves structurally non-compliant not because their vendor did anything but because the SaaS architecture cannot provide on-premises data residency by design. The European Court of Justice's 2020 Schrems II ruling constrained EU organizations from transferring personal data to US cloud providers without adequate supplemental safeguards — the vendor continued operating; the customer's legal ability to continue using it was constrained. India's DPDP Act 2023 is now creating comparable obligations for Indian organizations using US-hosted services for Indian residents' personal data. In each case, the customer becomes non-compliant regardless of the vendor's preferences or actions."
+  },
+  {
+    "path": "chapters/part-2-council-reads-the-paper/ch07-security-lens.md",
+    "para": 53,
+    "words": 190,
+    "text": "**Compelled Access as a Distinct Threat Model.** The compromised-relay threat model has a cousin that deserves its own name: compelled access. In jurisdictions where cloud-hosted infrastructure is subject to mandatory government access requirements — a live procedural reality in several CIS markets, a constrained reality in the EU post-Schrems II, and a jurisdiction-specific reality across parts of Asia — the architecture's end-to-end encryption with keys that never leave the originating device addresses a threat model that cloud storage cannot satisfy architecturally. The relay operator cannot produce decryptable content under a compulsion order because the relay operator does not possess decryptable content. This is not a cryptographic subtlety; it is the structural reason the architecture is a Schrems II compliance answer for European organizations, a Federal Law 242-FZ compliance answer for Russian and CIS organizations, a DIFC 2020 answer for DIFC-licensed financial firms, an India DPDP/RBI answer for Indian BFSI, and a PIPL answer for China-resident data. The relay routes ciphertext; the keys stay with the user. For deployments where compelled access is a named threat, the self-hosted relay is the additional guarantee — the metadata itself stays on user-controlled infrastructure."
+  },
+  {
+    "path": "chapters/part-2-council-reads-the-paper/ch07-security-lens.md",
+    "para": 99,
+    "words": 325,
+    "text": "- **DEK/KEK envelope encryption is enforced at the architecture level, not the application level.** The key hierarchy is audited, not invented; primitives are libsodium, age, Argon2id reference, SQLCipher; compositions require a cryptographic engineer's sign-off against a written specification.\n- **Send-tier filtering is an inviolable protocol invariant.** Subscription filtering lives in the sync daemon, not in the UI, not in an API handler, not in a permission check on a view component. If it moves, blast radius expands from role-scoped to total.\n- **Key compromise response is specified and tested before first production deployment.** Revocation procedure, administrator re-attestation flow with a twenty-four-hour recommended re-attestation interval, offline-node reconnection handling, and capability-rotation propagation are documented with timing commitments, not described as design intent.\n- **Root organization key custody uses HSM or multi-party ceremony.** A compromised root key is a higher-order failure than a compromised role KEK. Deployments under import substitution constraints or in jurisdictions where Western HSM hardware is not approved must use a domestic HSM equivalent or a documented multi-party key ceremony — the custody requirement is structural, not procedural.\n- **Supply-chain transparency is signed, reproducible, and attestable.** Release signing key custody is documented; reproducible builds are required for release artifacts; Sigstore or equivalent attestations ship with every release; SBOM accompanies the binary.\n- **Relay is ciphertext-only with a self-hosted path for metadata-sensitive deployments.** Compelled-access and traffic-analysis threat models are named explicitly; self-hosted relay operation is a supported configuration, not a fork.\n- **Credential recovery offers at least one artifact-based path.** Recovery-key file, administrator-held wrapped KEK escrow, or MDM re-enrollment plus relay-assisted re-sync — organizations must choose and test one before production. The no-artifact case (permanent loss possible) is disclosed to users at onboarding.\n- **Right-to-erasure is implemented via crypto-shredding with documented metadata residue.** DEK destruction makes operation content unrecoverable; operation metadata remains and must be disclosed to the data protection officer; the pattern applies uniformly to GDPR, LGPD, POPIA, NDPR, Kenya DPA, DPDP, and PIPA obligations."
+  },
+  {
+    "path": "chapters/part-2-council-reads-the-paper/ch10-synthesis.md",
+    "para": 40,
+    "words": 189,
+    "text": "**Relay geographic architecture.** The managed relay routes ciphertext only, but the metadata it observes — which nodes communicate with which, at what times, at what volume — is itself subject to jurisdictional data-residency scrutiny. For EU buyers under Schrems II, DIFC-licensed firms under DIFC 2020, Russian organizations under 242-FZ, or Chinese organizations under PIPL, the question of where the relay operator's infrastructure is legally located determines whether the architecture satisfies regulatory transfer constraints. The self-hosted relay path answers this for high-sensitivity deployments; the managed relay requires jurisdictional deployment choices (EU-resident for Schrems II, Russia-resident for 242-FZ, etc.). This is one of the most consequential implementation decisions in the architecture and is currently unspecified. Chapter 16 addresses the relay architecture; relay geographic residency becomes a per-deployment choice with regulatory consequences. A distinct threat model operates in parallel: state-mandated data access on cloud-hosted infrastructure. Local key management, where keys never leave the user's device, addresses this threat model architecturally — the relay cannot produce decryptable content because the relay does not possess decryptable content. This is a deployment consideration relevant across multiple jurisdictions, not a political judgment about any specific government."
+  },
+  {
+    "path": "chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md",
+    "para": 67,
+    "words": 319,
+    "text": "**BYOC backup destination.** The Tier 3 backup adapter is not bound to a specific cloud provider. The architecture specifies a generic object storage interface; operator deployments configure the destination. The backup object contains a full encrypted snapshot of the node's CRDT event log and the current snapshot tier — not a database file, not a ZIP archive, but the serialized event log the system already maintains as Tier 2. The encryption key for the backup is derived by HKDF-SHA256 from the same DEK/KEK hierarchy specified in Chapter 15: the same root seed protects both the local database and its off-node backup. A backup stored in an untrusted object store is still encrypted under the user's key material. The storage provider cannot read it. If the user loses their key, they lose access to the backup — the same tradeoff that governs the local store. The adapter configuration accepts any endpoint that speaks the S3 API: hyperscaler services (Azure Blob via compatibility adapter, Google Cloud Storage, AWS S3); EU-resident providers (Hetzner Object Storage, OVHcloud, Scaleway) satisfying post-Schrems II supplementary-measures requirements; GCC and Indian sovereign cloud providers satisfying UAE Data Protection Law 2022, DIFC Data Protection Law 2020, and RBI data localization circular obligations; domestic providers in Japan (IDCFrontier, NTT Object Storage, Sakura), China (Aliyun OSS with PIPL-compliant configuration), and South Korea; domestically hosted endpoints satisfying Russia's Federal Law 242-FZ and comparable CIS data localization laws; and on-premise object storage (self-hosted MinIO, Ceph RGW, network shares) for air-gapped or import-substitution-mandated deployments. The BYOC model is the architectural answer to the 2022 SaaS terminations — when Adobe, Autodesk, Figma, and dozens of other Western SaaS vendors suspended service across Russia and CIS markets under sanctions enforcement, organizations whose backup endpoints were in vendor cloud infrastructure lost access to their own data. A backup endpoint the user controls survives that failure mode; the architecture makes it a structural property, not a configuration choice."
+  },
+  {
+    "path": "chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md",
+    "para": 72,
+    "words": 129,
+    "text": "**Managed relay deployment.** The managed relay is a horizontally-scaled service accepting WebSocket connections over TLS 1.3 on port 443. The service terminates TLS at an edge proxy, authenticates each connection against the Ed25519 public key presented in the handshake, and forwards CRDT operation frames to subscribing peers. Horizontal scaling is stateless at the forwarding layer: any relay node can route any frame. Per-peer connection affinity is handled by consistent hashing on node_id for subscription routing. The managed relay is operated per jurisdiction: `eu-relay.example.com` (Frankfurt, EU-resident for Schrems II), `me-relay.example.com` (DIFC-resident for UAE/DIFC compliance), `in-relay.example.com` (Mumbai for RBI localization), `ru-relay.example.com` (Moscow for 242-FZ), and so forth. Teams select the relay endpoint at onboarding; cross-jurisdiction deployments configure multiple endpoints with relay-to-relay interconnect (also over TLS 1.3, authenticated by operator-held relay keys)."
+  },
+  {
+    "path": "chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md",
+    "para": 76,
+    "words": 99,
+    "text": "**Compelled access.** The relay cannot produce decryptable content under legal compulsion because the relay does not possess decryptable content. A subpoena to the relay operator yields connection logs and message envelopes — never payload plaintext. This is the structural answer to the compelled-access threat model across CIS jurisdictions (242-FZ + import substitution), the EU (post-Schrems II transfer safeguards), the GCC (DIFC Data Protection Law 2020), China (PIPL + MLPS 2.0), and every other regulatory regime where cloud-operator data access is a live procurement concern. Chapter 15 specifies the cryptographic mechanism; Chapter 16 specifies the operational configuration that activates it."
+  },
+  {
+    "path": "chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md",
+    "para": 57,
+    "words": 127,
+    "text": "For regulated markets the backup target carries jurisdictional weight. Russian deployments\nunder 242-FZ require a backup inside Russian territory. Indian deployments under the DPDP Act\nrequire defensible classification of personal data crossing borders. UAE deployments under DPL\n2022 require clarity on whether the chosen location sits inside or outside a free zone. Surface\nthe chosen target's jurisdiction alongside the path — \"Backup location: OneDrive (Microsoft,\nUnited States)\" rather than a raw file URL — and, when the team's declared jurisdiction\nrequires in-country storage, present a labelled list of in-country targets and block selection\nof out-of-jurisdiction options with a short explanation: \"This location stores data outside\n[jurisdiction]. Your team's policy requires a local target.\" A silent failure at this step is a\ncompliance incident, not a UX inconvenience."
+  }
+]
