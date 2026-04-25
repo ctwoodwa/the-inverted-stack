@@ -1,0 +1,51 @@
+# Voice-pass plan: chapter -> primary voice agent (pass 1)
+#
+# Pass 2 always normalizes through @voice-sinek (the book's house voice).
+# Chapters mapped to "sinek" skip pass 1 and only run pass 2.
+#
+# Voice rationale per chapter:
+#   - sinek    : the house voice; specification chapters and author-narrator passages
+#   - gladwell : scene-first thesis-opener register
+#   - grant    : research-grounded landscape / commercial-argument register
+#   - godin    : decision-framework / manifesto / direct-address register
+#   - lencioni : leadership-fable scenes (council critic chapters; migration leadership)
+#   - brown    : confession-to-principle / human-cost register
+
+# Front matter
+preface:                                sinek
+
+# Part I — thesis and pain
+ch01-when-saas-fights-reality:          gladwell
+ch02-local-first-serious-stack:         grant
+ch03-inverted-stack-one-diagram:        sinek
+ch04-choosing-your-architecture:        godin
+
+# Part II — Kleppmann Council two-act
+ch05-enterprise-lens:                   lencioni
+ch06-distributed-systems-lens:          lencioni
+ch07-security-lens:                     lencioni
+ch08-product-economic-lens:             grant
+ch09-local-first-practitioner-lens:     brown
+ch10-synthesis:                         sinek
+
+# Part III — reference architecture
+ch11-node-architecture:                 sinek
+ch12-crdt-engine-data-layer:            grant
+ch13-schema-migration-evolution:        sinek
+ch14-sync-daemon-protocol:              sinek
+ch15-security-architecture:             sinek
+ch16-persistence-beyond-the-node:       sinek
+
+# Part IV — implementation playbooks
+ch17-building-first-node:               godin
+ch18-migrating-existing-saas:           lencioni
+ch19-shipping-to-enterprise:            sinek
+ch20-ux-sync-conflict:                  brown
+
+# Back matter
+epilogue-what-the-stack-owes-you:       sinek
+appendix-a-sync-daemon-wire-protocol:   sinek
+appendix-b-threat-model-worksheets:     sinek
+appendix-c-further-reading:             sinek
+appendix-d-testing-the-inverted-stack:  sinek
+appendix-e-citation-style:              sinek

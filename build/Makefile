@@ -95,6 +95,27 @@ normalize-fast:
 embed-cover:
 	python build/embed-cover.py
 
+# voice-pass: rewrite chapters through voice agents per chapters/voice-plan.yaml.
+# Pass 1 applies the guest voice (Gladwell, Brown, Grant, Godin, Lencioni)
+# per the plan; Pass 2 normalizes everything through Sinek (the house voice).
+# Outputs go to chapters/_voice-drafts/{pass1,final}/<chapter>.md (gitignored).
+# Review and merge selectively — does not overwrite source chapters.
+.PHONY: voice-pass
+voice-pass:
+	python build/voice-pass.py
+
+.PHONY: voice-pass-1
+voice-pass-1:
+	python build/voice-pass.py --pass 1
+
+.PHONY: voice-pass-2
+voice-pass-2:
+	python build/voice-pass.py --pass 2
+
+.PHONY: voice-plan
+voice-plan:
+	python build/voice-pass.py --plan-only
+
 # audio-copy: run alone, with stability check on (protects against picking
 # up in-flight files when an audiobook render is happening in another shell).
 .PHONY: audio-copy
