@@ -32,6 +32,7 @@ TARGETS = {
     "appendix-c": 2000,
     "appendix-d": 2000,
     "appendix-e": 500,
+    "appendix-f": 2000,
 }
 
 CHAPTERS_DIR = os.path.join(os.path.dirname(__file__), "..", "chapters")
