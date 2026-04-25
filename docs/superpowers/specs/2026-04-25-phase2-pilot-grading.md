@@ -103,15 +103,32 @@ diff -u chapters/_voice-drafts/_archive/<ts>-pre-phase2/final/ch01-when-saas-fig
 
 ## Audiobook listener test (G2)
 
-Pick ONE pilot to generate audiobook for and listen at 1.0× playback. Recommended: Ch01 (the bellwether).
+**Workflow constraint:** `build/audiobook.py` reads chapter source paths from a hardcoded `CHAPTER_FILES` list — it does not have a `--source` flag and cannot read a voice-pass draft directly. Three options:
+
+- **A. Modify `audiobook.py` to accept `--source <path>`** — small code change, lets you point the audiobook builder at any markdown file. Cleanest for repeated Phase 2 listener tests across multiple pilots.
+- **B. Temporarily promote one pilot chapter (Ch01) early** — run `python build/promote.py --chapter ch01-when-saas-fights-reality`, then `python build/audiobook.py --only ch01`, then if it fails revert the promotion via `git revert <promotion-sha>`. Uses the Phase 4 machinery one chapter early.
+- **C. Manually overwrite source** — `cp chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md chapters/part-1-thesis-and-pain/`, run audiobook, then `git checkout chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md` to revert. Crude but no code changes.
+
+**Default path: B** (uses Phase 4's promote.py and the manifest/hash machinery; the early-promotion is reversible). After promote.py lands (subagent in progress), run:
 
 ```bash
-python build/audiobook.py --chapter ch01 --source chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md
-# or whatever the audiobook entry signature is
+# Promote Ch01 pilot to source for audiobook test
+python build/promote.py --chapter ch01-when-saas-fights-reality
+
+# Generate audiobook
+python build/audiobook.py --only ch01
+
+# Listen at 1.0× playback to: build/output/audio/ch01-*.mp3 (or wherever the builder writes)
+```
+
+If the listener test FAILs, revert:
+```bash
+git revert <promotion-commit-sha>
 ```
 
 - **Listener verdict:** [ PASS (no fatigue) / FAIL (fatigue at: ___) ]
 - **Specific timestamps where prose tripped the listener:**
+- **If FAILed, was the promotion reverted?** [ YES / NO ]
 
 ---
 
