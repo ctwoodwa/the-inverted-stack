@@ -50,20 +50,23 @@ def chapter_title_from_md(md_path: Path) -> str:
     return md_path.stem
 
 
-def build_chapter_title_map() -> dict[str, str]:
-    """MP3 stem -> chapter title from the markdown source. Reads the audiobook
-    manifest if present (preserves original chapter ordering and titles);
-    falls back to scanning chapters/ when manifest is missing."""
+def build_chapter_title_map() -> tuple[dict[str, str], dict[str, int]]:
+    """Return (titles, order) from the audiobook manifest. titles maps
+    MP3 stem -> chapter title from the markdown source. order maps
+    MP3 stem -> 1-indexed reading-order position (for track numbering).
+    Both are empty when the manifest is missing."""
     titles: dict[str, str] = {}
+    order: dict[str, int] = {}
     if MANIFEST.exists():
         import json
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        for c in manifest.get("chapters", []):
+        for i, c in enumerate(manifest.get("chapters", []), 1):
             mp3_stem = Path(c["output"]).stem
             md_path = REPO / c["source"]
             if md_path.exists():
                 titles[mp3_stem] = chapter_title_from_md(md_path)
-    return titles
+                order[mp3_stem] = i
+    return titles, order
 
 
 def has_attached_pic(ffmpeg: str, mp3: Path) -> bool:
@@ -154,6 +157,9 @@ def main() -> None:
         print("No matching MP3s.")
         return
 
+    title_map, order_map = build_chapter_title_map()
+    total_tracks = len(sources)
+
     t0 = time.time()
     embedded = 0
     skipped = 0
@@ -168,9 +174,16 @@ def main() -> None:
             skipped += 1
             continue
 
+        chapter_title = title_map.get(src.stem, src.stem.replace("-", " ").title())
+        # Track number reflects the audiobook's reading order from the
+        # manifest, not the alphabetical iteration order. Falls back to i
+        # only when the manifest doesn't list this file.
+        track_n = order_map.get(src.stem, i)
+
         ti = time.time()
         try:
-            embed(ffmpeg, src, args.cover)
+            embed(ffmpeg, src, args.cover, chapter_title,
+                  track_n=track_n, total_tracks=total_tracks)
         except subprocess.CalledProcessError as e:
             print(f"  [{i:2d}/{len(sources)}] FAILED {src.name}: {e}", file=sys.stderr)
             continue
