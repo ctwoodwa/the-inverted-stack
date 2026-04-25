@@ -199,3 +199,13 @@ clean:
 .PHONY: check-audit
 check-audit:
 	python build/check_audit.py
+
+.PHONY: promote-chapter promote-all promote-reject
+promote-chapter:
+	python build/promote.py --chapter $(ch)
+
+promote-all:
+	python build/promote.py --all
+
+promote-reject:
+	python build/promote.py --reject $(ch) --reason "$(reason)"
