@@ -209,3 +209,7 @@ promote-all:
 
 promote-reject:
 	python build/promote.py --reject $(ch) --reason "$(reason)"
+
+.PHONY: check-stale
+check-stale:
+	python build/check_stale.py
