@@ -293,6 +293,16 @@ def _expand_numbers(t: str) -> str:
         return f"{amount} {word} dollars"
 
     t = re.sub(r"\$(\d+(?:\.\d+)?)\s*([KMBTkmbt])\b", _currency_sub, t)
+    # Currency with full-word magnitude: "$4.2 million" -> "4.2 million dollars".
+    # Without this, the plain-$N pattern below would strip just the dollar sign
+    # and leave the magnitude word stranded ("4.2 dollars million" — wrong word
+    # order). Match the full pattern first so the plain-$N pass doesn't see it.
+    t = re.sub(
+        r"\$(\d+(?:\.\d+)?)\s+(thousand|million|billion|trillion)\b",
+        r"\1 \2 dollars",
+        t,
+        flags=re.IGNORECASE,
+    )
     # Plain "$N" without magnitude suffix: espeak reads as "dollar N" which
     # sounds inverted. Convert "$N" to "N dollars" instead.
     t = re.sub(r"\$(\d+(?:\.\d+)?)\b", r"\1 dollars", t)
@@ -359,11 +369,14 @@ def narratable_text(md: str) -> str:
     t = re.sub(r"(?m)^\s*[-*+]\s+", "", t)
     t = re.sub(r"(?m)^\s*\d+\.\s+", "", t)
 
-    # Em-dash / en-dash handling. Spaced em-dashes are appositions and
-    # deserve a longer beat than a comma — `...` gives Kokoro a meaningful
-    # pause without the prosody-breaking effect of a period. Bare em-dashes
-    # (compound-word use) fall back to a comma for the micro-pause.
-    t = t.replace(" — ", " ... ").replace(" – ", " ... ")
+    # Em-dash / en-dash handling. Both spaced (apposition) and unspaced
+    # (compound-word) em-dashes collapse to a comma for a micro-pause.
+    # Earlier versions converted spaced em-dashes to "..." for a longer
+    # beat, but in long-form chapter narration the dot-marker pauses
+    # accumulate into noticeable mid-sentence dead air, especially after
+    # voice-pass tunes that increase em-dash apposition density. A comma
+    # gives espeak a natural prosody pause without injecting silence.
+    t = t.replace(" — ", ", ").replace(" – ", ", ")
     t = t.replace("—", ", ").replace("–", ", ")
 
     # Smart-quote normalization. Espeak handles curly quotes inconsistently;
