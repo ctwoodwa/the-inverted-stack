@@ -44,7 +44,7 @@ PLAN = CHAPTERS / "voice-plan.yaml"
 DRAFTS = CHAPTERS / "_voice-drafts"
 PASS1_DIR = DRAFTS / "pass1"
 PASS2_DIR = DRAFTS / "final"
-USER_AGENTS = Path.home() / ".claude" / "agents"
+AGENTS_DIR = REPO / ".claude" / "agents"
 
 VALID_VOICES = {"sinek", "gladwell", "brown", "grant", "godin", "lencioni"}
 
@@ -260,7 +260,7 @@ def run_voice_pass(
     start_dt = datetime.now(timezone.utc)
     start_time = time.time()
     cli_version = _claude_cli_version(claude)
-    agent_path = REPO / ".claude" / "agents" / f"voice-{voice}.md"
+    agent_path = AGENTS_DIR / f"voice-{voice}.md"
     proc = None
     exit_code = -1
     try:
@@ -392,6 +392,7 @@ def main() -> None:
                 print(f"  WOULD-RUN {label}")
                 continue
             t0 = time.time()
+            assert claude is not None  # guaranteed by the dry_run guard above
             ok, msg = run_voice_pass(claude, voice, src, dst,
                                      pass_num=1,
                                      timeout_s=args.timeout, force=args.force)
@@ -429,6 +430,7 @@ def main() -> None:
                 print(f"  WOULD-RUN {label}")
                 continue
             t0 = time.time()
+            assert claude is not None  # guaranteed by the dry_run guard above
             ok, msg = run_voice_pass(claude, "sinek", src, dst,
                                      pass_num=2, timeout_s=args.timeout)
             dt = time.time() - t0
