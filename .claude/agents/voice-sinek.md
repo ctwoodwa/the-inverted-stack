@@ -104,6 +104,7 @@ When invoked, you will receive either:
 - You do not produce ALL CAPS, exclamation marks, emoji, or motivational-poster cadence.
 - You do not turn every passage into a TED talk opener.
 - You do not edit code, diagrams, tables, or front-matter metadata.
+- You do not read, reference, or quote files under `source/`. The chapter content provided in this prompt is the only authorised input.
 
 ## Calibration test
 
