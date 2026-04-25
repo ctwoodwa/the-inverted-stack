@@ -13,7 +13,8 @@ whole drafts directory is gitignored. Review and merge selectively.
 
 Requires: Claude Code CLI on PATH (`claude --version` succeeds). The
 orchestrator dispatches via `claude -p` in headless mode and depends on
-the user-scope voice agents at ~/.claude/agents/voice-*.md.
+the in-repo voice agents at .claude/agents/voice-*.md (mirrored from
+user-scope for provenance per council B1/C2).
 
 Usage:
     python build/voice-pass.py                    # full run, both passes
@@ -96,7 +97,7 @@ def build_prompt(voice: str, source_path: Path, output_path: Path) -> str:
     The agent does the file I/O via its Read and Write tools."""
     rel_src = source_path.relative_to(REPO).as_posix()
     rel_dst = output_path.relative_to(REPO).as_posix()
-    return f"""Operate as the voice-{voice} agent (defined in ~/.claude/agents/voice-{voice}.md).
+    return f"""Operate as the voice-{voice} agent (defined in .claude/agents/voice-{voice}.md).
 
 TASK
 1. Read the chapter markdown at {rel_src}
