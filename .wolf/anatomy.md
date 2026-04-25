@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-25T17:26:09.872Z
-> Files: 68 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-25T20:56:04.432Z
+> Files: 75 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -51,14 +51,18 @@
 
 ## build/
 
+- `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
 - `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~9474 tok)
+- `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `copy-to-dropbox.py` — Copy generated audiobook files to a destination folder (typically Dropbox). (~1655 tok)
 - `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
 - `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
-- `Makefile` — The Inverted Stack — Build Targets (~2050 tok)
+- `Makefile` — The Inverted Stack — Build Targets (~2067 tok)
 - `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~1932 tok)
+- `update_kleppmann_citation.py` — One-shot updater: standardize all Kleppmann et al. 2019 citations (~1568 tok)
 - `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~4220 tok)
+- `word-count.py` — Word count per chapter vs. target. (~666 tok)
 
 ## chapters/
 
@@ -70,15 +74,16 @@
 
 ## chapters/_voice-drafts/pass1/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9218 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8822 tok)
 
 ## chapters/appendices/
 
-- `appendix-a-sync-daemon-wire-protocol.md` — Appendix A — Sync Daemon Wire Protocol (~6736 tok)
+- `appendix-a-sync-daemon-wire-protocol.md` — Appendix A — Sync Daemon Wire Protocol (~6830 tok)
 - `appendix-b-threat-model-worksheets.md` — Introduction (~5200 tok)
 - `appendix-c-further-reading.md` — Appendix C — Further Reading (~5973 tok)
 - `appendix-d-testing-the-inverted-stack.md` — Appendix D — Testing the Inverted Stack (~5969 tok)
 - `appendix-e-citation-style.md` — Appendix E — Citation Style (~1667 tok)
+- `appendix-f-regulatory-coverage.md` — Appendix F — Regulatory Coverage Map — 7-region matrix of 40+ frameworks with per-chapter reverse index; the canonical compliance reference for the book (~3200 tok)
 
 ## chapters/epilogue/
 
@@ -86,7 +91,7 @@
 
 ## chapters/front-matter/
 
-- `preface.md` — Preface (~2175 tok)
+- `preface.md` — Preface (~2239 tok)
 
 ## chapters/part-1-thesis-and-pain/
 
@@ -97,9 +102,9 @@
 
 ## chapters/part-2-council-reads-the-paper/
 
-- `ch05-enterprise-lens.md` — Chapter 5 — The Enterprise Lens (~6446 tok)
+- `ch05-enterprise-lens.md` — Chapter 5 — The Enterprise Lens (~6496 tok)
 - `ch06-distributed-systems-lens.md` — Chapter 6 — The Distributed Systems Lens (~6714 tok)
-- `ch07-security-lens.md` — Chapter 7 — The Security Lens (~7082 tok)
+- `ch07-security-lens.md` — Chapter 7 — The Security Lens (~7056 tok)
 - `ch08-product-economic-lens.md` — Who Is Jordan Kelsey (~6961 tok)
 - `ch09-local-first-practitioner-lens.md` — Chapter 9 — The Local-First Practitioner Lens (~7650 tok)
 - `ch10-synthesis.md` — Chapter 10 — Synthesis: What the Council Finally Agreed On (~5754 tok)
@@ -111,7 +116,7 @@
 - `ch13-schema-migration-evolution.md` — Chapter 13 — Schema Migration and Evolution (~6932 tok)
 - `ch14-sync-daemon-protocol.md` — Chapter 14 — Sync Daemon Protocol (~7080 tok)
 - `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~7671 tok)
-- `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~8485 tok)
+- `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~8462 tok)
 
 ## chapters/part-4-implementation-playbooks/
 
@@ -133,6 +138,7 @@
 
 ## docs/superpowers/specs/
 
+- `2026-04-25-phase0a-med-review.md` — Phase 0a MED-Tier Review and Decisions (~871 tok)
 - `2026-04-25-phase0a-review.md` — Phase 0a HIGH-Tier Compression Review (~3057 tok)
 - `2026-04-25-voice-pass-orchestration-design.council-review.md` — SEAT 1 — Dr. Marguerite Voss (Plan-as-infrastructure) (~5492 tok)
 - `2026-04-25-voice-pass-orchestration-design.md` — Voice-pass Orchestration for the Entire Book — Design (~10348 tok)
@@ -160,3 +166,4 @@
 ## tests/build/
 
 - `__init__.py` — tests/build/__init__.py (~8 tok)
+- `test_check_audit.py` — Tests for the reference-integrity audit checker. (~234 tok)

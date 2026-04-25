@@ -2,7 +2,9 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 2026-04-25 | Task 7: build/check_audit.py reference-integrity script | build/check_audit.py, build/__init__.py, tests/build/test_check_audit.py, build/Makefile | 2 tests pass; script returns PASS against live repo; check-audit Make target added; committed 5ea1547 | ~2000 |
 | 15:30 | pytest scaffolding (Task 0) — created pytest.ini, tests/__init__.py, tests/build/__init__.py, tests/conftest.py | pytest.ini, tests/ | 0 items collected, no errors; committed db4a0a1 via GitButler on cw-branch-1 | ~1500 |
+| 17:45 | Task 6: created Appendix F — Regulatory Coverage Map | chapters/appendices/appendix-f-regulatory-coverage.md | 2,132 words (target 2,000 ±10%); 7 regions, 40+ frameworks, 20-row per-chapter index; committed ff27ecc | ~6000 |
 | 2026-04-25 | voice-sinek rewrite of ch01-when-saas-fights-reality | chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md | Rewrote pass1 draft in Sinek voice (Why→How→What, deliberate pacing, repetition loops, clarity bridging, emotion-first framing). Created final/ directory. ~5,100 words. | ~12000 |
 | 2026-04-24 | Appendix E lightweight consistency pass | chapters/appendices/appendix-e-citation-style.md | Added 5 missing formats (Technical Report / arXiv pre-print / IETF RFC / Legal Decision / Statute/Regulation + EU Regulation variant) now that Appendix C cites all these types. Examples table expanded from 2 illustrative citations to 10 covering every format class (Kleppmann Onward! / DDIA / Shapiro INRIA RR-7506 / Flexible Paxos arXiv / RFC 8032 / Noise Protocol spec / Schrems II C-311/18 / GDPR Reg 2016/679 / DPDP Act 2023 / Linear engineering blog). New Assembly Guidance section with 5-step final-manuscript citation audit protocol; 1,066 words | ~2500 |
 | 2026-04-24 | Appendix D pass-1 resolution (6.3 POLISH → 5 priority items) | chapters/appendices/appendix-d-testing-the-inverted-stack.md | Opening stakes hook added; 4 CRDT properties as bulleted list + state-based vs op-based commutativity qualifier + Shapiro citation; 10,000-sequence rationale stated; Level 4 MVP harness design spec (4 components + 1-3 engineer-week estimate); Level 5 chaos tooling named (Pumba/Gremlin/toxiproxy); NEW scenarios added — Extended-offline-baseline 90 days, Abrupt-power-interruption WAL SIGKILL, Air-gapped 30-day, Historical-document-re-keying, Data-boundary-relay-disabled (Schrems II/DIFC/RBI/NDPR/PIPL/242-FZ), Relay-operator-cannot-decrypt (state-actor threat model), Attestation-validation-and-revocation, Audit-trail-completeness (Japan PIPA/Korea ISMS-P/PIPL/SOX/HIPAA); Low-resource-variant (2 GB RAM / 16 GB storage); Regulatory citations parenthetical per security scenario; Section 4 restructured as CI tier table (Tier/Levels/Trigger/Time budget/Severity/Purpose); Test artefact capture requirements (test report/evidence/harness config/SBOM); Accessibility announcement testing (WCAG 2.1 AA / EU EAA 2025 / Section 508 / UK Equality Act); 3,663 words | ~6000 |
@@ -722,3 +724,35 @@
 | 13:24 | Created build/apply_phase0a.py | — | ~15490 |
 | 13:26 | Created docs/superpowers/specs/2026-04-25-phase0a-review.md | — | ~3261 |
 | 13:26 | Session end: 43 writes across 13 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 20 reads | ~119231 tok |
+| 13:37 | Session end: 43 writes across 13 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 20 reads | ~119231 tok |
+| 13:46 | Created chapters/appendices/appendix-f-regulatory-coverage.md | — | ~6890 |
+| 13:47 | Created chapters/appendices/appendix-f-regulatory-coverage.md | — | ~4548 |
+| 13:49 | Edited build/word-count.py | 2→3 lines | ~14 |
+| 13:51 | Created build/__init__.py | — | ~6 |
+| 13:51 | Created tests/build/test_check_audit.py | — | ~234 |
+| 13:51 | Created build/check_audit.py | — | ~588 |
+| 13:51 | Edited build/check_audit.py | 7→7 lines | ~93 |
+| 13:52 | Edited build/check_audit.py | inline fix | ~15 |
+| 13:52 | Edited build/Makefile | 3→7 lines | ~28 |
+| 13:54 | Edited chapters/front-matter/preface.md | 3→5 lines | ~194 |
+| 13:54 | Edited chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md | 9→13 lines | ~116 |
+| 13:55 | Session end: 54 writes across 20 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 27 reads | ~155699 tok |
+| 14:00 | Session end: 54 writes across 20 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 28 reads | ~155699 tok |
+| 14:15 | Edited chapters/appendices/appendix-a-sync-daemon-wire-protocol.md | inline fix | ~79 |
+| 14:15 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~102 |
+| 14:15 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~201 |
+| 14:16 | Created docs/superpowers/specs/2026-04-25-phase0a-med-review.md | — | ~929 |
+| 14:17 | Edited build/word-count.py | modified walk() | ~98 |
+| 14:18 | Session end: 59 writes across 24 files (feedback_voice_sinek_calibration.md, MEMORY.md, style-guide.md, 2026-04-25-voice-pass-orchestration-design.md, 2026-04-25-voice-pass-orchestration-design.council-review.md) | 31 reads | ~180132 tok |
+
+## Session: 2026-04-25 14:21
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 14:31 | Created chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md | — | ~9411 |
+| 14:31 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~18784 tok |
+| 14:31 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~18784 tok |
+| 14:31 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~18784 tok |
+| 16:44 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~18784 tok |
+| 16:49 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 4 reads | ~26424 tok |
+| 16:56 | Created build/update_kleppmann_citation.py | — | ~1568 |

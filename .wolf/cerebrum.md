@@ -74,3 +74,9 @@
 - **Conservative total: ~11 hours.** Well within the original 24-48h budget; no need to invoke Alternative A or B.
 
 **Decision: CONTINUE with Phase 0 sweep.** Plan Task 3 (the projection gate) is satisfied: projection ≤48h, continue.
+
+## Decision Log — 2026-04-25 — Phase 0.5 result
+
+**Decision: ORIGINAL PLAN stands.** Phase 0.5 methodology test produced a fresh Gladwell pass-1 on cleaned Ch01 (`chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md`, 5,447 words). Author's verdict: "the ch01 reality check looks good" — confirming pass-1 did not regress after Phase 0a; pass-2 (Sinek polish over Gladwell) is still needed for the book's house voice.
+
+**Phase 1 scope unchanged:** tune all six voice agents (sinek + 5 guests). Polish/normalize tier system as planned.

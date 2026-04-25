@@ -2,14 +2,14 @@
   "version": 1,
   "created_at": "2026-04-23T23:28:33.650Z",
   "lifetime": {
-    "total_tokens_estimated": 5842801,
-    "total_reads": 1164,
-    "total_writes": 4447,
-    "total_sessions": 20,
-    "anatomy_hits": 483,
-    "anatomy_misses": 681,
-    "repeated_reads_blocked": 907,
-    "estimated_savings_vs_bare_cli": 4478044
+    "total_tokens_estimated": 6555122,
+    "total_reads": 1282,
+    "total_writes": 4662,
+    "total_sessions": 21,
+    "anatomy_hits": 559,
+    "anatomy_misses": 723,
+    "repeated_reads_blocked": 933,
+    "estimated_savings_vs_bare_cli": 4514708
   },
   "sessions": [
     {
@@ -31208,6 +31208,1942 @@
         "writes_count": 43,
         "repeated_reads_blocked": 4,
         "anatomy_lookups": 12
+      }
+    },
+    {
+      "id": "session-2026-04-25-0958",
+      "started": "2026-04-25T13:58:06.113Z",
+      "ended": "2026-04-25T17:37:04.456Z",
+      "reads": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/voice-plan.yaml",
+          "tokens_estimated": 600,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/voice-pass.py",
+          "tokens_estimated": 4220,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-sinek.md",
+          "tokens_estimated": 3058,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 9218,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 5862,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 5492,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 34,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 18150,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8999,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-audit.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-paragraphs.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/feedback_voice_sinek_calibration.md",
+          "tokens_estimated": 507,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 119,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 235,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 224,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 207,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 86,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 6699,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 105,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 159,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 286,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 101,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 6276,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 164,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 305,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 267,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 607,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 255,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 280,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 320,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 598,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 505,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 497,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 1186,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 310,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 743,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 481,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 20742,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 36,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 39,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 268,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/reference_gitbutler_workflow.md",
+          "tokens_estimated": 550,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 118,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 236,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/apply_phase0a.py",
+          "tokens_estimated": 15490,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3494,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 56000,
+        "output_tokens_estimated": 63231,
+        "reads_count": 20,
+        "writes_count": 43,
+        "repeated_reads_blocked": 4,
+        "anatomy_lookups": 12
+      }
+    },
+    {
+      "id": "session-2026-04-25-0958",
+      "started": "2026-04-25T13:58:06.113Z",
+      "ended": "2026-04-25T17:55:44.077Z",
+      "reads": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/voice-plan.yaml",
+          "tokens_estimated": 600,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/voice-pass.py",
+          "tokens_estimated": 4220,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-sinek.md",
+          "tokens_estimated": 3058,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 9218,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 5862,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 5492,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 34,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 18150,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8999,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-audit.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-paragraphs.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3057,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-c-further-reading.md",
+          "tokens_estimated": 5973,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 3200,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/Makefile",
+          "tokens_estimated": 2050,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/front-matter/preface.md",
+          "tokens_estimated": 2175,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+          "tokens_estimated": 6446,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/feedback_voice_sinek_calibration.md",
+          "tokens_estimated": 507,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 119,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 235,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 224,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 207,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 86,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 6699,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 105,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 159,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 286,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 101,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 6276,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 164,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 305,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 267,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 607,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 255,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 280,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 320,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 598,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 505,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 497,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 1186,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 310,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 743,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 481,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 20742,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 36,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 39,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 268,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/reference_gitbutler_workflow.md",
+          "tokens_estimated": 550,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 118,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 236,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/apply_phase0a.py",
+          "tokens_estimated": 15490,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3494,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 7382,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 4873,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 14,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/test_check_audit.py",
+          "tokens_estimated": 234,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 588,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 93,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 15,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/Makefile",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/front-matter/preface.md",
+          "tokens_estimated": 208,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+          "tokens_estimated": 124,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 78901,
+        "output_tokens_estimated": 76798,
+        "reads_count": 27,
+        "writes_count": 54,
+        "repeated_reads_blocked": 7,
+        "anatomy_lookups": 18
+      }
+    },
+    {
+      "id": "session-2026-04-25-0958",
+      "started": "2026-04-25T13:58:06.113Z",
+      "ended": "2026-04-25T18:00:54.681Z",
+      "reads": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/voice-plan.yaml",
+          "tokens_estimated": 600,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/voice-pass.py",
+          "tokens_estimated": 4220,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-sinek.md",
+          "tokens_estimated": 3058,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 9218,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 5862,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 5492,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 34,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 18150,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8999,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-audit.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-paragraphs.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3057,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-c-further-reading.md",
+          "tokens_estimated": 5973,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 3200,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/Makefile",
+          "tokens_estimated": 2050,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/front-matter/preface.md",
+          "tokens_estimated": 2175,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+          "tokens_estimated": 6446,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-med-paragraphs.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/feedback_voice_sinek_calibration.md",
+          "tokens_estimated": 507,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 119,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 235,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 224,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 207,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 86,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 6699,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 105,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 159,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 286,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 101,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 6276,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 164,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 305,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 267,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 607,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 255,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 280,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 320,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 598,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 505,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 497,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 1186,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 310,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 743,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 481,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 20742,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 36,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 39,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 268,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/reference_gitbutler_workflow.md",
+          "tokens_estimated": 550,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 118,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 236,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/apply_phase0a.py",
+          "tokens_estimated": 15490,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3494,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 7382,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 4873,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 14,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/test_check_audit.py",
+          "tokens_estimated": 234,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 588,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 93,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 15,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/Makefile",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/front-matter/preface.md",
+          "tokens_estimated": 208,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+          "tokens_estimated": 124,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 78901,
+        "output_tokens_estimated": 76798,
+        "reads_count": 28,
+        "writes_count": 54,
+        "repeated_reads_blocked": 7,
+        "anatomy_lookups": 18
+      }
+    },
+    {
+      "id": "session-2026-04-25-0958",
+      "started": "2026-04-25T13:58:06.113Z",
+      "ended": "2026-04-25T18:18:13.835Z",
+      "reads": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/voice-plan.yaml",
+          "tokens_estimated": 600,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/voice-pass.py",
+          "tokens_estimated": 4220,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-sinek.md",
+          "tokens_estimated": 3058,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 9218,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 0,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 5862,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 5492,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/implementer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/spec-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 34,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Users/Chris/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/code-quality-reviewer-prompt.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 18150,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8999,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-audit.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-paragraphs.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3057,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-c-further-reading.md",
+          "tokens_estimated": 5973,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 3200,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 628,
+          "was_repeated": true,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/Makefile",
+          "tokens_estimated": 2050,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/front-matter/preface.md",
+          "tokens_estimated": 2175,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+          "tokens_estimated": 6446,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-med-paragraphs.json",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
+          "tokens_estimated": 6736,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch07-security-lens.md",
+          "tokens_estimated": 7082,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md",
+          "tokens_estimated": 8485,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/feedback_voice_sinek_calibration.md",
+          "tokens_estimated": 507,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 119,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 235,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 224,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 207,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 72,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/style/style-guide.md",
+          "tokens_estimated": 86,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 6699,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 105,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 159,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 286,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 101,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.council-review.md",
+          "tokens_estimated": 6276,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 164,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 305,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 267,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 607,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 255,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 280,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 320,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 598,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 505,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 497,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 1186,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 310,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 243,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 743,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 12,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+          "tokens_estimated": 481,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 20742,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/pytest.ini",
+          "tokens_estimated": 36,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/__init__.py",
+          "tokens_estimated": 8,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 353,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 39,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/plans/2026-04-25-voice-pass-orchestration.md",
+          "tokens_estimated": 268,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/conftest.py",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/reference_gitbutler_workflow.md",
+          "tokens_estimated": 550,
+          "action": "create"
+        },
+        {
+          "file": "C:/Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md",
+          "tokens_estimated": 118,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 236,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/apply_phase0a.py",
+          "tokens_estimated": 15490,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-review.md",
+          "tokens_estimated": 3494,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 7382,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-f-regulatory-coverage.md",
+          "tokens_estimated": 4873,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 14,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/__init__.py",
+          "tokens_estimated": 6,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/tests/build/test_check_audit.py",
+          "tokens_estimated": 234,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 588,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 93,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/check_audit.py",
+          "tokens_estimated": 15,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/Makefile",
+          "tokens_estimated": 30,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/front-matter/preface.md",
+          "tokens_estimated": 208,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
+          "tokens_estimated": 124,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
+          "tokens_estimated": 85,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-2-council-reads-the-paper/ch07-security-lens.md",
+          "tokens_estimated": 109,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md",
+          "tokens_estimated": 215,
+          "action": "edit"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/docs/superpowers/specs/2026-04-25-phase0a-med-review.md",
+          "tokens_estimated": 995,
+          "action": "create"
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/build/word-count.py",
+          "tokens_estimated": 98,
+          "action": "edit"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 101832,
+        "output_tokens_estimated": 78300,
+        "reads_count": 31,
+        "writes_count": 59,
+        "repeated_reads_blocked": 8,
+        "anatomy_lookups": 21
+      }
+    },
+    {
+      "id": "session-2026-04-25-1421",
+      "started": "2026-04-25T18:21:10.895Z",
+      "ended": "2026-04-25T18:31:21.111Z",
+      "reads": [
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8701,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 10083,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 8701,
+        "output_tokens_estimated": 10083,
+        "reads_count": 2,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-25-1421",
+      "started": "2026-04-25T18:21:10.895Z",
+      "ended": "2026-04-25T18:31:23.367Z",
+      "reads": [
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8701,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 10083,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 8701,
+        "output_tokens_estimated": 10083,
+        "reads_count": 2,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-25-1421",
+      "started": "2026-04-25T18:21:10.895Z",
+      "ended": "2026-04-25T18:31:52.717Z",
+      "reads": [
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8701,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 10083,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 8701,
+        "output_tokens_estimated": 10083,
+        "reads_count": 2,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-25-1421",
+      "started": "2026-04-25T18:21:10.895Z",
+      "ended": "2026-04-25T20:44:28.391Z",
+      "reads": [
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8701,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 10083,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 8701,
+        "output_tokens_estimated": 10083,
+        "reads_count": 2,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 1
+      }
+    },
+    {
+      "id": "session-2026-04-25-1421",
+      "started": "2026-04-25T18:21:10.895Z",
+      "ended": "2026-04-25T20:49:04.466Z",
+      "reads": [
+        {
+          "file": "C:/Users/Chris/.claude/agents/voice-gladwell.md",
+          "tokens_estimated": 0,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 8701,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-c-further-reading.md",
+          "tokens_estimated": 5973,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        },
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/appendices/appendix-e-citation-style.md",
+          "tokens_estimated": 1667,
+          "was_repeated": false,
+          "anatomy_had_description": false
+        }
+      ],
+      "writes": [
+        {
+          "file": "C:/Projects/the-inverted-stack/chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md",
+          "tokens_estimated": 10083,
+          "action": "create"
+        }
+      ],
+      "totals": {
+        "input_tokens_estimated": 16341,
+        "output_tokens_estimated": 10083,
+        "reads_count": 4,
+        "writes_count": 1,
+        "repeated_reads_blocked": 0,
+        "anatomy_lookups": 3
       }
     }
   ],
