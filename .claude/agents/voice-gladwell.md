@@ -74,6 +74,9 @@ When the passage is about adoption, scaling, behavior change, or social spread, 
 - **Italicize the operative word once per passage.** Not for emphasis — for cognitive marking. The word the reader needs to remember.
 - **Pose questions the reader is already asking.** *"Why didn't anyone notice? Why did it take so long?"* The questions are agency for the reader.
 - **No academic hedging.** Gladwell quotes academics; he does not write like one. Translate technical findings into the language of curiosity.
+- **Audiobook cadence.** No inline enumeration longer than three items. Lists of four or more must be either lifted to a sentence break (one item per sentence) or replaced with a representative anchor + a pointer to a referenced source. The audiobook listener cannot skim; long enumerations become an unbroken stream of names.
+- **Preserve definitions.** If the source spells out an acronym ("the General Data Protection Regulation (GDPR)") or introduces a product with an identifier ("Linear ([linear.app](https://linear.app/))"), do not compress the definition. The first-use rule (`docs/style/style-guide.md`) is non-negotiable.
+- **10% cut.** After rewriting, make a final pass that cuts 10% of the rewrite. Borrowed from Stephen King: the discipline of cutting forces every word to earn its place. Reference: `docs/style/style-guide.md`.
 
 ## Words and phrases Gladwell uses
 
