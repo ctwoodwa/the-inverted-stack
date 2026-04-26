@@ -1,249 +1,585 @@
 chapter: ch09
 chapter-title: The Local-First Practitioner Lens
-source-paper-refs: [v13 §13, R1 Ferreira, R2 Ferreira]
+source-paper-refs:
+- v13 §13
+- R1 Ferreira
+- R2 Ferreira
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: LENS-LF-01
-    name: Plain-file application-independent export path
-    source: 'ch09 §"The Blocking Issue: No Export Path"'
-    source-paper: v13 §13
-    definition: A user-owned local-first application must provide a single command that produces user data in durable application-independent formats — JSON for structured records, CSV for tabular data, Markdown for long-form documents — readable by any other competent software without vendor cooperation, active subscription, or network connectivity.
-    must-implement:
-      - Application exposes a single export command that runs entirely against the local node
-      - Export emits JSON for structured records, CSV for tabular data, and Markdown for long-form documents
-      - Export operates with no vendor cooperation, no active subscription check, and no network connectivity required
-      - Export output is byte-for-byte readable by software that has never seen the producing application
-    verification: Disconnect the network, cancel the subscription if applicable, run the export command, then ingest the resulting JSON/CSV/Markdown into a different application and confirm semantic equivalence to the source records.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [data-portability, export, ownership, shipping-requirement]
-    notes: Distinguished from rclone-style backup, which preserves only the internal database format and therefore delivers custody rather than ownership.
-
-  - id: LENS-LF-02
-    name: Non-technical disaster recovery walkthrough
-    source: ch09 §"What Changed Between Rounds"
-    source-paper: v13 §13
-    definition: Recovery from total device loss is a documented step-by-step path that a non-technical user can complete unaided in under thirty minutes, ending with a working node that resumes from BYOC backup without exposing any technical surface such as bucket URLs or rclone paths.
-    must-implement:
-      - Recovery flow is specified as a sequenced user-facing walkthrough — buy device, install application, enter recovery code or scan team-member QR, confirm BYOC target, restore runs in background
-      - Recovery substitutes a recovery code or peer-attestation QR for the lost device's original attestation bundle
-      - Eager-sync buckets populate first so the user resumes role-relevant work immediately while remaining records hydrate in the background
-      - No step in the recovery flow requires the user to type a bucket URL, an rclone destination, or any other technical identifier
-    verification: A non-technical tester completes end-to-end restore from a destroyed device to a working node in under thirty minutes without consulting documentation beyond in-application prompts.
-    kleppmann-properties: [P2, P5, P7]
-    scope: foundational
-    failure-modes: [key-loss, vendor-outage]
-    tags: [disaster-recovery, ux, backup, shipping-requirement]
-
-  - id: LENS-LF-03
-    name: Symmetric NAT plus relay outage as documented failure mode
-    source: ch09 §"What Changed Between Rounds"
-    source-paper: v13 §13
-    definition: When both peers sit behind carrier-grade NAT and the managed relay is unavailable, direct peer-to-peer communication is impossible and the architecture documents this as a named local-only failure mode with a self-hosted-relay fallback rather than concealing it.
-    must-implement:
-      - Peer-discovery documentation names symmetric NAT plus relay outage as a known failure mode that produces local-only operation for both parties
-      - Self-hosting a relay on a host with a public IP is documented as the supported fallback that eliminates the symmetric NAT problem
-      - The application surfaces a clear sync-status indication when both LAN and relay paths are unreachable
-    verification: Architecture documentation contains a section naming the symmetric NAT plus relay outage failure mode and the self-hosted-relay remediation; integration test exercises the local-only mode and confirms reads/writes succeed against local storage.
-    kleppmann-properties: [P3, P7]
-    scope: foundational
-    failure-modes: [peer-discovery-failure, partition]
-    tags: [networking, nat, relay, honesty]
-
-  - id: LENS-LF-04
-    name: Engine-agnostic CRDT abstraction for ecosystem reversibility
-    source: ch09 §"Production Analogues"
-    source-paper: v13 §13
-    definition: The application layer interacts with the CRDT engine through a stable abstraction such as ICrdtEngine that prevents lock-in to any specific CRDT ecosystem — Yjs, Automerge, or Loro — so the engine can be replaced without rewriting the application as the field continues to evolve.
-    must-implement:
-      - A single interface mediates all CRDT operations consumed by the application layer
-      - At least one engine implementation is replaceable without changes to application code
-      - The abstraction surfaces map, list, text, and counter operations independent of engine-native types
-    verification: Source tree contains an ICrdtEngine-equivalent interface; a second engine adapter (test stub or alternate implementation) exists and the application test suite passes against both.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition]
-    tags: [crdt, abstraction, reversibility, engine-agnostic]
-
-  - id: LENS-LF-05
-    name: Peer-attestation QR onboarding bundle
-    source: ch09 §"What Ferreira Commended"
-    source-paper: v13 §13
-    definition: A new device joins an existing workspace by scanning a QR-encoded attestation bundle from an existing peer that transfers credentials, workspace identity, and gossip-bootstrap parameters in a single out-of-band step, eliminating the credentials-require-peer chicken-and-egg failure mode of naive multi-device onboarding.
-    must-implement:
-      - Existing peer generates a QR-encoded bundle containing the credentials and workspace metadata required to authenticate and begin gossip
-      - New device authenticates and begins peer gossip using only the scanned bundle plus a network path to at least one peer
-      - Bundle exchange occurs out-of-band, requiring no third-party credential server
-    verification: Pair a new device to a workspace by scanning a peer-generated QR; confirm the new device authenticates and begins receiving CRDT updates without contacting a centralized credential service.
-    kleppmann-properties: [P2, P4, P7]
-    scope: foundational
-    failure-modes: [peer-discovery-failure]
-    tags: [onboarding, attestation, qr, multi-device]
-
-  - id: LENS-LF-06
-    name: Container cold-start hidden behind health-gated UI
-    source: ch09 §"What Ferreira Commended"
-    source-paper: v13 §13
-    definition: Local-first desktop applications shipped as containerized stacks must hide cold-start latency behind a persistent background service plus a health-check gate that holds the UI until the daemon is ready, eliminating the launch-pause that signals to users that the software is waiting on something remote.
-    must-implement:
-      - A persistent background service keeps the local container runtime warm across application launches
-      - The application UI does not present an interactive surface until a health check confirms the local daemon is ready
-      - The health gate hides implementation latency without misrepresenting the application as remote-dependent
-    verification: Cold-launch the application from a fresh boot and confirm the UI either appears with the daemon ready or presents a deterministic loading state until readiness, with no point at which the user can interact with stale or partial data.
-    kleppmann-properties: [P1]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [container, cold-start, ux, daemon]
-
-  - id: LENS-LF-07
-    name: Three-state backup status with dismissible at-risk banner
-    source: ch09 §"Backup and Recovery UX"
-    source-paper: v13 §13
-    definition: Backup health surfaces to the user through three escalating states — Protected (subtle), Attention (amber badge), At Risk (persistent non-blocking banner dismissible only with explicit acknowledgment) — so users do not think about working backups but cannot accidentally ignore failing ones.
-    must-implement:
-      - Backup status UI exposes exactly the three named states with distinct visual treatments
-      - Protected state is unobtrusive and requires no user attention
-      - At Risk banner is persistent, non-blocking, and dismissible only via an explicit acknowledgment that records user intent
-    verification: Force each of the three backup states in a test build and confirm the visual treatment matches specification; confirm the At Risk dismissal records an acknowledgment event in the local log.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, backup, status-indicator]
-
-  - id: LENS-LF-08
-    name: Recovery UX parity with backup status design
-    source: ch09 §"Backup and Recovery UX"
-    source-paper: v13 §13
-    definition: The restore experience receives the same non-technical design attention as backup status — a guided reconnection to the BYOC target, a restore-progress indicator that mirrors the three-state backup model in restore context, and zero exposure of bucket URLs or rclone paths at the moment the user is most stressed about lost work.
-    must-implement:
-      - Restore flow guides the user through reconnecting to the configured BYOC target with the same UX register used during initial backup configuration
-      - Restore progress surfaces as a background-sync indicator using the three-state visual model adapted to restore semantics
-      - No technical identifier (bucket URL, rclone path, credential string) is exposed in the restore flow
-    verification: A non-technical tester completes restore using only in-application prompts; UI inspection confirms no bucket URL or rclone path appears anywhere in the restore flow.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [key-loss]
-    tags: [ux, recovery, restore, design-parity]
-
-  - id: LENS-LF-09
-    name: Zero-state first-run experience as product specification
-    source: ch09 §"The Zero-State First-Run Problem"
-    source-paper: v13 §13
-    definition: The first thirty seconds after install for a brand-new solo user with no prior data and no existing peers is specified as a product requirement that walks the user from blank state to first project, first backup configuration, and first invite — closing the most common 30-day abandonment path for local-first applications.
-    must-implement:
-      - The application specifies the zero-state screen explicitly — what the user sees, the first action surfaced, and the path to first project
-      - The first-run flow guides the user to configure a backup target before significant data is created
-      - The first-run flow surfaces the invite path so the workspace is not silently single-user by default
-    verification: Install the application on a fresh device with no prior workspace; confirm the user reaches a first project, a configured backup target, and an invite surface within the first session without consulting external documentation.
-    kleppmann-properties: [P1, P2, P4]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, onboarding, first-run, product-requirement]
-
-  - id: LENS-LF-10
-    name: Conflict-inbox grouping with auto-resolve and resolve-all-similar
-    source: ch09 §"The Zero-State First-Run Problem"
-    source-paper: v13 §13
-    definition: When two offline nodes reconnect, surfaced conflicts are grouped by record type and cause, auto-resolved where predefined rules clearly apply, and offer a resolve-all-similar action for the remainder — converting the undifferentiated conflict list that breaks most collaborative local-first applications into a manageable inbox.
-    must-implement:
-      - Conflict UI groups conflicts by record type and by underlying cause rather than presenting a flat list
-      - Conflicts matching predefined deterministic resolution rules are auto-resolved and surfaced as informational rather than blocking
-      - A resolve-all-similar action exists that applies a single user decision across all conflicts in a group
-    verification: Generate a synthetic conflict set covering at least three record types and two cause classes after a partition heal; confirm the UI groups by type and cause, auto-resolves rule-matching conflicts, and exposes resolve-all-similar.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, conflict-resolution, crdt, post-partition]
-
-  - id: LENS-LF-11
-    name: Three-tier sync status indicator with degradation escalation
-    source: ch09 §"The Zero-State First-Run Problem"
-    source-paper: v13 §13
-    definition: Sync state surfaces to the user through three persistent but unobtrusive status-bar indicators that escalate from silent to informative to persistent-banner as connectivity and sync health degrade, giving the user accurate situational awareness without alarm fatigue.
-    must-implement:
-      - The status bar exposes a sync-state indicator with three distinct levels matching the silent / informative / persistent-banner pattern
-      - Indicator escalation is driven by observable sync-health signals, not arbitrary timers
-      - The persistent-banner level appears only when sync degradation crosses a documented threshold
-    verification: Simulate healthy, degraded, and failed sync conditions in a test build and confirm the indicator transitions through the three levels at the documented thresholds.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [ux, sync-status, indicator]
-
-  - id: LENS-LF-12
-    name: Default-deny telemetry with named privacy model
-    source: ch09 §"Implementation Drift Risk"
-    source-paper: v13 §13
-    definition: Product analytics in a local-first architecture must be specified before the first analytics request arrives — opt-in telemetry disabled by default, aggregate-through-relay privacy-preserving statistics as the only permitted centralized collection — and the chosen model is documented in an ADR mapped to GDPR Article 25 privacy-by-design so the line stays durable under future product pressure.
-    must-implement:
-      - Telemetry is opt-in and disabled by default at first install
-      - Centralized analytics collection is restricted to aggregate-through-relay privacy-preserving statistics or none at all
-      - An ADR documents the chosen telemetry model with explicit mapping to GDPR Article 25 privacy-by-design
-    verification: Confirm a fresh install reports no telemetry; confirm an ADR exists naming the telemetry model with the GDPR Article 25 mapping; confirm centralized collection paths in the codebase emit only aggregate metadata.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [telemetry, privacy, gdpr, adr, drift-prevention]
-
-  - id: LENS-LF-13
-    name: Implementation drift prohibition on server-side feature gating
-    source: ch09 §"Implementation Drift Risk"
-    source-paper: v13 §13
-    definition: A local-first architecture explicitly prohibits server-side feature flag checks, server-side A/B tests, and server-coordinated business logic that would re-introduce the network as a runtime dependency, naming this as the primary drift path that erodes local-first commitments one reasonable-sounding decision at a time.
-    must-implement:
-      - Feature flag evaluation runs entirely against the local node with no network call as a precondition for feature visibility
-      - A/B assignment is computed locally from a deterministic seed, not retrieved from a server-side experiment service
-      - Business logic gating is rejected at code review when it requires a server round-trip
-    verification: Disconnect the network, launch the application, and confirm all features behave identically to a connected launch; code review checklist includes a server-side-feature-gate prohibition.
-    kleppmann-properties: [P1, P3, P7]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [drift-prevention, feature-flags, governance]
-
-  - id: LENS-LF-14
-    name: Intermittent connectivity as architectural baseline
-    source: ch09 §"Global Deployment Context — Ferreira's Empirical Note"
-    source-paper: v13 §13
-    definition: The architecture treats intermittent connectivity as the operational baseline for hundreds of millions of enterprise workers across Sub-Saharan Africa, South and Southeast Asia, and rural Latin America — not as a carrier-grade NAT edge case — so all sync, conflict, and recovery flows are designed for sessions that span many disconnected intervals.
-    must-implement:
-      - Sync daemon is designed for long-running sessions across repeated disconnections without manual reconnect actions
-      - Subscription scoping at the sync daemon limits per-reconnect catch-up cost to role-relevant data
-      - Conflict surfaces remain usable after multi-day partitions, not just brief outages
-    verification: Run a multi-day partition simulation across the test fleet; confirm reconnect catch-up completes without manual intervention and the conflict inbox remains within the documented usability envelope.
-    kleppmann-properties: [P3, P4, P7]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [global-deployment, intermittent-connectivity, baseline]
-
-  - id: LENS-LF-15
-    name: Sanctions-grade availability as design anchor
-    source: ch09 §"Global Deployment Context — Ferreira's Empirical Note"
-    source-paper: v13 §13
-    definition: The architecture is anchored against the empirical case of the 2022 sanctions-driven SaaS suspensions across Russia and CIS markets — hundreds of thousands of organizations losing vendor access on days of notice — establishing that surviving vendor suspension is not a theoretical improvement but a property the architecture has already had to provide.
-    must-implement:
-      - Core read and write paths function with all vendor-controlled endpoints unreachable
-      - Self-hosted relay deployment is documented and supported as a first-class option
-      - License terms permit continued use under vendor-jurisdiction sanctions enforcement
-    verification: Block all vendor-controlled domains at the network layer and confirm the application performs all core operations identically; confirm a self-hosted relay deployment guide exists in the public documentation.
-    kleppmann-properties: [P3, P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [sanctions, availability, geopolitical, anchor]
-
-  - id: LENS-LF-16
-    name: Shared-device role-scoped recovery
-    source: ch09 §"Global Deployment Context — Ferreira's Empirical Note"
-    source-paper: v13 §13
-    definition: Recovery must support shared-device deployments — a single tablet rotated across a team of field workers — by targeting the role and the workspace rather than the device and its sole user, with BYOC backup configured against role-scoped workspace targets so any team member can restore from any device.
-    must-implement:
-      - BYOC backup targets are scoped to workspace and role, not bound to a specific device serial
-      - Recovery flow accepts a role credential plus workspace identifier as sufficient inputs to restore role-relevant data
-      - Multiple users may rotate through the same physical device without each restore wiping the prior user's role state from backup
-    verification: Provision a workspace with three role-scoped users, restore each onto a single shared device in succession, and confirm each user reaches role-relevant data without loss to the others' backup state.
-    kleppmann-properties: [P2, P4, P7]
-    scope: foundational
-    failure-modes: [key-loss]
-    tags: [global-deployment, shared-device, recovery, field-operations]
+- id: LENS-LF-01
+  name: Plain-file application-independent export path
+  source: 'ch09 §"The Blocking Issue: No Export Path"'
+  source-paper: v13 §13
+  definition: A user-owned local-first application must provide a single command that produces user data
+    in durable application-independent formats — JSON for structured records, CSV for tabular data, Markdown
+    for long-form documents — readable by any other competent software without vendor cooperation, active
+    subscription, or network connectivity.
+  must-implement:
+  - Application exposes a single export command that runs entirely against the local node
+  - Export emits JSON for structured records, CSV for tabular data, and Markdown for long-form documents
+  - Export operates with no vendor cooperation, no active subscription check, and no network connectivity
+    required
+  - Export output is byte-for-byte readable by software that has never seen the producing application
+  verification: Disconnect the network, cancel the subscription if applicable, run the export command,
+    then ingest the resulting JSON/CSV/Markdown into a different application and confirm semantic equivalence
+    to the source records.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - data-portability
+  - export
+  - ownership
+  - shipping-requirement
+  notes: Distinguished from rclone-style backup, which preserves only the internal database format and
+    therefore delivers custody rather than ownership.
+  failed-conditions:
+  - Application does not expose a single export command that runs entirely against the local node
+  - Export does not emit JSON for structured records, CSV for tabular data, and Markdown for long-form
+    documents
+  - Export does not operate with no vendor cooperation, no active subscription check, and no network connectivity
+    required
+  - Export output is not byte-for-byte readable by software that has never seen the producing application
+  - 'Verification check does not pass: Disconnect the network, cancel the subscription if applicable,
+    run the export command, then ingest the resulting JSON/CS...'
+- id: LENS-LF-02
+  name: Non-technical disaster recovery walkthrough
+  source: ch09 §"What Changed Between Rounds"
+  source-paper: v13 §13
+  definition: Recovery from total device loss is a documented step-by-step path that a non-technical user
+    can complete unaided in under thirty minutes, ending with a working node that resumes from BYOC backup
+    without exposing any technical surface such as bucket URLs or rclone paths.
+  must-implement:
+  - Recovery flow is specified as a sequenced user-facing walkthrough — buy device, install application,
+    enter recovery code or scan team-member QR, confirm BYOC target, restore runs in background
+  - Recovery substitutes a recovery code or peer-attestation QR for the lost device's original attestation
+    bundle
+  - Eager-sync buckets populate first so the user resumes role-relevant work immediately while remaining
+    records hydrate in the background
+  - No step in the recovery flow requires the user to type a bucket URL, an rclone destination, or any
+    other technical identifier
+  verification: A non-technical tester completes end-to-end restore from a destroyed device to a working
+    node in under thirty minutes without consulting documentation beyond in-application prompts.
+  kleppmann-properties:
+  - P2
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  - vendor-outage
+  tags:
+  - disaster-recovery
+  - ux
+  - backup
+  - shipping-requirement
+  failed-conditions:
+  - Recovery flow is not specified as a sequenced user-facing walkthrough — buy device, install application,
+    enter recovery code or scan team-member QR, confirm BYOC target, restore runs in background
+  - 'Fails to satisfy: Recovery substitutes a recovery code or peer-attestation QR for the lost device''s
+    original attestation bundle'
+  - Eager-sync buckets populate first so the user resumes role-relevant work immediately while remaining
+    does not record hydrate in the background
+  - No step in the recovery flow does not require the user to type a bucket URL, an rclone destination,
+    or any other technical identifier
+  - 'Verification check does not pass: A non-technical tester completes end-to-end restore from a destroyed
+    device to a working node in under thirty minutes wi...'
+- id: LENS-LF-03
+  name: Symmetric NAT plus relay outage as documented failure mode
+  source: ch09 §"What Changed Between Rounds"
+  source-paper: v13 §13
+  definition: When both peers sit behind carrier-grade NAT and the managed relay is unavailable, direct
+    peer-to-peer communication is impossible and the architecture documents this as a named local-only
+    failure mode with a self-hosted-relay fallback rather than concealing it.
+  must-implement:
+  - Peer-discovery documentation names symmetric NAT plus relay outage as a known failure mode that produces
+    local-only operation for both parties
+  - Self-hosting a relay on a host with a public IP is documented as the supported fallback that eliminates
+    the symmetric NAT problem
+  - The application surfaces a clear sync-status indication when both LAN and relay paths are unreachable
+  verification: Architecture documentation contains a section naming the symmetric NAT plus relay outage
+    failure mode and the self-hosted-relay remediation; integration test exercises the local-only mode
+    and confirms reads/writes succeed against local storage.
+  kleppmann-properties:
+  - P3
+  - P7
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  - partition
+  tags:
+  - networking
+  - nat
+  - relay
+  - honesty
+  failed-conditions:
+  - 'Fails to satisfy: Peer-discovery documentation names symmetric NAT plus relay outage as a known failure
+    mode that produces local-only operation for both parties'
+  - Self-hosting a relay on a host with a public IP is not documented as the supported fallback that eliminates
+    the symmetric NAT problem
+  - The application surfaces a clear sync-status indication when both LAN and relay paths are not unreachable
+  - 'Verification check does not pass: Architecture documentation contains a section naming the symmetric
+    NAT plus relay outage failure mode and the self-hoste...'
+- id: LENS-LF-04
+  name: Engine-agnostic CRDT abstraction for ecosystem reversibility
+  source: ch09 §"Production Analogues"
+  source-paper: v13 §13
+  definition: The application layer interacts with the CRDT engine through a stable abstraction such as
+    ICrdtEngine that prevents lock-in to any specific CRDT ecosystem — Yjs, Automerge, or Loro — so the
+    engine can be replaced without rewriting the application as the field continues to evolve.
+  must-implement:
+  - A single interface mediates all CRDT operations consumed by the application layer
+  - At least one engine implementation is replaceable without changes to application code
+  - The abstraction surfaces map, list, text, and counter operations independent of engine-native types
+  verification: Source tree contains an ICrdtEngine-equivalent interface; a second engine adapter (test
+    stub or alternate implementation) exists and the application test suite passes against both.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - crdt
+  - abstraction
+  - reversibility
+  - engine-agnostic
+  failed-conditions:
+  - 'Fails to satisfy: A single interface mediates all CRDT operations consumed by the application layer'
+  - At least one engine implementation is not replaceable without changes to application code
+  - The abstraction does not surface map, list, text, and counter operations independent of engine-native
+    types
+  - 'Verification check does not pass: Source tree contains an ICrdtEngine-equivalent interface; a second
+    engine adapter (test stub or alternate implementation...'
+- id: LENS-LF-05
+  name: Peer-attestation QR onboarding bundle
+  source: ch09 §"What Ferreira Commended"
+  source-paper: v13 §13
+  definition: A new device joins an existing workspace by scanning a QR-encoded attestation bundle from
+    an existing peer that transfers credentials, workspace identity, and gossip-bootstrap parameters in
+    a single out-of-band step, eliminating the credentials-require-peer chicken-and-egg failure mode of
+    naive multi-device onboarding.
+  must-implement:
+  - Existing peer generates a QR-encoded bundle containing the credentials and workspace metadata required
+    to authenticate and begin gossip
+  - New device authenticates and begins peer gossip using only the scanned bundle plus a network path
+    to at least one peer
+  - Bundle exchange occurs out-of-band, requiring no third-party credential server
+  verification: Pair a new device to a workspace by scanning a peer-generated QR; confirm the new device
+    authenticates and begins receiving CRDT updates without contacting a centralized credential service.
+  kleppmann-properties:
+  - P2
+  - P4
+  - P7
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - onboarding
+  - attestation
+  - qr
+  - multi-device
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Existing peer does not generate a QR-encoded bundle containing the credentials and workspace metadata
+    required to authenticate and begin gossip
+  - 'Fails to satisfy: New device authenticates and begins peer gossip using only the scanned bundle plus
+    a network path to at least one peer'
+  - 'Fails to satisfy: Bundle exchange occurs out-of-band, requiring no third-party credential server'
+  - 'Verification check does not pass: Pair a new device to a workspace by scanning a peer-generated QR;
+    confirm the new device authenticates and begins receiv...'
+- id: LENS-LF-06
+  name: Container cold-start hidden behind health-gated UI
+  source: ch09 §"What Ferreira Commended"
+  source-paper: v13 §13
+  definition: Local-first desktop applications shipped as containerized stacks must hide cold-start latency
+    behind a persistent background service plus a health-check gate that holds the UI until the daemon
+    is ready, eliminating the launch-pause that signals to users that the software is waiting on something
+    remote.
+  must-implement:
+  - A persistent background service keeps the local container runtime warm across application launches
+  - The application UI does not present an interactive surface until a health check confirms the local
+    daemon is ready
+  - The health gate hides implementation latency without misrepresenting the application as remote-dependent
+  verification: Cold-launch the application from a fresh boot and confirm the UI either appears with the
+    daemon ready or presents a deterministic loading state until readiness, with no point at which the
+    user can interact with stale or partial data.
+  kleppmann-properties:
+  - P1
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - container
+  - cold-start
+  - ux
+  - daemon
+  failed-conditions:
+  - 'Fails to satisfy: A persistent background service keeps the local container runtime warm across application
+    launches'
+  - The application UI does not present an interactive surface until a health check confirms the local
+    daemon is not ready
+  - 'Fails to satisfy: The health gate hides implementation latency without misrepresenting the application
+    as remote-dependent'
+  - 'Verification check does not pass: Cold-launch the application from a fresh boot and confirm the UI
+    either appears with the daemon ready or presents a dete...'
+- id: LENS-LF-07
+  name: Three-state backup status with dismissible at-risk banner
+  source: ch09 §"Backup and Recovery UX"
+  source-paper: v13 §13
+  definition: Backup health surfaces to the user through three escalating states — Protected (subtle),
+    Attention (amber badge), At Risk (persistent non-blocking banner dismissible only with explicit acknowledgment)
+    — so users do not think about working backups but cannot accidentally ignore failing ones.
+  must-implement:
+  - Backup status UI exposes exactly the three named states with distinct visual treatments
+  - Protected state is unobtrusive and requires no user attention
+  - At Risk banner is persistent, non-blocking, and dismissible only via an explicit acknowledgment that
+    records user intent
+  verification: Force each of the three backup states in a test build and confirm the visual treatment
+    matches specification; confirm the At Risk dismissal records an acknowledgment event in the local
+    log.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - backup
+  - status-indicator
+  failed-conditions:
+  - Backup status UI does not expose exactly the three named states with distinct visual treatments
+  - Protected state is not unobtrusive and requires no user attention
+  - At Risk banner is not persistent, non-blocking, and dismissible only via an explicit acknowledgment
+    that records user intent
+  - 'Verification check does not pass: Force each of the three backup states in a test build and confirm
+    the visual treatment matches specification; confirm th...'
+- id: LENS-LF-08
+  name: Recovery UX parity with backup status design
+  source: ch09 §"Backup and Recovery UX"
+  source-paper: v13 §13
+  definition: The restore experience receives the same non-technical design attention as backup status
+    — a guided reconnection to the BYOC target, a restore-progress indicator that mirrors the three-state
+    backup model in restore context, and zero exposure of bucket URLs or rclone paths at the moment the
+    user is most stressed about lost work.
+  must-implement:
+  - Restore flow guides the user through reconnecting to the configured BYOC target with the same UX register
+    used during initial backup configuration
+  - Restore progress surfaces as a background-sync indicator using the three-state visual model adapted
+    to restore semantics
+  - No technical identifier (bucket URL, rclone path, credential string) is exposed in the restore flow
+  verification: A non-technical tester completes restore using only in-application prompts; UI inspection
+    confirms no bucket URL or rclone path appears anywhere in the restore flow.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  tags:
+  - ux
+  - recovery
+  - restore
+  - design-parity
+  failed-conditions:
+  - 'Fails to satisfy: Restore flow guides the user through reconnecting to the configured BYOC target
+    with the same UX register used during initial backup configuration'
+  - Restore progress does not surface as a background-sync indicator using the three-state visual model
+    adapted to restore semantics
+  - No technical identifier (bucket URL, rclone path, credential string) is not exposed in the restore
+    flow
+  - 'Verification check does not pass: A non-technical tester completes restore using only in-application
+    prompts; UI inspection confirms no bucket URL or rclo...'
+- id: LENS-LF-09
+  name: Zero-state first-run experience as product specification
+  source: ch09 §"The Zero-State First-Run Problem"
+  source-paper: v13 §13
+  definition: The first thirty seconds after install for a brand-new solo user with no prior data and
+    no existing peers is specified as a product requirement that walks the user from blank state to first
+    project, first backup configuration, and first invite — closing the most common 30-day abandonment
+    path for local-first applications.
+  must-implement:
+  - The application specifies the zero-state screen explicitly — what the user sees, the first action
+    surfaced, and the path to first project
+  - The first-run flow guides the user to configure a backup target before significant data is created
+  - The first-run flow surfaces the invite path so the workspace is not silently single-user by default
+  verification: Install the application on a fresh device with no prior workspace; confirm the user reaches
+    a first project, a configured backup target, and an invite surface within the first session without
+    consulting external documentation.
+  kleppmann-properties:
+  - P1
+  - P2
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - onboarding
+  - first-run
+  - product-requirement
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: The application specifies the zero-state screen explicitly — what the user sees,
+    the first action surfaced, and the path to first project'
+  - The first-run flow guides the user to configure a backup target before significant data is not created
+  - The first-run flow does not surface the invite path so the workspace is not silently single-user by
+    default
+  - 'Verification check does not pass: Install the application on a fresh device with no prior workspace;
+    confirm the user reaches a first project, a configure...'
+- id: LENS-LF-10
+  name: Conflict-inbox grouping with auto-resolve and resolve-all-similar
+  source: ch09 §"The Zero-State First-Run Problem"
+  source-paper: v13 §13
+  definition: When two offline nodes reconnect, surfaced conflicts are grouped by record type and cause,
+    auto-resolved where predefined rules clearly apply, and offer a resolve-all-similar action for the
+    remainder — converting the undifferentiated conflict list that breaks most collaborative local-first
+    applications into a manageable inbox.
+  must-implement:
+  - Conflict UI groups conflicts by record type and by underlying cause rather than presenting a flat
+    list
+  - Conflicts matching predefined deterministic resolution rules are auto-resolved and surfaced as informational
+    rather than blocking
+  - A resolve-all-similar action exists that applies a single user decision across all conflicts in a
+    group
+  verification: Generate a synthetic conflict set covering at least three record types and two cause classes
+    after a partition heal; confirm the UI groups by type and cause, auto-resolves rule-matching conflicts,
+    and exposes resolve-all-similar.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - conflict-resolution
+  - crdt
+  - post-partition
+  failed-conditions:
+  - 'Fails to satisfy: Conflict UI groups conflicts by record type and by underlying cause rather than
+    presenting a flat list'
+  - Conflicts matching predefined deterministic resolution rules are not auto-resolved and surfaced as
+    informational rather than blocking
+  - A resolve-all-similar action does not exist that applies a single user decision across all conflicts
+    in a group
+  - 'Verification check does not pass: Generate a synthetic conflict set covering at least three record
+    types and two cause classes after a partition heal; con...'
+- id: LENS-LF-11
+  name: Three-tier sync status indicator with degradation escalation
+  source: ch09 §"The Zero-State First-Run Problem"
+  source-paper: v13 §13
+  definition: Sync state surfaces to the user through three persistent but unobtrusive status-bar indicators
+    that escalate from silent to informative to persistent-banner as connectivity and sync health degrade,
+    giving the user accurate situational awareness without alarm fatigue.
+  must-implement:
+  - The status bar exposes a sync-state indicator with three distinct levels matching the silent / informative
+    / persistent-banner pattern
+  - Indicator escalation is driven by observable sync-health signals, not arbitrary timers
+  - The persistent-banner level appears only when sync degradation crosses a documented threshold
+  verification: Simulate healthy, degraded, and failed sync conditions in a test build and confirm the
+    indicator transitions through the three levels at the documented thresholds.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - ux
+  - sync-status
+  - indicator
+  failed-conditions:
+  - The status bar does not expose a sync-state indicator with three distinct levels matching the silent
+    / informative / persistent-banner pattern
+  - Indicator escalation is not driven by observable sync-health signals, not arbitrary timers
+  - 'Fails to satisfy: The persistent-banner level appears only when sync degradation crosses a documented
+    threshold'
+  - 'Verification check does not pass: Simulate healthy, degraded, and failed sync conditions in a test
+    build and confirm the indicator transitions through the...'
+- id: LENS-LF-12
+  name: Default-deny telemetry with named privacy model
+  source: ch09 §"Implementation Drift Risk"
+  source-paper: v13 §13
+  definition: Product analytics in a local-first architecture must be specified before the first analytics
+    request arrives — opt-in telemetry disabled by default, aggregate-through-relay privacy-preserving
+    statistics as the only permitted centralized collection — and the chosen model is documented in an
+    ADR mapped to GDPR Article 25 privacy-by-design so the line stays durable under future product pressure.
+  must-implement:
+  - Telemetry is opt-in and disabled by default at first install
+  - Centralized analytics collection is restricted to aggregate-through-relay privacy-preserving statistics
+    or none at all
+  - An ADR documents the chosen telemetry model with explicit mapping to GDPR Article 25 privacy-by-design
+  verification: Confirm a fresh install reports no telemetry; confirm an ADR exists naming the telemetry
+    model with the GDPR Article 25 mapping; confirm centralized collection paths in the codebase emit
+    only aggregate metadata.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - telemetry
+  - privacy
+  - gdpr
+  - adr
+  - drift-prevention
+  failed-conditions:
+  - Telemetry is not opt-in and disabled by default at first install
+  - Centralized analytics collection is not restricted to aggregate-through-relay privacy-preserving statistics
+    or none at all
+  - 'Fails to satisfy: An ADR documents the chosen telemetry model with explicit mapping to GDPR Article
+    25 privacy-by-design'
+  - 'Verification check does not pass: Confirm a fresh install reports no telemetry; confirm an ADR exists
+    naming the telemetry model with the GDPR Article 25 ...'
+- id: LENS-LF-13
+  name: Implementation drift prohibition on server-side feature gating
+  source: ch09 §"Implementation Drift Risk"
+  source-paper: v13 §13
+  definition: A local-first architecture explicitly prohibits server-side feature flag checks, server-side
+    A/B tests, and server-coordinated business logic that would re-introduce the network as a runtime
+    dependency, naming this as the primary drift path that erodes local-first commitments one reasonable-sounding
+    decision at a time.
+  must-implement:
+  - Feature flag evaluation runs entirely against the local node with no network call as a precondition
+    for feature visibility
+  - A/B assignment is computed locally from a deterministic seed, not retrieved from a server-side experiment
+    service
+  - Business logic gating is rejected at code review when it requires a server round-trip
+  verification: Disconnect the network, launch the application, and confirm all features behave identically
+    to a connected launch; code review checklist includes a server-side-feature-gate prohibition.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - drift-prevention
+  - feature-flags
+  - governance
+  failed-conditions:
+  - 'Fails to satisfy: Feature flag evaluation runs entirely against the local node with no network call
+    as a precondition for feature visibility'
+  - A/B assignment is not computed locally from a deterministic seed, not retrieved from a server-side
+    experiment service
+  - Business logic gating is not rejected at code review when it requires a server round-trip
+  - 'Verification check does not pass: Disconnect the network, launch the application, and confirm all
+    features behave identically to a connected launch; code ...'
+- id: LENS-LF-14
+  name: Intermittent connectivity as architectural baseline
+  source: ch09 §"Global Deployment Context — Ferreira's Empirical Note"
+  source-paper: v13 §13
+  definition: The architecture treats intermittent connectivity as the operational baseline for hundreds
+    of millions of enterprise workers across Sub-Saharan Africa, South and Southeast Asia, and rural Latin
+    America — not as a carrier-grade NAT edge case — so all sync, conflict, and recovery flows are designed
+    for sessions that span many disconnected intervals.
+  must-implement:
+  - Sync daemon is designed for long-running sessions across repeated disconnections without manual reconnect
+    actions
+  - Subscription scoping at the sync daemon limits per-reconnect catch-up cost to role-relevant data
+  - Conflict surfaces remain usable after multi-day partitions, not just brief outages
+  verification: Run a multi-day partition simulation across the test fleet; confirm reconnect catch-up
+    completes without manual intervention and the conflict inbox remains within the documented usability
+    envelope.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P7
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - global-deployment
+  - intermittent-connectivity
+  - baseline
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Sync daemon is not designed for long-running sessions across repeated disconnections without manual
+    reconnect actions
+  - 'Fails to satisfy: Subscription scoping at the sync daemon limits per-reconnect catch-up cost to role-relevant
+    data'
+  - Conflict does not surface remain usable after multi-day partitions, not just brief outages
+  - 'Verification check does not pass: Run a multi-day partition simulation across the test fleet; confirm
+    reconnect catch-up completes without manual interven...'
+- id: LENS-LF-15
+  name: Sanctions-grade availability as design anchor
+  source: ch09 §"Global Deployment Context — Ferreira's Empirical Note"
+  source-paper: v13 §13
+  definition: The architecture is anchored against the empirical case of the 2022 sanctions-driven SaaS
+    suspensions across Russia and CIS markets — hundreds of thousands of organizations losing vendor access
+    on days of notice — establishing that surviving vendor suspension is not a theoretical improvement
+    but a property the architecture has already had to provide.
+  must-implement:
+  - Core read and write paths function with all vendor-controlled endpoints unreachable
+  - Self-hosted relay deployment is documented and supported as a first-class option
+  - License terms permit continued use under vendor-jurisdiction sanctions enforcement
+  verification: Block all vendor-controlled domains at the network layer and confirm the application performs
+    all core operations identically; confirm a self-hosted relay deployment guide exists in the public
+    documentation.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - sanctions
+  - availability
+  - geopolitical
+  - anchor
+  failed-conditions:
+  - 'Fails to satisfy: Core read and write paths function with all vendor-controlled endpoints unreachable'
+  - Self-hosted relay deployment is not documented and supported as a first-class option
+  - 'Fails to satisfy: License terms permit continued use under vendor-jurisdiction sanctions enforcement'
+  - 'Verification check does not pass: Block all vendor-controlled domains at the network layer and confirm
+    the application performs all core operations identi...'
+- id: LENS-LF-16
+  name: Shared-device role-scoped recovery
+  source: ch09 §"Global Deployment Context — Ferreira's Empirical Note"
+  source-paper: v13 §13
+  definition: Recovery must support shared-device deployments — a single tablet rotated across a team
+    of field workers — by targeting the role and the workspace rather than the device and its sole user,
+    with BYOC backup configured against role-scoped workspace targets so any team member can restore from
+    any device.
+  must-implement:
+  - BYOC backup targets are scoped to workspace and role, not bound to a specific device serial
+  - Recovery flow accepts a role credential plus workspace identifier as sufficient inputs to restore
+    role-relevant data
+  - Multiple users may rotate through the same physical device without each restore wiping the prior user's
+    role state from backup
+  verification: Provision a workspace with three role-scoped users, restore each onto a single shared
+    device in succession, and confirm each user reaches role-relevant data without loss to the others'
+    backup state.
+  kleppmann-properties:
+  - P2
+  - P4
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  tags:
+  - global-deployment
+  - shared-device
+  - recovery
+  - field-operations
+  failed-conditions:
+  - BYOC backup targets are not scoped to workspace and role, not bound to a specific device serial
+  - Recovery flow does not accept a role credential plus workspace identifier as sufficient inputs to
+    restore role-relevant data
+  - 'Fails to satisfy: Multiple users may rotate through the same physical device without each restore
+    wiping the prior user''s role state from backup'
+  - 'Verification check does not pass: Provision a workspace with three role-scoped users, restore each
+    onto a single shared device in succession, and confirm ...'

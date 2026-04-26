@@ -1,35 +1,41 @@
-# Appendix E — Citation Style
-#
-# NOTE: This is a citation-style appendix for the book itself (IEEE numeric
-# format, reference list formats, in-text bracket rules). It is not
-# architectural. Almost nothing in it constrains a reference implementation.
-#
-# One concept is borderline-architectural and is captured below: the
-# documentation contract that compliance/regulatory claims must cite verified
-# primary sources. This is relevant to the book's compliance argument
-# (Appendix F, Ch15, Ch19) and so flows into a reference implementation's
-# documentation requirements. Everything else in the appendix (in-text bracket
-# placement, BibTeX-style entry templates, journal-name capitalization) is
-# editorial and not extracted.
 chapter: appendix-e-citation-style
 chapter-title: Citation Style
 source-paper-refs: []
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: DOC-01
-    name: Compliance citations verified against primary sources
-    source: appendix-e §"Assembly Guidance"
-    source-paper: null
-    definition: Every legal decision, statute, and regulation cited in support of a compliance claim must be checked against the primary source (case docket, official journal, enacting body) before publication.
-    must-implement:
-      - Reference implementation documentation cites compliance claims with verifiable primary-source references (case number, regulation number with publication date, statute act number)
-      - Each cited legal/regulatory source resolves to an authoritative URL or print citation, not a secondary summary
-      - A citation-audit step in the documentation build verifies every legal/regulatory reference resolves before release
-    verification: Documentation build includes a citation-audit step that checks every legal-decision, statute, and regulation reference resolves to a primary source; build fails on broken or secondary-only references.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [documentation, compliance, citation, build]
-    notes: Architectural relevance is indirect — supports the credibility of compliance claims that the reference implementation must back up (see Appendix F and Ch15/Ch19). All other appendix content (in-text bracket format, reference-list templates) is editorial and not extracted.
+- id: DOC-01
+  name: Compliance citations verified against primary sources
+  source: appendix-e §"Assembly Guidance"
+  source-paper: null
+  definition: Every legal decision, statute, and regulation cited in support of a compliance claim must
+    be checked against the primary source (case docket, official journal, enacting body) before publication.
+  must-implement:
+  - Reference implementation documentation cites compliance claims with verifiable primary-source references
+    (case number, regulation number with publication date, statute act number)
+  - Each cited legal/regulatory source resolves to an authoritative URL or print citation, not a secondary
+    summary
+  - A citation-audit step in the documentation build verifies every legal/regulatory reference resolves
+    before release
+  verification: Documentation build includes a citation-audit step that checks every legal-decision, statute,
+    and regulation reference resolves to a primary source; build fails on broken or secondary-only references.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - documentation
+  - compliance
+  - citation
+  - build
+  notes: Architectural relevance is indirect — supports the credibility of compliance claims that the
+    reference implementation must back up (see Appendix F and Ch15/Ch19). All other appendix content (in-text
+    bracket format, reference-list templates) is editorial and not extracted.
+  failed-conditions:
+  - 'Fails to satisfy: Reference implementation documentation cites compliance claims with verifiable
+    primary-source references (case number, regulation number with publication date, statute act number)'
+  - 'Fails to satisfy: Each cited legal/regulatory source resolves to an authoritative URL or print citation,
+    not a secondary summary'
+  - A citation-audit step in the documentation build does not verifie every legal/regulatory reference
+    resolves before release
+  - 'Verification check does not pass: Documentation build includes a citation-audit step that checks
+    every legal-decision, statute, and regulation reference r...'

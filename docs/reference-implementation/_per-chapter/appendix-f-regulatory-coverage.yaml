@@ -3,227 +3,521 @@ chapter-title: Regulatory Coverage Map
 source-paper-refs: []
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: COMP-01
-    name: GDPR Article 17 right-to-erasure via crypto-shredding
-    source: appendix-f §"GDPR (Regulation (EU) 2016/679)"
-    source-paper: null
-    definition: An EU-mandated individual right to erasure that local-first architectures answer by destroying the per-record DEK so encrypted CRDT history becomes unrecoverable, with the lawfulness of crypto-shred-as-erasure remaining unsettled across CNIL and German DPAs.
-    must-implement:
-      - Per-record or per-tenant DEKs are independently destroyable
-      - Operator documentation describes the crypto-shred procedure as the Article 17 mechanism
-      - Residual CRDT metadata (operation IDs, timestamps, DAG position) is enumerated for jurisdictional review
-      - Legal review precedes any production reliance on crypto-shred for Article 17 responses
-    verification: After erasure, the targeted record's ciphertext remains but no DEK path exists to decrypt it; an ADR documents the chosen erasure mechanism and its jurisdictional caveats
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-loss]
-    tags: [gdpr, erasure, crypto-shredding, compliance, eu]
-
-  - id: COMP-02
-    name: GDPR Article 30 records-of-processing at the node level
-    source: appendix-f §"GDPR (Regulation (EU) 2016/679)"
-    source-paper: null
-    definition: A GDPR requirement that processing activities be logged in a controller-accessible record, satisfied in local-first architectures by per-node processing logs rather than centralized SaaS audit trails.
-    must-implement:
-      - Each node maintains a processing record covering purpose, categories of data, and retention
-      - Records are exportable for controller and DPA inspection
-      - The 72-hour Article 33 breach-notification window is the shortest assumed deadline absent stricter local rules
-    verification: A node export produces an Article-30-compliant processing record without requiring vendor cooperation
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [gdpr, audit, records, compliance, eu]
-
-  - id: COMP-03
-    name: Schrems II structural answer via no cross-border transfer
-    source: appendix-f §"Schrems II"
-    source-paper: null
-    definition: The CJEU C-311/18 ruling invalidating Privacy Shield and constraining SCCs is bypassed structurally when a local-first node never exports personal data to a foreign cloud, removing the transfer mechanism the ruling evaluates.
-    must-implement:
-      - Personal data of EEA subjects never leaves EEA-resident nodes during normal operation
-      - Sync relays for EEA tenants terminate within EEA jurisdiction
-      - The deployment topology is documented sufficient to assert no cross-border transfer occurs
-    verification: A traffic-flow diagram and a deployment audit show no PII egress from EEA-resident nodes to non-adequate jurisdictions
-    kleppmann-properties: [P3, P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [schrems-ii, transfer, eu, residency, compliance]
-
-  - id: COMP-04
-    name: DIFC DPL 2020 categorical foreign-cloud prohibition
-    source: appendix-f §"DIFC Data Protection Law 2020"
-    source-paper: null
-    definition: A DIFC-jurisdiction rule prohibiting DIFC-licensed financial entities from routing personal data through offshore cloud infrastructure, satisfied at the architectural level by a local-first node that never traverses an offshore cloud.
-    must-implement:
-      - DIFC-tenant nodes route personal data only through infrastructure inside the permitted jurisdiction
-      - Sync paths and relay endpoints for DIFC tenants are independently auditable
-      - The deployment topology documents which components are inside DIFC and which are not
-    verification: A network-egress test for a DIFC tenant shows no personal data leaving permitted infrastructure under any operational condition including degraded sync
-    kleppmann-properties: [P3, P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [difc, gcc, residency, compliance, prohibition]
-
-  - id: COMP-05
-    name: UAE Federal DPL 2022 Article 16 erasure right
-    source: appendix-f §"UAE Federal Data Protection Law 2022"
-    source-paper: null
-    definition: A UAE federal data protection rule establishing an Article 16 erasure right for processing outside DIFC and ADGM, carrying the same crypto-shredding sufficiency tension as GDPR Article 17.
-    must-implement:
-      - Erasure mechanism for UAE federal-jurisdiction tenants is the same crypto-shred path as GDPR Article 17
-      - Documentation distinguishes UAE federal tenancy from DIFC-licensed tenancy
-    verification: A UAE federal tenant erasure request produces the same crypto-shred audit artifacts as a GDPR Article 17 request
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-loss]
-    tags: [uae, erasure, crypto-shredding, compliance, gcc]
-
-  - id: COMP-06
-    name: India DPDP Act 2023 Section 12 erasure rights
-    source: appendix-f §"India DPDP Act 2023"
-    source-paper: null
-    definition: India's omnibus data protection statute establishes a Section 12 erasure right parallel to GDPR Article 17, with implementing rules pending and BFSI deployments layered with the RBI localization circular.
-    must-implement:
-      - DPDP-jurisdiction tenants receive the same crypto-shred erasure path as GDPR Article 17
-      - BFSI tenancy is segregated from non-BFSI to allow stricter residency enforcement
-    verification: A DPDP Section 12 erasure request produces a documented crypto-shred audit trail for the targeted record
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-loss]
-    tags: [dpdp, india, erasure, compliance]
-
-  - id: COMP-07
-    name: RBI 2018 hard payment-data localization
-    source: appendix-f §"RBI Data Localization Circular"
-    source-paper: null
-    definition: A Reserve Bank of India circular requiring all payment-related data of Indian payment-system operators to be stored exclusively within India, treated as a Tier 3 architectural driver rather than a design preference.
-    must-implement:
-      - Payment-related personal data for RBI-scoped tenants is stored only on India-resident nodes
-      - Sync relays carrying RBI-scoped data terminate within India
-      - The deployment topology distinguishes payment data from non-payment data scope
-    verification: An infrastructure inventory shows every node and relay handling RBI-scoped data resides within India
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [rbi, india, residency, bfsi, compliance, hard-mandate]
-
-  - id: COMP-08
-    name: Russia Federal Law 242-FZ initial-collection localization
-    source: appendix-f §"Russia Federal Law 242-FZ"
-    source-paper: null
-    definition: The 2015 amendment to Federal Law 152-FZ requiring personal data of Russian citizens to be initially collected and stored on servers physically located in Russia, predating GDPR and establishing the doctrinal pattern of hard territorial mandates that local-first satisfies architecturally.
-    must-implement:
-      - Initial collection of Russian-citizen personal data targets Russia-resident nodes
-      - Subsequent processing nodes outside Russia receive only data already domiciled inside Russia
-      - The deployment topology identifies which nodes are inside the Russian Federation
-    verification: A data-flow trace for a Russian-citizen record shows initial write to a Russia-resident node before any cross-border replication
-    kleppmann-properties: [P3, P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [russia, 242-fz, residency, compliance, hard-mandate, cis]
-
-  - id: COMP-09
-    name: China PIPL plus MLPS 2.0 strict cross-border restriction
-    source: appendix-f §"China PIPL"
-    source-paper: null
-    definition: PIPL Article 47 erasure rights combined with MLPS 2.0 security classification create one of the strictest cross-border transfer regimes globally, generally requiring personal data of Chinese residents to remain inside China.
-    must-implement:
-      - Chinese-resident-tenant nodes are domiciled within mainland China
-      - Cross-border egress of PIPL-scoped personal data is gated by documented legal basis
-      - Erasure mechanism for PIPL-scoped tenants is the same crypto-shred path as GDPR Article 17
-      - MLPS 2.0 classification level is recorded for each China-resident deployment
-    verification: A China-tenant deployment audit confirms node residency, MLPS classification, and absence of unauthorized cross-border egress
-    kleppmann-properties: [P3, P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-loss]
-    tags: [pipl, china, mlps, residency, erasure, compliance]
-
-  - id: COMP-10
-    name: Japan APPI Article 36 cross-border consent and erasure
-    source: appendix-f §"Japan APPI / PIPA"
-    source-paper: null
-    definition: The 2022-revised Japanese APPI introduces Article 36 cross-border transfer consent and an erasure-equivalent right that inherits the same CRDT-history-versus-DEK-destruction tension as GDPR Article 17.
-    must-implement:
-      - Cross-border transfer of APPI-scoped data records consent provenance per data subject
-      - Erasure mechanism for APPI-scoped tenants is the same crypto-shred path as GDPR Article 17
-    verification: A Japan-tenant erasure request produces a crypto-shred audit trail and any cross-border transfer carries an attached consent record
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-loss]
-    tags: [appi, japan, erasure, consent, compliance, apac]
-
-  - id: COMP-11
-    name: South Korea PIPA plus ISMS-P procurement certification
-    source: appendix-f §"South Korea PIPA + ISMS-P"
-    source-paper: null
-    definition: South Korea's PIPA establishes erasure rights and ISMS-P functions as a procurement-required certification that the local-first vendor must produce alongside SOC 2 and ISO 27001 documentation.
-    must-implement:
-      - Korean-tenant erasure path matches the GDPR Article 17 crypto-shred mechanism
-      - ISMS-P artifacts are produced as part of the compliance-packaging deliverable for Korean enterprise procurement
-    verification: An ISMS-P artifact exists in the procurement-evidence bundle and an erasure dry-run produces a PIPA-suitable audit trail
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [pipa, korea, isms-p, procurement, certification, compliance, apac]
-
-  - id: COMP-12
-    name: Africa parallel mandates (NDPA, POPIA, Kenya DPA)
-    source: appendix-f §"Africa"
-    source-paper: null
-    definition: A coherent set of African data-protection statutes (Nigeria NDPA 2023, South Africa POPIA Sections 24 and 72, Kenya DPA 2019 Section 40) establishing erasure rights and cross-border transfer prohibitions to non-adequate countries that mirror the GDPR structural argument for on-device residency.
-    must-implement:
-      - Erasure path for African-jurisdiction tenants matches the GDPR Article 17 crypto-shred mechanism
-      - Cross-border transfers from POPIA-scoped tenants verify destination adequacy under Section 72
-      - Sectoral BFSI and telecom localization obligations are identified per tenant
-    verification: A POPIA Section 72 transfer review and a per-tenant sectoral-obligation register exist and are kept current
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [africa, ndpa, popia, kenya, erasure, residency, compliance]
-
-  - id: COMP-13
-    name: LATAM erasure-rights cluster (LGPD, LFPDPPP ARCO)
-    source: appendix-f §"Americas"
-    source-paper: null
-    definition: A Latin American cluster of statutes (Brazil LGPD Article 18, Mexico LFPDPPP ARCO cancellation right, Colombia Ley 1581, Argentina Ley 25.326) establishing erasure rights parallel to GDPR Article 17 with the ANPD's stance on crypto-shredding still unsettled.
-    must-implement:
-      - Erasure path for LATAM-jurisdiction tenants matches the GDPR Article 17 crypto-shred mechanism
-      - LGPD-tenant documentation flags ANPD's open position on crypto-shred sufficiency
-    verification: An LGPD Article 18 erasure dry-run produces a crypto-shred audit trail and an open-question note for ANPD review
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-loss]
-    tags: [latam, lgpd, lfpdppp, arco, erasure, compliance]
-
-  - id: COMP-14
-    name: US sector-specific frameworks (HIPAA, FedRAMP, ITAR)
-    source: appendix-f §"United States — Sector-Specific Frameworks"
-    source-paper: null
-    definition: The absence of a US omnibus privacy law leaves sector-specific regimes — HIPAA for PHI, FedRAMP for federal cloud authorization, ITAR/EAR for export-controlled technology, CCPA/CPRA for California consumer rights — each addressed by on-device encryption and sovereign deployment patterns.
-    must-implement:
-      - HIPAA-scoped PHI is encrypted at rest using the same per-record DEK pattern as GDPR-scoped data
-      - ITAR-scoped or EAR-scoped deployments restrict node residency to authorized jurisdictions and personnel
-      - FedRAMP-relevant deployments produce the procurement-evidence bundle required for federal authorization
-      - California-resident-tenant nodes honor CCPA and CPRA consumer-rights requests through the same erasure path
-    verification: A US-tenant deployment registers each applicable sectoral framework and produces the corresponding evidence artifacts on demand
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-compromise]
-    tags: [us, hipaa, fedramp, itar, ccpa, sectoral, compliance, americas]
-
-  - id: COMP-15
-    name: Russian import-substitution market-access requirement
-    source: appendix-f §"Импортозамещение (Import Substitution Policy)"
-    source-paper: null
-    definition: A Russian state procurement policy mandating preference for domestically-produced software, treated not as a data protection law but as a market-access requirement that a locally-deployed on-device build on domestically-licensed components can satisfy where cloud-resident SaaS cannot.
-    must-implement:
-      - State-sector Russian deployments use components on the domestic licensing register
-      - Build provenance for state-sector deployments is documented to support procurement audits
-      - The deployment topology distinguishes state-sector tenants from commercial tenants
-    verification: A state-sector procurement audit confirms domestic component licensing and locally-deployed build provenance for the tenant's nodes
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition, data-residency-objection]
-    tags: [russia, import-substitution, procurement, market-access, sovereignty, cis]
+- id: COMP-01
+  name: GDPR Article 17 right-to-erasure via crypto-shredding
+  source: appendix-f §"GDPR (Regulation (EU) 2016/679)"
+  source-paper: null
+  definition: An EU-mandated individual right to erasure that local-first architectures answer by destroying
+    the per-record DEK so encrypted CRDT history becomes unrecoverable, with the lawfulness of crypto-shred-as-erasure
+    remaining unsettled across CNIL and German DPAs.
+  must-implement:
+  - Per-record or per-tenant DEKs are independently destroyable
+  - Operator documentation describes the crypto-shred procedure as the Article 17 mechanism
+  - Residual CRDT metadata (operation IDs, timestamps, DAG position) is enumerated for jurisdictional
+    review
+  - Legal review precedes any production reliance on crypto-shred for Article 17 responses
+  verification: After erasure, the targeted record's ciphertext remains but no DEK path exists to decrypt
+    it; an ADR documents the chosen erasure mechanism and its jurisdictional caveats
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-loss
+  tags:
+  - gdpr
+  - erasure
+  - crypto-shredding
+  - compliance
+  - eu
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Per-record or per-tenant DEKs are not independently destroyable
+  - 'Fails to satisfy: Operator documentation describes the crypto-shred procedure as the Article 17 mechanism'
+  - Residual CRDT metadata (operation IDs, timestamps, DAG position) is not enumerated for jurisdictional
+    review
+  - 'Fails to satisfy: Legal review precedes any production reliance on crypto-shred for Article 17 responses'
+  - 'Verification check does not pass: After erasure, the targeted record''s ciphertext remains but no
+    DEK path exists to decrypt it; an ADR documents the chose...'
+- id: COMP-02
+  name: GDPR Article 30 records-of-processing at the node level
+  source: appendix-f §"GDPR (Regulation (EU) 2016/679)"
+  source-paper: null
+  definition: A GDPR requirement that processing activities be logged in a controller-accessible record,
+    satisfied in local-first architectures by per-node processing logs rather than centralized SaaS audit
+    trails.
+  must-implement:
+  - Each node maintains a processing record covering purpose, categories of data, and retention
+  - Records are exportable for controller and DPA inspection
+  - The 72-hour Article 33 breach-notification window is the shortest assumed deadline absent stricter
+    local rules
+  verification: A node export produces an Article-30-compliant processing record without requiring vendor
+    cooperation
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - gdpr
+  - audit
+  - records
+  - compliance
+  - eu
+  failed-conditions:
+  - Each node does not maintain a processing record covering purpose, categories of data, and retention
+  - Records are not exportable for controller and DPA inspection
+  - The 72-hour Article 33 breach-notification window is not the shortest assumed deadline absent stricter
+    local rules
+  - 'Verification check does not pass: A node export produces an Article-30-compliant processing record
+    without requiring vendor cooperation'
+- id: COMP-03
+  name: Schrems II structural answer via no cross-border transfer
+  source: appendix-f §"Schrems II"
+  source-paper: null
+  definition: The CJEU C-311/18 ruling invalidating Privacy Shield and constraining SCCs is bypassed structurally
+    when a local-first node never exports personal data to a foreign cloud, removing the transfer mechanism
+    the ruling evaluates.
+  must-implement:
+  - Personal data of EEA subjects never leaves EEA-resident nodes during normal operation
+  - Sync relays for EEA tenants terminate within EEA jurisdiction
+  - The deployment topology is documented sufficient to assert no cross-border transfer occurs
+  verification: A traffic-flow diagram and a deployment audit show no PII egress from EEA-resident nodes
+    to non-adequate jurisdictions
+  kleppmann-properties:
+  - P3
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - schrems-ii
+  - transfer
+  - eu
+  - residency
+  - compliance
+  failed-conditions:
+  - 'Fails to satisfy: Personal data of EEA subjects never leaves EEA-resident nodes during normal operation'
+  - 'Fails to satisfy: Sync relays for EEA tenants terminate within EEA jurisdiction'
+  - The deployment topology is not documented sufficient to assert no cross-border transfer occurs
+  - 'Verification check does not pass: A traffic-flow diagram and a deployment audit show no PII egress
+    from EEA-resident nodes to non-adequate jurisdictions'
+- id: COMP-04
+  name: DIFC DPL 2020 categorical foreign-cloud prohibition
+  source: appendix-f §"DIFC Data Protection Law 2020"
+  source-paper: null
+  definition: A DIFC-jurisdiction rule prohibiting DIFC-licensed financial entities from routing personal
+    data through offshore cloud infrastructure, satisfied at the architectural level by a local-first
+    node that never traverses an offshore cloud.
+  must-implement:
+  - DIFC-tenant nodes route personal data only through infrastructure inside the permitted jurisdiction
+  - Sync paths and relay endpoints for DIFC tenants are independently auditable
+  - The deployment topology documents which components are inside DIFC and which are not
+  verification: A network-egress test for a DIFC tenant shows no personal data leaving permitted infrastructure
+    under any operational condition including degraded sync
+  kleppmann-properties:
+  - P3
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - difc
+  - gcc
+  - residency
+  - compliance
+  - prohibition
+  failed-conditions:
+  - 'Fails to satisfy: DIFC-tenant nodes route personal data only through infrastructure inside the permitted
+    jurisdiction'
+  - Sync paths and relay endpoints for DIFC tenants are not independently auditable
+  - The deployment topology documents which components are not inside DIFC and which are not
+  - 'Verification check does not pass: A network-egress test for a DIFC tenant shows no personal data
+    leaving permitted infrastructure under any operational co...'
+- id: COMP-05
+  name: UAE Federal DPL 2022 Article 16 erasure right
+  source: appendix-f §"UAE Federal Data Protection Law 2022"
+  source-paper: null
+  definition: A UAE federal data protection rule establishing an Article 16 erasure right for processing
+    outside DIFC and ADGM, carrying the same crypto-shredding sufficiency tension as GDPR Article 17.
+  must-implement:
+  - Erasure mechanism for UAE federal-jurisdiction tenants is the same crypto-shred path as GDPR Article
+    17
+  - Documentation distinguishes UAE federal tenancy from DIFC-licensed tenancy
+  verification: A UAE federal tenant erasure request produces the same crypto-shred audit artifacts as
+    a GDPR Article 17 request
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-loss
+  tags:
+  - uae
+  - erasure
+  - crypto-shredding
+  - compliance
+  - gcc
+  failed-conditions:
+  - Erasure mechanism for UAE federal-jurisdiction tenants is not the same crypto-shred path as GDPR Article
+    17
+  - 'Fails to satisfy: Documentation distinguishes UAE federal tenancy from DIFC-licensed tenancy'
+  - 'Verification check does not pass: A UAE federal tenant erasure request produces the same crypto-shred
+    audit artifacts as a GDPR Article 17 request'
+- id: COMP-06
+  name: India DPDP Act 2023 Section 12 erasure rights
+  source: appendix-f §"India DPDP Act 2023"
+  source-paper: null
+  definition: India's omnibus data protection statute establishes a Section 12 erasure right parallel
+    to GDPR Article 17, with implementing rules pending and BFSI deployments layered with the RBI localization
+    circular.
+  must-implement:
+  - DPDP-jurisdiction tenants receive the same crypto-shred erasure path as GDPR Article 17
+  - BFSI tenancy is segregated from non-BFSI to allow stricter residency enforcement
+  verification: A DPDP Section 12 erasure request produces a documented crypto-shred audit trail for the
+    targeted record
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-loss
+  tags:
+  - dpdp
+  - india
+  - erasure
+  - compliance
+  failed-conditions:
+  - 'Fails to satisfy: DPDP-jurisdiction tenants receive the same crypto-shred erasure path as GDPR Article
+    17'
+  - BFSI tenancy is not segregated from non-BFSI to allow stricter residency enforcement
+  - 'Verification check does not pass: A DPDP Section 12 erasure request produces a documented crypto-shred
+    audit trail for the targeted record'
+- id: COMP-07
+  name: RBI 2018 hard payment-data localization
+  source: appendix-f §"RBI Data Localization Circular"
+  source-paper: null
+  definition: A Reserve Bank of India circular requiring all payment-related data of Indian payment-system
+    operators to be stored exclusively within India, treated as a Tier 3 architectural driver rather than
+    a design preference.
+  must-implement:
+  - Payment-related personal data for RBI-scoped tenants is stored only on India-resident nodes
+  - Sync relays carrying RBI-scoped data terminate within India
+  - The deployment topology distinguishes payment data from non-payment data scope
+  verification: An infrastructure inventory shows every node and relay handling RBI-scoped data resides
+    within India
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - rbi
+  - india
+  - residency
+  - bfsi
+  - compliance
+  - hard-mandate
+  failed-conditions:
+  - Payment-related personal data for RBI-scoped tenants is not stored only on India-resident nodes
+  - 'Fails to satisfy: Sync relays carrying RBI-scoped data terminate within India'
+  - 'Fails to satisfy: The deployment topology distinguishes payment data from non-payment data scope'
+  - 'Verification check does not pass: An infrastructure inventory shows every node and relay handling
+    RBI-scoped data resides within India'
+- id: COMP-08
+  name: Russia Federal Law 242-FZ initial-collection localization
+  source: appendix-f §"Russia Federal Law 242-FZ"
+  source-paper: null
+  definition: The 2015 amendment to Federal Law 152-FZ requiring personal data of Russian citizens to
+    be initially collected and stored on servers physically located in Russia, predating GDPR and establishing
+    the doctrinal pattern of hard territorial mandates that local-first satisfies architecturally.
+  must-implement:
+  - Initial collection of Russian-citizen personal data targets Russia-resident nodes
+  - Subsequent processing nodes outside Russia receive only data already domiciled inside Russia
+  - The deployment topology identifies which nodes are inside the Russian Federation
+  verification: A data-flow trace for a Russian-citizen record shows initial write to a Russia-resident
+    node before any cross-border replication
+  kleppmann-properties:
+  - P3
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - russia
+  - 242-fz
+  - residency
+  - compliance
+  - hard-mandate
+  - cis
+  failed-conditions:
+  - 'Fails to satisfy: Initial collection of Russian-citizen personal data targets Russia-resident nodes'
+  - 'Fails to satisfy: Subsequent processing nodes outside Russia receive only data already domiciled
+    inside Russia'
+  - The deployment topology identifies which nodes are not inside the Russian Federation
+  - 'Verification check does not pass: A data-flow trace for a Russian-citizen record shows initial write
+    to a Russia-resident node before any cross-border rep...'
+- id: COMP-09
+  name: China PIPL plus MLPS 2.0 strict cross-border restriction
+  source: appendix-f §"China PIPL"
+  source-paper: null
+  definition: PIPL Article 47 erasure rights combined with MLPS 2.0 security classification create one
+    of the strictest cross-border transfer regimes globally, generally requiring personal data of Chinese
+    residents to remain inside China.
+  must-implement:
+  - Chinese-resident-tenant nodes are domiciled within mainland China
+  - Cross-border egress of PIPL-scoped personal data is gated by documented legal basis
+  - Erasure mechanism for PIPL-scoped tenants is the same crypto-shred path as GDPR Article 17
+  - MLPS 2.0 classification level is recorded for each China-resident deployment
+  verification: A China-tenant deployment audit confirms node residency, MLPS classification, and absence
+    of unauthorized cross-border egress
+  kleppmann-properties:
+  - P3
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-loss
+  tags:
+  - pipl
+  - china
+  - mlps
+  - residency
+  - erasure
+  - compliance
+  failed-conditions:
+  - Chinese-resident-tenant nodes are not domiciled within mainland China
+  - Cross-border egress of PIPL-scoped personal data is not gated by documented legal basis
+  - Erasure mechanism for PIPL-scoped tenants is not the same crypto-shred path as GDPR Article 17
+  - MLPS 2.0 classification level is not recorded for each China-resident deployment
+  - 'Verification check does not pass: A China-tenant deployment audit confirms node residency, MLPS classification,
+    and absence of unauthorized cross-border e...'
+- id: COMP-10
+  name: Japan APPI Article 36 cross-border consent and erasure
+  source: appendix-f §"Japan APPI / PIPA"
+  source-paper: null
+  definition: The 2022-revised Japanese APPI introduces Article 36 cross-border transfer consent and an
+    erasure-equivalent right that inherits the same CRDT-history-versus-DEK-destruction tension as GDPR
+    Article 17.
+  must-implement:
+  - Cross-border transfer of APPI-scoped data records consent provenance per data subject
+  - Erasure mechanism for APPI-scoped tenants is the same crypto-shred path as GDPR Article 17
+  verification: A Japan-tenant erasure request produces a crypto-shred audit trail and any cross-border
+    transfer carries an attached consent record
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-loss
+  tags:
+  - appi
+  - japan
+  - erasure
+  - consent
+  - compliance
+  - apac
+  failed-conditions:
+  - Cross-border transfer of APPI-scoped data does not record consent provenance per data subject
+  - Erasure mechanism for APPI-scoped tenants is not the same crypto-shred path as GDPR Article 17
+  - 'Verification check does not pass: A Japan-tenant erasure request produces a crypto-shred audit trail
+    and any cross-border transfer carries an attached con...'
+- id: COMP-11
+  name: South Korea PIPA plus ISMS-P procurement certification
+  source: appendix-f §"South Korea PIPA + ISMS-P"
+  source-paper: null
+  definition: South Korea's PIPA establishes erasure rights and ISMS-P functions as a procurement-required
+    certification that the local-first vendor must produce alongside SOC 2 and ISO 27001 documentation.
+  must-implement:
+  - Korean-tenant erasure path matches the GDPR Article 17 crypto-shred mechanism
+  - ISMS-P artifacts are produced as part of the compliance-packaging deliverable for Korean enterprise
+    procurement
+  verification: An ISMS-P artifact exists in the procurement-evidence bundle and an erasure dry-run produces
+    a PIPA-suitable audit trail
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - pipa
+  - korea
+  - isms-p
+  - procurement
+  - certification
+  - compliance
+  - apac
+  failed-conditions:
+  - Korean-tenant erasure path does not matche the GDPR Article 17 crypto-shred mechanism
+  - ISMS-P artifacts are not produced as part of the compliance-packaging deliverable for Korean enterprise
+    procurement
+  - 'Verification check does not pass: An ISMS-P artifact exists in the procurement-evidence bundle and
+    an erasure dry-run produces a PIPA-suitable audit trail'
+- id: COMP-12
+  name: Africa parallel mandates (NDPA, POPIA, Kenya DPA)
+  source: appendix-f §"Africa"
+  source-paper: null
+  definition: A coherent set of African data-protection statutes (Nigeria NDPA 2023, South Africa POPIA
+    Sections 24 and 72, Kenya DPA 2019 Section 40) establishing erasure rights and cross-border transfer
+    prohibitions to non-adequate countries that mirror the GDPR structural argument for on-device residency.
+  must-implement:
+  - Erasure path for African-jurisdiction tenants matches the GDPR Article 17 crypto-shred mechanism
+  - Cross-border transfers from POPIA-scoped tenants verify destination adequacy under Section 72
+  - Sectoral BFSI and telecom localization obligations are identified per tenant
+  verification: A POPIA Section 72 transfer review and a per-tenant sectoral-obligation register exist
+    and are kept current
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - africa
+  - ndpa
+  - popia
+  - kenya
+  - erasure
+  - residency
+  - compliance
+  failed-conditions:
+  - Erasure path for African-jurisdiction tenants does not matche the GDPR Article 17 crypto-shred mechanism
+  - 'Fails to satisfy: Cross-border transfers from POPIA-scoped tenants verify destination adequacy under
+    Section 72'
+  - Sectoral BFSI and telecom localization obligations are not identified per tenant
+  - 'Verification check does not pass: A POPIA Section 72 transfer review and a per-tenant sectoral-obligation
+    register exist and are kept current'
+- id: COMP-13
+  name: LATAM erasure-rights cluster (LGPD, LFPDPPP ARCO)
+  source: appendix-f §"Americas"
+  source-paper: null
+  definition: A Latin American cluster of statutes (Brazil LGPD Article 18, Mexico LFPDPPP ARCO cancellation
+    right, Colombia Ley 1581, Argentina Ley 25.326) establishing erasure rights parallel to GDPR Article
+    17 with the ANPD's stance on crypto-shredding still unsettled.
+  must-implement:
+  - Erasure path for LATAM-jurisdiction tenants matches the GDPR Article 17 crypto-shred mechanism
+  - LGPD-tenant documentation flags ANPD's open position on crypto-shred sufficiency
+  verification: An LGPD Article 18 erasure dry-run produces a crypto-shred audit trail and an open-question
+    note for ANPD review
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-loss
+  tags:
+  - latam
+  - lgpd
+  - lfpdppp
+  - arco
+  - erasure
+  - compliance
+  failed-conditions:
+  - Erasure path for LATAM-jurisdiction tenants does not matche the GDPR Article 17 crypto-shred mechanism
+  - 'Fails to satisfy: LGPD-tenant documentation flags ANPD''s open position on crypto-shred sufficiency'
+  - 'Verification check does not pass: An LGPD Article 18 erasure dry-run produces a crypto-shred audit
+    trail and an open-question note for ANPD review'
+- id: COMP-14
+  name: US sector-specific frameworks (HIPAA, FedRAMP, ITAR)
+  source: appendix-f §"United States — Sector-Specific Frameworks"
+  source-paper: null
+  definition: The absence of a US omnibus privacy law leaves sector-specific regimes — HIPAA for PHI,
+    FedRAMP for federal cloud authorization, ITAR/EAR for export-controlled technology, CCPA/CPRA for
+    California consumer rights — each addressed by on-device encryption and sovereign deployment patterns.
+  must-implement:
+  - HIPAA-scoped PHI is encrypted at rest using the same per-record DEK pattern as GDPR-scoped data
+  - ITAR-scoped or EAR-scoped deployments restrict node residency to authorized jurisdictions and personnel
+  - FedRAMP-relevant deployments produce the procurement-evidence bundle required for federal authorization
+  - California-resident-tenant nodes honor CCPA and CPRA consumer-rights requests through the same erasure
+    path
+  verification: A US-tenant deployment registers each applicable sectoral framework and produces the corresponding
+    evidence artifacts on demand
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-compromise
+  tags:
+  - us
+  - hipaa
+  - fedramp
+  - itar
+  - ccpa
+  - sectoral
+  - compliance
+  - americas
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - HIPAA-scoped PHI is not encrypted at rest using the same per-record DEK pattern as GDPR-scoped data
+  - 'Fails to satisfy: ITAR-scoped or EAR-scoped deployments restrict node residency to authorized jurisdictions
+    and personnel'
+  - 'Fails to satisfy: FedRAMP-relevant deployments produce the procurement-evidence bundle required for
+    federal authorization'
+  - 'Fails to satisfy: California-resident-tenant nodes honor CCPA and CPRA consumer-rights requests through
+    the same erasure path'
+  - 'Verification check does not pass: A US-tenant deployment registers each applicable sectoral framework
+    and produces the corresponding evidence artifacts on...'
+- id: COMP-15
+  name: Russian import-substitution market-access requirement
+  source: appendix-f §"Импортозамещение (Import Substitution Policy)"
+  source-paper: null
+  definition: A Russian state procurement policy mandating preference for domestically-produced software,
+    treated not as a data protection law but as a market-access requirement that a locally-deployed on-device
+    build on domestically-licensed components can satisfy where cloud-resident SaaS cannot.
+  must-implement:
+  - State-sector Russian deployments use components on the domestic licensing register
+  - Build provenance for state-sector deployments is documented to support procurement audits
+  - The deployment topology distinguishes state-sector tenants from commercial tenants
+  verification: A state-sector procurement audit confirms domestic component licensing and locally-deployed
+    build provenance for the tenant's nodes
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - russia
+  - import-substitution
+  - procurement
+  - market-access
+  - sovereignty
+  - cis
+  failed-conditions:
+  - 'Fails to satisfy: State-sector Russian deployments use components on the domestic licensing register'
+  - Build provenance for state-sector deployments is not documented to support procurement audits
+  - 'Fails to satisfy: The deployment topology distinguishes state-sector tenants from commercial tenants'
+  - 'Verification check does not pass: A state-sector procurement audit confirms domestic component licensing
+    and locally-deployed build provenance for the ten...'

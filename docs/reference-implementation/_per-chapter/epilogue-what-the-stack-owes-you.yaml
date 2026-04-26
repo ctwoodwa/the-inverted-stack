@@ -1,233 +1,475 @@
 chapter: epilogue
 chapter-title: What the Stack Owes You
-source-paper-refs: [v13 §20, v5 §9, v5 §10]
+source-paper-refs:
+- v13 §20
+- v5 §9
+- v5 §10
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: EPI-01
-    name: Protocol-layer data minimization
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v13 §20
-    definition: Data minimization is a send-tier protocol enforcement that prevents bytes from leaving the originating node toward an unauthorized peer, not a UI filter or server-side policy applied after data arrives.
-    must-implement:
-      - Sync daemon evaluates authorization against peer attestations before serializing payload
-      - Unauthorized peers never receive document bytes on the wire
-      - No filter is applied only at receive time
-    verification: Wire capture from an unauthorized peer's perspective shows zero protected bytes after capability negotiation completes.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [obligation, minimization, sync, security]
-
-  - id: EPI-02
-    name: MDM attestation at capability negotiation
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v13 §20
-    definition: Mobile Device Management attestation is verified during capability negotiation before the sync stream opens, so that a non-compliant device is rejected at the perimeter rather than detected post-hoc in an audit log.
-    must-implement:
-      - Capability negotiation includes an MDM attestation challenge
-      - Handshake fails closed when attestation is missing or invalid
-      - No document operation is applied from a peer that has not satisfied attestation
-    verification: A peer presenting an invalid or absent MDM attestation cannot complete handshake; sync stream is never opened.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [obligation, attestation, mdm, security]
-
-  - id: EPI-03
-    name: Honest three-tier CRDT consistency
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v13 §20
-    definition: The architecture commits to a three-tier resolution model — AP for documents, CP under lease for coordination records, append-only for financial ledger — and names the consistency guarantee per data type rather than presenting a single uniform model.
-    must-implement:
-      - Each data type is assigned an explicit consistency tier
-      - Document store uses AP CRDT semantics
-      - Coordination records use CP semantics under a lease protocol
-      - Financial records use append-only ledger semantics
-    verification: Architecture document maps every persisted data type to one of the three tiers; the CRDT engine adapter for each tier matches the documented semantics.
-    kleppmann-properties: [P4, P5]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [obligation, crdt, consistency, semantic-layer]
-
-  - id: EPI-04
-    name: Cryptographic role revocation
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v13 §20
-    definition: Role revocation is implemented through DEK/KEK envelope encryption with key rotation proportional to document count, so that a revoked role cannot decrypt documents whose keys have been rotated.
-    must-implement:
-      - Each protected document is encrypted with a per-document DEK wrapped by a role KEK
-      - Role revocation triggers DEK rotation for documents the revoked role had access to
-      - The former role-holder's KEK cannot unwrap rotated DEKs
-    verification: Revocation procedure is executed, then the revoked principal's key material is presented against rotated documents and fails to decrypt.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [obligation, encryption, revocation, keys]
-
-  - id: EPI-05
-    name: Dual license and CLA before community formation
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v5 §10
-    definition: The dual license structure and Contributor License Agreement must exist before the first external pull request, so that governance terms cannot be retroactively changed against contributors who joined under different terms.
-    must-implement:
-      - Repository has a published dual license at first public commit
-      - CLA process is in place before merging external contributions
-      - License change requires contributor consent under documented governance
-    verification: Repository contains LICENSE, CLA, and governance documents whose commit dates precede the first external pull request merge.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition]
-    tags: [obligation, governance, licensing, community]
-
-  - id: EPI-06
-    name: Non-technical disaster recovery
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v13 §20
-    definition: A non-technical user must be able to restore complete data after a device failure without contacting support, using a backup, restore, and verification UX legible to someone who is not an engineer.
-    must-implement:
-      - Backup UX surfaces backup state and recency without technical vocabulary
-      - Restore UX guides recovery from a fresh device end-to-end
-      - Verification UX confirms restored data integrity to a non-technical user
-    verification: A non-technical tester completes device-loss recovery scenario without engineering assistance and confirms data integrity.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [key-loss]
-    tags: [obligation, ux, recovery, ownership]
-
-  - id: EPI-07
-    name: Plain-file export without vendor cooperation
-    source: epilogue §"What the Stack Owes You"
-    source-paper: v13 §20
-    definition: User data is available on local disk in a documented file format under user-controlled keys, allowing the user to leave the platform at any time without negotiating with the vendor or depending on its continued operation.
-    must-implement:
-      - Export format is publicly documented
-      - Export proceeds entirely from local disk and local key material
-      - No vendor service is required to produce or interpret an export
-    verification: Disconnect network and revoke vendor accounts; user produces a complete export and a third-party tool reads it using only the public format spec and the user's keys.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [obligation, export, ownership, portability]
-
-  - id: EPI-08
-    name: KEK-compromise incident response at scale
-    source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
-    source-paper: v13 §20
-    definition: The procedure for responding to compromise of a broadly-scoped Key Encryption Key across thousands of documents and hundreds of nodes is specified in principle but has not been validated under production load.
-    must-implement:
-      - Incident response runbook for KEK compromise exists
-      - Runbook covers fan-out re-keying across all affected nodes and documents
-      - Stress-test plan is identified as outstanding work
-    verification: Runbook document exists naming the steps; an explicit open item records that production-scale validation has not been completed.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [open-question, incident-response, keys]
-    notes: Acknowledged as unfinished work; included so conformance scoring can mark partial coverage rather than overstating completeness.
-
-  - id: EPI-09
-    name: Relay isolation for high-risk verticals
-    source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
-    source-paper: v13 §20
-    definition: The relay is designed as a data-minimal transit cache, but a complete threat model and isolation architecture for verticals where metadata about document existence is itself regulated (legal, healthcare) is not yet specified.
-    must-implement:
-      - Relay deployment documents what metadata is observable at the relay
-      - High-risk vertical deployments specify additional metadata-isolation controls
-      - Outstanding work for legal and healthcare isolation is named in the architecture backlog
-    verification: Threat model document for the relay enumerates observable metadata; deployment guide for high-risk verticals either specifies isolation controls or marks them as open.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [open-question, relay, threat-model, compliance]
-
-  - id: EPI-10
-    name: Long-now archival format beyond CRDT log
-    source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
-    source-paper: v13 §20
-    definition: Because the CRDT event log is not a stable archival format, long-horizon durability requires snapshots in standardized formats (signed append-only logs, documented export schemas) that the architecture has not yet specified.
-    must-implement:
-      - Architecture identifies a stable archival snapshot format separate from the live CRDT log
-      - Periodic snapshot generation is specified
-      - Snapshot format is consumable without a running CRDT engine
-    verification: Snapshot specification document exists; a snapshot can be opened and read by a tool that has no CRDT engine in its dependency tree.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [open-question, archival, long-now, persistence]
-
-  - id: EPI-11
-    name: Domain invariant enforcement above CRDT convergence
-    source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
-    source-paper: v13 §20
-    definition: CRDTs deliver structural convergence but not domain invariants such as inventory-cannot-go-negative, no-double-booking, or ledger-balance, which require additional modeling beyond the CRDT engine and have no standardized formal verification approach in this architecture.
-    must-implement:
-      - Semantic layer enforces named domain invariants on top of CRDT merge
-      - Each enforced invariant is documented with the data type and the enforcement mechanism
-      - Invariants whose enforcement is not yet specified are listed as open items
-    verification: Semantic-layer document enumerates enforced invariants and their mechanisms; merge tests demonstrate violation rejection for each enforced invariant.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [open-question, invariants, semantic-layer, crdt]
-
-  - id: EPI-12
-    name: Crypto-shredding as right-to-erasure mechanism
-    source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
-    source-paper: v13 §20
-    definition: Right-to-erasure is implemented technically by destroying the per-document DEK so that ciphertext becomes unrecoverable; whether residual CRDT-log operation metadata constitutes personal data under a given jurisdiction's deletion statute is an unsettled legal question, not a technical one.
-    must-implement:
-      - DEK destruction procedure renders document content unrecoverable
-      - Residual CRDT operation metadata is documented as the surface a legal review must evaluate
-      - Per-jurisdiction legal posture is captured in the compliance appendix
-    verification: Destroying a document's DEK is shown to render its ciphertext unrecoverable; compliance documentation names the jurisdictions in scope and the open legal question for each.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [open-question, erasure, gdpr, dpdp, compliance, crypto-shredding]
-
-  - id: EPI-13
-    name: Mobile platform constraints unresolved
-    source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
-    source-paper: v5 §9
-    definition: iOS and Android impose background-execution, keystore, and filesystem constraints that the desktop-first local-node architecture has not yet solved, so mobile is not yet a first-class deployment target with a fully specified tradeoff envelope.
-    must-implement:
-      - Mobile deployment guide identifies background-execution, keystore, and filesystem constraints
-      - Tradeoffs in battery, background limits, and permission prompts are documented
-      - Architecture backlog names mobile-first work as outstanding
-    verification: Mobile platform notes exist enumerating the constraints and the architectural choices that remain open.
-    kleppmann-properties: [P2, P3]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [open-question, mobile, platform, deployment]
-
-  - id: EPI-14
-    name: Implementation drift via server-side convenience paths
-    source: epilogue §"The Implementation Drift Risk"
-    source-paper: v13 §20
-    definition: The dominant failure mode for local-first architectures in practice is the gradual accumulation of locally-reasonable server-side paths — feature gates, analytics, A/B testing, compliance logging, write-time permission checks — that re-establish the server as load-bearing and reduce the local node to a cache.
-    must-implement:
-      - Architecture names each drift anti-pattern with the local-first equivalent that replaces it
-      - Feature flags evaluate locally via a Sunfish.Foundation.FeatureManagement-equivalent capability
-      - Telemetry, compliance logging, and permission checks are designed before the first request that would centralize them
-    verification: ADR set documents each named anti-pattern with the local replacement; sample drift requests are matched to the ADR that already answers them.
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [drift, anti-pattern, governance, adr]
-
-  - id: EPI-15
-    name: ADRs with named enforcement owner
-    source: epilogue §"The Implementation Drift Risk"
-    source-paper: v13 §20
-    definition: Architecture Decision Records that prevent drift must name an enforcement owner — a review board, principal engineer, or CTO sign-off path — because ADRs without an owner do not survive velocity pressure.
-    must-implement:
-      - Every drift-prevention ADR names an accountable role for deviation approval
-      - Deviation requests follow a documented review path
-      - ADR template requires the enforcement owner field
-    verification: ADR template includes an enforcement owner field; existing drift-prevention ADRs have that field populated with a named role.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [governance, adr, organizational]
+- id: EPI-01
+  name: Protocol-layer data minimization
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v13 §20
+  definition: Data minimization is a send-tier protocol enforcement that prevents bytes from leaving the
+    originating node toward an unauthorized peer, not a UI filter or server-side policy applied after
+    data arrives.
+  must-implement:
+  - Sync daemon evaluates authorization against peer attestations before serializing payload
+  - Unauthorized peers never receive document bytes on the wire
+  - No filter is applied only at receive time
+  verification: Wire capture from an unauthorized peer's perspective shows zero protected bytes after
+    capability negotiation completes.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - obligation
+  - minimization
+  - sync
+  - security
+  failed-conditions:
+  - 'Fails to satisfy: Sync daemon evaluates authorization against peer attestations before serializing
+    payload'
+  - 'Fails to satisfy: Unauthorized peers never receive document bytes on the wire'
+  - No filter is not applied only at receive time
+  - 'Verification check does not pass: Wire capture from an unauthorized peer''s perspective shows zero
+    protected bytes after capability negotiation completes.'
+- id: EPI-02
+  name: MDM attestation at capability negotiation
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v13 §20
+  definition: Mobile Device Management attestation is verified during capability negotiation before the
+    sync stream opens, so that a non-compliant device is rejected at the perimeter rather than detected
+    post-hoc in an audit log.
+  must-implement:
+  - Capability negotiation includes an MDM attestation challenge
+  - Handshake fails closed when attestation is missing or invalid
+  - No document operation is applied from a peer that has not satisfied attestation
+  verification: A peer presenting an invalid or absent MDM attestation cannot complete handshake; sync
+    stream is never opened.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - obligation
+  - attestation
+  - mdm
+  - security
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Capability negotiation does not include an MDM attestation challenge
+  - Handshake fails closed when attestation is not missing or invalid
+  - No document operation is not applied from a peer that has not satisfied attestation
+  - 'Verification check does not pass: A peer presenting an invalid or absent MDM attestation cannot complete
+    handshake; sync stream is never opened.'
+- id: EPI-03
+  name: Honest three-tier CRDT consistency
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v13 §20
+  definition: The architecture commits to a three-tier resolution model — AP for documents, CP under lease
+    for coordination records, append-only for financial ledger — and names the consistency guarantee per
+    data type rather than presenting a single uniform model.
+  must-implement:
+  - Each data type is assigned an explicit consistency tier
+  - Document store uses AP CRDT semantics
+  - Coordination records use CP semantics under a lease protocol
+  - Financial records use append-only ledger semantics
+  verification: Architecture document maps every persisted data type to one of the three tiers; the CRDT
+    engine adapter for each tier matches the documented semantics.
+  kleppmann-properties:
+  - P4
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - obligation
+  - crdt
+  - consistency
+  - semantic-layer
+  failed-conditions:
+  - Each data type is not assigned an explicit consistency tier
+  - 'Fails to satisfy: Document store uses AP CRDT semantics'
+  - Coordination does not record use CP semantics under a lease protocol
+  - Financial does not record use append-only ledger semantics
+  - 'Verification check does not pass: Architecture document maps every persisted data type to one of
+    the three tiers; the CRDT engine adapter for each tier ma...'
+- id: EPI-04
+  name: Cryptographic role revocation
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v13 §20
+  definition: Role revocation is implemented through DEK/KEK envelope encryption with key rotation proportional
+    to document count, so that a revoked role cannot decrypt documents whose keys have been rotated.
+  must-implement:
+  - Each protected document is encrypted with a per-document DEK wrapped by a role KEK
+  - Role revocation triggers DEK rotation for documents the revoked role had access to
+  - The former role-holder's KEK cannot unwrap rotated DEKs
+  verification: Revocation procedure is executed, then the revoked principal's key material is presented
+    against rotated documents and fails to decrypt.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - obligation
+  - encryption
+  - revocation
+  - keys
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Each protected document is not encrypted with a per-document DEK wrapped by a role KEK
+  - 'Fails to satisfy: Role revocation triggers DEK rotation for documents the revoked role had access
+    to'
+  - 'Fails to satisfy: The former role-holder''s KEK cannot unwrap rotated DEKs'
+  - 'Verification check does not pass: Revocation procedure is executed, then the revoked principal''s
+    key material is presented against rotated documents and f...'
+- id: EPI-05
+  name: Dual license and CLA before community formation
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v5 §10
+  definition: The dual license structure and Contributor License Agreement must exist before the first
+    external pull request, so that governance terms cannot be retroactively changed against contributors
+    who joined under different terms.
+  must-implement:
+  - Repository has a published dual license at first public commit
+  - CLA process is in place before merging external contributions
+  - License change requires contributor consent under documented governance
+  verification: Repository contains LICENSE, CLA, and governance documents whose commit dates precede
+    the first external pull request merge.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - obligation
+  - governance
+  - licensing
+  - community
+  failed-conditions:
+  - Repository has not a published dual license at first public commit
+  - CLA process is not in place before merging external contributions
+  - License change does not require contributor consent under documented governance
+  - 'Verification check does not pass: Repository contains LICENSE, CLA, and governance documents whose
+    commit dates precede the first external pull request me...'
+- id: EPI-06
+  name: Non-technical disaster recovery
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v13 §20
+  definition: A non-technical user must be able to restore complete data after a device failure without
+    contacting support, using a backup, restore, and verification UX legible to someone who is not an
+    engineer.
+  must-implement:
+  - Backup UX surfaces backup state and recency without technical vocabulary
+  - Restore UX guides recovery from a fresh device end-to-end
+  - Verification UX confirms restored data integrity to a non-technical user
+  verification: A non-technical tester completes device-loss recovery scenario without engineering assistance
+    and confirms data integrity.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  tags:
+  - obligation
+  - ux
+  - recovery
+  - ownership
+  failed-conditions:
+  - Backup UX does not surface backup state and recency without technical vocabulary
+  - 'Fails to satisfy: Restore UX guides recovery from a fresh device end-to-end'
+  - 'Fails to satisfy: Verification UX confirms restored data integrity to a non-technical user'
+  - 'Verification check does not pass: A non-technical tester completes device-loss recovery scenario
+    without engineering assistance and confirms data integrit...'
+- id: EPI-07
+  name: Plain-file export without vendor cooperation
+  source: epilogue §"What the Stack Owes You"
+  source-paper: v13 §20
+  definition: User data is available on local disk in a documented file format under user-controlled keys,
+    allowing the user to leave the platform at any time without negotiating with the vendor or depending
+    on its continued operation.
+  must-implement:
+  - Export format is publicly documented
+  - Export proceeds entirely from local disk and local key material
+  - No vendor service is required to produce or interpret an export
+  verification: Disconnect network and revoke vendor accounts; user produces a complete export and a third-party
+    tool reads it using only the public format spec and the user's keys.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - obligation
+  - export
+  - ownership
+  - portability
+  failed-conditions:
+  - Export format is not publicly documented
+  - 'Fails to satisfy: Export proceeds entirely from local disk and local key material'
+  - No vendor service is not required to produce or interpret an export
+  - 'Verification check does not pass: Disconnect network and revoke vendor accounts; user produces a
+    complete export and a third-party tool reads it using onl...'
+- id: EPI-08
+  name: KEK-compromise incident response at scale
+  source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
+  source-paper: v13 §20
+  definition: The procedure for responding to compromise of a broadly-scoped Key Encryption Key across
+    thousands of documents and hundreds of nodes is specified in principle but has not been validated
+    under production load.
+  must-implement:
+  - Incident response runbook for KEK compromise exists
+  - Runbook covers fan-out re-keying across all affected nodes and documents
+  - Stress-test plan is identified as outstanding work
+  verification: Runbook document exists naming the steps; an explicit open item records that production-scale
+    validation has not been completed.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - open-question
+  - incident-response
+  - keys
+  notes: Acknowledged as unfinished work; included so conformance scoring can mark partial coverage rather
+    than overstating completeness.
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Incident response runbook for KEK compromise does not exist
+  - Runbook does not cover fan-out re-keying across all affected nodes and documents
+  - Stress-test plan is not identified as outstanding work
+  - 'Verification check does not pass: Runbook document exists naming the steps; an explicit open item
+    records that production-scale validation has not been co...'
+- id: EPI-09
+  name: Relay isolation for high-risk verticals
+  source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
+  source-paper: v13 §20
+  definition: The relay is designed as a data-minimal transit cache, but a complete threat model and isolation
+    architecture for verticals where metadata about document existence is itself regulated (legal, healthcare)
+    is not yet specified.
+  must-implement:
+  - Relay deployment documents what metadata is observable at the relay
+  - High-risk vertical deployments specify additional metadata-isolation controls
+  - Outstanding work for legal and healthcare isolation is named in the architecture backlog
+  verification: Threat model document for the relay enumerates observable metadata; deployment guide for
+    high-risk verticals either specifies isolation controls or marks them as open.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - open-question
+  - relay
+  - threat-model
+  - compliance
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Relay deployment documents what metadata is not observable at the relay
+  - 'Fails to satisfy: High-risk vertical deployments specify additional metadata-isolation controls'
+  - Outstanding work for legal and healthcare isolation is not named in the architecture backlog
+  - 'Verification check does not pass: Threat model document for the relay enumerates observable metadata;
+    deployment guide for high-risk verticals either spec...'
+- id: EPI-10
+  name: Long-now archival format beyond CRDT log
+  source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
+  source-paper: v13 §20
+  definition: Because the CRDT event log is not a stable archival format, long-horizon durability requires
+    snapshots in standardized formats (signed append-only logs, documented export schemas) that the architecture
+    has not yet specified.
+  must-implement:
+  - Architecture identifies a stable archival snapshot format separate from the live CRDT log
+  - Periodic snapshot generation is specified
+  - Snapshot format is consumable without a running CRDT engine
+  verification: Snapshot specification document exists; a snapshot can be opened and read by a tool that
+    has no CRDT engine in its dependency tree.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - open-question
+  - archival
+  - long-now
+  - persistence
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Architecture identifies a stable archival snapshot format separate from the live
+    CRDT log'
+  - Periodic snapshot generation is not specified
+  - Snapshot format is not consumable without a running CRDT engine
+  - 'Verification check does not pass: Snapshot specification document exists; a snapshot can be opened
+    and read by a tool that has no CRDT engine in its depen...'
+- id: EPI-11
+  name: Domain invariant enforcement above CRDT convergence
+  source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
+  source-paper: v13 §20
+  definition: CRDTs deliver structural convergence but not domain invariants such as inventory-cannot-go-negative,
+    no-double-booking, or ledger-balance, which require additional modeling beyond the CRDT engine and
+    have no standardized formal verification approach in this architecture.
+  must-implement:
+  - Semantic layer enforces named domain invariants on top of CRDT merge
+  - Each enforced invariant is documented with the data type and the enforcement mechanism
+  - Invariants whose enforcement is not yet specified are listed as open items
+  verification: Semantic-layer document enumerates enforced invariants and their mechanisms; merge tests
+    demonstrate violation rejection for each enforced invariant.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - open-question
+  - invariants
+  - semantic-layer
+  - crdt
+  failed-conditions:
+  - Semantic layer does not enforce named domain invariants on top of CRDT merge
+  - Each enforced invariant is not documented with the data type and the enforcement mechanism
+  - Invariants whose enforcement is not yet specified are not listed as open items
+  - 'Verification check does not pass: Semantic-layer document enumerates enforced invariants and their
+    mechanisms; merge tests demonstrate violation rejection...'
+- id: EPI-12
+  name: Crypto-shredding as right-to-erasure mechanism
+  source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
+  source-paper: v13 §20
+  definition: Right-to-erasure is implemented technically by destroying the per-document DEK so that ciphertext
+    becomes unrecoverable; whether residual CRDT-log operation metadata constitutes personal data under
+    a given jurisdiction's deletion statute is an unsettled legal question, not a technical one.
+  must-implement:
+  - DEK destruction procedure renders document content unrecoverable
+  - Residual CRDT operation metadata is documented as the surface a legal review must evaluate
+  - Per-jurisdiction legal posture is captured in the compliance appendix
+  verification: Destroying a document's DEK is shown to render its ciphertext unrecoverable; compliance
+    documentation names the jurisdictions in scope and the open legal question for each.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - open-question
+  - erasure
+  - gdpr
+  - dpdp
+  - compliance
+  - crypto-shredding
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: DEK destruction procedure renders document content unrecoverable'
+  - Residual CRDT operation metadata is not documented as the surface a legal review must evaluate
+  - Per-jurisdiction legal posture is not captured in the compliance appendix
+  - 'Verification check does not pass: Destroying a document''s DEK is shown to render its ciphertext
+    unrecoverable; compliance documentation names the jurisdic...'
+- id: EPI-13
+  name: Mobile platform constraints unresolved
+  source: epilogue §"The Open Questions That Remain Genuinely Unsettled"
+  source-paper: v5 §9
+  definition: iOS and Android impose background-execution, keystore, and filesystem constraints that the
+    desktop-first local-node architecture has not yet solved, so mobile is not yet a first-class deployment
+    target with a fully specified tradeoff envelope.
+  must-implement:
+  - Mobile deployment guide identifies background-execution, keystore, and filesystem constraints
+  - Tradeoffs in battery, background limits, and permission prompts are documented
+  - Architecture backlog names mobile-first work as outstanding
+  verification: Mobile platform notes exist enumerating the constraints and the architectural choices
+    that remain open.
+  kleppmann-properties:
+  - P2
+  - P3
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - open-question
+  - mobile
+  - platform
+  - deployment
+  failed-conditions:
+  - 'Fails to satisfy: Mobile deployment guide identifies background-execution, keystore, and filesystem
+    constraints'
+  - Tradeoffs in battery, background limits, and permission prompts are not documented
+  - 'Fails to satisfy: Architecture backlog names mobile-first work as outstanding'
+  - 'Verification check does not pass: Mobile platform notes exist enumerating the constraints and the
+    architectural choices that remain open.'
+- id: EPI-14
+  name: Implementation drift via server-side convenience paths
+  source: epilogue §"The Implementation Drift Risk"
+  source-paper: v13 §20
+  definition: The dominant failure mode for local-first architectures in practice is the gradual accumulation
+    of locally-reasonable server-side paths — feature gates, analytics, A/B testing, compliance logging,
+    write-time permission checks — that re-establish the server as load-bearing and reduce the local node
+    to a cache.
+  must-implement:
+  - Architecture names each drift anti-pattern with the local-first equivalent that replaces it
+  - Feature flags evaluate locally via a Sunfish.Foundation.FeatureManagement-equivalent capability
+  - Telemetry, compliance logging, and permission checks are designed before the first request that would
+    centralize them
+  verification: ADR set documents each named anti-pattern with the local replacement; sample drift requests
+    are matched to the ADR that already answers them.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - drift
+  - anti-pattern
+  - governance
+  - adr
+  failed-conditions:
+  - 'Fails to satisfy: Architecture names each drift anti-pattern with the local-first equivalent that
+    replaces it'
+  - 'Fails to satisfy: Feature flags evaluate locally via a Sunfish.Foundation.FeatureManagement-equivalent
+    capability'
+  - Telemetry, compliance logging, and permission checks are not designed before the first request that
+    would centralize them
+  - 'Verification check does not pass: ADR set documents each named anti-pattern with the local replacement;
+    sample drift requests are matched to the ADR that ...'
+- id: EPI-15
+  name: ADRs with named enforcement owner
+  source: epilogue §"The Implementation Drift Risk"
+  source-paper: v13 §20
+  definition: Architecture Decision Records that prevent drift must name an enforcement owner — a review
+    board, principal engineer, or CTO sign-off path — because ADRs without an owner do not survive velocity
+    pressure.
+  must-implement:
+  - Every drift-prevention ADR names an accountable role for deviation approval
+  - Deviation requests follow a documented review path
+  - ADR template requires the enforcement owner field
+  verification: ADR template includes an enforcement owner field; existing drift-prevention ADRs have
+    that field populated with a named role.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - governance
+  - adr
+  - organizational
+  failed-conditions:
+  - 'Fails to satisfy: Every drift-prevention ADR names an accountable role for deviation approval'
+  - 'Fails to satisfy: Deviation requests follow a documented review path'
+  - ADR template does not require the enforcement owner field
+  - 'Verification check does not pass: ADR template includes an enforcement owner field; existing drift-prevention
+    ADRs have that field populated with a named ...'

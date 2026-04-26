@@ -1,536 +1,1053 @@
 chapter: ch14
 chapter-title: Sync Daemon Protocol
-source-paper-refs: [v13 §6, v5 §3.4, v5 §3.5]
+source-paper-refs:
+- v13 §6
+- v5 §3.4
+- v5 §3.5
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: SYNC-01
-    name: Sync daemon as separate OS process
-    source: ch14 §"Process Isolation"
-    source-paper: v13 §6
-    definition: The sync daemon runs as a distinct OS-level process from the application, decoupling network and replication lifecycle from application lifecycle.
-    must-implement:
-      - Daemon runs in a process distinct from the application process
-      - Daemon survives application restart, update, and crash
-      - Daemon continues accepting inbound deltas while application is down
-      - Daemon reconnects to peers independent of application UI startup
-    verification: Kill the application process while peers are streaming; confirm daemon process retains peer connections and queues inbound deltas for next application startup.
-    kleppmann-properties: [P1, P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, partition]
-    tags: [daemon, process-model, architecture]
-
-  - id: SYNC-02
-    name: IPC over Unix domain socket / named pipe
-    source: ch14 §"Process Isolation"
-    source-paper: v13 §6
-    definition: The application communicates with the daemon over a Unix domain socket on Linux/macOS and a named pipe on Windows, with file-permission/ACL controls scoping access to the same user.
-    must-implement:
-      - Daemon exposes a local IPC endpoint (UDS or named pipe)
-      - Socket path enforces user-level filesystem permissions or explicit ACL grants
-      - No network port is exposed for application-to-daemon communication
-    verification: Inspect socket path permissions; confirm only same-user processes (or explicit ACL grantees) can connect.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ipc, transport, security]
-
-  - id: SYNC-03
-    name: Device-key authentication on the IPC channel
-    source: ch14 §"Process Isolation"
-    source-paper: v13 §6
-    definition: All messages on the daemon's IPC channel are authenticated with a device key, so processes that can reach the socket cannot inject operations without a valid key.
-    must-implement:
-      - Daemon rejects IPC sessions that do not present a valid device key
-      - Authentication occurs before any command-channel operation is processed
-    verification: Connect a process without a device key to the socket and confirm the daemon refuses session establishment.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [security, ipc, authentication]
-
-  - id: SYNC-04
-    name: Daemon ownership of four responsibilities
-    source: ch14 §"Process Isolation"
-    source-paper: v13 §6
-    definition: The daemon owns the local CRDT document store, peer/relay connections, per-peer capability and subscription enforcement, and background tasks (compaction, archival), and the application never touches the document store directly.
-    must-implement:
-      - Document store is accessed only via the daemon
-      - Peer connection lifecycle is managed by the daemon, not the application
-      - Capability/subscription rules are enforced inside the daemon
-      - Background maintenance (compaction, archival) runs in the daemon
-    verification: Inspect the application binary; confirm no code paths read or mutate the document store outside the daemon command channel.
-    kleppmann-properties: [P3, P4, P5, P6]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [daemon, architecture, separation-of-concerns]
-
-  - id: SYNC-05
-    name: Three-tier peer discovery
-    source: ch14 §"Three-Tier Peer Discovery"
-    source-paper: v13 §6
-    definition: The daemon discovers peers concurrently across three mechanisms — mDNS for LAN, mesh VPN for cross-network, and managed relay for restricted networks — with no tier acting as a fallback that disables another.
-    must-implement:
-      - Daemon runs all three discovery mechanisms concurrently when configured
-      - Tiers are not mutually exclusive; a peer reachable on multiple paths is recorded for all
-      - Daemon selects the lowest-latency reachable path per peer
-    verification: With a peer reachable via mDNS and mesh VPN, observe the daemon selecting mDNS as primary while keeping VPN as hot standby.
-    kleppmann-properties: [P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [discovery, transport, topology]
-
-  - id: SYNC-06
-    name: mDNS LAN discovery
-    source: ch14 §"Three-Tier Peer Discovery"
-    source-paper: v13 §6
-    definition: On a local network segment, the daemon announces node ID, schema version, and IPC endpoint via multicast DNS, removing peers from the candidate list after three missed heartbeat intervals.
-    must-implement:
-      - Daemon emits mDNS announcements containing node ID and schema version
-      - Daemon removes a peer from the candidate list after three missed heartbeats
-      - Discovery requires no central coordinator on the LAN
-    verification: Two daemons on the same LAN segment discover each other within one mDNS announcement interval with zero configuration.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [peer-discovery-failure]
-    tags: [discovery, mdns, lan]
-
-  - id: SYNC-07
-    name: Mesh VPN cross-network discovery
-    source: ch14 §"Three-Tier Peer Discovery"
-    source-paper: v13 §6
-    definition: Peers on different networks connect through a WireGuard-based mesh VPN that handles NAT traversal and provides in-transit encryption independent of protocol-layer authentication.
-    must-implement:
-      - Daemon supports a WireGuard-based mesh VPN transport
-      - No port forwarding is required at either endpoint
-      - VPN peers are treated identically to LAN peers above the transport layer
-    verification: Two daemons behind separate NATs establish a session through the mesh VPN with no per-endpoint port forwarding.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [peer-discovery-failure, partition]
-    tags: [discovery, vpn, nat-traversal]
-
-  - id: SYNC-08
-    name: Managed relay for restricted networks
-    source: ch14 §"Three-Tier Peer Discovery"
-    source-paper: v13 §6
-    definition: For deployments where direct peer-to-peer connectivity is not viable, the daemon connects through a managed relay that forwards delta streams without decrypting them and cannot inject or modify operations.
-    must-implement:
-      - Relay forwards delta frames opaquely without decrypting payloads
-      - Receiving daemon verifies Ed25519 signatures on every relay-forwarded message
-      - Relay cannot read content or inject operations
-    verification: Run a relay with logging instrumented; confirm no plaintext payload visibility and that mutated frames are rejected by the receiving daemon's signature check.
-    kleppmann-properties: [P3, P4, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [relay, transport, security]
-
-  - id: SYNC-09
-    name: Lowest-latency path selection with hot standby
-    source: ch14 §"Three-Tier Peer Discovery"
-    source-paper: v13 §6
-    definition: The daemon selects the lowest-latency reachable path to each known peer and dynamically updates path selection as network conditions change, retaining alternate paths as hot standby.
-    must-implement:
-      - Daemon measures per-path latency to each known peer
-      - Daemon promotes an alternate path when the primary degrades
-      - Path selection updates without re-handshake
-    verification: Sever the primary path between two peers; observe the daemon promoting the standby within one gossip interval without a fresh CAPABILITY_NEG.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [transport, failover]
-
-  - id: SYNC-10
-    name: Five-step handshake (HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM, GOSSIP_PING)
-    source: ch14 §"Five-Step Handshake"
-    source-paper: v13 §6
-    definition: Every peer connection follows a fixed five-step sequence — HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM, GOSSIP_PING — that establishes identity, negotiates capabilities, and confirms subscription grants before any CRDT operations flow.
-    must-implement:
-      - No DELTA_STREAM frames flow before ACK is received
-      - Both peers exchange HELLO simultaneously at session start
-      - GOSSIP_PING runs on a 30-second cadence after the session is live
-    verification: Capture wire trace of a fresh session; confirm the five message types appear in the specified order and no operations precede ACK.
-    kleppmann-properties: [P4, P6]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew, replay]
-    tags: [wire-protocol, handshake]
-
-  - id: SYNC-11
-    name: HELLO message and schema-version negotiation
-    source: ch14 §"Five-Step Handshake"
-    source-paper: v13 §6
-    definition: HELLO carries node ID, current schema epoch, public key, signed timestamp, and supported protocol versions; the session proceeds on the highest mutually supported version, and incompatible epochs result in SCHEMA_VERSION_INCOMPATIBLE and session close.
-    must-implement:
-      - HELLO carries node_id, schema_version, public_key, sent_at, signature, supported_versions
-      - Session uses the highest version in the intersection of both peers' supported lists
-      - Incompatible schema epoch closes the session with SCHEMA_VERSION_INCOMPATIBLE; no partial or read-only mode
-      - Application surfaces a schema-update notification when the daemon closes a session on version grounds
-    verification: Connect two daemons with non-overlapping supported_versions; confirm SCHEMA_VERSION_INCOMPATIBLE is sent and the session closes.
-    kleppmann-properties: [P4, P6]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew]
-    tags: [wire-protocol, handshake, schema]
-
-  - id: SYNC-12
-    name: CAPABILITY_NEG with role-attestation tokens
-    source: ch14 §"Five-Step Handshake"
-    source-paper: v13 §6
-    definition: The requesting node declares CRDT streams, CP leases, and bucket subscriptions, with each requested subscription accompanied by a role attestation signed by the node's device key that the receiving node verifies before granting.
-    must-implement:
-      - Each requested subscription carries a device-key-signed role attestation
-      - Receiving daemon verifies attestation signature and validity before grant
-      - Streams without valid attestations are excluded from grants
-    verification: Submit a CAPABILITY_NEG with an expired attestation; confirm the corresponding subscription is rejected with EXPIRED_ATTESTATION.
-    kleppmann-properties: [P4, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [wire-protocol, capabilities, attestation]
-
-  - id: SYNC-13
-    name: ACK with granted_subscriptions and typed rejections
-    source: ch14 §"Five-Step Handshake"
-    source-paper: v13 §6
-    definition: The accepting node responds with granted_subscriptions[] and a rejected[] list using typed reason codes (MISSING_ATTESTATION, EXPIRED_ATTESTATION, INVALID_SIGNATURE), and silently omits streams the requester has no attestation for to prevent stream enumeration.
-    must-implement:
-      - ACK enumerates only granted subscriptions and explicitly rejected ones
-      - Rejection codes are limited to the specified taxonomy
-      - Streams the requester is unaware of are absent from both arrays
-    verification: Request a stream the receiver does not publish to the requester; confirm it appears in neither granted nor rejected arrays.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [wire-protocol, capabilities, enumeration-resistance]
-
-  - id: SYNC-14
-    name: DELTA_STREAM continuous CRDT operation flow
-    source: ch14 §"Five-Step Handshake"
-    source-paper: v13 §6
-    definition: After ACK, both nodes emit a continuous append-only stream of compact binary CRDT deltas computed from the difference between sender state and receiver vector clock, with out-of-scope operations dropped at the send tier.
-    must-implement:
-      - Deltas are computed per receiver vector clock
-      - Out-of-scope operations are dropped at the sender, not filtered at the receiver
-      - Receiver applies operations and advances its vector clock
-    verification: Observe wire trace; confirm deltas contain only operations the receiver has not seen and only for granted subscriptions.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: []
-    tags: [wire-protocol, delta-sync, crdt]
-
-  - id: SYNC-15
-    name: GOSSIP_PING for membership and clock summary
-    source: ch14 §"Five-Step Handshake"
-    source-paper: v13 §6
-    definition: Every 30 seconds each node emits GOSSIP_PING carrying its current vector clock summary and known-peer membership list, enabling drift detection, peer discovery via transitive knowledge, and network healing without a central directory.
-    must-implement:
-      - Daemon emits GOSSIP_PING on a 30-second cadence (configurable)
-      - GOSSIP_PING carries vector clock summary and membership entries
-      - Receiving node merges new peers and updated addresses into local membership list
-    verification: Three-node test where C learns of B's new address only via A's GOSSIP_PING transitively forwarding it.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure, clock-skew]
-    tags: [wire-protocol, gossip, membership]
-
-  - id: SYNC-16
-    name: CBOR canonical wire encoding with length prefix
-    source: ch14 §"Wire Format — Message Field Reference"
-    source-paper: v13 §6
-    definition: All wire messages use CBOR (RFC 8949) canonical encoding, length-prefixed with a 4-byte big-endian frame length, with individual frames capped at 16 MiB and unknown fields ignored for forward compatibility.
-    must-implement:
-      - All frames use CBOR canonical encoding
-      - 4-byte big-endian length precedes each CBOR payload
-      - Frames exceeding 16 MiB are rejected
-      - Unknown fields are ignored on decode
-    verification: Send a frame with an unknown field; confirm receiver accepts the frame and processes the known fields.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [wire-protocol, encoding, cbor]
-
-  - id: SYNC-17
-    name: Replay-window-bounded signed HELLO
-    source: ch14 §"Wire Format — Message Field Reference"
-    source-paper: v13 §6
-    definition: HELLO is signed with the sender's Ed25519 key over (node_id, schema_version, public_key, sent_at) and accepted only within a ±30-second replay window of receiver clock.
-    must-implement:
-      - HELLO signature is Ed25519 over the specified canonical tuple
-      - Receiver rejects HELLO with sent_at outside ±30-second window
-      - Receiver verifies signature against the embedded public_key
-    verification: Replay a captured HELLO 60 seconds later; confirm receiver rejects it on replay-window grounds.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: [replay]
-    tags: [wire-protocol, security, replay-protection]
-
-  - id: SYNC-18
-    name: Membership list with tier-aware addressing
-    source: ch14 §"Gossip Anti-Entropy"
-    source-paper: v13 §6
-    definition: Each node maintains a membership list recording peer node ID, last-known address per discovery tier, current reachability state (active/suspected/failed), and last-received vector clock per peer.
-    must-implement:
-      - Membership entry stores per-tier last-known address
-      - Entry tracks reachability state in {active, suspected, failed}
-      - Entry tracks last-received vector clock from peer
-    verification: Inspect daemon membership store; confirm presence of all four fields per peer.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [membership, state-management]
-
-  - id: SYNC-19
-    name: Random-peer-selection gossip anti-entropy
-    source: ch14 §"Gossip Anti-Entropy"
-    source-paper: v13 §6
-    definition: Every 30 seconds each node selects two peers at random from its active membership list and initiates a symmetric delta exchange, ensuring O(log N) propagation and preventing load concentration on high-degree nodes.
-    must-implement:
-      - Daemon selects k random peers (default k=2) per gossip tick
-      - Exchange is symmetric — each side sends operations the other lacks
-      - 30-second default interval is configurable per deployment
-    verification: Run a 10-node simulation; confirm convergence in O(log N) rounds and even per-node send/receive distribution.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [gossip, anti-entropy, convergence]
-
-  - id: SYNC-20
-    name: Vector-clock-driven delta computation
-    source: ch14 §"Gossip Anti-Entropy"
-    source-paper: v13 §6
-    definition: Each CRDT operation carries a vector clock entry identifying the originating node and logical time, and deltas include all operations causally ahead of the remote peer's last known clock.
-    must-implement:
-      - Operations carry per-node vector clock entries
-      - Receiver advances its vector clock on operation apply
-      - Delta computation includes only operations causally ahead of remote clock
-    verification: Two-peer convergence test under partition heal; confirm byte-identical state after exchange.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition, clock-skew]
-    tags: [vector-clock, delta-sync, causality]
-
-  - id: SYNC-21
-    name: Send-tier subscription scope enforcement
-    source: ch14 §"Data Minimization at the Stream Level"
-    source-paper: v13 §6
-    definition: The sync daemon enforces subscription scope at the stream level before operations leave the node, ensuring unauthorized data never reaches the receiving device — application-layer filtering is not a substitute.
-    must-implement:
-      - Subscription eligibility is checked on the sender prior to transmission
-      - Out-of-scope operations are not transmitted and not logged
-      - Receiver never receives operations for unauthorized streams or fields
-    verification: Capture wire trace from sender; confirm operations for out-of-scope streams/fields never appear on the wire.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise, data-residency-objection]
-    tags: [data-minimization, security, subscription]
-
-  - id: SYNC-22
-    name: Field-level scope stripping within streams
-    source: ch14 §"Data Minimization at the Stream Level"
-    source-paper: v13 §6
-    definition: Stream definitions specify the minimum field set required per role, and the daemon strips operations for out-of-scope fields when constructing outbound deltas even within streams the receiver is authorized to receive.
-    must-implement:
-      - Stream definitions encode per-role minimum field sets
-      - Daemon strips out-of-scope-field operations at delta construction
-      - Field-level exclusions are invisible to the receiver
-    verification: Two-role test where Role A receives a stream with field set {x, y} and Role B receives the same stream with {x}; confirm Role B's wire trace contains no operations for field y.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [data-minimization, schema, subscription]
-
-  - id: SYNC-23
-    name: Re-eligibility check on reconnect
-    source: ch14 §"Data Minimization at the Stream Level"
-    source-paper: v13 §6
-    definition: When a node reconnects after offline, the daemon re-runs eligibility checks during the handshake before replaying buffered deltas, and excludes streams whose attestations expired during the offline period.
-    must-implement:
-      - Buffered deltas are not replayed before fresh CAPABILITY_NEG completes
-      - Expired-attestation streams are excluded from new session grants
-      - Buffered deltas for excluded streams are dropped, not delivered
-    verification: Expire a node's attestation while offline; reconnect and confirm no buffered deltas for that stream are delivered post-handshake.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [reconnect, security, subscription]
-
-  - id: SYNC-24
-    name: Distributed quorum lease for CP-class records
-    source: ch14 §"Distributed Lease Coordination"
-    source-paper: v13 §6
-    definition: Before a node writes to a CP-class record it must acquire a distributed lease requiring acknowledgement by ceil(N/2)+1 of the active membership, with a default 30-second lease duration.
-    must-implement:
-      - Daemon requests a lease for every CP-class write
-      - Default quorum is ceil(N/2)+1 of active membership
-      - Default lease duration is 30 seconds
-    verification: Attempt a CP-class write with N=3 and only 1 peer reachable; confirm the write blocks rather than proceeding.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [consensus, lease, cp-class]
-
-  - id: SYNC-25
-    name: No-fallback semantics for blocked CP writes
-    source: ch14 §"Distributed Lease Coordination"
-    source-paper: v13 §6
-    definition: When quorum is unreachable, the daemon blocks the CP-class write rather than degrading to a best-effort write, surfacing a definitive failure signal to the application UI.
-    must-implement:
-      - Daemon never silently queues a CP-class write when quorum is unreachable
-      - Application receives an explicit failure signal for blocked writes
-      - UI reflects blocked-write status with a definitive indicator
-    verification: Force a partition; attempt a CP-class write; confirm explicit failure signal reaches the application within the configured timeout.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [consensus, lease, cp-class, failure-mode]
-
-  - id: SYNC-26
-    name: Lease expiry via missed renewal pings
-    source: ch14 §"Distributed Lease Coordination"
-    source-paper: v13 §6
-    definition: Leases expire automatically at the configured duration; a node that goes offline without explicit release loses the lease, and other nodes detect expiry through absence of a renewal GOSSIP_PING.
-    must-implement:
-      - Leases expire on a wall-clock timer at the configured duration
-      - Daemon does not require explicit release for expiry
-      - Other nodes infer expiry from missing renewal GOSSIP_PINGs
-    verification: Acquire a lease, kill the holding daemon mid-write; confirm a different node acquires the lease after expiry without manual intervention.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [consensus, lease, expiry]
-
-  - id: SYNC-27
-    name: Early lease-conflict surfacing in CAPABILITY_NEG
-    source: ch14 §"Distributed Lease Coordination"
-    source-paper: v13 §6
-    definition: CAPABILITY_NEG carries the cp_leases[] field so peer handshakes immediately surface lease conflicts on shared records rather than deferring detection until the write attempt.
-    must-implement:
-      - CAPABILITY_NEG includes cp_leases[] for all leases the node currently holds
-      - Daemon detects conflicts at handshake time and signals them to the application
-    verification: Two nodes hold conflicting lease intentions; confirm the conflict is reported during handshake, not at first write attempt.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [consensus, lease, handshake]
-
-  - id: SYNC-28
-    name: Exponential backoff with jitter on reconnect
-    source: ch14 §"Reconnection Storm Handling"
-    source-paper: v13 §6
-    definition: When a previously unavailable network path becomes reachable, the daemon waits a random interval drawn from an exponential distribution bounded at 60 seconds before initiating handshake, ensuring simultaneously disconnected nodes do not reconnect simultaneously.
-    must-implement:
-      - Backoff formula is min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter_range)
-      - Maximum backoff is 60 seconds (relay-enforced)
-      - A node offline beyond a full gossip cycle uses maximum backoff on first reconnect
-    verification: Simulate 100 nodes reconnecting after a partition heal; confirm reconnection events are spread across the 60-second window.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [reconnect, backoff, flow-control]
-
-  - id: SYNC-29
-    name: Relay-enforced per-node delta rate limiting
-    source: ch14 §"Reconnection Storm Handling"
-    source-paper: v13 §6
-    definition: The managed relay enforces a per-node rate limit on delta submissions with a bounded queue that drops the oldest queued submission on overflow, signalling flow control via the next handshake ACK.
-    must-implement:
-      - Relay queues rather than rejects nodes exceeding the rate limit
-      - Queue is bounded; oldest entry is dropped on overflow
-      - Flow-control indication is delivered in the next ACK frame
-      - Receiving node increases backoff interval after flow-control signal
-    verification: Submit deltas faster than the rate limit through the relay; confirm queue behavior and ACK-borne flow-control signal.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [relay, rate-limiting, flow-control]
-
-  - id: SYNC-30
-    name: Three-to-five interval failure detection
-    source: ch14 §"Stale Peer Recovery"
-    source-paper: v13 §6
-    definition: A peer that misses three consecutive GOSSIP_PINGs transitions from active to suspected, and after five total missed intervals transitions from suspected to failed and is removed from the active membership list.
-    must-implement:
-      - Three missed GOSSIP_PINGs triggers active-to-suspected transition
-      - Five total missed intervals triggers suspected-to-failed transition
-      - Failed peers are removed from active membership list
-      - Suspected peers continue to receive GOSSIP_PINGs
-    verification: Block GOSSIP_PINGs to one peer; observe state transitions at the 3rd and 5th missed intervals.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [peer-discovery-failure, partition]
-    tags: [failure-detection, membership, gossip]
-
-  - id: SYNC-31
-    name: Suspected-peer recovery without re-handshake
-    source: ch14 §"Stale Peer Recovery"
-    source-paper: v13 §6
-    definition: A suspected peer that responds to a GOSSIP_PING transitions immediately back to active and resumes delta exchange on the existing session without requiring a fresh handshake.
-    must-implement:
-      - Suspected-to-active transition occurs on first GOSSIP_PING response
-      - Existing session is preserved across suspected interval
-      - No fresh CAPABILITY_NEG is required for recovery
-    verification: Drive a peer to suspected state, then resume responses; confirm session continues without re-handshake and accumulated deltas exchange.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [failure-detection, recovery, session-management]
-
-  - id: SYNC-32
-    name: Address-change reconnect on same node ID
-    source: ch14 §"Stale Peer Recovery"
-    source-paper: v13 §6
-    definition: A new peer presenting the same node ID as a previously failed peer is treated as a reconnect, triggering a fresh handshake including full CAPABILITY_NEG and resetting the failure counter.
-    must-implement:
-      - Daemon recognizes returning node IDs and resets failure counter
-      - Address change triggers fresh CAPABILITY_NEG, not stale-session reuse
-      - Membership list updates to the new address
-    verification: Have a node move from Wi-Fi to cellular, presenting the same node ID at a new address; confirm fresh handshake completes and old address is replaced.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [peer-discovery-failure]
-    tags: [reconnect, mobility, membership]
-
-  - id: SYNC-33
-    name: Transitive address propagation via gossip
-    source: ch14 §"Stale Peer Recovery"
-    source-paper: v13 §6
-    definition: Stale addresses are cleaned through explicit removal at failed-state and through address updates carried in incoming GOSSIP_PING messages, allowing transitive learning of new addresses without direct contact.
-    must-implement:
-      - Address updates in GOSSIP_PING overwrite older entries for the same node ID
-      - Failed-state removal clears stale entries from active list
-      - Node C learns Node B's new address via Node A's gossip
-    verification: Three-node test where A learns of B's new address from C without A having pinged B directly at the new address.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [peer-discovery-failure]
-    tags: [gossip, membership, propagation]
-
-  - id: SYNC-34
-    name: Sunfish.Kernel.Sync as protocol entry point
-    source: ch14 §"Integration with Sunfish"
-    source-paper: v13 §6
-    definition: The sync daemon's full protocol lifecycle — discovery, handshake, delta computation, gossip, lease coordination, reconnection backoff — is exposed to the application via the Sunfish.Kernel.Sync package, with stream definitions registered there declaring the field-level access rules the daemon enforces.
-    must-implement:
-      - Sunfish.Kernel.Sync namespace exists and exposes the daemon command channel
-      - Stream definitions registered through the package drive daemon enforcement
-      - Application has no code path that re-implements any part of the sync protocol
-    verification: Inspect application code; confirm all sync operations go through Sunfish.Kernel.Sync and stream definitions are the sole source of access rules.
-    kleppmann-properties: [P3, P4, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [sunfish, integration, package]
-
-  - id: SYNC-35
-    name: Uniform protocol guarantees across all transport tiers
-    source: ch14 §"Protocol Invariants"
-    source-paper: v13 §6
-    definition: The protocol invariants — source-side subscription scope, quorum-required CP writes, handshake-before-data-flow, rate-controlled reconnection — hold uniformly across mDNS, mesh VPN, and managed relay, with no trusted-network mode that relaxes rules for LAN peers.
-    must-implement:
-      - No code path bypasses scope enforcement on LAN peers
-      - No code path bypasses quorum requirement on LAN peers
-      - No code path bypasses handshake on LAN peers
-      - All transport tiers apply identical protocol rules
-    verification: Audit transport-tier branches in daemon code; confirm no per-tier conditional that disables an invariant.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [security, protocol-invariant, defense-in-depth]
+- id: SYNC-01
+  name: Sync daemon as separate OS process
+  source: ch14 §"Process Isolation"
+  source-paper: v13 §6
+  definition: The sync daemon runs as a distinct OS-level process from the application, decoupling network
+    and replication lifecycle from application lifecycle.
+  must-implement:
+  - Daemon runs in a process distinct from the application process
+  - Daemon survives application restart, update, and crash
+  - Daemon continues accepting inbound deltas while application is down
+  - Daemon reconnects to peers independent of application UI startup
+  verification: Kill the application process while peers are streaming; confirm daemon process retains
+    peer connections and queues inbound deltas for next application startup.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - partition
+  tags:
+  - daemon
+  - process-model
+  - architecture
+  failed-conditions:
+  - 'Fails to satisfy: Daemon runs in a process distinct from the application process'
+  - 'Fails to satisfy: Daemon survives application restart, update, and crash'
+  - Daemon continues accepting inbound deltas while application is not down
+  - 'Fails to satisfy: Daemon reconnects to peers independent of application UI startup'
+  - 'Verification check does not pass: Kill the application process while peers are streaming; confirm
+    daemon process retains peer connections and queues inbou...'
+- id: SYNC-02
+  name: IPC over Unix domain socket / named pipe
+  source: ch14 §"Process Isolation"
+  source-paper: v13 §6
+  definition: The application communicates with the daemon over a Unix domain socket on Linux/macOS and
+    a named pipe on Windows, with file-permission/ACL controls scoping access to the same user.
+  must-implement:
+  - Daemon exposes a local IPC endpoint (UDS or named pipe)
+  - Socket path enforces user-level filesystem permissions or explicit ACL grants
+  - No network port is exposed for application-to-daemon communication
+  verification: Inspect socket path permissions; confirm only same-user processes (or explicit ACL grantees)
+    can connect.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ipc
+  - transport
+  - security
+  failed-conditions:
+  - Daemon does not expose a local IPC endpoint (UDS or named pipe)
+  - Socket path does not enforce user-level filesystem permissions or explicit ACL grants
+  - No network port is not exposed for application-to-daemon communication
+  - 'Verification check does not pass: Inspect socket path permissions; confirm only same-user processes
+    (or explicit ACL grantees) can connect.'
+- id: SYNC-03
+  name: Device-key authentication on the IPC channel
+  source: ch14 §"Process Isolation"
+  source-paper: v13 §6
+  definition: All messages on the daemon's IPC channel are authenticated with a device key, so processes
+    that can reach the socket cannot inject operations without a valid key.
+  must-implement:
+  - Daemon rejects IPC sessions that do not present a valid device key
+  - Authentication occurs before any command-channel operation is processed
+  verification: Connect a process without a device key to the socket and confirm the daemon refuses session
+    establishment.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - security
+  - ipc
+  - authentication
+  failed-conditions:
+  - Daemon does not reject IPC sessions that do not present a valid device key
+  - Authentication occurs before any command-channel operation is not processed
+  - 'Verification check does not pass: Connect a process without a device key to the socket and confirm
+    the daemon refuses session establishment.'
+- id: SYNC-04
+  name: Daemon ownership of four responsibilities
+  source: ch14 §"Process Isolation"
+  source-paper: v13 §6
+  definition: The daemon owns the local CRDT document store, peer/relay connections, per-peer capability
+    and subscription enforcement, and background tasks (compaction, archival), and the application never
+    touches the document store directly.
+  must-implement:
+  - Document store is accessed only via the daemon
+  - Peer connection lifecycle is managed by the daemon, not the application
+  - Capability/subscription rules are enforced inside the daemon
+  - Background maintenance (compaction, archival) runs in the daemon
+  verification: Inspect the application binary; confirm no code paths read or mutate the document store
+    outside the daemon command channel.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  - P6
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - daemon
+  - architecture
+  - separation-of-concerns
+  failed-conditions:
+  - Document store is not accessed only via the daemon
+  - Peer connection lifecycle is not managed by the daemon, not the application
+  - Capability/subscription rules are not enforced inside the daemon
+  - 'Fails to satisfy: Background maintenance (compaction, archival) runs in the daemon'
+  - 'Verification check does not pass: Inspect the application binary; confirm no code paths read or mutate
+    the document store outside the daemon command chann...'
+- id: SYNC-05
+  name: Three-tier peer discovery
+  source: ch14 §"Three-Tier Peer Discovery"
+  source-paper: v13 §6
+  definition: The daemon discovers peers concurrently across three mechanisms — mDNS for LAN, mesh VPN
+    for cross-network, and managed relay for restricted networks — with no tier acting as a fallback that
+    disables another.
+  must-implement:
+  - Daemon runs all three discovery mechanisms concurrently when configured
+  - Tiers are not mutually exclusive; a peer reachable on multiple paths is recorded for all
+  - Daemon selects the lowest-latency reachable path per peer
+  verification: With a peer reachable via mDNS and mesh VPN, observe the daemon selecting mDNS as primary
+    while keeping VPN as hot standby.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - discovery
+  - transport
+  - topology
+  failed-conditions:
+  - 'Fails to satisfy: Daemon runs all three discovery mechanisms concurrently when configured'
+  - Tiers are not mutually exclusive; a peer reachable on multiple paths is not recorded for all
+  - 'Fails to satisfy: Daemon selects the lowest-latency reachable path per peer'
+  - 'Verification check does not pass: With a peer reachable via mDNS and mesh VPN, observe the daemon
+    selecting mDNS as primary while keeping VPN as hot stand...'
+- id: SYNC-06
+  name: mDNS LAN discovery
+  source: ch14 §"Three-Tier Peer Discovery"
+  source-paper: v13 §6
+  definition: On a local network segment, the daemon announces node ID, schema version, and IPC endpoint
+    via multicast DNS, removing peers from the candidate list after three missed heartbeat intervals.
+  must-implement:
+  - Daemon emits mDNS announcements containing node ID and schema version
+  - Daemon removes a peer from the candidate list after three missed heartbeats
+  - Discovery requires no central coordinator on the LAN
+  verification: Two daemons on the same LAN segment discover each other within one mDNS announcement interval
+    with zero configuration.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - discovery
+  - mdns
+  - lan
+  failed-conditions:
+  - Daemon does not emit mDNS announcements containing node ID and schema version
+  - 'Fails to satisfy: Daemon removes a peer from the candidate list after three missed heartbeats'
+  - Discovery does not require no central coordinator on the LAN
+  - 'Verification check does not pass: Two daemons on the same LAN segment discover each other within
+    one mDNS announcement interval with zero configuration.'
+- id: SYNC-07
+  name: Mesh VPN cross-network discovery
+  source: ch14 §"Three-Tier Peer Discovery"
+  source-paper: v13 §6
+  definition: Peers on different networks connect through a WireGuard-based mesh VPN that handles NAT
+    traversal and provides in-transit encryption independent of protocol-layer authentication.
+  must-implement:
+  - Daemon supports a WireGuard-based mesh VPN transport
+  - No port forwarding is required at either endpoint
+  - VPN peers are treated identically to LAN peers above the transport layer
+  verification: Two daemons behind separate NATs establish a session through the mesh VPN with no per-endpoint
+    port forwarding.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  - partition
+  tags:
+  - discovery
+  - vpn
+  - nat-traversal
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Daemon does not support a WireGuard-based mesh VPN transport
+  - No port forwarding is not required at either endpoint
+  - VPN peers are not treated identically to LAN peers above the transport layer
+  - 'Verification check does not pass: Two daemons behind separate NATs establish a session through the
+    mesh VPN with no per-endpoint port forwarding.'
+- id: SYNC-08
+  name: Managed relay for restricted networks
+  source: ch14 §"Three-Tier Peer Discovery"
+  source-paper: v13 §6
+  definition: For deployments where direct peer-to-peer connectivity is not viable, the daemon connects
+    through a managed relay that forwards delta streams without decrypting them and cannot inject or modify
+    operations.
+  must-implement:
+  - Relay forwards delta frames opaquely without decrypting payloads
+  - Receiving daemon verifies Ed25519 signatures on every relay-forwarded message
+  - Relay cannot read content or inject operations
+  verification: Run a relay with logging instrumented; confirm no plaintext payload visibility and that
+    mutated frames are rejected by the receiving daemon's signature check.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - relay
+  - transport
+  - security
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Relay does not forward delta frames opaquely without decrypting payloads
+  - Receiving daemon does not verifie Ed25519 signatures on every relay-forwarded message
+  - 'Fails to satisfy: Relay cannot read content or inject operations'
+  - 'Verification check does not pass: Run a relay with logging instrumented; confirm no plaintext payload
+    visibility and that mutated frames are rejected by t...'
+- id: SYNC-09
+  name: Lowest-latency path selection with hot standby
+  source: ch14 §"Three-Tier Peer Discovery"
+  source-paper: v13 §6
+  definition: The daemon selects the lowest-latency reachable path to each known peer and dynamically
+    updates path selection as network conditions change, retaining alternate paths as hot standby.
+  must-implement:
+  - Daemon measures per-path latency to each known peer
+  - Daemon promotes an alternate path when the primary degrades
+  - Path selection updates without re-handshake
+  verification: Sever the primary path between two peers; observe the daemon promoting the standby within
+    one gossip interval without a fresh CAPABILITY_NEG.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - transport
+  - failover
+  failed-conditions:
+  - 'Fails to satisfy: Daemon measures per-path latency to each known peer'
+  - 'Fails to satisfy: Daemon promotes an alternate path when the primary degrades'
+  - 'Fails to satisfy: Path selection updates without re-handshake'
+  - 'Verification check does not pass: Sever the primary path between two peers; observe the daemon promoting
+    the standby within one gossip interval without a ...'
+- id: SYNC-10
+  name: Five-step handshake (HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM, GOSSIP_PING)
+  source: ch14 §"Five-Step Handshake"
+  source-paper: v13 §6
+  definition: Every peer connection follows a fixed five-step sequence — HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM,
+    GOSSIP_PING — that establishes identity, negotiates capabilities, and confirms subscription grants
+    before any CRDT operations flow.
+  must-implement:
+  - No DELTA_STREAM frames flow before ACK is received
+  - Both peers exchange HELLO simultaneously at session start
+  - GOSSIP_PING runs on a 30-second cadence after the session is live
+  verification: Capture wire trace of a fresh session; confirm the five message types appear in the specified
+    order and no operations precede ACK.
+  kleppmann-properties:
+  - P4
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  - replay
+  tags:
+  - wire-protocol
+  - handshake
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - No DELTA_STREAM frames flow before ACK is not received
+  - 'Fails to satisfy: Both peers exchange HELLO simultaneously at session start'
+  - GOSSIP_PING runs on a 30-second cadence after the session is not live
+  - 'Verification check does not pass: Capture wire trace of a fresh session; confirm the five message
+    types appear in the specified order and no operations pr...'
+- id: SYNC-11
+  name: HELLO message and schema-version negotiation
+  source: ch14 §"Five-Step Handshake"
+  source-paper: v13 §6
+  definition: HELLO carries node ID, current schema epoch, public key, signed timestamp, and supported
+    protocol versions; the session proceeds on the highest mutually supported version, and incompatible
+    epochs result in SCHEMA_VERSION_INCOMPATIBLE and session close.
+  must-implement:
+  - HELLO carries node_id, schema_version, public_key, sent_at, signature, supported_versions
+  - Session uses the highest version in the intersection of both peers' supported lists
+  - Incompatible schema epoch closes the session with SCHEMA_VERSION_INCOMPATIBLE; no partial or read-only
+    mode
+  - Application surfaces a schema-update notification when the daemon closes a session on version grounds
+  verification: Connect two daemons with non-overlapping supported_versions; confirm SCHEMA_VERSION_INCOMPATIBLE
+    is sent and the session closes.
+  kleppmann-properties:
+  - P4
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  tags:
+  - wire-protocol
+  - handshake
+  - schema
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - HELLO does not carrie node_id, schema_version, public_key, sent_at, signature, supported_versions
+  - 'Fails to satisfy: Session uses the highest version in the intersection of both peers'' supported
+    lists'
+  - 'Fails to satisfy: Incompatible schema epoch closes the session with SCHEMA_VERSION_INCOMPATIBLE;
+    no partial or read-only mode'
+  - Application does not surface a schema-update notification when the daemon closes a session on version
+    grounds
+  - 'Verification check does not pass: Connect two daemons with non-overlapping supported_versions; confirm
+    SCHEMA_VERSION_INCOMPATIBLE is sent and the session...'
+- id: SYNC-12
+  name: CAPABILITY_NEG with role-attestation tokens
+  source: ch14 §"Five-Step Handshake"
+  source-paper: v13 §6
+  definition: The requesting node declares CRDT streams, CP leases, and bucket subscriptions, with each
+    requested subscription accompanied by a role attestation signed by the node's device key that the
+    receiving node verifies before granting.
+  must-implement:
+  - Each requested subscription carries a device-key-signed role attestation
+  - Receiving daemon verifies attestation signature and validity before grant
+  - Streams without valid attestations are excluded from grants
+  verification: Submit a CAPABILITY_NEG with an expired attestation; confirm the corresponding subscription
+    is rejected with EXPIRED_ATTESTATION.
+  kleppmann-properties:
+  - P4
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - wire-protocol
+  - capabilities
+  - attestation
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Each requested subscription does not carrie a device-key-signed role attestation
+  - Receiving daemon does not verifie attestation signature and validity before grant
+  - Streams without valid attestations are not excluded from grants
+  - 'Verification check does not pass: Submit a CAPABILITY_NEG with an expired attestation; confirm the
+    corresponding subscription is rejected with EXPIRED_ATT...'
+- id: SYNC-13
+  name: ACK with granted_subscriptions and typed rejections
+  source: ch14 §"Five-Step Handshake"
+  source-paper: v13 §6
+  definition: The accepting node responds with granted_subscriptions[] and a rejected[] list using typed
+    reason codes (MISSING_ATTESTATION, EXPIRED_ATTESTATION, INVALID_SIGNATURE), and silently omits streams
+    the requester has no attestation for to prevent stream enumeration.
+  must-implement:
+  - ACK enumerates only granted subscriptions and explicitly rejected ones
+  - Rejection codes are limited to the specified taxonomy
+  - Streams the requester is unaware of are absent from both arrays
+  verification: Request a stream the receiver does not publish to the requester; confirm it appears in
+    neither granted nor rejected arrays.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - wire-protocol
+  - capabilities
+  - enumeration-resistance
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: ACK enumerates only granted subscriptions and explicitly rejected ones'
+  - Rejection codes are not limited to the specified taxonomy
+  - Streams the requester is not unaware of are absent from both arrays
+  - 'Verification check does not pass: Request a stream the receiver does not publish to the requester;
+    confirm it appears in neither granted nor rejected arra...'
+- id: SYNC-14
+  name: DELTA_STREAM continuous CRDT operation flow
+  source: ch14 §"Five-Step Handshake"
+  source-paper: v13 §6
+  definition: After ACK, both nodes emit a continuous append-only stream of compact binary CRDT deltas
+    computed from the difference between sender state and receiver vector clock, with out-of-scope operations
+    dropped at the send tier.
+  must-implement:
+  - Deltas are computed per receiver vector clock
+  - Out-of-scope operations are dropped at the sender, not filtered at the receiver
+  - Receiver applies operations and advances its vector clock
+  verification: Observe wire trace; confirm deltas contain only operations the receiver has not seen and
+    only for granted subscriptions.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - wire-protocol
+  - delta-sync
+  - crdt
+  failed-conditions:
+  - Deltas are not computed per receiver vector clock
+  - Out-of-scope operations are not dropped at the sender, not filtered at the receiver
+  - Receiver does not applie operations and advances its vector clock
+  - 'Verification check does not pass: Observe wire trace; confirm deltas contain only operations the
+    receiver has not seen and only for granted subscriptions.'
+- id: SYNC-15
+  name: GOSSIP_PING for membership and clock summary
+  source: ch14 §"Five-Step Handshake"
+  source-paper: v13 §6
+  definition: Every 30 seconds each node emits GOSSIP_PING carrying its current vector clock summary and
+    known-peer membership list, enabling drift detection, peer discovery via transitive knowledge, and
+    network healing without a central directory.
+  must-implement:
+  - Daemon emits GOSSIP_PING on a 30-second cadence (configurable)
+  - GOSSIP_PING carries vector clock summary and membership entries
+  - Receiving node merges new peers and updated addresses into local membership list
+  verification: Three-node test where C learns of B's new address only via A's GOSSIP_PING transitively
+    forwarding it.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  - clock-skew
+  tags:
+  - wire-protocol
+  - gossip
+  - membership
+  failed-conditions:
+  - Daemon does not emit GOSSIP_PING on a 30-second cadence (configurable)
+  - GOSSIP_PING does not carrie vector clock summary and membership entries
+  - 'Fails to satisfy: Receiving node merges new peers and updated addresses into local membership list'
+  - 'Verification check does not pass: Three-node test where C learns of B''s new address only via A''s
+    GOSSIP_PING transitively forwarding it.'
+- id: SYNC-16
+  name: CBOR canonical wire encoding with length prefix
+  source: ch14 §"Wire Format — Message Field Reference"
+  source-paper: v13 §6
+  definition: All wire messages use CBOR (RFC 8949) canonical encoding, length-prefixed with a 4-byte
+    big-endian frame length, with individual frames capped at 16 MiB and unknown fields ignored for forward
+    compatibility.
+  must-implement:
+  - All frames use CBOR canonical encoding
+  - 4-byte big-endian length precedes each CBOR payload
+  - Frames exceeding 16 MiB are rejected
+  - Unknown fields are ignored on decode
+  verification: Send a frame with an unknown field; confirm receiver accepts the frame and processes the
+    known fields.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - wire-protocol
+  - encoding
+  - cbor
+  failed-conditions:
+  - 'Fails to satisfy: All frames use CBOR canonical encoding'
+  - 'Fails to satisfy: 4-byte big-endian length precedes each CBOR payload'
+  - Frames exceeding 16 MiB are not rejected
+  - Unknown fields are not ignored on decode
+  - 'Verification check does not pass: Send a frame with an unknown field; confirm receiver accepts the
+    frame and processes the known fields.'
+- id: SYNC-17
+  name: Replay-window-bounded signed HELLO
+  source: ch14 §"Wire Format — Message Field Reference"
+  source-paper: v13 §6
+  definition: HELLO is signed with the sender's Ed25519 key over (node_id, schema_version, public_key,
+    sent_at) and accepted only within a ±30-second replay window of receiver clock.
+  must-implement:
+  - HELLO signature is Ed25519 over the specified canonical tuple
+  - Receiver rejects HELLO with sent_at outside ±30-second window
+  - Receiver verifies signature against the embedded public_key
+  verification: Replay a captured HELLO 60 seconds later; confirm receiver rejects it on replay-window
+    grounds.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - replay
+  tags:
+  - wire-protocol
+  - security
+  - replay-protection
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - HELLO signature is not Ed25519 over the specified canonical tuple
+  - Receiver does not reject HELLO with sent_at outside ±30-second window
+  - Receiver does not verifie signature against the embedded public_key
+  - 'Verification check does not pass: Replay a captured HELLO 60 seconds later; confirm receiver rejects
+    it on replay-window grounds.'
+- id: SYNC-18
+  name: Membership list with tier-aware addressing
+  source: ch14 §"Gossip Anti-Entropy"
+  source-paper: v13 §6
+  definition: Each node maintains a membership list recording peer node ID, last-known address per discovery
+    tier, current reachability state (active/suspected/failed), and last-received vector clock per peer.
+  must-implement:
+  - Membership entry stores per-tier last-known address
+  - Entry tracks reachability state in {active, suspected, failed}
+  - Entry tracks last-received vector clock from peer
+  verification: Inspect daemon membership store; confirm presence of all four fields per peer.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - membership
+  - state-management
+  failed-conditions:
+  - Membership entry does not store per-tier last-known address
+  - Entry does not track reachability state in {active, suspected, failed}
+  - Entry does not track last-received vector clock from peer
+  - 'Verification check does not pass: Inspect daemon membership store; confirm presence of all four fields
+    per peer.'
+- id: SYNC-19
+  name: Random-peer-selection gossip anti-entropy
+  source: ch14 §"Gossip Anti-Entropy"
+  source-paper: v13 §6
+  definition: Every 30 seconds each node selects two peers at random from its active membership list and
+    initiates a symmetric delta exchange, ensuring O(log N) propagation and preventing load concentration
+    on high-degree nodes.
+  must-implement:
+  - Daemon selects k random peers (default k=2) per gossip tick
+  - Exchange is symmetric — each side sends operations the other lacks
+  - 30-second default interval is configurable per deployment
+  verification: Run a 10-node simulation; confirm convergence in O(log N) rounds and even per-node send/receive
+    distribution.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - gossip
+  - anti-entropy
+  - convergence
+  failed-conditions:
+  - 'Fails to satisfy: Daemon selects k random peers (default k=2) per gossip tick'
+  - Exchange is not symmetric — each side sends operations the other lacks
+  - 30-second default interval is not configurable per deployment
+  - 'Verification check does not pass: Run a 10-node simulation; confirm convergence in O(log N) rounds
+    and even per-node send/receive distribution.'
+- id: SYNC-20
+  name: Vector-clock-driven delta computation
+  source: ch14 §"Gossip Anti-Entropy"
+  source-paper: v13 §6
+  definition: Each CRDT operation carries a vector clock entry identifying the originating node and logical
+    time, and deltas include all operations causally ahead of the remote peer's last known clock.
+  must-implement:
+  - Operations carry per-node vector clock entries
+  - Receiver advances its vector clock on operation apply
+  - Delta computation includes only operations causally ahead of remote clock
+  verification: Two-peer convergence test under partition heal; confirm byte-identical state after exchange.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - clock-skew
+  tags:
+  - vector-clock
+  - delta-sync
+  - causality
+  failed-conditions:
+  - 'Fails to satisfy: Operations carry per-node vector clock entries'
+  - 'Fails to satisfy: Receiver advances its vector clock on operation apply'
+  - Delta computation does not include only operations causally ahead of remote clock
+  - 'Verification check does not pass: Two-peer convergence test under partition heal; confirm byte-identical
+    state after exchange.'
+- id: SYNC-21
+  name: Send-tier subscription scope enforcement
+  source: ch14 §"Data Minimization at the Stream Level"
+  source-paper: v13 §6
+  definition: The sync daemon enforces subscription scope at the stream level before operations leave
+    the node, ensuring unauthorized data never reaches the receiving device — application-layer filtering
+    is not a substitute.
+  must-implement:
+  - Subscription eligibility is checked on the sender prior to transmission
+  - Out-of-scope operations are not transmitted and not logged
+  - Receiver never receives operations for unauthorized streams or fields
+  verification: Capture wire trace from sender; confirm operations for out-of-scope streams/fields never
+    appear on the wire.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  - data-residency-objection
+  tags:
+  - data-minimization
+  - security
+  - subscription
+  failed-conditions:
+  - Subscription eligibility is not checked on the sender prior to transmission
+  - 'Fails to satisfy: Out-of-scope operations are not transmitted and not logged'
+  - 'Fails to satisfy: Receiver never receives operations for unauthorized streams or fields'
+  - 'Verification check does not pass: Capture wire trace from sender; confirm operations for out-of-scope
+    streams/fields never appear on the wire.'
+- id: SYNC-22
+  name: Field-level scope stripping within streams
+  source: ch14 §"Data Minimization at the Stream Level"
+  source-paper: v13 §6
+  definition: Stream definitions specify the minimum field set required per role, and the daemon strips
+    operations for out-of-scope fields when constructing outbound deltas even within streams the receiver
+    is authorized to receive.
+  must-implement:
+  - Stream definitions encode per-role minimum field sets
+  - Daemon strips out-of-scope-field operations at delta construction
+  - Field-level exclusions are invisible to the receiver
+  verification: Two-role test where Role A receives a stream with field set {x, y} and Role B receives
+    the same stream with {x}; confirm Role B's wire trace contains no operations for field y.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - data-minimization
+  - schema
+  - subscription
+  failed-conditions:
+  - 'Fails to satisfy: Stream definitions encode per-role minimum field sets'
+  - 'Fails to satisfy: Daemon strips out-of-scope-field operations at delta construction'
+  - Field-level exclusions are not invisible to the receiver
+  - 'Verification check does not pass: Two-role test where Role A receives a stream with field set {x,
+    y} and Role B receives the same stream with {x}; confirm...'
+- id: SYNC-23
+  name: Re-eligibility check on reconnect
+  source: ch14 §"Data Minimization at the Stream Level"
+  source-paper: v13 §6
+  definition: When a node reconnects after offline, the daemon re-runs eligibility checks during the handshake
+    before replaying buffered deltas, and excludes streams whose attestations expired during the offline
+    period.
+  must-implement:
+  - Buffered deltas are not replayed before fresh CAPABILITY_NEG completes
+  - Expired-attestation streams are excluded from new session grants
+  - Buffered deltas for excluded streams are dropped, not delivered
+  verification: Expire a node's attestation while offline; reconnect and confirm no buffered deltas for
+    that stream are delivered post-handshake.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - reconnect
+  - security
+  - subscription
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Buffered deltas are not replayed before fresh CAPABILITY_NEG does not complete
+  - Expired-attestation streams are not excluded from new session grants
+  - Buffered deltas for excluded streams are not dropped, not delivered
+  - 'Verification check does not pass: Expire a node''s attestation while offline; reconnect and confirm
+    no buffered deltas for that stream are delivered post-h...'
+- id: SYNC-24
+  name: Distributed quorum lease for CP-class records
+  source: ch14 §"Distributed Lease Coordination"
+  source-paper: v13 §6
+  definition: Before a node writes to a CP-class record it must acquire a distributed lease requiring
+    acknowledgement by ceil(N/2)+1 of the active membership, with a default 30-second lease duration.
+  must-implement:
+  - Daemon requests a lease for every CP-class write
+  - Default quorum is ceil(N/2)+1 of active membership
+  - Default lease duration is 30 seconds
+  verification: Attempt a CP-class write with N=3 and only 1 peer reachable; confirm the write blocks
+    rather than proceeding.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - consensus
+  - lease
+  - cp-class
+  failed-conditions:
+  - 'Fails to satisfy: Daemon requests a lease for every CP-class write'
+  - Default quorum is not ceil(N/2)+1 of active membership
+  - Default lease duration is not 30 seconds
+  - 'Verification check does not pass: Attempt a CP-class write with N=3 and only 1 peer reachable; confirm
+    the write blocks rather than proceeding.'
+- id: SYNC-25
+  name: No-fallback semantics for blocked CP writes
+  source: ch14 §"Distributed Lease Coordination"
+  source-paper: v13 §6
+  definition: When quorum is unreachable, the daemon blocks the CP-class write rather than degrading to
+    a best-effort write, surfacing a definitive failure signal to the application UI.
+  must-implement:
+  - Daemon never silently queues a CP-class write when quorum is unreachable
+  - Application receives an explicit failure signal for blocked writes
+  - UI reflects blocked-write status with a definitive indicator
+  verification: Force a partition; attempt a CP-class write; confirm explicit failure signal reaches the
+    application within the configured timeout.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - consensus
+  - lease
+  - cp-class
+  - failure-mode
+  failed-conditions:
+  - Daemon never silently queues a CP-class write when quorum is not unreachable
+  - 'Fails to satisfy: Application receives an explicit failure signal for blocked writes'
+  - 'Fails to satisfy: UI reflects blocked-write status with a definitive indicator'
+  - 'Verification check does not pass: Force a partition; attempt a CP-class write; confirm explicit failure
+    signal reaches the application within the configur...'
+- id: SYNC-26
+  name: Lease expiry via missed renewal pings
+  source: ch14 §"Distributed Lease Coordination"
+  source-paper: v13 §6
+  definition: Leases expire automatically at the configured duration; a node that goes offline without
+    explicit release loses the lease, and other nodes detect expiry through absence of a renewal GOSSIP_PING.
+  must-implement:
+  - Leases expire on a wall-clock timer at the configured duration
+  - Daemon does not require explicit release for expiry
+  - Other nodes infer expiry from missing renewal GOSSIP_PINGs
+  verification: Acquire a lease, kill the holding daemon mid-write; confirm a different node acquires
+    the lease after expiry without manual intervention.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - consensus
+  - lease
+  - expiry
+  failed-conditions:
+  - 'Fails to satisfy: Leases expire on a wall-clock timer at the configured duration'
+  - 'Fails to satisfy: Daemon does not require explicit release for expiry'
+  - 'Fails to satisfy: Other nodes infer expiry from missing renewal GOSSIP_PINGs'
+  - 'Verification check does not pass: Acquire a lease, kill the holding daemon mid-write; confirm a different
+    node acquires the lease after expiry without man...'
+- id: SYNC-27
+  name: Early lease-conflict surfacing in CAPABILITY_NEG
+  source: ch14 §"Distributed Lease Coordination"
+  source-paper: v13 §6
+  definition: CAPABILITY_NEG carries the cp_leases[] field so peer handshakes immediately surface lease
+    conflicts on shared records rather than deferring detection until the write attempt.
+  must-implement:
+  - CAPABILITY_NEG includes cp_leases[] for all leases the node currently holds
+  - Daemon detects conflicts at handshake time and signals them to the application
+  verification: Two nodes hold conflicting lease intentions; confirm the conflict is reported during handshake,
+    not at first write attempt.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - consensus
+  - lease
+  - handshake
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - CAPABILITY_NEG does not include cp_leases[] for all leases the node currently holds
+  - Daemon does not detect conflicts at handshake time and signals them to the application
+  - 'Verification check does not pass: Two nodes hold conflicting lease intentions; confirm the conflict
+    is reported during handshake, not at first write attem...'
+- id: SYNC-28
+  name: Exponential backoff with jitter on reconnect
+  source: ch14 §"Reconnection Storm Handling"
+  source-paper: v13 §6
+  definition: When a previously unavailable network path becomes reachable, the daemon waits a random
+    interval drawn from an exponential distribution bounded at 60 seconds before initiating handshake,
+    ensuring simultaneously disconnected nodes do not reconnect simultaneously.
+  must-implement:
+  - Backoff formula is min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter_range)
+  - Maximum backoff is 60 seconds (relay-enforced)
+  - A node offline beyond a full gossip cycle uses maximum backoff on first reconnect
+  verification: Simulate 100 nodes reconnecting after a partition heal; confirm reconnection events are
+    spread across the 60-second window.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - reconnect
+  - backoff
+  - flow-control
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Backoff formula is not min(base * 2^attempt, max_seconds) + uniform_jitter(0, jitter_range)
+  - Maximum backoff is not 60 seconds (relay-enforced)
+  - 'Fails to satisfy: A node offline beyond a full gossip cycle uses maximum backoff on first reconnect'
+  - 'Verification check does not pass: Simulate 100 nodes reconnecting after a partition heal; confirm
+    reconnection events are spread across the 60-second wind...'
+- id: SYNC-29
+  name: Relay-enforced per-node delta rate limiting
+  source: ch14 §"Reconnection Storm Handling"
+  source-paper: v13 §6
+  definition: The managed relay enforces a per-node rate limit on delta submissions with a bounded queue
+    that drops the oldest queued submission on overflow, signalling flow control via the next handshake
+    ACK.
+  must-implement:
+  - Relay queues rather than rejects nodes exceeding the rate limit
+  - Queue is bounded; oldest entry is dropped on overflow
+  - Flow-control indication is delivered in the next ACK frame
+  - Receiving node increases backoff interval after flow-control signal
+  verification: Submit deltas faster than the rate limit through the relay; confirm queue behavior and
+    ACK-borne flow-control signal.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - relay
+  - rate-limiting
+  - flow-control
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Relay queues rather than does not reject nodes exceeding the rate limit
+  - Queue is not bounded; oldest entry is dropped on overflow
+  - Flow-control indication is not delivered in the next ACK frame
+  - 'Fails to satisfy: Receiving node increases backoff interval after flow-control signal'
+  - 'Verification check does not pass: Submit deltas faster than the rate limit through the relay; confirm
+    queue behavior and ACK-borne flow-control signal.'
+- id: SYNC-30
+  name: Three-to-five interval failure detection
+  source: ch14 §"Stale Peer Recovery"
+  source-paper: v13 §6
+  definition: A peer that misses three consecutive GOSSIP_PINGs transitions from active to suspected,
+    and after five total missed intervals transitions from suspected to failed and is removed from the
+    active membership list.
+  must-implement:
+  - Three missed GOSSIP_PINGs triggers active-to-suspected transition
+  - Five total missed intervals triggers suspected-to-failed transition
+  - Failed peers are removed from active membership list
+  - Suspected peers continue to receive GOSSIP_PINGs
+  verification: Block GOSSIP_PINGs to one peer; observe state transitions at the 3rd and 5th missed intervals.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  - partition
+  tags:
+  - failure-detection
+  - membership
+  - gossip
+  failed-conditions:
+  - 'Fails to satisfy: Three missed GOSSIP_PINGs triggers active-to-suspected transition'
+  - 'Fails to satisfy: Five total missed intervals triggers suspected-to-failed transition'
+  - Failed peers are not removed from active membership list
+  - 'Fails to satisfy: Suspected peers continue to receive GOSSIP_PINGs'
+  - 'Verification check does not pass: Block GOSSIP_PINGs to one peer; observe state transitions at the
+    3rd and 5th missed intervals.'
+- id: SYNC-31
+  name: Suspected-peer recovery without re-handshake
+  source: ch14 §"Stale Peer Recovery"
+  source-paper: v13 §6
+  definition: A suspected peer that responds to a GOSSIP_PING transitions immediately back to active and
+    resumes delta exchange on the existing session without requiring a fresh handshake.
+  must-implement:
+  - Suspected-to-active transition occurs on first GOSSIP_PING response
+  - Existing session is preserved across suspected interval
+  - No fresh CAPABILITY_NEG is required for recovery
+  verification: Drive a peer to suspected state, then resume responses; confirm session continues without
+    re-handshake and accumulated deltas exchange.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - failure-detection
+  - recovery
+  - session-management
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Suspected-to-active transition occurs on first GOSSIP_PING response'
+  - Existing session is not preserved across suspected interval
+  - No fresh CAPABILITY_NEG is not required for recovery
+  - 'Verification check does not pass: Drive a peer to suspected state, then resume responses; confirm
+    session continues without re-handshake and accumulated d...'
+- id: SYNC-32
+  name: Address-change reconnect on same node ID
+  source: ch14 §"Stale Peer Recovery"
+  source-paper: v13 §6
+  definition: A new peer presenting the same node ID as a previously failed peer is treated as a reconnect,
+    triggering a fresh handshake including full CAPABILITY_NEG and resetting the failure counter.
+  must-implement:
+  - Daemon recognizes returning node IDs and resets failure counter
+  - Address change triggers fresh CAPABILITY_NEG, not stale-session reuse
+  - Membership list updates to the new address
+  verification: Have a node move from Wi-Fi to cellular, presenting the same node ID at a new address;
+    confirm fresh handshake completes and old address is replaced.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - reconnect
+  - mobility
+  - membership
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Daemon recognizes returning node IDs and resets failure counter'
+  - 'Fails to satisfy: Address change triggers fresh CAPABILITY_NEG, not stale-session reuse'
+  - 'Fails to satisfy: Membership list updates to the new address'
+  - 'Verification check does not pass: Have a node move from Wi-Fi to cellular, presenting the same node
+    ID at a new address; confirm fresh handshake completes...'
+- id: SYNC-33
+  name: Transitive address propagation via gossip
+  source: ch14 §"Stale Peer Recovery"
+  source-paper: v13 §6
+  definition: Stale addresses are cleaned through explicit removal at failed-state and through address
+    updates carried in incoming GOSSIP_PING messages, allowing transitive learning of new addresses without
+    direct contact.
+  must-implement:
+  - Address updates in GOSSIP_PING overwrite older entries for the same node ID
+  - Failed-state removal clears stale entries from active list
+  - Node C learns Node B's new address via Node A's gossip
+  verification: Three-node test where A learns of B's new address from C without A having pinged B directly
+    at the new address.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - gossip
+  - membership
+  - propagation
+  failed-conditions:
+  - 'Fails to satisfy: Address updates in GOSSIP_PING overwrite older entries for the same node ID'
+  - 'Fails to satisfy: Failed-state removal clears stale entries from active list'
+  - 'Fails to satisfy: Node C learns Node B''s new address via Node A''s gossip'
+  - 'Verification check does not pass: Three-node test where A learns of B''s new address from C without
+    A having pinged B directly at the new address.'
+- id: SYNC-34
+  name: Sunfish.Kernel.Sync as protocol entry point
+  source: ch14 §"Integration with Sunfish"
+  source-paper: v13 §6
+  definition: The sync daemon's full protocol lifecycle — discovery, handshake, delta computation, gossip,
+    lease coordination, reconnection backoff — is exposed to the application via the Sunfish.Kernel.Sync
+    package, with stream definitions registered there declaring the field-level access rules the daemon
+    enforces.
+  must-implement:
+  - Sunfish.Kernel.Sync namespace exists and exposes the daemon command channel
+  - Stream definitions registered through the package drive daemon enforcement
+  - Application has no code path that re-implements any part of the sync protocol
+  verification: Inspect application code; confirm all sync operations go through Sunfish.Kernel.Sync and
+    stream definitions are the sole source of access rules.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - sunfish
+  - integration
+  - package
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Sunfish.Kernel.Sync namespace does not exist and exposes the daemon command channel
+  - 'Fails to satisfy: Stream definitions registered through the package drive daemon enforcement'
+  - Application has not no code path that re-implements any part of the sync protocol
+  - 'Verification check does not pass: Inspect application code; confirm all sync operations go through
+    Sunfish.Kernel.Sync and stream definitions are the sole...'
+- id: SYNC-35
+  name: Uniform protocol guarantees across all transport tiers
+  source: ch14 §"Protocol Invariants"
+  source-paper: v13 §6
+  definition: The protocol invariants — source-side subscription scope, quorum-required CP writes, handshake-before-data-flow,
+    rate-controlled reconnection — hold uniformly across mDNS, mesh VPN, and managed relay, with no trusted-network
+    mode that relaxes rules for LAN peers.
+  must-implement:
+  - No code path bypasses scope enforcement on LAN peers
+  - No code path bypasses quorum requirement on LAN peers
+  - No code path bypasses handshake on LAN peers
+  - All transport tiers apply identical protocol rules
+  verification: Audit transport-tier branches in daemon code; confirm no per-tier conditional that disables
+    an invariant.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - security
+  - protocol-invariant
+  - defense-in-depth
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: No code path bypasses scope enforcement on LAN peers'
+  - 'Fails to satisfy: No code path bypasses quorum requirement on LAN peers'
+  - 'Fails to satisfy: No code path bypasses handshake on LAN peers'
+  - 'Fails to satisfy: All transport tiers apply identical protocol rules'
+  - 'Verification check does not pass: Audit transport-tier branches in daemon code; confirm no per-tier
+    conditional that disables an invariant.'

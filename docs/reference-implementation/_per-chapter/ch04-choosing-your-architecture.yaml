@@ -1,243 +1,573 @@
 chapter: ch04
-chapter-title: "Choosing Your Architecture"
-source-paper-refs: [v13 §20.2, v13 §20.3, v13 §20.4, v13 §20.5, v13 §20.6, v13 §20.7, v13 §20.8]
+chapter-title: Choosing Your Architecture
+source-paper-refs:
+- v13 §20.2
+- v13 §20.3
+- v13 §20.4
+- v13 §20.5
+- v13 §20.6
+- v13 §20.7
+- v13 §20.8
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: DEC-01
-    name: The One Question (user-owned vs aggregated value)
-    source: 'ch04 §"The One Question That Decides Everything"'
-    source-paper: v13 §20.2
-    definition: The architecture-determining question is whether the primary value of the software comes from the user's own data or from data aggregated across many users.
-    must-implement:
-      - Architecture decision record states the answer to the One Question for the product's primary records
-      - Aggregated-value features are scoped to a separate service layer when present alongside user-owned primary records
-      - Local-node architecture is selected only when primary value is user-owned
-    verification: Architecture decision record names the primary records, identifies their natural owner, and cites the One Question answer as the basis for selecting Zone A, B, or C.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [decision-framework, architecture, philosophy]
-
-  - id: DEC-02
-    name: Mixed-ownership architecture pattern
-    source: 'ch04 §"The One Question That Decides Everything"'
-    source-paper: v13 §20.2
-    definition: A product whose primary records are user-owned but which also exposes aggregated surfaces routes the primary records through the local-node data plane and treats aggregated surfaces as optional read models on a separate service layer.
-    must-implement:
-      - Primary user-owned records live on the local-node data plane
-      - Aggregated surfaces (org dashboards, cross-team reports, benchmarking) are served by a separate service that treats local nodes as the source of truth
-      - Aggregated read models are not authoritative; loss of the aggregation service does not impair access to primary records
-    verification: System diagram shows aggregated surfaces as downstream consumers of node-sourced data; integration test confirms primary records remain readable and writable after the aggregation service is stopped.
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [architecture, hybrid, zone-c, read-models]
-
-  - id: FILT-01
-    name: "Filter 1 — Consistency requirements (hard stop)"
-    source: 'ch04 §"Filter 1: Consistency Requirements (Hard Stop)"'
-    source-paper: v13 §20.3
-    definition: A disqualifying check that rejects local-first architecture when the domain requires atomic cross-user transactions, intolerance for stale data, or millisecond-identical truth across all peers.
-    must-implement:
-      - Architecture review explicitly evaluates whether primary records require atomic cross-user consistency as a moment-to-moment invariant
-      - Domains requiring globally consistent state at settlement (payments processors, exchanges, real-time inventory) are routed to centralized architecture
-      - CP-class subsystems (e.g., the double-entry ledger) are scoped as deliberately specified components, not as the product's core loop
-    verification: Architecture decision record answers all four Filter 1 questions in writing; any "yes" to atomic cross-user transactions, dangerous stale data, or millisecond-identical truth requirements documents the centralized routing for that subsystem.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [decision-framework, consistency, cap, hard-stop, filter]
-
-  - id: FILT-02
-    name: "Filter 2 — Data ownership profile"
-    source: 'ch04 §"Filter 2: Data Ownership Profile"'
-    source-paper: v13 §20.4
-    definition: A check that classifies the natural owner of the primary records by who creates them, who uses them, and who suffers loss when access is severed — distinguishing user-owned, vendor-aggregated, and regulator-custodied profiles.
-    must-implement:
-      - Architecture decision record names the natural owner of each primary record type
-      - Vendor-aggregated-as-product use cases are routed to centralized storage
-      - Regulatory-custodian regimes (HIPAA BAA scope, FINRA 4511 / SEC 17a-4 WORM, ITAR) are identified before architecture selection and route specific retention flows to the required custodian
-      - Mixed-ownership products use Zone C with user-owned primary records and aggregated surfaces on a separate service
-    verification: Architecture decision record cites the data-ownership profile per primary record type; regulator-custodian flows reference the specific regulation (HIPAA, FINRA, ITAR, etc.) and the custodial mechanism used.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition, data-residency-objection]
-    tags: [decision-framework, ownership, compliance, filter]
-
-  - id: FILT-03
-    name: "Filter 3 — Connectivity and operational environment"
-    source: 'ch04 §"Filter 3: Connectivity and Operational Environment"'
-    source-paper: v13 §20.5
-    definition: A check that names the actual deployment environment and routes to local-first when users operate in field, air-gapped, regulated-residency, clinical, or chronically intermittent-connectivity conditions.
-    must-implement:
-      - Architecture decision record names the physical deployment environment of the primary user, not the cloud provider's SLA
-      - Field, air-gapped, MDM-governed, residency-regulated, and chronically-intermittent environments route to local-first as mandatory or strongly preferred
-      - The product treats absence of network as a normal operating mode, not a degraded one — input is accepted and writes are queued without network access
-      - Always-online browser-only zero-install scenarios are the only category routed to traditional SaaS at this filter
-    verification: Architecture decision record names the actual environments; behavioral test confirms the application accepts input and persists writes with no network present, distinguished from a degraded-but-online state.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [vendor-outage, data-residency-objection]
-    tags: [decision-framework, connectivity, offline, residency, filter]
-
-  - id: FILT-04
-    name: "Filter 4 — Business model alignment"
-    source: 'ch04 §"Filter 4: Business Model Alignment"'
-    source-paper: v13 §20.6
-    definition: A check that rejects local-first when revenue depends on controlling user access to their own data, and confirms it when revenue derives from service quality, managed relay, support, tooling, or dual-licensed open-core offerings.
-    must-implement:
-      - Architecture decision record states the revenue model and confirms it does not require gating user access to user-owned data
-      - Revenue paths that depend on data-custody lock-in are explicitly disqualified
-      - Managed relay is specified as replaceable infrastructure, not a data custodian — relay failure degrades sync but never local operation or data access
-      - Dual-licensing patterns (open-source core plus commercial managed offering) are recognized as the strongest alignment for this architecture
-    verification: Business model document names the revenue path; relay-failure test confirms local operation and data access continue unaffected; user data export is supported without vendor mediation.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition, vendor-outage]
-    tags: [decision-framework, business-model, monetization, dual-license, filter]
-
-  - id: FILT-05
-    name: "Filter 5 — Team capability and timeline"
-    source: 'ch04 §"Filter 5: Team Capability and Timeline"'
-    source-paper: v13 §20.7
-    definition: A check that governs when and how to adopt local-first by honestly assessing whether the team has CRDT, distributed-state, multi-version schema, and key-management skills, and whether the timeline accommodates the required investment.
-    must-implement:
-      - Team capability assessment names CRDT debugging, distributed state management, multi-version schema migration, and key management as the four required skills
-      - Timeline budgets 3–6 months for CRDT and sync work and 1–3 months for key management before naming a production date
-      - Sub-3-month timelines route to Zone C (start with traditional SaaS, architect for local-node migration from day one)
-      - Existing hosted products with established users route to Zone C incremental migration, not Zone A greenfield rebuild
-      - Greenfield projects with adequate timeline and capability route to Zone A
-    verification: Project plan documents the four-skill capability assessment, the CRDT/sync and key-management budgets, and the resulting Zone selection; production date is not set before the key-management budget elapses.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: [key-loss, key-compromise, schema-skew]
-    tags: [decision-framework, team, timeline, capability, filter]
-
-  - id: DEC-03
-    name: Zone A — Local-first node outcome
-    source: 'ch04 §"The Three Outcome Zones"'
-    source-paper: v13 §20.8
-    definition: The outcome when all five filters clear and the team has timeline and capability to build the full local-first node from the start, where every user runs a complete local node and the relay is optional infrastructure.
-    must-implement:
-      - Every user runs a complete local node holding authoritative state
-      - The relay is optional infrastructure for peer discovery and backup, not a runtime dependency
-      - The application operates at full fidelity with no server reachable
-      - Domain fit is single-tenant or team-scoped productivity, professional or enterprise users, software whose value exists before any other user joins
-    verification: Integration test confirms the application provides full functionality with no relay reachable; reference implementation is the Anchor accelerator under Sunfish.
-    kleppmann-properties: [P1, P2, P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [zone-a, architecture, anchor, outcome]
-
-  - id: DEC-04
-    name: Zone B — Centralized SaaS outcome (when local-first is wrong)
-    source: 'ch04 §"The Three Outcome Zones"'
-    source-paper: v13 §20.8
-    definition: The outcome when Filter 1 or Filter 2 returns a hard "centralized only" verdict, applying to multi-tenant aggregation as core value, anonymous public access, millisecond global consistency requirements, and pure content delivery.
-    must-implement:
-      - Architecture decision record cites the specific Filter 1 or Filter 2 result that routed the product to centralized
-      - Local-first is not retrofitted onto a domain whose primary value is aggregated state or whose core loop requires CP-class consistency
-      - The architecture serves the domain — building financial trading infrastructure on a local-node architecture is recognized as wrong for the domain
-    verification: Architecture decision record names which filter forced Zone B and identifies the aggregated value or consistency invariant that justifies centralization.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [zone-b, centralized, cap, outcome, anti-pattern-guard]
-
-  - id: DEC-05
-    name: Zone C — Hybrid outcome
-    source: 'ch04 §"The Three Outcome Zones"'
-    source-paper: v13 §20.8
-    definition: The outcome when filters pass for user-scoped primary records but fail for specific coordination features, or when Filter 5 indicates a timeline incompatible with full Zone A investment, where the local node handles user-owned data and a cloud relay handles sync, cross-organization collaboration, payments, and compliance reporting.
-    must-implement:
-      - The local node holds all user-owned data and performs all day-to-day compute
-      - The cloud relay handles sync, cross-organization collaboration, payment-class transactions, and compliance reporting
-      - A traditional web layer handles public-facing surfaces when present
-      - Hybrids are designed with an explicit trajectory toward Zone A; server-side logic is not allowed to accumulate indefinitely
-    verification: Architecture decision record documents which features run on the relay versus the node; reference implementation is the Bridge accelerator under Sunfish; periodic review confirms server-side logic has not re-centralized authoritative state.
-    kleppmann-properties: [P3, P4, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [zone-c, hybrid, bridge, outcome, migration]
-
-  - id: DEC-06
-    name: The Practical Shortcut (three-question prefilter)
-    source: 'ch04 §"The Practical Shortcut"'
-    source-paper: v13 §20.8
-    definition: A three-question prefilter — primary-record ownership, sustained-offline requirement, vendor-outlive requirement — that determines whether a full five-filter evaluation is worth the time for a project in early discovery.
-    must-implement:
-      - Discovery-stage projects answer the three shortcut questions before committing to a full filter evaluation
-      - All-yes answers route to Zone A (Anchor) for greenfield or Zone C (Bridge) for migration
-      - A "no" answer maps to a specific filter for full evaluation (Q1 → Filter 2, Q2 → Zone C tolerance, Q3 → Filter 4)
-      - The shortcut is not a substitute for the full five filters in a production architectural decision
-    verification: Discovery-stage architecture note records the three shortcut answers and either cites the resulting Zone or names the filter requiring full evaluation.
-    kleppmann-properties: [P3, P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition, vendor-outage]
-    tags: [decision-framework, shortcut, discovery]
-
-  - id: DEC-07
-    name: Vendor-outlive requirement
-    source: 'ch04 §"The Practical Shortcut"'
-    source-paper: v13 §20.8
-    definition: The requirement that the product keep working regardless of whether the vendor survives, is acquired, changes pricing, or is directed to stop serving a given jurisdiction — making vendor-independent authoritative data custody a structural, not contractual, property.
-    must-implement:
-      - Authoritative data lives on infrastructure under the user's or customer's control
-      - The application functions without vendor server availability
-      - Data export is not gated by vendor permission or active subscription
-      - Recovery from vendor disappearance does not require vendor cooperation
-    verification: Behavioral test simulates vendor service permanently unavailable; the application continues to function on local data and a documented procedure exists for replacing vendor-provided relay infrastructure without data migration.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [longevity, ownership, vendor-independence, philosophy]
-
-  - id: DEC-08
-    name: Degraded-vs-absent network distinction
-    source: 'ch04 §"Filter 3: Connectivity and Operational Environment"'
-    source-paper: v13 §20.5
-    definition: An operational distinction that treats an application loading stale data and queueing writes as degraded (still working) and an application showing a spinner and refusing input as broken — establishing absence-tolerance, not graceful-degradation, as the local-first acceptance criterion.
-    must-implement:
-      - The application accepts user input with no network present
-      - Writes are persisted locally and queued for sync without blocking the UI
-      - Reads return locally available data without spinners on network absence
-      - Failure to reach the network never produces a refused-input state
-    verification: Behavioral test disables all network interfaces and exercises the application's primary write and read paths; no spinner appears on network absence and no input is refused.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [offline, ux, acceptance-criteria]
-
-  - id: DEC-09
-    name: Four required local-first engineering skills
-    source: 'ch04 §"Filter 5: Team Capability and Timeline"'
-    source-paper: v13 §20.7
-    definition: The four engineering skills that separate local-node development from standard web application development — CRDT debugging, distributed state management, multi-version schema migration, and key management.
-    must-implement:
-      - Team has practitioners who can reason about CRDT type semantics and merge order under uncertainty
-      - Team manages authoritative local state under concurrent local edits, incoming sync deltas, and schema migrations with explicit design
-      - Team applies the expand-contract pattern for schema migrations across a distribution of in-field versions
-      - Team designs and implements key rotation, revocation, and recovery procedures before first production deployment
-    verification: Capability matrix documents named owners for each of the four skills; key compromise recovery procedure exists in writing before the first production deployment date is set.
-    kleppmann-properties: [P4, P5, P6]
-    scope: foundational
-    failure-modes: [key-loss, key-compromise, schema-skew, partition]
-    tags: [team, capability, skills, crdt, schema, keys]
-
-  - id: DEC-10
-    name: Replaceable-relay invariant
-    source: 'ch04 §"Filter 4: Business Model Alignment"'
-    source-paper: v13 §20.6
-    definition: The structural property that the managed relay is replaceable infrastructure rather than a data custodian, such that relay failure degrades sync and cross-organization collaboration but never affects local operation or data access.
-    must-implement:
-      - Relay failure does not affect local operation or data access on any node
-      - A team can replace its relay provider without data migration
-      - The relay holds no authoritative state that is not also held on at least one node
-      - Cross-organization collaboration is the only function that requires a reachable relay
-    verification: Behavioral test stops the relay and confirms full local operation continues; relay-replacement procedure swaps providers without migrating authoritative data.
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [relay, infrastructure, business-model, zone-c]
+- id: DEC-01
+  name: The One Question (user-owned vs aggregated value)
+  source: ch04 §"The One Question That Decides Everything"
+  source-paper: v13 §20.2
+  definition: The architecture-determining question is whether the primary value of the software comes
+    from the user's own data or from data aggregated across many users.
+  must-implement:
+  - Architecture decision record states the answer to the One Question for the product's primary records
+  - Aggregated-value features are scoped to a separate service layer when present alongside user-owned
+    primary records
+  - Local-node architecture is selected only when primary value is user-owned
+  verification: Architecture decision record names the primary records, identifies their natural owner,
+    and cites the One Question answer as the basis for selecting Zone A, B, or C.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - decision-framework
+  - architecture
+  - philosophy
+  failed-conditions:
+  - Architecture decision record states the answer to the One Question for the product's primary does
+    not record
+  - Aggregated-value features are not scoped to a separate service layer when present alongside user-owned
+    primary records
+  - Local-node architecture is not selected only when primary value is user-owned
+  - 'Verification check does not pass: Architecture decision record names the primary records, identifies
+    their natural owner, and cites the One Question answe...'
+- id: DEC-02
+  name: Mixed-ownership architecture pattern
+  source: ch04 §"The One Question That Decides Everything"
+  source-paper: v13 §20.2
+  definition: A product whose primary records are user-owned but which also exposes aggregated surfaces
+    routes the primary records through the local-node data plane and treats aggregated surfaces as optional
+    read models on a separate service layer.
+  must-implement:
+  - Primary user-owned records live on the local-node data plane
+  - Aggregated surfaces (org dashboards, cross-team reports, benchmarking) are served by a separate service
+    that treats local nodes as the source of truth
+  - Aggregated read models are not authoritative; loss of the aggregation service does not impair access
+    to primary records
+  verification: System diagram shows aggregated surfaces as downstream consumers of node-sourced data;
+    integration test confirms primary records remain readable and writable after the aggregation service
+    is stopped.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - architecture
+  - hybrid
+  - zone-c
+  - read-models
+  failed-conditions:
+  - Primary user-owned does not record live on the local-node data plane
+  - Aggregated surfaces (org dashboards, cross-team reports, benchmarking) are not served by a separate
+    service that treats local nodes as the source of truth
+  - Aggregated read models are not authoritative; loss of the aggregation service does not impair access
+    to primary does not record
+  - 'Verification check does not pass: System diagram shows aggregated surfaces as downstream consumers
+    of node-sourced data; integration test confirms primary...'
+- id: FILT-01
+  name: Filter 1 — Consistency requirements (hard stop)
+  source: 'ch04 §"Filter 1: Consistency Requirements (Hard Stop)"'
+  source-paper: v13 §20.3
+  definition: A disqualifying check that rejects local-first architecture when the domain requires atomic
+    cross-user transactions, intolerance for stale data, or millisecond-identical truth across all peers.
+  must-implement:
+  - Architecture review explicitly evaluates whether primary records require atomic cross-user consistency
+    as a moment-to-moment invariant
+  - Domains requiring globally consistent state at settlement (payments processors, exchanges, real-time
+    inventory) are routed to centralized architecture
+  - CP-class subsystems (e.g., the double-entry ledger) are scoped as deliberately specified components,
+    not as the product's core loop
+  verification: Architecture decision record answers all four Filter 1 questions in writing; any "yes"
+    to atomic cross-user transactions, dangerous stale data, or millisecond-identical truth requirements
+    documents the centralized routing for that subsystem.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - decision-framework
+  - consistency
+  - cap
+  - hard-stop
+  - filter
+  failed-conditions:
+  - Architecture review explicitly evaluates whether primary does not record require atomic cross-user
+    consistency as a moment-to-moment invariant
+  - Domains requiring globally consistent state at settlement (payments processors, exchanges, real-time
+    inventory) are not routed to centralized architecture
+  - CP-class subsystems (e.g., the double-entry ledger) are not scoped as deliberately specified components,
+    not as the product's core loop
+  - 'Verification check does not pass: Architecture decision record answers all four Filter 1 questions
+    in writing; any "yes" to atomic cross-user transactions...'
+- id: FILT-02
+  name: Filter 2 — Data ownership profile
+  source: 'ch04 §"Filter 2: Data Ownership Profile"'
+  source-paper: v13 §20.4
+  definition: A check that classifies the natural owner of the primary records by who creates them, who
+    uses them, and who suffers loss when access is severed — distinguishing user-owned, vendor-aggregated,
+    and regulator-custodied profiles.
+  must-implement:
+  - Architecture decision record names the natural owner of each primary record type
+  - Vendor-aggregated-as-product use cases are routed to centralized storage
+  - Regulatory-custodian regimes (HIPAA BAA scope, FINRA 4511 / SEC 17a-4 WORM, ITAR) are identified before
+    architecture selection and route specific retention flows to the required custodian
+  - Mixed-ownership products use Zone C with user-owned primary records and aggregated surfaces on a separate
+    service
+  verification: Architecture decision record cites the data-ownership profile per primary record type;
+    regulator-custodian flows reference the specific regulation (HIPAA, FINRA, ITAR, etc.) and the custodial
+    mechanism used.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - decision-framework
+  - ownership
+  - compliance
+  - filter
+  failed-conditions:
+  - 'Fails to satisfy: Architecture decision record names the natural owner of each primary record type'
+  - Vendor-aggregated-as-product use cases are not routed to centralized storage
+  - Regulatory-custodian regimes (HIPAA BAA scope, FINRA 4511 / SEC 17a-4 WORM, ITAR) are not identified
+    before architecture selection and route specific retention flows to the required custodian
+  - Mixed-ownership products use Zone C with user-owned primary does not record and aggregated surfaces
+    on a separate service
+  - 'Verification check does not pass: Architecture decision record cites the data-ownership profile per
+    primary record type; regulator-custodian flows referen...'
+- id: FILT-03
+  name: Filter 3 — Connectivity and operational environment
+  source: 'ch04 §"Filter 3: Connectivity and Operational Environment"'
+  source-paper: v13 §20.5
+  definition: A check that names the actual deployment environment and routes to local-first when users
+    operate in field, air-gapped, regulated-residency, clinical, or chronically intermittent-connectivity
+    conditions.
+  must-implement:
+  - Architecture decision record names the physical deployment environment of the primary user, not the
+    cloud provider's SLA
+  - Field, air-gapped, MDM-governed, residency-regulated, and chronically-intermittent environments route
+    to local-first as mandatory or strongly preferred
+  - The product treats absence of network as a normal operating mode, not a degraded one — input is accepted
+    and writes are queued without network access
+  - Always-online browser-only zero-install scenarios are the only category routed to traditional SaaS
+    at this filter
+  verification: Architecture decision record names the actual environments; behavioral test confirms the
+    application accepts input and persists writes with no network present, distinguished from a degraded-but-online
+    state.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - data-residency-objection
+  tags:
+  - decision-framework
+  - connectivity
+  - offline
+  - residency
+  - filter
+  failed-conditions:
+  - 'Fails to satisfy: Architecture decision record names the physical deployment environment of the primary
+    user, not the cloud provider''s SLA'
+  - 'Fails to satisfy: Field, air-gapped, MDM-governed, residency-regulated, and chronically-intermittent
+    environments route to local-first as mandatory or strongly preferred'
+  - The product treats absence of network as a normal operating mode, not a degraded one — input is not
+    accepted and writes are queued without network access
+  - Always-online browser-only zero-install scenarios are not the only category routed to traditional
+    SaaS at this filter
+  - 'Verification check does not pass: Architecture decision record names the actual environments; behavioral
+    test confirms the application accepts input and p...'
+- id: FILT-04
+  name: Filter 4 — Business model alignment
+  source: 'ch04 §"Filter 4: Business Model Alignment"'
+  source-paper: v13 §20.6
+  definition: A check that rejects local-first when revenue depends on controlling user access to their
+    own data, and confirms it when revenue derives from service quality, managed relay, support, tooling,
+    or dual-licensed open-core offerings.
+  must-implement:
+  - Architecture decision record states the revenue model and confirms it does not require gating user
+    access to user-owned data
+  - Revenue paths that depend on data-custody lock-in are explicitly disqualified
+  - Managed relay is specified as replaceable infrastructure, not a data custodian — relay failure degrades
+    sync but never local operation or data access
+  - Dual-licensing patterns (open-source core plus commercial managed offering) are recognized as the
+    strongest alignment for this architecture
+  verification: Business model document names the revenue path; relay-failure test confirms local operation
+    and data access continue unaffected; user data export is supported without vendor mediation.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  - vendor-outage
+  tags:
+  - decision-framework
+  - business-model
+  - monetization
+  - dual-license
+  - filter
+  failed-conditions:
+  - 'Fails to satisfy: Architecture decision record states the revenue model and confirms it does not
+    require gating user access to user-owned data'
+  - Revenue paths that depend on data-custody lock-in are not explicitly disqualified
+  - Managed relay is not specified as replaceable infrastructure, not a data custodian — relay failure
+    degrades sync but never local operation or data access
+  - Dual-licensing patterns (open-source core plus commercial managed offering) are not recognized as
+    the strongest alignment for this architecture
+  - 'Verification check does not pass: Business model document names the revenue path; relay-failure test
+    confirms local operation and data access continue una...'
+- id: FILT-05
+  name: Filter 5 — Team capability and timeline
+  source: 'ch04 §"Filter 5: Team Capability and Timeline"'
+  source-paper: v13 §20.7
+  definition: A check that governs when and how to adopt local-first by honestly assessing whether the
+    team has CRDT, distributed-state, multi-version schema, and key-management skills, and whether the
+    timeline accommodates the required investment.
+  must-implement:
+  - Team capability assessment names CRDT debugging, distributed state management, multi-version schema
+    migration, and key management as the four required skills
+  - Timeline budgets 3–6 months for CRDT and sync work and 1–3 months for key management before naming
+    a production date
+  - Sub-3-month timelines route to Zone C (start with traditional SaaS, architect for local-node migration
+    from day one)
+  - Existing hosted products with established users route to Zone C incremental migration, not Zone A
+    greenfield rebuild
+  - Greenfield projects with adequate timeline and capability route to Zone A
+  verification: Project plan documents the four-skill capability assessment, the CRDT/sync and key-management
+    budgets, and the resulting Zone selection; production date is not set before the key-management budget
+    elapses.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes:
+  - key-loss
+  - key-compromise
+  - schema-skew
+  tags:
+  - decision-framework
+  - team
+  - timeline
+  - capability
+  - filter
+  failed-conditions:
+  - 'Fails to satisfy: Team capability assessment names CRDT debugging, distributed state management,
+    multi-version schema migration, and key management as the four required skills'
+  - 'Fails to satisfy: Timeline budgets 3–6 months for CRDT and sync work and 1–3 months for key management
+    before naming a production date'
+  - 'Fails to satisfy: Sub-3-month timelines route to Zone C (start with traditional SaaS, architect for
+    local-node migration from day one)'
+  - 'Fails to satisfy: Existing hosted products with established users route to Zone C incremental migration,
+    not Zone A greenfield rebuild'
+  - 'Fails to satisfy: Greenfield projects with adequate timeline and capability route to Zone A'
+  - 'Verification check does not pass: Project plan documents the four-skill capability assessment, the
+    CRDT/sync and key-management budgets, and the resulting...'
+- id: DEC-03
+  name: Zone A — Local-first node outcome
+  source: ch04 §"The Three Outcome Zones"
+  source-paper: v13 §20.8
+  definition: The outcome when all five filters clear and the team has timeline and capability to build
+    the full local-first node from the start, where every user runs a complete local node and the relay
+    is optional infrastructure.
+  must-implement:
+  - Every user runs a complete local node holding authoritative state
+  - The relay is optional infrastructure for peer discovery and backup, not a runtime dependency
+  - The application operates at full fidelity with no server reachable
+  - Domain fit is single-tenant or team-scoped productivity, professional or enterprise users, software
+    whose value exists before any other user joins
+  verification: Integration test confirms the application provides full functionality with no relay reachable;
+    reference implementation is the Anchor accelerator under Sunfish.
+  kleppmann-properties:
+  - P1
+  - P2
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - zone-a
+  - architecture
+  - anchor
+  - outcome
+  failed-conditions:
+  - 'Fails to satisfy: Every user runs a complete local node holding authoritative state'
+  - The relay is not optional infrastructure for peer discovery and backup, not a runtime dependency
+  - The application does not operate at full fidelity with no server reachable
+  - Domain fit is not single-tenant or team-scoped productivity, professional or enterprise users, software
+    whose value exists before any other user joins
+  - 'Verification check does not pass: Integration test confirms the application provides full functionality
+    with no relay reachable; reference implementation ...'
+- id: DEC-04
+  name: Zone B — Centralized SaaS outcome (when local-first is wrong)
+  source: ch04 §"The Three Outcome Zones"
+  source-paper: v13 §20.8
+  definition: The outcome when Filter 1 or Filter 2 returns a hard "centralized only" verdict, applying
+    to multi-tenant aggregation as core value, anonymous public access, millisecond global consistency
+    requirements, and pure content delivery.
+  must-implement:
+  - Architecture decision record cites the specific Filter 1 or Filter 2 result that routed the product
+    to centralized
+  - Local-first is not retrofitted onto a domain whose primary value is aggregated state or whose core
+    loop requires CP-class consistency
+  - The architecture serves the domain — building financial trading infrastructure on a local-node architecture
+    is recognized as wrong for the domain
+  verification: Architecture decision record names which filter forced Zone B and identifies the aggregated
+    value or consistency invariant that justifies centralization.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - zone-b
+  - centralized
+  - cap
+  - outcome
+  - anti-pattern-guard
+  failed-conditions:
+  - 'Fails to satisfy: Architecture decision record cites the specific Filter 1 or Filter 2 result that
+    routed the product to centralized'
+  - Local-first is not retrofitted onto a domain whose primary value is not aggregated state or whose
+    core loop requires CP-class consistency
+  - The architecture serves the domain — building financial trading infrastructure on a local-node architecture
+    is not recognized as wrong for the domain
+  - 'Verification check does not pass: Architecture decision record names which filter forced Zone B and
+    identifies the aggregated value or consistency invaria...'
+- id: DEC-05
+  name: Zone C — Hybrid outcome
+  source: ch04 §"The Three Outcome Zones"
+  source-paper: v13 §20.8
+  definition: The outcome when filters pass for user-scoped primary records but fail for specific coordination
+    features, or when Filter 5 indicates a timeline incompatible with full Zone A investment, where the
+    local node handles user-owned data and a cloud relay handles sync, cross-organization collaboration,
+    payments, and compliance reporting.
+  must-implement:
+  - The local node holds all user-owned data and performs all day-to-day compute
+  - The cloud relay handles sync, cross-organization collaboration, payment-class transactions, and compliance
+    reporting
+  - A traditional web layer handles public-facing surfaces when present
+  - Hybrids are designed with an explicit trajectory toward Zone A; server-side logic is not allowed to
+    accumulate indefinitely
+  verification: Architecture decision record documents which features run on the relay versus the node;
+    reference implementation is the Bridge accelerator under Sunfish; periodic review confirms server-side
+    logic has not re-centralized authoritative state.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - zone-c
+  - hybrid
+  - bridge
+  - outcome
+  - migration
+  failed-conditions:
+  - 'Fails to satisfy: The local node holds all user-owned data and performs all day-to-day compute'
+  - The cloud relay does not handle sync, cross-organization collaboration, payment-class transactions,
+    and compliance reporting
+  - A traditional web layer does not handle public-facing surfaces when present
+  - Hybrids are not designed with an explicit trajectory toward Zone A; server-side logic is not allowed
+    to accumulate indefinitely
+  - 'Verification check does not pass: Architecture decision record documents which features run on the
+    relay versus the node; reference implementation is the ...'
+- id: DEC-06
+  name: The Practical Shortcut (three-question prefilter)
+  source: ch04 §"The Practical Shortcut"
+  source-paper: v13 §20.8
+  definition: A three-question prefilter — primary-record ownership, sustained-offline requirement, vendor-outlive
+    requirement — that determines whether a full five-filter evaluation is worth the time for a project
+    in early discovery.
+  must-implement:
+  - Discovery-stage projects answer the three shortcut questions before committing to a full filter evaluation
+  - All-yes answers route to Zone A (Anchor) for greenfield or Zone C (Bridge) for migration
+  - A "no" answer maps to a specific filter for full evaluation (Q1 → Filter 2, Q2 → Zone C tolerance,
+    Q3 → Filter 4)
+  - The shortcut is not a substitute for the full five filters in a production architectural decision
+  verification: Discovery-stage architecture note records the three shortcut answers and either cites
+    the resulting Zone or names the filter requiring full evaluation.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  - vendor-outage
+  tags:
+  - decision-framework
+  - shortcut
+  - discovery
+  failed-conditions:
+  - 'Fails to satisfy: Discovery-stage projects answer the three shortcut questions before committing
+    to a full filter evaluation'
+  - 'Fails to satisfy: All-yes answers route to Zone A (Anchor) for greenfield or Zone C (Bridge) for
+    migration'
+  - A "no" answer does not map to a specific filter for full evaluation (Q1 → Filter 2, Q2 → Zone C tolerance,
+    Q3 → Filter 4)
+  - 'Fails to satisfy: The shortcut is not a substitute for the full five filters in a production architectural
+    decision'
+  - 'Verification check does not pass: Discovery-stage architecture note records the three shortcut answers
+    and either cites the resulting Zone or names the fi...'
+- id: DEC-07
+  name: Vendor-outlive requirement
+  source: ch04 §"The Practical Shortcut"
+  source-paper: v13 §20.8
+  definition: The requirement that the product keep working regardless of whether the vendor survives,
+    is acquired, changes pricing, or is directed to stop serving a given jurisdiction — making vendor-independent
+    authoritative data custody a structural, not contractual, property.
+  must-implement:
+  - Authoritative data lives on infrastructure under the user's or customer's control
+  - The application functions without vendor server availability
+  - Data export is not gated by vendor permission or active subscription
+  - Recovery from vendor disappearance does not require vendor cooperation
+  verification: Behavioral test simulates vendor service permanently unavailable; the application continues
+    to function on local data and a documented procedure exists for replacing vendor-provided relay infrastructure
+    without data migration.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - longevity
+  - ownership
+  - vendor-independence
+  - philosophy
+  failed-conditions:
+  - 'Fails to satisfy: Authoritative data lives on infrastructure under the user''s or customer''s control'
+  - 'Fails to satisfy: The application functions without vendor server availability'
+  - 'Fails to satisfy: Data export is not gated by vendor permission or active subscription'
+  - 'Fails to satisfy: Recovery from vendor disappearance does not require vendor cooperation'
+  - 'Verification check does not pass: Behavioral test simulates vendor service permanently unavailable;
+    the application continues to function on local data an...'
+- id: DEC-08
+  name: Degraded-vs-absent network distinction
+  source: 'ch04 §"Filter 3: Connectivity and Operational Environment"'
+  source-paper: v13 §20.5
+  definition: An operational distinction that treats an application loading stale data and queueing writes
+    as degraded (still working) and an application showing a spinner and refusing input as broken — establishing
+    absence-tolerance, not graceful-degradation, as the local-first acceptance criterion.
+  must-implement:
+  - The application accepts user input with no network present
+  - Writes are persisted locally and queued for sync without blocking the UI
+  - Reads return locally available data without spinners on network absence
+  - Failure to reach the network never produces a refused-input state
+  verification: Behavioral test disables all network interfaces and exercises the application's primary
+    write and read paths; no spinner appears on network absence and no input is refused.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - offline
+  - ux
+  - acceptance-criteria
+  failed-conditions:
+  - The application does not accept user input with no network present
+  - Writes are not persisted locally and queued for sync without blocking the UI
+  - 'Fails to satisfy: Reads return locally available data without spinners on network absence'
+  - 'Fails to satisfy: Failure to reach the network never produces a refused-input state'
+  - 'Verification check does not pass: Behavioral test disables all network interfaces and exercises the
+    application''s primary write and read paths; no spinner...'
+- id: DEC-09
+  name: Four required local-first engineering skills
+  source: 'ch04 §"Filter 5: Team Capability and Timeline"'
+  source-paper: v13 §20.7
+  definition: The four engineering skills that separate local-node development from standard web application
+    development — CRDT debugging, distributed state management, multi-version schema migration, and key
+    management.
+  must-implement:
+  - Team has practitioners who can reason about CRDT type semantics and merge order under uncertainty
+  - Team manages authoritative local state under concurrent local edits, incoming sync deltas, and schema
+    migrations with explicit design
+  - Team applies the expand-contract pattern for schema migrations across a distribution of in-field versions
+  - Team designs and implements key rotation, revocation, and recovery procedures before first production
+    deployment
+  verification: Capability matrix documents named owners for each of the four skills; key compromise recovery
+    procedure exists in writing before the first production deployment date is set.
+  kleppmann-properties:
+  - P4
+  - P5
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-loss
+  - key-compromise
+  - schema-skew
+  - partition
+  tags:
+  - team
+  - capability
+  - skills
+  - crdt
+  - schema
+  - keys
+  failed-conditions:
+  - Team has not practitioners who can reason about CRDT type semantics and merge order under uncertainty
+  - 'Fails to satisfy: Team manages authoritative local state under concurrent local edits, incoming sync
+    deltas, and schema migrations with explicit design'
+  - Team does not applie the expand-contract pattern for schema migrations across a distribution of in-field
+    versions
+  - Team designs and does not implement key rotation, revocation, and recovery procedures before first
+    production deployment
+  - 'Verification check does not pass: Capability matrix documents named owners for each of the four skills;
+    key compromise recovery procedure exists in writin...'
+- id: DEC-10
+  name: Replaceable-relay invariant
+  source: 'ch04 §"Filter 4: Business Model Alignment"'
+  source-paper: v13 §20.6
+  definition: The structural property that the managed relay is replaceable infrastructure rather than
+    a data custodian, such that relay failure degrades sync and cross-organization collaboration but never
+    affects local operation or data access.
+  must-implement:
+  - Relay failure does not affect local operation or data access on any node
+  - A team can replace its relay provider without data migration
+  - The relay holds no authoritative state that is not also held on at least one node
+  - Cross-organization collaboration is the only function that requires a reachable relay
+  verification: Behavioral test stops the relay and confirms full local operation continues; relay-replacement
+    procedure swaps providers without migrating authoritative data.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - relay
+  - infrastructure
+  - business-model
+  - zone-c
+  failed-conditions:
+  - 'Fails to satisfy: Relay failure does not affect local operation or data access on any node'
+  - A team cannot replace its relay provider without data migration
+  - 'Fails to satisfy: The relay holds no authoritative state that is not also held on at least one node'
+  - Cross-organization collaboration is not the only function that requires a reachable relay
+  - 'Verification check does not pass: Behavioral test stops the relay and confirms full local operation
+    continues; relay-replacement procedure swaps providers...'

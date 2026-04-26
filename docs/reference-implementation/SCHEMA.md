@@ -1,4 +1,6 @@
-# Concept-Index Schema (v1.0)
+# Concept-Index Schema (v1.1)
+
+> **v1.1 changelog (April 2026):** Added 4 new fields surfaced by app-archetype design discussion + universal-planning rigor review. All fields are **optional** for backward compatibility — concepts without them default to all-roles, no-axis, no-failed-conditions. Tag explicit values where confidently determined.
 
 This document defines the YAML schema for `concept-index.yaml` and the per-chapter extraction files under `_per-chapter/`. Subagents extracting concepts from book chapters MUST follow this schema exactly so the consolidator can merge cleanly.
 
@@ -28,6 +30,13 @@ concepts:
     failure-modes: [partition, key-loss]         # Named failure modes if relevant; [] otherwise
     tags: [crdt, semantic-layer]                 # Free tags for grouping/filtering
     notes: <optional clarification>              # Or omit field
+
+    # v1.1 fields (optional; defaults shown in field guide):
+    security-axis: [confidentiality, authenticity]    # Security property dimension; [] for non-security concepts
+    applies-to-roles: [full-node, full-node-multi-user]  # App archetype roles; [] means "all roles"
+    failed-conditions:                                  # Explicit conditions that mean concept is NOT met
+      - <condition that means concept fails>
+      - <another failing condition>
 ```
 
 ## Field guide
@@ -133,6 +142,69 @@ Free tags for grouping/filtering. Examples: `architecture`, `philosophy`, `crdt`
 ### `notes`
 Optional. Use sparingly — for clarifications that don't fit elsewhere. Omit the field if you don't need it.
 
+### `security-axis` (v1.1, optional)
+Subset of `[confidentiality, authenticity]`. Separates the orthogonal security properties so deployment-side `data-classes` declarations can selectively relax/enforce. Use:
+
+- `[confidentiality]` for encryption-at-rest, encryption-in-transit, zero-knowledge-relay concepts
+- `[authenticity]` for signing, attestation, replay-window, sequence-number, identity concepts
+- `[confidentiality, authenticity]` for handshake / Noise / TLS-style concepts that BOTH encrypt session AND sign messages
+- `[]` (or omit) for non-security concepts (UX, build tooling, compliance manifests, etc.)
+
+A deployment with `data-classes: {weather-readings: {confidentiality: public}}` will treat concepts tagged `security-axis: [confidentiality]` as N/A for that data class — public data doesn't need confidentiality enforcement. Concepts tagged `security-axis: [authenticity]` stay in scope (public data still needs to be unforgeable).
+
+### `applies-to-roles` (v1.1, optional)
+Subset of the role taxonomy: `full-node`, `full-node-multi-user`, `full-node-headless`, `relay`, `thin-client-read`, `thin-client-write`, `legacy-bridge`, `developer-tool`. Defines which app archetype roles need to satisfy this concept.
+
+- **Empty list `[]` or field omitted** = applies to all roles (default; permissive — recommended for most concepts)
+- **Explicit list** = concept applies ONLY to listed roles; other roles mark this concept `not_applicable` with no penalty
+
+Common explicit narrowing:
+- UX-* concepts → `applies-to-roles: [full-node, full-node-multi-user]` (not headless / relay / thin-client / legacy-bridge — no human at the device)
+- Fleet-management concepts → `applies-to-roles: [full-node-headless]` (org-managed unattended devices)
+- Relay-specific concepts (zero-knowledge relay, ciphertext-only) → `applies-to-roles: [relay]`
+- Heavy-compute concepts (CRDT garbage collection, large-snapshot transfer) → may exclude resource-constrained roles like watch-class wearables
+
+When in doubt, leave empty. Tag explicit narrowing only where confidently determined; tighten over time based on real conformance-run feedback.
+
+### `failed-conditions` (v1.1, optional but recommended)
+Explicit list of conditions that mean the concept is NOT met. Surfaced by Stage 1 universal-planning rigor: without this, conformance scoring can't distinguish "passes" from "exists as code but doesn't actually work."
+
+Each entry is a present-tense statement of failure. Examples:
+
+For `ch11:NODE-13 Local event log`:
+```yaml
+failed-conditions:
+  - Event log can be silently truncated by garbage collection
+  - Events written without monotonic ordering
+  - No replay-safety test exists in CI
+  - Application can read past events but cannot rebuild current state from them
+```
+
+For `ch15:KEY-04 Argon2id key derivation`:
+```yaml
+failed-conditions:
+  - Key derivation parameters fall below memory ≥ 64 MiB / iterations ≥ 3
+  - PBKDF2 used instead of Argon2id without explicit migration plan
+  - Salt is fixed across users
+```
+
+Conformance scoring rule: a concept is `complete` when its `must-implement` items are satisfied AND none of its `failed-conditions` are observed. A concept is `partial` if some must-implement items are satisfied but at least one failed-condition is also observed. A concept is `missing` if no must-implement items are satisfied OR multiple critical failed-conditions are observed.
+
+For purely conceptual / philosophical concepts (`must-implement: []`), `failed-conditions` may be empty or omitted — there's nothing to fail against.
+
+### `kill-triggers` (v1.1, optional, primitive-cluster level — NOT per-concept)
+Escalation criteria when conformance regresses across a primitive cluster. Lives in concept-index.yaml metadata at the Volume / primitive cluster level, not in per-concept entries. Surfaced by Stage 0 Check 0.11 (zombie-project anti-pattern defense).
+
+Example for P1 no-spinners primitive cluster:
+```yaml
+kill-triggers:
+  - Conformance regresses below 95% for 3 consecutive sprints
+  - Any user-facing operation crosses 100ms ceiling
+  - Main-thread isolation guarantee violated in CI
+```
+
+Without kill-triggers, a primitive can degrade gradually with no defined escalation point — the zombie-project anti-pattern.
+
 ## Per-chapter extraction guidance
 
 **High-yield chapters** (specification, playbooks, contracts) — expect 15-30 concepts each:
@@ -188,3 +260,9 @@ Before saving the per-chapter YAML, verify:
 - [ ] `scope` is exactly `foundational` or `inverted-stack-specific`
 - [ ] No duplicate concept IDs within the file
 - [ ] YAML parses cleanly (`python -c "import yaml; yaml.safe_load(open('<file>'))"`)
+
+For v1.1 fields (when present):
+- [ ] `security-axis` only contains values from `[confidentiality, authenticity]`
+- [ ] `applies-to-roles` only contains values from the canonical role taxonomy (8 roles in `design-decisions.md` §3.1)
+- [ ] `failed-conditions` items are present-tense statements of failure (not requirements)
+- [ ] `kill-triggers` (if present in metadata) cite measurable thresholds (% conformance, sprint counts, latency ceilings)

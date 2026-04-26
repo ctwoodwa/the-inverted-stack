@@ -1,389 +1,755 @@
 chapter: ch13
 chapter-title: Schema Migration and Evolution
-source-paper-refs: [v13 §7, v13 §8, v13 §15, v13 §19, v5 §3]
+source-paper-refs:
+- v13 §7
+- v13 §8
+- v13 §15
+- v13 §19
+- v5 §3
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: SCH-01
-    name: Multi-version schema skew across nodes
-    source: 'ch13 §"The Problem: Nodes Run Different Versions"'
-    source-paper: v13 §7
-    definition: A team's nodes simultaneously run multiple schema versions because no central authority can force coordinated upgrade and the sync daemon cannot know a peer's schema version until handshake.
-    must-implement:
-      - System tolerates concurrent operation across at least three live schema versions
-      - No write path assumes a single global schema version is in effect
-      - Application correctness does not depend on coordinated upgrade windows
-    verification: Multi-peer test runs three nodes at v1, v2, v3 simultaneously and verifies bidirectional sync produces convergent state for shared record types.
-    kleppmann-properties: [P3, P4, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, migration, foundational]
-
-  - id: SCH-02
-    name: Expand-contract migration pattern
-    source: ch13 §"Expand-Contract Migration"
-    source-paper: v13 §7
-    definition: A schema modification divided into an expand phase (additive, dual-write, both old and new fields present) and a contract phase (removal of old field) separated by a compatibility window.
-    must-implement:
-      - Every breaking schema modification decomposes into an expand phase followed by a contract phase
-      - Expand phase remains active for at least one full major version release cycle
-      - Contract phase is initiated only by explicit operational act, never by timer
-    verification: Migration runbook in source control documents the expand-contract decomposition for each schema change; CI rejects schema changes lacking a registered expand and contract step.
-    kleppmann-properties: [P3, P4, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, migration, expand-contract]
-
-  - id: SCH-03
-    name: Dual-write during expand phase
-    source: ch13 §"The Expand Phase"
-    source-paper: v13 §7
-    definition: During the expand phase, every write path produces records carrying both the old and the new field, so that nodes on either schema version can interpret the record without information loss.
-    must-implement:
-      - All write paths producing a migrated record type write both old and new fields atomically
-      - New-schema reads prefer the new field and fall back to the old field when absent
-      - A code-review invariant prohibits write paths that emit only the new field during expand phase
-    verification: Static analysis or grep-based check enumerates all write sites for the record type and confirms each writes both fields; integration test produces a record on a v2 node and reads it correctly on a v1 peer.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, dual-write, expand-contract]
-
-  - id: SCH-04
-    name: Unknown-field tolerance in CRDT maps
-    source: ch13 §"The Expand Phase"
-    source-paper: v13 §7
-    definition: CRDT map types preserve unknown keys received from peers running newer schemas, storing them rather than rejecting the operation.
-    must-implement:
-      - CRDT map deserialization preserves unknown keys rather than dropping them
-      - Unknown keys are retained on disk and re-emitted to peers on subsequent sync
-      - Domain logic ignores unknown keys without failing
-    verification: Test sends a CRDT map operation containing a field absent from the local schema; node stores the field and re-emits it on subsequent sync to a third peer that recognizes it.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [crdt, schema, forward-compatibility]
-
-  - id: SCH-05
-    name: Compatibility window minimum duration
-    source: ch13 §"The Expand Phase"
-    source-paper: v13 §7
-    definition: The expand phase must remain active long enough that all realistically deployed nodes have had the opportunity to upgrade, governed by the slowest-connecting node in the deployment.
-    must-implement:
-      - Kernel tracks the oldest schema version observed per peer per sync session
-      - Epoch coordinator consults peer-version tracking before initiating contract phase
-      - Compatibility window duration is configurable per deployment intermittency profile
-    verification: Kernel exposes a per-peer oldest-schema-version metric queryable by the epoch coordinator; coordinator refuses to advance epoch if any acknowledged peer is below threshold.
-    kleppmann-properties: [P3, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, expand-contract, observability]
-
-  - id: SCH-06
-    name: Schema version registry
-    source: ch13 §"Dual-Write Safety"
-    source-paper: v13 §7
-    definition: A kernel-level registry of declared schema versions, each carrying its upcasting logic and registered through a versioning interface.
-    must-implement:
-      - Kernel exposes an interface for registering schema versions and their upcasters
-      - Plugins declare each schema version they have ever published to the registry
-      - Startup fails if a registered schema version omits required upcaster wiring
-    verification: Sunfish.Kernel.Runtime exposes an ISchemaVersion interface; startup test confirms a plugin missing an upcaster between two registered versions causes a fatal startup error.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew]
-    tags: [schema, registry, sunfish]
-    notes: ISchemaVersion lives in Sunfish.Kernel.Runtime per the package reference table.
-
-  - id: SCH-07
-    name: Event upcaster as pure read-path transform
-    source: ch13 §"Event Versioning and Upcasters"
-    source-paper: v13 §8
-    definition: A pure function that transforms an event of an older type into the equivalent current-version event, applied on read by the semantic layer before domain logic sees the event.
-    must-implement:
-      - Upcasters are pure functions with no side effects
-      - Semantic layer applies upcasters on read before delivering events to domain logic
-      - The original event in the log is never modified by upcasting
-    verification: Upcaster registry test feeds a stored V1 event to the read path and confirms domain logic receives a V2-shaped event while the on-disk V1 event is unchanged.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [event-sourcing, upcaster, semantic-layer]
-
-  - id: SCH-08
-    name: Additive change classes that skip upcasters
-    source: ch13 §"Event Versioning and Upcasters"
-    source-paper: v13 §8
-    definition: Two classes of schema change require no upcaster — adding a new optional field to an existing event type, and adding a new event variant — because absence is a defined default and unknown variants are quarantined.
-    must-implement:
-      - Optional field absence is treated as the field's declared default
-      - New event variants unknown to a node are quarantined into the circuit breaker queue rather than dropped
-      - Quarantined events are re-evaluated after upgrade
-    verification: Test introduces a new optional field and a new event variant, sends both to an old node, and confirms the optional field is defaulted and the new variant lands in the circuit breaker queue.
-    kleppmann-properties: [P3, P4, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [event-sourcing, additive-evolution, quarantine]
-
-  - id: SCH-09
-    name: New event type for non-additive change
-    source: ch13 §"Event Versioning and Upcasters"
-    source-paper: v13 §8
-    definition: Non-additive changes such as field renames must introduce a new event type alongside the unmodified original, registered with an upcaster that promotes the old type to the new on read.
-    must-implement:
-      - Renames and structural reshuffles produce a new event type, never modify an existing one
-      - The prior event type remains readable from the log indefinitely until compaction retires it
-      - An upcaster bridges every retained prior version to the current shape
-    verification: Audit test enumerates registered event types and confirms no event type's schema definition has been mutated since its first commit; SHA of each event type's definition is pinned.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [event-sourcing, immutability, upcaster]
-
-  - id: SCH-10
-    name: Upcaster chain accumulation problem
-    source: ch13 §"The Accumulation Problem"
-    source-paper: v13 §8
-    definition: Each new schema version adds an upcaster to the chain, producing maintenance and read-path complexity that grows linearly with version history unless explicitly bounded.
-    must-implement:
-      - System tracks total upcaster chain depth per event type
-      - Maintenance documentation captures each upcaster's transformation
-      - Compaction is triggered before chain depth degrades read latency
-    verification: Telemetry exposes per-event-type upcaster chain depth; alert fires when depth exceeds configured threshold.
-    kleppmann-properties: [P1, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [event-sourcing, technical-debt, observability]
-
-  - id: SCH-11
-    name: Mandatory stream compaction
-    source: ch13 §"The Accumulation Problem"
-    source-paper: v13 §8
-    definition: A background copy-transform job that replays the original event stream, applies all current upcasters in sequence, and writes a new compacted stream where every event is in current-version shape.
-    must-implement:
-      - Compaction runs as a low-priority background process that does not block sync
-      - Compaction is checkpointed so an interrupted run resumes rather than restarts
-      - Original stream is archived rather than deleted after compacted stream is verified
-      - Retired upcasters are removed from the active read path after compaction verification
-    verification: Test interrupts a compaction job mid-run and confirms restart resumes from the last checkpoint with byte-identical output to an uninterrupted run.
-    kleppmann-properties: [P1, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [event-sourcing, compaction, archival]
-
-  - id: SCH-12
-    name: Bidirectional schema lens
-    source: ch13 §"Bidirectional Schema Lenses"
-    source-paper: v13 §7
-    definition: A pair of forward and backward transformation functions between two schema versions, where forward and backward must be mutual inverses up to information loss.
-    must-implement:
-      - Each lens registers both forward and backward functions
-      - Bidirectionality is verified at startup against a canonical property-based test fixture
-      - A lens whose round-trip is not identity halts node startup with a diagnostic naming the failing edge
-    verification: Sunfish.Kernel.SchemaRegistry startup runs round-trip tests for each registered lens; injecting a lens with a non-identity round-trip causes startup to fail with the failing edge name in the diagnostic.
-    kleppmann-properties: [P3, P4, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [lens, schema, bidirectionality]
-    notes: Architecture follows Ink and Switch Cambria reference design.
-
-  - id: SCH-13
-    name: Lens application on transmission and receipt
-    source: ch13 §"Bidirectional Schema Lenses"
-    source-paper: v13 §7
-    definition: The sync daemon applies the backward lens before transmitting a delta to an older-schema peer and the forward lens on receipt of a delta from an older-schema peer, so neither node stores data in the wrong version shape.
-    must-implement:
-      - Outbound deltas to older-schema peers pass through the backward lens
-      - Inbound deltas from older-schema peers pass through the forward lens
-      - Local storage always reflects the local node's own schema version
-    verification: Sync test between a v1 and v2 node confirms each node's local store contains records in its own schema version after bidirectional sync.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [sync, lens, schema]
-
-  - id: SCH-14
-    name: Lens version graph and shortest-path composition
-    source: ch13 §"Bidirectional Schema Lenses"
-    source-paper: v13 §7
-    definition: Lenses form a directed graph between schema versions; non-adjacent translations are produced by composing lenses along the shortest path through the graph.
-    must-implement:
-      - Lens registry maintains a graph of version-to-version edges
-      - Sync daemon computes shortest path between peer and local schema versions
-      - Composed lens chains are cached per peer schema version
-    verification: Lens engine exposes a query returning the composition path between any two registered versions; cache hit-rate metric is observable.
-    kleppmann-properties: [P1, P3, P4]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [lens, schema, graph]
-
-  - id: SCH-15
-    name: Missing lens edge suspends sync
-    source: ch13 §"Lens Registration"
-    source-paper: v13 §7
-    definition: When the lens version graph contains no path between a peer's schema version and the local schema version for a given record type, synchronization for that record type is suspended until a lens is installed or the peer upgrades.
-    must-implement:
-      - Sync daemon checks for a lens path during HELLO handshake per record type
-      - Absence of a path suspends only the affected record types, not the entire sync session
-      - Suspension produces a diagnostic identifying the missing edge
-    verification: Test removes a lens edge between v2 and v3, connects a v1 and v3 peer, and confirms only the affected record types are suspended while unaffected types continue to sync.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [sync, lens, capability-negotiation]
-
-  - id: SCH-16
-    name: Schema epoch with minimum supported version
-    source: ch13 §"Schema Epochs and Coordination"
-    source-paper: v13 §7
-    definition: A versioned, gossiped administrative boundary that carries a minimum supported peer version, below which the sync daemon refuses to synchronize the record types governed by the epoch.
-    must-implement:
-      - Epoch announcements propagate through the gossip network as administrative events
-      - Sync daemon enforces minimum supported version for governed record types
-      - Below-minimum peers receive an explicit version-gate error rather than partial data
-    verification: Test announces epoch E+1 with minimum version v3; v2 peer attempting to sync a governed record type receives a version-gate error and does not receive partial data; non-governed types continue to sync.
-    kleppmann-properties: [P4, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, epoch, coordination]
-
-  - id: SCH-17
-    name: Epoch coordinator role
-    source: ch13 §"Epoch Lifecycle"
-    source-paper: v13 §7
-    definition: A statically assigned but transferable team role responsible for announcing epochs, accumulating peer acknowledgments, and committing the epoch when quorum is reached.
-    must-implement:
-      - Coordinator role is statically assigned at team setup, defaulting to the administrator node
-      - Role transfer requires either current-coordinator authorization or quorum of authenticated team members
-      - Coordinator monitors epoch acknowledgment progress and commits only on quorum
-    verification: Test confirms an unauthenticated node cannot assume coordinator role; role transfer event is signed and verifiable.
-    kleppmann-properties: [P4, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [epoch, coordination, governance]
-
-  - id: SCH-18
-    name: Epoch quorum acknowledgment
-    source: ch13 §"Epoch Lifecycle"
-    source-paper: v13 §7
-    definition: An epoch becomes active only when a strict majority of the currently reachable peer set has acknowledged the announcement, matching the CP-class lease quorum from Chapter 12.
-    must-implement:
-      - Coordinator counts acknowledgments from currently reachable peers
-      - Strict majority threshold is required before epoch activation
-      - Offline peers receive the epoch event on reconnect and acknowledge then
-    verification: Test with 5-node team confirms epoch activation requires 3 acknowledgments and not just announcement broadcast; activation is denied below threshold.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [epoch, quorum, coordination]
-
-  - id: SCH-19
-    name: Couch device snapshot recovery
-    source: ch13 §"The Couch Device Problem"
-    source-paper: v13 §15
-    definition: A node returning after an absence so long that the lens graph no longer spans its version recovers by discarding its local event log for affected record types and downloading a current-version snapshot from a reachable peer.
-    must-implement:
-      - Sync handshake detects when peer vector clock predates the GC horizon
-      - Daemon reports a snapshot-required condition rather than attempting incremental sync
-      - Snapshot delivery supports byte-offset resume across interrupted connections
-      - Peer's pre-absence local edits to governed types are quarantined for human review
-    verification: Test simulates a peer offline across two epoch boundaries; on reconnect, daemon reports snapshot-required, snapshot resumes after connection interruption, and offline edits to governed types appear in the circuit breaker queue.
-    kleppmann-properties: [P3, P5]
-    scope: foundational
-    failure-modes: [schema-skew, partition]
-    tags: [snapshot, recovery, intermittent-connectivity]
-
-  - id: SCH-20
-    name: Copy-transform background migration
-    source: ch13 §"Copy-Transform Migration"
-    source-paper: v13 §7
-    definition: An idempotent, checkpointed background job that reads the existing event log for governed record types, applies all registered lenses and upcasters in sequence, and writes the result to a new epoch stream while sync continues uninterrupted.
-    must-implement:
-      - Job is idempotent and resumes from the last checkpointed position after interruption
-      - Job does not block synchronization
-      - New operations written during the job land directly in the new epoch stream
-      - Old epoch stream is preserved in read-only mode until retention window expires
-    verification: Test interrupts the copy-transform job, restarts it, and confirms the resulting new-epoch stream is byte-identical to an uninterrupted run; concurrent writes during the job land in the new stream.
-    kleppmann-properties: [P1, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [migration, copy-transform, idempotency]
-
-  - id: SCH-21
-    name: Eight-step migration runbook with reversibility gate
-    source: ch13 §"The Migration Runbook"
-    source-paper: v13 §7
-    definition: A sequenced operational procedure of eight steps from epoch announcement through copy-transform completion, where every step before the contract phase commit is fully reversible.
-    must-implement:
-      - Each step is observable and produces an audit record
-      - Steps 1 through 6 are reversible without forward-only side effects
-      - Step 7 commit is gated on quorum acknowledgment
-      - Rolling back after step 7 requires issuing a new epoch, not a true revert
-    verification: Runbook test simulates abort at each step 1-6 and confirms full state restoration; abort at step 7 requires forward-recovery via new epoch.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [runbook, operations, migration]
-
-  - id: SCH-22
-    name: Non-migratable change classes
-    source: ch13 §"What Cannot Be Migrated"
-    source-paper: v13 §7
-    definition: Three classes of change cannot be expressed as a bidirectional lens and require introducing a new document type rather than migrating the existing one — field removal with no semantic equivalent, CRDT type change, and field split with no deterministic inverse merge.
-    must-implement:
-      - Schema-change linter rejects field removals lacking a backward lens with no information loss
-      - CRDT type changes are rejected at registration; replacement requires a new field
-      - Field splits with non-deterministic inverse are rejected as migrations and treated as new document types
-    verification: Schema linter test attempts each of the three forbidden change classes against an existing schema and confirms each is rejected with an explanation pointing to the new-document-type alternative.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, lens-limits, document-type]
-
-  - id: SCH-23
-    name: HELLO handshake schema version negotiation
-    source: ch13 §"Lens Registration"
-    source-paper: v13 §7
-    definition: The sync daemon's HELLO handshake exchanges schema versions per record type so each side can determine whether a lens path exists before transmitting any operations.
-    must-implement:
-      - HELLO handshake includes per-record-type schema version
-      - Daemon resolves lens paths before any delta exchange begins
-      - Capability mismatch produces a structured suspension report rather than a connection failure
-    verification: Wire-protocol test confirms HELLO frame carries per-record-type schema version fields; handshake test with mismatched versions produces a structured suspension report.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew]
-    tags: [sync, handshake, capability-negotiation]
-    notes: Wire-format details belong to Ch14 / Appendix A; this concept is the schema-side contract.
-
-  - id: SCH-24
-    name: Local-only archival of retired epoch streams
-    source: ch13 §"Copy-Transform Migration"
-    source-paper: v13 §19
-    definition: Retired epoch streams remain on the node operator's storage and are not replicated to the managed relay by default, so archival retention does not trigger a cross-border data transfer event.
-    must-implement:
-      - Retired epoch streams default to local-only retention
-      - Replication of archived streams to relay requires explicit opt-in
-      - Retention window for archived streams is configurable per jurisdiction
-    verification: Configuration audit confirms archived streams are not enumerated in default replication targets; opt-in requires a signed administrative event.
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [compliance, archival, data-residency]
-
-  - id: SCH-25
-    name: Crypto-shred deletion bridge to right-to-erasure
-    source: ch13 §"Copy-Transform Migration"
-    source-paper: v13 §19
-    definition: The tension between immutable archival history and storage-limitation or erasure-rights regulation is resolved by deleting the per-record DEK rather than rewriting the archive, rendering the historical record cryptographically unreadable.
-    must-implement:
-      - Archived streams are encrypted with per-record or per-document DEKs
-      - Erasure operation deletes the DEK, leaving ciphertext unreadable
-      - Audit log records the DEK-deletion event without revealing plaintext
-    verification: Erasure test confirms post-deletion the archived ciphertext remains on disk but is unrecoverable without the DEK; audit log records the operation.
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [key-loss]
-    tags: [compliance, crypto-shredding, erasure]
-    notes: Implementation detail of the deletion path lives in Ch15.
+- id: SCH-01
+  name: Multi-version schema skew across nodes
+  source: 'ch13 §"The Problem: Nodes Run Different Versions"'
+  source-paper: v13 §7
+  definition: A team's nodes simultaneously run multiple schema versions because no central authority
+    can force coordinated upgrade and the sync daemon cannot know a peer's schema version until handshake.
+  must-implement:
+  - System tolerates concurrent operation across at least three live schema versions
+  - No write path assumes a single global schema version is in effect
+  - Application correctness does not depend on coordinated upgrade windows
+  verification: Multi-peer test runs three nodes at v1, v2, v3 simultaneously and verifies bidirectional
+    sync produces convergent state for shared record types.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - migration
+  - foundational
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - System does not tolerate concurrent operation across at least three live schema versions
+  - No write path assumes a single global schema version is not in effect
+  - 'Fails to satisfy: Application correctness does not depend on coordinated upgrade windows'
+  - 'Verification check does not pass: Multi-peer test runs three nodes at v1, v2, v3 simultaneously and
+    verifies bidirectional sync produces convergent state ...'
+- id: SCH-02
+  name: Expand-contract migration pattern
+  source: ch13 §"Expand-Contract Migration"
+  source-paper: v13 §7
+  definition: A schema modification divided into an expand phase (additive, dual-write, both old and new
+    fields present) and a contract phase (removal of old field) separated by a compatibility window.
+  must-implement:
+  - Every breaking schema modification decomposes into an expand phase followed by a contract phase
+  - Expand phase remains active for at least one full major version release cycle
+  - Contract phase is initiated only by explicit operational act, never by timer
+  verification: Migration runbook in source control documents the expand-contract decomposition for each
+    schema change; CI rejects schema changes lacking a registered expand and contract step.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - migration
+  - expand-contract
+  failed-conditions:
+  - 'Fails to satisfy: Every breaking schema modification decomposes into an expand phase followed by
+    a contract phase'
+  - 'Fails to satisfy: Expand phase remains active for at least one full major version release cycle'
+  - Contract phase is not initiated only by explicit operational act, never by timer
+  - 'Verification check does not pass: Migration runbook in source control documents the expand-contract
+    decomposition for each schema change; CI rejects schem...'
+- id: SCH-03
+  name: Dual-write during expand phase
+  source: ch13 §"The Expand Phase"
+  source-paper: v13 §7
+  definition: During the expand phase, every write path produces records carrying both the old and the
+    new field, so that nodes on either schema version can interpret the record without information loss.
+  must-implement:
+  - All write paths producing a migrated record type write both old and new fields atomically
+  - New-schema reads prefer the new field and fall back to the old field when absent
+  - A code-review invariant prohibits write paths that emit only the new field during expand phase
+  verification: Static analysis or grep-based check enumerates all write sites for the record type and
+    confirms each writes both fields; integration test produces a record on a v2 node and reads it correctly
+    on a v1 peer.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - dual-write
+  - expand-contract
+  failed-conditions:
+  - 'Fails to satisfy: All write paths producing a migrated record type write both old and new fields
+    atomically'
+  - 'Fails to satisfy: New-schema reads prefer the new field and fall back to the old field when absent'
+  - 'Fails to satisfy: A code-review invariant prohibits write paths that emit only the new field during
+    expand phase'
+  - 'Verification check does not pass: Static analysis or grep-based check enumerates all write sites
+    for the record type and confirms each writes both fields;...'
+- id: SCH-04
+  name: Unknown-field tolerance in CRDT maps
+  source: ch13 §"The Expand Phase"
+  source-paper: v13 §7
+  definition: CRDT map types preserve unknown keys received from peers running newer schemas, storing
+    them rather than rejecting the operation.
+  must-implement:
+  - CRDT map deserialization preserves unknown keys rather than dropping them
+  - Unknown keys are retained on disk and re-emitted to peers on subsequent sync
+  - Domain logic ignores unknown keys without failing
+  verification: Test sends a CRDT map operation containing a field absent from the local schema; node
+    stores the field and re-emits it on subsequent sync to a third peer that recognizes it.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - crdt
+  - schema
+  - forward-compatibility
+  failed-conditions:
+  - CRDT map deserialization does not preserve unknown keys rather than dropping them
+  - Unknown keys are not retained on disk and re-emitted to peers on subsequent sync
+  - 'Fails to satisfy: Domain logic ignores unknown keys without failing'
+  - 'Verification check does not pass: Test sends a CRDT map operation containing a field absent from
+    the local schema; node stores the field and re-emits it o...'
+- id: SCH-05
+  name: Compatibility window minimum duration
+  source: ch13 §"The Expand Phase"
+  source-paper: v13 §7
+  definition: The expand phase must remain active long enough that all realistically deployed nodes have
+    had the opportunity to upgrade, governed by the slowest-connecting node in the deployment.
+  must-implement:
+  - Kernel tracks the oldest schema version observed per peer per sync session
+  - Epoch coordinator consults peer-version tracking before initiating contract phase
+  - Compatibility window duration is configurable per deployment intermittency profile
+  verification: Kernel exposes a per-peer oldest-schema-version metric queryable by the epoch coordinator;
+    coordinator refuses to advance epoch if any acknowledged peer is below threshold.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - expand-contract
+  - observability
+  failed-conditions:
+  - Kernel does not track the oldest schema version observed per peer per sync session
+  - 'Fails to satisfy: Epoch coordinator consults peer-version tracking before initiating contract phase'
+  - Compatibility window duration is not configurable per deployment intermittency profile
+  - 'Verification check does not pass: Kernel exposes a per-peer oldest-schema-version metric queryable
+    by the epoch coordinator; coordinator refuses to advanc...'
+- id: SCH-06
+  name: Schema version registry
+  source: ch13 §"Dual-Write Safety"
+  source-paper: v13 §7
+  definition: A kernel-level registry of declared schema versions, each carrying its upcasting logic and
+    registered through a versioning interface.
+  must-implement:
+  - Kernel exposes an interface for registering schema versions and their upcasters
+  - Plugins declare each schema version they have ever published to the registry
+  - Startup fails if a registered schema version omits required upcaster wiring
+  verification: Sunfish.Kernel.Runtime exposes an ISchemaVersion interface; startup test confirms a plugin
+    missing an upcaster between two registered versions causes a fatal startup error.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - registry
+  - sunfish
+  notes: ISchemaVersion lives in Sunfish.Kernel.Runtime per the package reference table.
+  failed-conditions:
+  - Kernel does not expose an interface for registering schema versions and their upcasters
+  - Plugins declare each schema version they have not ever published to the registry
+  - 'Fails to satisfy: Startup fails if a registered schema version omits required upcaster wiring'
+  - 'Verification check does not pass: Sunfish.Kernel.Runtime exposes an ISchemaVersion interface; startup
+    test confirms a plugin missing an upcaster between t...'
+- id: SCH-07
+  name: Event upcaster as pure read-path transform
+  source: ch13 §"Event Versioning and Upcasters"
+  source-paper: v13 §8
+  definition: A pure function that transforms an event of an older type into the equivalent current-version
+    event, applied on read by the semantic layer before domain logic sees the event.
+  must-implement:
+  - Upcasters are pure functions with no side effects
+  - Semantic layer applies upcasters on read before delivering events to domain logic
+  - The original event in the log is never modified by upcasting
+  verification: Upcaster registry test feeds a stored V1 event to the read path and confirms domain logic
+    receives a V2-shaped event while the on-disk V1 event is unchanged.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - event-sourcing
+  - upcaster
+  - semantic-layer
+  failed-conditions:
+  - Upcasters are not pure functions with no side effects
+  - Semantic layer does not applie upcasters on read before delivering events to domain logic
+  - The original event in the log is not never modified by upcasting
+  - 'Verification check does not pass: Upcaster registry test feeds a stored V1 event to the read path
+    and confirms domain logic receives a V2-shaped event whi...'
+- id: SCH-08
+  name: Additive change classes that skip upcasters
+  source: ch13 §"Event Versioning and Upcasters"
+  source-paper: v13 §8
+  definition: Two classes of schema change require no upcaster — adding a new optional field to an existing
+    event type, and adding a new event variant — because absence is a defined default and unknown variants
+    are quarantined.
+  must-implement:
+  - Optional field absence is treated as the field's declared default
+  - New event variants unknown to a node are quarantined into the circuit breaker queue rather than dropped
+  - Quarantined events are re-evaluated after upgrade
+  verification: Test introduces a new optional field and a new event variant, sends both to an old node,
+    and confirms the optional field is defaulted and the new variant lands in the circuit breaker queue.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - event-sourcing
+  - additive-evolution
+  - quarantine
+  failed-conditions:
+  - Optional field absence is not treated as the field's declared default
+  - New event variants unknown to a node are not quarantined into the circuit breaker queue rather than
+    dropped
+  - Quarantined events are not re-evaluated after upgrade
+  - 'Verification check does not pass: Test introduces a new optional field and a new event variant, sends
+    both to an old node, and confirms the optional field...'
+- id: SCH-09
+  name: New event type for non-additive change
+  source: ch13 §"Event Versioning and Upcasters"
+  source-paper: v13 §8
+  definition: Non-additive changes such as field renames must introduce a new event type alongside the
+    unmodified original, registered with an upcaster that promotes the old type to the new on read.
+  must-implement:
+  - Renames and structural reshuffles produce a new event type, never modify an existing one
+  - The prior event type remains readable from the log indefinitely until compaction retires it
+  - An upcaster bridges every retained prior version to the current shape
+  verification: Audit test enumerates registered event types and confirms no event type's schema definition
+    has been mutated since its first commit; SHA of each event type's definition is pinned.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - event-sourcing
+  - immutability
+  - upcaster
+  failed-conditions:
+  - 'Fails to satisfy: Renames and structural reshuffles produce a new event type, never modify an existing
+    one'
+  - 'Fails to satisfy: The prior event type remains readable from the log indefinitely until compaction
+    retires it'
+  - 'Fails to satisfy: An upcaster bridges every retained prior version to the current shape'
+  - 'Verification check does not pass: Audit test enumerates registered event types and confirms no event
+    type''s schema definition has been mutated since its f...'
+- id: SCH-10
+  name: Upcaster chain accumulation problem
+  source: ch13 §"The Accumulation Problem"
+  source-paper: v13 §8
+  definition: Each new schema version adds an upcaster to the chain, producing maintenance and read-path
+    complexity that grows linearly with version history unless explicitly bounded.
+  must-implement:
+  - System tracks total upcaster chain depth per event type
+  - Maintenance documentation captures each upcaster's transformation
+  - Compaction is triggered before chain depth degrades read latency
+  verification: Telemetry exposes per-event-type upcaster chain depth; alert fires when depth exceeds
+    configured threshold.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - event-sourcing
+  - technical-debt
+  - observability
+  failed-conditions:
+  - System does not track total upcaster chain depth per event type
+  - 'Fails to satisfy: Maintenance documentation captures each upcaster''s transformation'
+  - Compaction is not triggered before chain depth degrades read latency
+  - 'Verification check does not pass: Telemetry exposes per-event-type upcaster chain depth; alert fires
+    when depth exceeds configured threshold.'
+- id: SCH-11
+  name: Mandatory stream compaction
+  source: ch13 §"The Accumulation Problem"
+  source-paper: v13 §8
+  definition: A background copy-transform job that replays the original event stream, applies all current
+    upcasters in sequence, and writes a new compacted stream where every event is in current-version shape.
+  must-implement:
+  - Compaction runs as a low-priority background process that does not block sync
+  - Compaction is checkpointed so an interrupted run resumes rather than restarts
+  - Original stream is archived rather than deleted after compacted stream is verified
+  - Retired upcasters are removed from the active read path after compaction verification
+  verification: Test interrupts a compaction job mid-run and confirms restart resumes from the last checkpoint
+    with byte-identical output to an uninterrupted run.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - event-sourcing
+  - compaction
+  - archival
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Compaction runs as a low-priority background process that does not block sync'
+  - Compaction is not checkpointed so an interrupted run resumes rather than restarts
+  - Original stream is not archived rather than deleted after compacted stream is verified
+  - Retired upcasters are not removed from the active read path after compaction verification
+  - 'Verification check does not pass: Test interrupts a compaction job mid-run and confirms restart resumes
+    from the last checkpoint with byte-identical outpu...'
+- id: SCH-12
+  name: Bidirectional schema lens
+  source: ch13 §"Bidirectional Schema Lenses"
+  source-paper: v13 §7
+  definition: A pair of forward and backward transformation functions between two schema versions, where
+    forward and backward must be mutual inverses up to information loss.
+  must-implement:
+  - Each lens registers both forward and backward functions
+  - Bidirectionality is verified at startup against a canonical property-based test fixture
+  - A lens whose round-trip is not identity halts node startup with a diagnostic naming the failing edge
+  verification: Sunfish.Kernel.SchemaRegistry startup runs round-trip tests for each registered lens;
+    injecting a lens with a non-identity round-trip causes startup to fail with the failing edge name
+    in the diagnostic.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - lens
+  - schema
+  - bidirectionality
+  notes: Architecture follows Ink and Switch Cambria reference design.
+  failed-conditions:
+  - 'Fails to satisfy: Each lens registers both forward and backward functions'
+  - Bidirectionality is not verified at startup against a canonical property-based test fixture
+  - 'Fails to satisfy: A lens whose round-trip is not identity halts node startup with a diagnostic naming
+    the failing edge'
+  - 'Verification check does not pass: Sunfish.Kernel.SchemaRegistry startup runs round-trip tests for
+    each registered lens; injecting a lens with a non-identi...'
+- id: SCH-13
+  name: Lens application on transmission and receipt
+  source: ch13 §"Bidirectional Schema Lenses"
+  source-paper: v13 §7
+  definition: The sync daemon applies the backward lens before transmitting a delta to an older-schema
+    peer and the forward lens on receipt of a delta from an older-schema peer, so neither node stores
+    data in the wrong version shape.
+  must-implement:
+  - Outbound deltas to older-schema peers pass through the backward lens
+  - Inbound deltas from older-schema peers pass through the forward lens
+  - Local storage always reflects the local node's own schema version
+  verification: Sync test between a v1 and v2 node confirms each node's local store contains records in
+    its own schema version after bidirectional sync.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - sync
+  - lens
+  - schema
+  failed-conditions:
+  - 'Fails to satisfy: Outbound deltas to older-schema peers pass through the backward lens'
+  - 'Fails to satisfy: Inbound deltas from older-schema peers pass through the forward lens'
+  - 'Fails to satisfy: Local storage always reflects the local node''s own schema version'
+  - 'Verification check does not pass: Sync test between a v1 and v2 node confirms each node''s local
+    store contains records in its own schema version after bid...'
+- id: SCH-14
+  name: Lens version graph and shortest-path composition
+  source: ch13 §"Bidirectional Schema Lenses"
+  source-paper: v13 §7
+  definition: Lenses form a directed graph between schema versions; non-adjacent translations are produced
+    by composing lenses along the shortest path through the graph.
+  must-implement:
+  - Lens registry maintains a graph of version-to-version edges
+  - Sync daemon computes shortest path between peer and local schema versions
+  - Composed lens chains are cached per peer schema version
+  verification: Lens engine exposes a query returning the composition path between any two registered
+    versions; cache hit-rate metric is observable.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - lens
+  - schema
+  - graph
+  failed-conditions:
+  - Lens registry does not maintain a graph of version-to-version edges
+  - 'Fails to satisfy: Sync daemon computes shortest path between peer and local schema versions'
+  - Composed lens chains are not cached per peer schema version
+  - 'Verification check does not pass: Lens engine exposes a query returning the composition path between
+    any two registered versions; cache hit-rate metric is...'
+- id: SCH-15
+  name: Missing lens edge suspends sync
+  source: ch13 §"Lens Registration"
+  source-paper: v13 §7
+  definition: When the lens version graph contains no path between a peer's schema version and the local
+    schema version for a given record type, synchronization for that record type is suspended until a
+    lens is installed or the peer upgrades.
+  must-implement:
+  - Sync daemon checks for a lens path during HELLO handshake per record type
+  - Absence of a path suspends only the affected record types, not the entire sync session
+  - Suspension produces a diagnostic identifying the missing edge
+  verification: Test removes a lens edge between v2 and v3, connects a v1 and v3 peer, and confirms only
+    the affected record types are suspended while unaffected types continue to sync.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - sync
+  - lens
+  - capability-negotiation
+  failed-conditions:
+  - 'Fails to satisfy: Sync daemon checks for a lens path during HELLO handshake per record type'
+  - 'Fails to satisfy: Absence of a path suspends only the affected record types, not the entire sync
+    session'
+  - 'Fails to satisfy: Suspension produces a diagnostic identifying the missing edge'
+  - 'Verification check does not pass: Test removes a lens edge between v2 and v3, connects a v1 and v3
+    peer, and confirms only the affected record types are s...'
+- id: SCH-16
+  name: Schema epoch with minimum supported version
+  source: ch13 §"Schema Epochs and Coordination"
+  source-paper: v13 §7
+  definition: A versioned, gossiped administrative boundary that carries a minimum supported peer version,
+    below which the sync daemon refuses to synchronize the record types governed by the epoch.
+  must-implement:
+  - Epoch announcements propagate through the gossip network as administrative events
+  - Sync daemon enforces minimum supported version for governed record types
+  - Below-minimum peers receive an explicit version-gate error rather than partial data
+  verification: Test announces epoch E+1 with minimum version v3; v2 peer attempting to sync a governed
+    record type receives a version-gate error and does not receive partial data; non-governed types continue
+    to sync.
+  kleppmann-properties:
+  - P4
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - epoch
+  - coordination
+  failed-conditions:
+  - 'Fails to satisfy: Epoch announcements propagate through the gossip network as administrative events'
+  - Sync daemon does not enforce minimum supported version for governed record types
+  - 'Fails to satisfy: Below-minimum peers receive an explicit version-gate error rather than partial
+    data'
+  - 'Verification check does not pass: Test announces epoch E+1 with minimum version v3; v2 peer attempting
+    to sync a governed record type receives a version-g...'
+- id: SCH-17
+  name: Epoch coordinator role
+  source: ch13 §"Epoch Lifecycle"
+  source-paper: v13 §7
+  definition: A statically assigned but transferable team role responsible for announcing epochs, accumulating
+    peer acknowledgments, and committing the epoch when quorum is reached.
+  must-implement:
+  - Coordinator role is statically assigned at team setup, defaulting to the administrator node
+  - Role transfer requires either current-coordinator authorization or quorum of authenticated team members
+  - Coordinator monitors epoch acknowledgment progress and commits only on quorum
+  verification: Test confirms an unauthenticated node cannot assume coordinator role; role transfer event
+    is signed and verifiable.
+  kleppmann-properties:
+  - P4
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - epoch
+  - coordination
+  - governance
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Coordinator role is not statically assigned at team setup, defaulting to the administrator node
+  - Role transfer does not require either current-coordinator authorization or quorum of authenticated
+    team members
+  - Coordinator does not monitor epoch acknowledgment progress and commits only on quorum
+  - 'Verification check does not pass: Test confirms an unauthenticated node cannot assume coordinator
+    role; role transfer event is signed and verifiable.'
+- id: SCH-18
+  name: Epoch quorum acknowledgment
+  source: ch13 §"Epoch Lifecycle"
+  source-paper: v13 §7
+  definition: An epoch becomes active only when a strict majority of the currently reachable peer set
+    has acknowledged the announcement, matching the CP-class lease quorum from Chapter 12.
+  must-implement:
+  - Coordinator counts acknowledgments from currently reachable peers
+  - Strict majority threshold is required before epoch activation
+  - Offline peers receive the epoch event on reconnect and acknowledge then
+  verification: Test with 5-node team confirms epoch activation requires 3 acknowledgments and not just
+    announcement broadcast; activation is denied below threshold.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - epoch
+  - quorum
+  - coordination
+  failed-conditions:
+  - 'Fails to satisfy: Coordinator counts acknowledgments from currently reachable peers'
+  - Strict majority threshold is not required before epoch activation
+  - 'Fails to satisfy: Offline peers receive the epoch event on reconnect and acknowledge then'
+  - 'Verification check does not pass: Test with 5-node team confirms epoch activation requires 3 acknowledgments
+    and not just announcement broadcast; activati...'
+- id: SCH-19
+  name: Couch device snapshot recovery
+  source: ch13 §"The Couch Device Problem"
+  source-paper: v13 §15
+  definition: A node returning after an absence so long that the lens graph no longer spans its version
+    recovers by discarding its local event log for affected record types and downloading a current-version
+    snapshot from a reachable peer.
+  must-implement:
+  - Sync handshake detects when peer vector clock predates the GC horizon
+  - Daemon reports a snapshot-required condition rather than attempting incremental sync
+  - Snapshot delivery supports byte-offset resume across interrupted connections
+  - Peer's pre-absence local edits to governed types are quarantined for human review
+  verification: Test simulates a peer offline across two epoch boundaries; on reconnect, daemon reports
+    snapshot-required, snapshot resumes after connection interruption, and offline edits to governed types
+    appear in the circuit breaker queue.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  - partition
+  tags:
+  - snapshot
+  - recovery
+  - intermittent-connectivity
+  failed-conditions:
+  - Sync handshake does not detect when peer vector clock predates the GC horizon
+  - Daemon does not report a snapshot-required condition rather than attempting incremental sync
+  - Snapshot delivery does not support byte-offset resume across interrupted connections
+  - Peer's pre-absence local edits to governed types are not quarantined for human review
+  - 'Verification check does not pass: Test simulates a peer offline across two epoch boundaries; on reconnect,
+    daemon reports snapshot-required, snapshot resu...'
+- id: SCH-20
+  name: Copy-transform background migration
+  source: ch13 §"Copy-Transform Migration"
+  source-paper: v13 §7
+  definition: An idempotent, checkpointed background job that reads the existing event log for governed
+    record types, applies all registered lenses and upcasters in sequence, and writes the result to a
+    new epoch stream while sync continues uninterrupted.
+  must-implement:
+  - Job is idempotent and resumes from the last checkpointed position after interruption
+  - Job does not block synchronization
+  - New operations written during the job land directly in the new epoch stream
+  - Old epoch stream is preserved in read-only mode until retention window expires
+  verification: Test interrupts the copy-transform job, restarts it, and confirms the resulting new-epoch
+    stream is byte-identical to an uninterrupted run; concurrent writes during the job land in the new
+    stream.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - migration
+  - copy-transform
+  - idempotency
+  failed-conditions:
+  - Job is not idempotent and resumes from the last checkpointed position after interruption
+  - 'Fails to satisfy: Job does not block synchronization'
+  - 'Fails to satisfy: New operations written during the job land directly in the new epoch stream'
+  - Old epoch stream is not preserved in read-only mode until retention window expires
+  - 'Verification check does not pass: Test interrupts the copy-transform job, restarts it, and confirms
+    the resulting new-epoch stream is byte-identical to an...'
+- id: SCH-21
+  name: Eight-step migration runbook with reversibility gate
+  source: ch13 §"The Migration Runbook"
+  source-paper: v13 §7
+  definition: A sequenced operational procedure of eight steps from epoch announcement through copy-transform
+    completion, where every step before the contract phase commit is fully reversible.
+  must-implement:
+  - Each step is observable and produces an audit record
+  - Steps 1 through 6 are reversible without forward-only side effects
+  - Step 7 commit is gated on quorum acknowledgment
+  - Rolling back after step 7 requires issuing a new epoch, not a true revert
+  verification: Runbook test simulates abort at each step 1-6 and confirms full state restoration; abort
+    at step 7 requires forward-recovery via new epoch.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - runbook
+  - operations
+  - migration
+  failed-conditions:
+  - Each step is not observable and produces an audit record
+  - Steps 1 through 6 are not reversible without forward-only side effects
+  - Step 7 commit is not gated on quorum acknowledgment
+  - Rolling back after step 7 does not require issuing a new epoch, not a true revert
+  - 'Verification check does not pass: Runbook test simulates abort at each step 1-6 and confirms full
+    state restoration; abort at step 7 requires forward-reco...'
+- id: SCH-22
+  name: Non-migratable change classes
+  source: ch13 §"What Cannot Be Migrated"
+  source-paper: v13 §7
+  definition: Three classes of change cannot be expressed as a bidirectional lens and require introducing
+    a new document type rather than migrating the existing one — field removal with no semantic equivalent,
+    CRDT type change, and field split with no deterministic inverse merge.
+  must-implement:
+  - Schema-change linter rejects field removals lacking a backward lens with no information loss
+  - CRDT type changes are rejected at registration; replacement requires a new field
+  - Field splits with non-deterministic inverse are rejected as migrations and treated as new document
+    types
+  verification: Schema linter test attempts each of the three forbidden change classes against an existing
+    schema and confirms each is rejected with an explanation pointing to the new-document-type alternative.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - lens-limits
+  - document-type
+  failed-conditions:
+  - Schema-change linter does not reject field removals lacking a backward lens with no information loss
+  - CRDT type changes are not rejected at registration; replacement requires a new field
+  - Field splits with non-deterministic inverse are not rejected as migrations and treated as new document
+    types
+  - 'Verification check does not pass: Schema linter test attempts each of the three forbidden change
+    classes against an existing schema and confirms each is r...'
+- id: SCH-23
+  name: HELLO handshake schema version negotiation
+  source: ch13 §"Lens Registration"
+  source-paper: v13 §7
+  definition: The sync daemon's HELLO handshake exchanges schema versions per record type so each side
+    can determine whether a lens path exists before transmitting any operations.
+  must-implement:
+  - HELLO handshake includes per-record-type schema version
+  - Daemon resolves lens paths before any delta exchange begins
+  - Capability mismatch produces a structured suspension report rather than a connection failure
+  verification: Wire-protocol test confirms HELLO frame carries per-record-type schema version fields;
+    handshake test with mismatched versions produces a structured suspension report.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  tags:
+  - sync
+  - handshake
+  - capability-negotiation
+  notes: Wire-format details belong to Ch14 / Appendix A; this concept is the schema-side contract.
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - HELLO handshake does not include per-record-type schema version
+  - 'Fails to satisfy: Daemon resolves lens paths before any delta exchange begins'
+  - 'Fails to satisfy: Capability mismatch produces a structured suspension report rather than a connection
+    failure'
+  - 'Verification check does not pass: Wire-protocol test confirms HELLO frame carries per-record-type
+    schema version fields; handshake test with mismatched ve...'
+- id: SCH-24
+  name: Local-only archival of retired epoch streams
+  source: ch13 §"Copy-Transform Migration"
+  source-paper: v13 §19
+  definition: Retired epoch streams remain on the node operator's storage and are not replicated to the
+    managed relay by default, so archival retention does not trigger a cross-border data transfer event.
+  must-implement:
+  - Retired epoch streams default to local-only retention
+  - Replication of archived streams to relay requires explicit opt-in
+  - Retention window for archived streams is configurable per jurisdiction
+  verification: Configuration audit confirms archived streams are not enumerated in default replication
+    targets; opt-in requires a signed administrative event.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - compliance
+  - archival
+  - data-residency
+  failed-conditions:
+  - 'Fails to satisfy: Retired epoch streams default to local-only retention'
+  - Replication of archived streams to relay does not require explicit opt-in
+  - Retention window for archived streams is not configurable per jurisdiction
+  - 'Verification check does not pass: Configuration audit confirms archived streams are not enumerated
+    in default replication targets; opt-in requires a signe...'
+- id: SCH-25
+  name: Crypto-shred deletion bridge to right-to-erasure
+  source: ch13 §"Copy-Transform Migration"
+  source-paper: v13 §19
+  definition: The tension between immutable archival history and storage-limitation or erasure-rights
+    regulation is resolved by deleting the per-record DEK rather than rewriting the archive, rendering
+    the historical record cryptographically unreadable.
+  must-implement:
+  - Archived streams are encrypted with per-record or per-document DEKs
+  - Erasure operation deletes the DEK, leaving ciphertext unreadable
+  - Audit log records the DEK-deletion event without revealing plaintext
+  verification: Erasure test confirms post-deletion the archived ciphertext remains on disk but is unrecoverable
+    without the DEK; audit log records the operation.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  tags:
+  - compliance
+  - crypto-shredding
+  - erasure
+  notes: Implementation detail of the deletion path lives in Ch15.
+  failed-conditions:
+  - Archived streams are not encrypted with per-record or per-document DEKs
+  - 'Fails to satisfy: Erasure operation deletes the DEK, leaving ciphertext unreadable'
+  - Audit log does not record the DEK-deletion event without revealing plaintext
+  - 'Verification check does not pass: Erasure test confirms post-deletion the archived ciphertext remains
+    on disk but is unrecoverable without the DEK; audit ...'

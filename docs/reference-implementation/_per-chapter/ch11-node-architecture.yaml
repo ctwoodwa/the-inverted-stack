@@ -1,495 +1,919 @@
 chapter: ch11
 chapter-title: Node Architecture
-source-paper-refs: [v13 §5, v5 §3]
+source-paper-refs:
+- v13 §5
+- v5 §3
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: NODE-01
-    name: Microkernel monolith pattern
-    source: ch11 §"The Microkernel Monolith"
-    source-paper: v13 §5
-    definition: A small stable kernel owns infrastructure concerns while domain plugins implementing well-defined extension-point contracts run in-process within the same monolith.
-    must-implement:
-      - Kernel exposes a fixed set of infrastructure contracts that plugins consume but do not implement
-      - All plugins execute in-process with the kernel with no per-plugin processes or inter-plugin RPC
-      - Domain plugins are versioned and deployed independently of the kernel
-    verification: Sunfish.Kernel.Runtime package exists exposing INodeHost and IPluginRegistry; plugin-to-kernel calls occur via in-process method dispatch with no serialization layer.
-    kleppmann-properties: [P1, P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [architecture, kernel, plugins]
-
-  - id: NODE-02
-    name: Kernel-plugin boundary by change cadence
-    source: ch11 §"The Microkernel Monolith"
-    source-paper: v13 §5
-    definition: Concerns are assigned to the kernel when changes require coordinated updates across all plugins, and to plugins when they encode independently-evolving domain knowledge.
-    must-implement:
-      - Kernel responsibilities cover node lifecycle, sync daemon, CRDT engine abstraction, schema migration, security primitives, partial sync engine, and plugin registry
-      - Plugin responsibilities cover aggregates, commands, events, projections, and UI blocks
-      - No domain-specific knowledge is hard-coded inside the kernel
-    verification: Static analysis of kernel namespaces shows no references to specific domain types (scheduling, ledger, billing, etc.); kernel package set matches the eight named infrastructure concerns.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [architecture, separation-of-concerns]
-
-  - id: NODE-03
-    name: Topological plugin load with version contracts
-    source: ch11 §"The Microkernel Monolith"
-    source-paper: v13 §5
-    definition: The plugin registry loads plugins in topological dependency order, deterministic by plugin ID at equal depth, and rejects cycles or missing dependencies before any load phase executes.
-    must-implement:
-      - Plugin registry computes load order from declared dependencies and rejects cycles at load time
-      - Missing dependencies are rejected before any plugin OnLoad executes
-      - At equal dependency depth, plugins load in deterministic ID-sorted order
-      - Unload reverses the topological load order
-      - Plugin identifiers follow reverse-DNS convention
-    verification: IPluginRegistry implementation rejects a test fixture containing a dependency cycle; integration test confirms reverse-order unload.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [plugins, lifecycle]
-
-  - id: NODE-04
-    name: One-shot plugin load surface
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: The plugin registry rejects a second load call until the prior loaded set has been fully unloaded, preventing partial state from a failed swap from contaminating the running plugin set.
-    must-implement:
-      - IPluginRegistry rejects concurrent or overlapping load operations
-      - A failed load batch leaves the registry in a clean unloaded state, not a partial state
-    verification: Behavioral test attempts a second load before unload completes and observes rejection.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [plugins, lifecycle]
-
-  - id: NODE-05
-    name: Five-state node lifecycle with terminal Faulted
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: INodeHost transitions through Stopped, Starting, Running, Stopping, and Faulted states, with Faulted as a terminal state that does not auto-restart on unrecoverable error.
-    must-implement:
-      - INodeHost exposes the five enumerated lifecycle states
-      - Faulted state is terminal and blocks automated restart
-      - Plugin loads sequence in topological order on start; unloads in reverse on stop
-    verification: INodeHost type defines exactly the five named states; integration test forces a Faulted transition and confirms no auto-restart occurs.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [lifecycle, kernel]
-    notes: Faulted is terminal because automatic restart can mask data integrity problems requiring operator diagnosis.
-
-  - id: NODE-06
-    name: Three-tier peer discovery
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Peer discovery operates across mDNS for LAN-local zero-configuration discovery, a WireGuard mesh VPN for cross-segment intra-organization discovery, and a managed relay for cross-organization or relay-assisted connectivity.
-    must-implement:
-      - Sync layer attempts mDNS discovery first with no infrastructure dependency
-      - WireGuard mesh discovery is supported as a second tier
-      - Managed relay is used only when direct paths are unavailable
-      - Same-LAN nodes sync without contacting the relay
-    verification: Behavioral test on isolated LAN demonstrates peer discovery and sync with no relay reachable.
-    kleppmann-properties: [P3, P7]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [sync, discovery, networking]
-
-  - id: NODE-07
-    name: ICrdtEngine abstraction
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Sunfish.Kernel.Crdt exposes ICrdtEngine as the single contract for creating and opening CRDT documents, allowing engine swaps without changes to kernel or plugin code.
-    must-implement:
-      - ICrdtEngine interface exists in Sunfish.Kernel.Crdt with engine name and version metadata
-      - All CRDT-using code depends on ICrdtEngine, not on a specific backend type
-      - At least one production-grade backend (YDotNet) and one test backend (StubCrdtEngine) implement the contract
-      - Test-only backends are clearly marked not for production
-    verification: Sunfish.Kernel.Crdt namespace exposes ICrdtEngine; backend implementations satisfy the interface; StubCrdtEngine carries explicit DO NOT SHIP marker.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: []
-    tags: [crdt, abstraction]
-    notes: Overlaps with Ch12 CRDT engine and data layer specification.
-
-  - id: NODE-08
-    name: Schema registry with upcaster chain
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Sunfish.Kernel.SchemaRegistry maintains event schema versions and pure-function upcasters, coordinates schema epochs across peers, and enables nodes at different plugin versions to interoperate.
-    must-implement:
-      - Schema registry stores upcasters keyed by source and target version
-      - Upcasters are pure functions with no I/O or side effects
-      - Inbound events from peers at older versions are lifted through the chain to current version
-      - Schema epochs are coordinated across the peer set
-      - Stream compaction removes superseded event versions
-    verification: ISchemaVersion contract surface present; integration test sends an N-1 schema event and observes correct upcasting through the chain.
-    kleppmann-properties: [P4, P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, migration]
-    notes: Overlaps with Ch13 schema migration.
-
-  - id: NODE-09
-    name: Capability-gated bucket subscription
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Sunfish.Kernel.Buckets evaluates sync-bucket eligibility against attestation bundles received during peer handshake, refusing non-attested peers before any bucket data is transferred.
-    must-implement:
-      - Buckets are declaratively named subsets of the team dataset, each gated on a required role attestation
-      - Attestation evaluation occurs during handshake, before data transfer
-      - Non-attested peers are refused subscriptions, not merely filtered after delivery
-    verification: Integration test confirms a peer lacking the required attestation receives zero events from the protected bucket on the wire.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [security, sync, partial-sync]
-
-  - id: NODE-10
-    name: Send-side subscription filtering invariant
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Bucket eligibility filtering occurs at the send tier before events leave the originating daemon, never at the receive tier where the data has already traveled.
-    must-implement:
-      - Originating daemon evaluates each outbound event against the receiving peer's attestation bundle and skips disallowed events
-      - No code path delivers a protected event to a peer and then filters at the receiver
-    verification: Wire-trace test on a protected bucket confirms zero packets containing protected events leave the originator toward an unauthorized peer.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [security, data-minimization]
-    notes: Council review identified as a non-negotiable.
-
-  - id: NODE-11
-    name: Flease distributed lease coordinator for CP records
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Sunfish.Kernel.Lease implements a Flease-inspired distributed lease coordinator that requires strict-majority quorum acknowledgment before a CP-class record write proceeds.
-    must-implement:
-      - CP-class writes acquire a lease granted by strict majority of the configured peer set
-      - Lease tokens are epoch-stamped to detect partition-time conflicts
-      - On partition heal, the lower-epoch lease is superseded and its pending write surfaces as a lease conflict, never as silent overwrite
-      - A node unable to reach quorum blocks the CP-class write and surfaces a staleness indicator instead of proceeding
-    verification: "Multi-node partition test: induce asymmetric partition, attempt concurrent CP writes, confirm exactly one succeeds and the other surfaces a lease conflict on heal."
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [consensus, lease, cp-class]
-    notes: Overlaps with Ch14 sync daemon partition recovery protocol.
-
-  - id: NODE-12
-    name: Three-tier CRDT resolution model
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: "The kernel routes writes to one of three coordinators based on tier classification: ICrdtEngine for AP-class records with deterministic merge, Flease coordinator for CP-class records requiring linearizable writes, and an append-only ledger engine for records not subject to merge."
-    must-implement:
-      - Each ILocalNodePlugin declares record-type tier assignments in its manifest
-      - Tier classification is validated at plugin load time
-      - Plugins cannot mutate tier classification at runtime
-      - Kernel routes each write to the coordinator matching the declared tier
-    verification: Plugin manifest schema enforces tier declaration; load-time test rejects manifests missing tier classifications; behavioral test confirms a CP-declared record never bypasses the lease coordinator.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [crdt, consistency, tier]
-
-  - id: NODE-13
-    name: Append-only durable event log
-    source: ch11 §"Kernel Responsibilities"
-    source-paper: v13 §5
-    definition: Sunfish.Kernel.EventBus exposes IEventBus for in-process publication and IEventLog for durable append-only persistence, with the event log as the authoritative record from which projections are rebuilt.
-    must-implement:
-      - IEventLog persists events durably in append-only fashion
-      - Read-model projections are derived from the event log and may be discarded and rebuilt
-      - Both file-backed (production) and in-memory (test) implementations ship with the package
-    verification: Sunfish.Kernel.EventBus exposes both IEventBus and IEventLog; durability test confirms event survival across process restart.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [event-sourcing, durability]
-    notes: Overlaps with Ch16 durability.
-
-  - id: NODE-14
-    name: ILocalNodePlugin contract
-    source: ch11 §"Plugin Contracts"
-    source-paper: v13 §5
-    definition: Every domain plugin implements ILocalNodePlugin and registers stream definitions, projections, schema versions, and UI block manifests via the IPluginContext surface during the load phase.
-    must-implement:
-      - ILocalNodePlugin exposes Id, Version, Dependencies, OnLoadAsync, OnUnloadAsync
-      - IPluginContext exposes registration methods for streams, projections, schema versions, and UI blocks
-      - IPluginContext.Services exposes the host DI container for resolving kernel-registered services
-    verification: Sunfish.Kernel.Runtime exposes ILocalNodePlugin and IPluginContext; reference plugin demonstrates registration of all four extension-point types.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [plugins, contracts]
-
-  - id: NODE-15
-    name: IStreamDefinition contract
-    source: ch11 §"Plugin Contracts"
-    source-paper: v13 §5
-    definition: IStreamDefinition declares a CRDT stream contributed by a plugin, carrying a stable stream identifier, schema version, emitted event type names, and the sync-bucket IDs the stream contributes to.
-    must-implement:
-      - Each stream definition declares stable stream ID, schema version, event type names, and bucket contributions
-      - Empty bucket contributions render the stream local-only with no peer propagation
-    verification: IStreamDefinition interface present; reference stream with empty bucket list demonstrates no gossip-layer propagation.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [streams, plugins]
-
-  - id: NODE-16
-    name: IProjectionBuilder contract with idempotent rebuild
-    source: ch11 §"Plugin Contracts"
-    source-paper: v13 §5
-    definition: IProjectionBuilder registers a derived read-model projection that reads from a source stream, holds no authoritative state, and exposes an idempotent rebuild safe to call repeatedly during schema migration and CRDT compaction.
-    must-implement:
-      - Each projection declares stable projection ID and source stream ID
-      - Projections hold no authoritative state and may be discarded by the kernel
-      - Rebuild method is idempotent and safe under repeated invocation
-    verification: Test invokes projection rebuild twice consecutively and observes byte-identical resulting state.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [projections, cqrs]
-
-  - id: NODE-17
-    name: ISchemaVersion contract with pure upcasters
-    source: ch11 §"Plugin Contracts"
-    source-paper: v13 §5
-    definition: ISchemaVersion declares the event types a plugin produces and provides a pure-function upcaster that lifts older event payloads to the current in-memory shape.
-    must-implement:
-      - Each ISchemaVersion declares event type, current canonical version, and accepted older versions
-      - Upcasters are pure functions with no side effects and no I/O
-      - Kernel chains upcasters incrementally from inbound version to current
-    verification: Test passes an N-2 event payload through the upcaster chain and observes deterministic lift to current shape.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema, plugins]
-
-  - id: NODE-18
-    name: IUiBlockManifest with attestation-gated visibility
-    source: ch11 §"Plugin Contracts"
-    source-paper: v13 §5
-    definition: IUiBlockManifest registers a UI block with stable identifier, display name, category, source stream IDs, and required role attestations, suppressing the block when the current user lacks the attestations required for its underlying streams.
-    must-implement:
-      - Each manifest declares block ID, display name, category, source stream IDs, and required role attestations
-      - Kernel UI layer suppresses blocks whose required attestations the current user lacks
-      - Suppressed blocks do not appear in the block picker
-      - Manifest declares accessibility metadata: roles exposed, live-region policy, keyboard shortcut surface
-    verification: Behavioral test loads a manifest requiring attestation A; user without A observes the block absent from both rendered surface and block picker.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ui, security, attestation]
-
-  - id: NODE-19
-    name: SyncState alignment invariant
-    source: 'ch11 §"The UI Kernel: Four-Tier Layering"'
-    source-paper: v13 §5
-    definition: Every infrastructure state visible to the data layer has a corresponding component-level visual state in the UI layer, structurally enforced through the SyncState enumeration with values Healthy, Stale, Offline, ConflictPending, and Quarantine.
-    must-implement:
-      - SyncState enumeration exposes exactly the five named values
-      - No UI tier introduces a UI state that does not correspond to a SyncState value
-      - UI cannot present data as current when the kernel reports Stale, ConflictPending, or Quarantine
-      - Resolvable conflicts are not hidden from users with authority to act on them
-    verification: Static check confirms only the five SyncState values; behavioral test forces ConflictPending in the kernel and observes UI surface reflects it within one render cycle.
-    kleppmann-properties: [P1, P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ui, sync-state]
-
-  - id: NODE-20
-    name: Four-tier UI layering
-    source: 'ch11 §"The UI Kernel: Four-Tier Layering"'
-    source-paper: v13 §5
-    definition: The UI kernel is organized as Foundation (design tokens and base contracts), Framework-Agnostic Contracts (renderer and provider interfaces), Adapters and Blocks (Blazor and React implementations plus domain blocks), and Compatibility Layer (third-party-API-shape wrappers).
-    must-implement:
-      - Sunfish.Foundation owns design tokens and base type hierarchy
-      - Sunfish.UICore owns ISunfishRenderer, ISunfishCssProvider, ISunfishIconProvider, SunfishWidgetDescriptor without UI-framework dependencies
-      - Sunfish.UIAdapters.Blazor and @sunfish/ui-adapters-react implement Tier 2 contracts
-      - Sunfish.Compat.* packages provide source-shape parity with third-party libraries via Tier 2 contracts
-    verification: Sunfish.UICore package has no Blazor or React dependencies; assembly inspection confirms the four layered packages exist with the correct dependency direction.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ui, architecture, layering]
-
-  - id: NODE-21
-    name: Accessibility as Tier 1 contract
-    source: 'ch11 §"The UI Kernel: Four-Tier Layering"'
-    source-paper: v13 §5
-    definition: Accessibility is enforced at the foundation tier rather than as a Tier 3 polish, requiring sync-state components to communicate state through more than color and to pair every icon with a text equivalent.
-    must-implement:
-      - Sync-state components expose role="status", aria-live="polite", and text labels alongside iconography
-      - ISunfishIconProvider implementations pair every icon with a text equivalent
-      - IUiBlockManifest declares accessibility metadata per block
-    verification: Accessibility audit on reference blocks confirms WCAG-compatible role/aria attributes and text-with-icon pairing.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [ui, accessibility]
-    notes: Local-first architecture preserves AT user data access during connectivity loss; full AT treatment in Ch20.
-
-  - id: NODE-22
-    name: Sync daemon as separate long-running process
-    source: ch11 §"Process Boundaries and IPC"
-    source-paper: v13 §5
-    definition: The sync daemon runs as a separate long-running process from the host (MAUI or Blazor shell) so that in-flight gossip rounds, peer connections, peer membership, and the CRDT document store survive host restarts and process cycling.
-    must-implement:
-      - Sync daemon is deployed as an OS-level process distinct from the application host
-      - Daemon owns the connection pool, peer membership list, and CRDT document store
-      - Daemon survives host process termination and restart
-      - Buffered writes reach the durable event log before acknowledgment
-    verification: Behavioral test kills the host process mid-round and confirms daemon continues gossip; restart of host reconnects to the running daemon without state loss.
-    kleppmann-properties: [P3, P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [process, daemon, ipc]
-    notes: Overlaps with Ch14 sync daemon specification.
-
-  - id: NODE-23
-    name: Circuit-breaker quarantine queue
-    source: ch11 §"Process Boundaries and IPC"
-    source-paper: v13 §5
-    definition: A queue inside Sunfish.Kernel.Sync buffers inbound and outbound operations through interruptions and holds unverified writes pending re-attestation on the next clean daemon start.
-    must-implement:
-      - Inbound and outbound operations are buffered through host or network interruption
-      - Unverified writes are held pending re-attestation rather than applied speculatively
-      - Buffered state survives abrupt power loss and resumes on clean daemon start
-    verification: Simulated power-loss test confirms buffered ops resume after restart with no double-apply.
-    kleppmann-properties: [P3, P5]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [resilience, quarantine, queue]
-
-  - id: NODE-24
-    name: Length-prefixed CBOR IPC channel
-    source: ch11 §"Process Boundaries and IPC"
-    source-paper: v13 §5
-    definition: The host-to-daemon channel uses Unix domain sockets on POSIX and named pipes on Windows, framed as CBOR payloads preceded by a 4-byte big-endian length prefix with frames capped at 16 MiB.
-    must-implement:
-      - POSIX implementation uses UnixDomainSocketEndPoint with file-permission confinement
-      - Windows implementation uses named pipes with OS-level access controls
-      - Every message is a CBOR payload prefixed by a 4-byte big-endian length
-      - Frames exceeding 16 MiB are rejected; chunking is done at the application layer
-      - All IPC messages use CBOR per RFC 8949 with canonical mode for signed messages
-    verification: Wire-format test inspects an IPC frame and confirms the prefix-then-CBOR layout; oversize-frame test confirms rejection.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ipc, cbor, wire-format]
-
-  - id: NODE-25
-    name: Authenticated five-phase IPC handshake
-    source: ch11 §"Process Boundaries and IPC"
-    source-paper: v13 §5
-    definition: The daemon enforces a five-phase handshake (HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM, GOSSIP_PING) against every connecting host process, with HELLO carrying an Ed25519 signature over a canonical CBOR array and a +/-30-second replay-protection window.
-    must-implement:
-      - Daemon enforces the five named handshake phases on every connection
-      - HELLO message is signed Ed25519 over canonical CBOR array of [node_id, schema_version, public_key, sent_at]
-      - Daemon verifies HELLO signature against claimed public key and rejects mismatches
-      - Daemon rejects HELLO whose sent_at falls outside +/-30 seconds
-      - Same attestation verification applies to local IPC as to peer-to-peer; no bypass path exists
-    verification: Replay test resends a captured HELLO outside the 30-second window and observes rejection; tampered-signature test observes rejection.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: [replay]
-    tags: [security, ipc, handshake]
-
-  - id: NODE-26
-    name: Push-based daemon-to-host change notifications
-    source: ch11 §"Process Boundaries and IPC"
-    source-paper: v13 §5
-    definition: After capability negotiation, the daemon pushes change notifications to the host as CRDT deltas arrive from peers and the host does not poll, while command traffic flows host-to-daemon as user-intent operations the daemon translates into CRDT mutations.
-    must-implement:
-      - Host receives change notifications via push, not polling
-      - Host sends create/update/delete commands describing user intent
-      - Daemon translates commands into CRDT mutations compatible with concurrent edits
-      - Daemon validates commands against the CRDT document store before applying and gossiping
-    verification: Behavioral test confirms zero polling traffic on idle channel; command-to-mutation translation test demonstrates conflict-free composition with concurrent peer edits.
-    kleppmann-properties: [P1, P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ipc, crdt, command]
-
-  - id: NODE-27
-    name: Ciphertext-only managed relay
-    source: ch11 §"Process Boundaries and IPC"
-    source-paper: v13 §5
-    definition: The managed relay observes and routes ciphertext only, holds no decryption keys, and is required only when nodes on different networks lack a direct IP path.
-    must-implement:
-      - Relay never holds decryption keys
-      - Relay never gains access to plaintext payload content
-      - Same-LAN nodes sync without relay involvement
-      - Cross-network nodes queue CRDT deltas during relay outage and catch up automatically on recovery
-    verification: "Inspect relay process: confirm no key material is provisioned; wire-trace at relay confirms only ciphertext frames pass through."
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, data-residency-objection]
-    tags: [relay, security, networking]
-
-  - id: NODE-28
-    name: Strict layered package dependency direction
-    source: ch11 §"Sunfish Package Map"
-    source-paper: v13 §5
-    definition: Sunfish package dependencies flow strictly from upper layers (plugins) through kernel to foundation, with no lower-layer package importing from a higher layer.
-    must-implement:
-      - Foundation packages have no Sunfish dependencies
-      - Kernel packages depend only on foundation
-      - Plugins depend on kernel and foundation, never the reverse
-      - UI layers respect Foundation -> UICore -> Adapters/Compat layering
-    verification: Static dependency analysis across the Sunfish package set confirms acyclic dependency graph in the documented direction.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [packaging, architecture]
-
-  - id: NODE-29
-    name: Sunfish.Kernel facade via type forwarding
-    source: ch11 §"Sunfish Package Map"
-    source-paper: v13 §5
-    definition: The Sunfish.Kernel package re-exports the seven kernel primitives via assembly type forwarding so a consuming package takes a single dependency rather than listing individual Foundation sub-packages, while the live stateful services remain in Sunfish.Kernel.Runtime and other runtime packages.
-    must-implement:
-      - Sunfish.Kernel facade re-exports entity store, version store, audit log, permission evaluator, blob store, schema registry, and event bus types
-      - Live stateful services are owned by Sunfish.Kernel.Runtime and runtime packages, not the facade
-    verification: Assembly inspection of Sunfish.Kernel confirms type-forwarded references; runtime packages own concrete service implementations.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [packaging, facade]
-
-  - id: NODE-30
-    name: TryAddSingleton DI override convention
-    source: ch11 §"Sunfish Package Map"
-    source-paper: v13 §5
-    definition: Each AddSunfish* DI extension uses TryAddSingleton internally so a preceding registration (test double, stub backend, custom transport) takes precedence without modifying the extension method.
-    must-implement:
-      - All AddSunfish* extensions register via TryAddSingleton
-      - Preceding registrations are honored without modification of kernel extension methods
-      - Test fixtures can inject stubs by registering before the production extension
-    verification: Source review of AddSunfish* extensions confirms TryAddSingleton; integration test registers a stub before AddSunfishCrdtEngine() and observes the stub is used.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [di, testing, composition]
-
-  - id: NODE-31
-    name: Local-first encrypted store foundation
-    source: ch11 §"Sunfish Package Map"
-    source-paper: v13 §5
-    definition: Sunfish.Foundation.LocalFirst provides the local encrypted store (SQLCipher-backed), the IOfflineStore contract, and the circuit-breaker quarantine queue as foundational primitives every node depends on.
-    must-implement:
-      - Local store is encrypted at rest (SQLCipher or equivalent)
-      - IOfflineStore contract is implemented as the primary storage surface
-      - Quarantine queue is part of foundation, not kernel runtime
-    verification: Sunfish.Foundation.LocalFirst package exists with encrypted store and IOfflineStore; storage file inspection confirms encryption-at-rest.
-    kleppmann-properties: [P3, P6, P7]
-    scope: foundational
-    failure-modes: [key-loss, key-compromise]
-    tags: [storage, encryption, offline]
-    notes: Overlaps with Ch15 security and Ch16 durability.
+- id: NODE-01
+  name: Microkernel monolith pattern
+  source: ch11 §"The Microkernel Monolith"
+  source-paper: v13 §5
+  definition: A small stable kernel owns infrastructure concerns while domain plugins implementing well-defined
+    extension-point contracts run in-process within the same monolith.
+  must-implement:
+  - Kernel exposes a fixed set of infrastructure contracts that plugins consume but do not implement
+  - All plugins execute in-process with the kernel with no per-plugin processes or inter-plugin RPC
+  - Domain plugins are versioned and deployed independently of the kernel
+  verification: Sunfish.Kernel.Runtime package exists exposing INodeHost and IPluginRegistry; plugin-to-kernel
+    calls occur via in-process method dispatch with no serialization layer.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - architecture
+  - kernel
+  - plugins
+  failed-conditions:
+  - Kernel does not expose a fixed set of infrastructure contracts that plugins consume but do not implement
+  - 'Fails to satisfy: All plugins execute in-process with the kernel with no per-plugin processes or
+    inter-plugin RPC'
+  - Domain plugins are not versioned and deployed independently of the kernel
+  - 'Verification check does not pass: Sunfish.Kernel.Runtime package exists exposing INodeHost and IPluginRegistry;
+    plugin-to-kernel calls occur via in-proces...'
+- id: NODE-02
+  name: Kernel-plugin boundary by change cadence
+  source: ch11 §"The Microkernel Monolith"
+  source-paper: v13 §5
+  definition: Concerns are assigned to the kernel when changes require coordinated updates across all
+    plugins, and to plugins when they encode independently-evolving domain knowledge.
+  must-implement:
+  - Kernel responsibilities cover node lifecycle, sync daemon, CRDT engine abstraction, schema migration,
+    security primitives, partial sync engine, and plugin registry
+  - Plugin responsibilities cover aggregates, commands, events, projections, and UI blocks
+  - No domain-specific knowledge is hard-coded inside the kernel
+  verification: Static analysis of kernel namespaces shows no references to specific domain types (scheduling,
+    ledger, billing, etc.); kernel package set matches the eight named infrastructure concerns.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - architecture
+  - separation-of-concerns
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Kernel responsibilities cover node lifecycle, sync daemon, CRDT engine abstraction,
+    schema migration, security primitives, partial sync engine, and plugin registry'
+  - Plugin responsibilities cover does not aggregate, commands, events, projections, and UI blocks
+  - No domain-specific knowledge is not hard-coded inside the kernel
+  - 'Verification check does not pass: Static analysis of kernel namespaces shows no references to specific
+    domain types (scheduling, ledger, billing, etc.); k...'
+- id: NODE-03
+  name: Topological plugin load with version contracts
+  source: ch11 §"The Microkernel Monolith"
+  source-paper: v13 §5
+  definition: The plugin registry loads plugins in topological dependency order, deterministic by plugin
+    ID at equal depth, and rejects cycles or missing dependencies before any load phase executes.
+  must-implement:
+  - Plugin registry computes load order from declared dependencies and rejects cycles at load time
+  - Missing dependencies are rejected before any plugin OnLoad executes
+  - At equal dependency depth, plugins load in deterministic ID-sorted order
+  - Unload reverses the topological load order
+  - Plugin identifiers follow reverse-DNS convention
+  verification: IPluginRegistry implementation rejects a test fixture containing a dependency cycle; integration
+    test confirms reverse-order unload.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - plugins
+  - lifecycle
+  failed-conditions:
+  - Plugin registry computes load order from declared dependencies and does not reject cycles at load
+    time
+  - Missing dependencies are not rejected before any plugin OnLoad executes
+  - 'Fails to satisfy: At equal dependency depth, plugins load in deterministic ID-sorted order'
+  - 'Fails to satisfy: Unload reverses the topological load order'
+  - 'Fails to satisfy: Plugin identifiers follow reverse-DNS convention'
+  - 'Verification check does not pass: IPluginRegistry implementation rejects a test fixture containing
+    a dependency cycle; integration test confirms reverse-o...'
+- id: NODE-04
+  name: One-shot plugin load surface
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: The plugin registry rejects a second load call until the prior loaded set has been fully
+    unloaded, preventing partial state from a failed swap from contaminating the running plugin set.
+  must-implement:
+  - IPluginRegistry rejects concurrent or overlapping load operations
+  - A failed load batch leaves the registry in a clean unloaded state, not a partial state
+  verification: Behavioral test attempts a second load before unload completes and observes rejection.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - plugins
+  - lifecycle
+  failed-conditions:
+  - IPluginRegistry does not reject concurrent or overlapping load operations
+  - 'Fails to satisfy: A failed load batch leaves the registry in a clean unloaded state, not a partial
+    state'
+  - 'Verification check does not pass: Behavioral test attempts a second load before unload completes
+    and observes rejection.'
+- id: NODE-05
+  name: Five-state node lifecycle with terminal Faulted
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: INodeHost transitions through Stopped, Starting, Running, Stopping, and Faulted states,
+    with Faulted as a terminal state that does not auto-restart on unrecoverable error.
+  must-implement:
+  - INodeHost exposes the five enumerated lifecycle states
+  - Faulted state is terminal and blocks automated restart
+  - Plugin loads sequence in topological order on start; unloads in reverse on stop
+  verification: INodeHost type defines exactly the five named states; integration test forces a Faulted
+    transition and confirms no auto-restart occurs.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - lifecycle
+  - kernel
+  notes: Faulted is terminal because automatic restart can mask data integrity problems requiring operator
+    diagnosis.
+  failed-conditions:
+  - INodeHost does not expose the five enumerated lifecycle states
+  - Faulted state is not terminal and blocks automated restart
+  - 'Fails to satisfy: Plugin loads sequence in topological order on start; unloads in reverse on stop'
+  - 'Verification check does not pass: INodeHost type defines exactly the five named states; integration
+    test forces a Faulted transition and confirms no auto-...'
+- id: NODE-06
+  name: Three-tier peer discovery
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Peer discovery operates across mDNS for LAN-local zero-configuration discovery, a WireGuard
+    mesh VPN for cross-segment intra-organization discovery, and a managed relay for cross-organization
+    or relay-assisted connectivity.
+  must-implement:
+  - Sync layer attempts mDNS discovery first with no infrastructure dependency
+  - WireGuard mesh discovery is supported as a second tier
+  - Managed relay is used only when direct paths are unavailable
+  - Same-LAN nodes sync without contacting the relay
+  verification: Behavioral test on isolated LAN demonstrates peer discovery and sync with no relay reachable.
+  kleppmann-properties:
+  - P3
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - sync
+  - discovery
+  - networking
+  failed-conditions:
+  - 'Fails to satisfy: Sync layer attempts mDNS discovery first with no infrastructure dependency'
+  - WireGuard mesh discovery is not supported as a second tier
+  - Managed relay is not used only when direct paths are unavailable
+  - 'Fails to satisfy: Same-LAN nodes sync without contacting the relay'
+  - 'Verification check does not pass: Behavioral test on isolated LAN demonstrates peer discovery and
+    sync with no relay reachable.'
+- id: NODE-07
+  name: ICrdtEngine abstraction
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Sunfish.Kernel.Crdt exposes ICrdtEngine as the single contract for creating and opening
+    CRDT documents, allowing engine swaps without changes to kernel or plugin code.
+  must-implement:
+  - ICrdtEngine interface exists in Sunfish.Kernel.Crdt with engine name and version metadata
+  - All CRDT-using code depends on ICrdtEngine, not on a specific backend type
+  - At least one production-grade backend (YDotNet) and one test backend (StubCrdtEngine) implement the
+    contract
+  - Test-only backends are clearly marked not for production
+  verification: Sunfish.Kernel.Crdt namespace exposes ICrdtEngine; backend implementations satisfy the
+    interface; StubCrdtEngine carries explicit DO NOT SHIP marker.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - crdt
+  - abstraction
+  notes: Overlaps with Ch12 CRDT engine and data layer specification.
+  failed-conditions:
+  - ICrdtEngine interface does not exist in Sunfish.Kernel.Crdt with engine name and version metadata
+  - 'Fails to satisfy: All CRDT-using code depends on ICrdtEngine, not on a specific backend type'
+  - 'Fails to satisfy: At least one production-grade backend (YDotNet) and one test backend (StubCrdtEngine)
+    implement the contract'
+  - Test-only backends are not clearly marked not for production
+  - 'Verification check does not pass: Sunfish.Kernel.Crdt namespace exposes ICrdtEngine; backend implementations
+    satisfy the interface; StubCrdtEngine carries...'
+- id: NODE-08
+  name: Schema registry with upcaster chain
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Sunfish.Kernel.SchemaRegistry maintains event schema versions and pure-function upcasters,
+    coordinates schema epochs across peers, and enables nodes at different plugin versions to interoperate.
+  must-implement:
+  - Schema registry stores upcasters keyed by source and target version
+  - Upcasters are pure functions with no I/O or side effects
+  - Inbound events from peers at older versions are lifted through the chain to current version
+  - Schema epochs are coordinated across the peer set
+  - Stream compaction removes superseded event versions
+  verification: ISchemaVersion contract surface present; integration test sends an N-1 schema event and
+    observes correct upcasting through the chain.
+  kleppmann-properties:
+  - P4
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - migration
+  notes: Overlaps with Ch13 schema migration.
+  failed-conditions:
+  - Schema registry does not store upcasters keyed by source and target version
+  - Upcasters are not pure functions with no I/O or side effects
+  - Inbound events from peers at older versions are not lifted through the chain to current version
+  - Schema epochs are not coordinated across the peer set
+  - 'Fails to satisfy: Stream compaction removes superseded event versions'
+  - 'Verification check does not pass: ISchemaVersion contract surface present; integration test sends
+    an N-1 schema event and observes correct upcasting throu...'
+- id: NODE-09
+  name: Capability-gated bucket subscription
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Sunfish.Kernel.Buckets evaluates sync-bucket eligibility against attestation bundles received
+    during peer handshake, refusing non-attested peers before any bucket data is transferred.
+  must-implement:
+  - Buckets are declaratively named subsets of the team dataset, each gated on a required role attestation
+  - Attestation evaluation occurs during handshake, before data transfer
+  - Non-attested peers are refused subscriptions, not merely filtered after delivery
+  verification: Integration test confirms a peer lacking the required attestation receives zero events
+    from the protected bucket on the wire.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - security
+  - sync
+  - partial-sync
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Buckets are not declaratively named subsets of the team dataset, each gated on a required role attestation
+  - 'Fails to satisfy: Attestation evaluation occurs during handshake, before data transfer'
+  - Non-attested peers are not refused subscriptions, not merely filtered after delivery
+  - 'Verification check does not pass: Integration test confirms a peer lacking the required attestation
+    receives zero events from the protected bucket on the ...'
+- id: NODE-10
+  name: Send-side subscription filtering invariant
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Bucket eligibility filtering occurs at the send tier before events leave the originating
+    daemon, never at the receive tier where the data has already traveled.
+  must-implement:
+  - Originating daemon evaluates each outbound event against the receiving peer's attestation bundle and
+    skips disallowed events
+  - No code path delivers a protected event to a peer and then filters at the receiver
+  verification: Wire-trace test on a protected bucket confirms zero packets containing protected events
+    leave the originator toward an unauthorized peer.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - security
+  - data-minimization
+  notes: Council review identified as a non-negotiable.
+  failed-conditions:
+  - 'Fails to satisfy: Originating daemon evaluates each outbound event against the receiving peer''s
+    attestation bundle and skips disallowed events'
+  - 'Fails to satisfy: No code path delivers a protected event to a peer and then filters at the receiver'
+  - 'Verification check does not pass: Wire-trace test on a protected bucket confirms zero packets containing
+    protected events leave the originator toward an u...'
+- id: NODE-11
+  name: Flease distributed lease coordinator for CP records
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Sunfish.Kernel.Lease implements a Flease-inspired distributed lease coordinator that requires
+    strict-majority quorum acknowledgment before a CP-class record write proceeds.
+  must-implement:
+  - CP-class writes acquire a lease granted by strict majority of the configured peer set
+  - Lease tokens are epoch-stamped to detect partition-time conflicts
+  - On partition heal, the lower-epoch lease is superseded and its pending write surfaces as a lease conflict,
+    never as silent overwrite
+  - A node unable to reach quorum blocks the CP-class write and surfaces a staleness indicator instead
+    of proceeding
+  verification: 'Multi-node partition test: induce asymmetric partition, attempt concurrent CP writes,
+    confirm exactly one succeeds and the other surfaces a lease conflict on heal.'
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - consensus
+  - lease
+  - cp-class
+  notes: Overlaps with Ch14 sync daemon partition recovery protocol.
+  failed-conditions:
+  - 'Fails to satisfy: CP-class writes acquire a lease granted by strict majority of the configured peer
+    set'
+  - Lease tokens are not epoch-stamped to detect partition-time conflicts
+  - On partition heal, the lower-epoch lease is not superseded and its pending write surfaces as a lease
+    conflict, never as silent overwrite
+  - A node unable to reach quorum blocks the CP-class write and does not surface a staleness indicator
+    instead of proceeding
+  - 'Verification check does not pass: Multi-node partition test: induce asymmetric partition, attempt
+    concurrent CP writes, confirm exactly one succeeds and t...'
+- id: NODE-12
+  name: Three-tier CRDT resolution model
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: 'The kernel routes writes to one of three coordinators based on tier classification: ICrdtEngine
+    for AP-class records with deterministic merge, Flease coordinator for CP-class records requiring linearizable
+    writes, and an append-only ledger engine for records not subject to merge.'
+  must-implement:
+  - Each ILocalNodePlugin declares record-type tier assignments in its manifest
+  - Tier classification is validated at plugin load time
+  - Plugins cannot mutate tier classification at runtime
+  - Kernel routes each write to the coordinator matching the declared tier
+  verification: Plugin manifest schema enforces tier declaration; load-time test rejects manifests missing
+    tier classifications; behavioral test confirms a CP-declared record never bypasses the lease coordinator.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - crdt
+  - consistency
+  - tier
+  failed-conditions:
+  - Each ILocalNodePlugin does not declare record-type tier assignments in its manifest
+  - Tier classification is not validated at plugin load time
+  - 'Fails to satisfy: Plugins cannot mutate tier classification at runtime'
+  - Kernel does not route each write to the coordinator matching the declared tier
+  - 'Verification check does not pass: Plugin manifest schema enforces tier declaration; load-time test
+    rejects manifests missing tier classifications; behavio...'
+- id: NODE-13
+  name: Append-only durable event log
+  source: ch11 §"Kernel Responsibilities"
+  source-paper: v13 §5
+  definition: Sunfish.Kernel.EventBus exposes IEventBus for in-process publication and IEventLog for durable
+    append-only persistence, with the event log as the authoritative record from which projections are
+    rebuilt.
+  must-implement:
+  - IEventLog persists events durably in append-only fashion
+  - Read-model projections are derived from the event log and may be discarded and rebuilt
+  - Both file-backed (production) and in-memory (test) implementations ship with the package
+  verification: Sunfish.Kernel.EventBus exposes both IEventBus and IEventLog; durability test confirms
+    event survival across process restart.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - event-sourcing
+  - durability
+  notes: Overlaps with Ch16 durability.
+  failed-conditions:
+  - IEventLog does not persist events durably in append-only fashion
+  - Read-model projections are not derived from the event log and may be discarded and rebuilt
+  - 'Fails to satisfy: Both file-backed (production) and in-memory (test) implementations ship with the
+    package'
+  - 'Verification check does not pass: Sunfish.Kernel.EventBus exposes both IEventBus and IEventLog; durability
+    test confirms event survival across process res...'
+- id: NODE-14
+  name: ILocalNodePlugin contract
+  source: ch11 §"Plugin Contracts"
+  source-paper: v13 §5
+  definition: Every domain plugin implements ILocalNodePlugin and registers stream definitions, projections,
+    schema versions, and UI block manifests via the IPluginContext surface during the load phase.
+  must-implement:
+  - ILocalNodePlugin exposes Id, Version, Dependencies, OnLoadAsync, OnUnloadAsync
+  - IPluginContext exposes registration methods for streams, projections, schema versions, and UI blocks
+  - IPluginContext.Services exposes the host DI container for resolving kernel-registered services
+  verification: Sunfish.Kernel.Runtime exposes ILocalNodePlugin and IPluginContext; reference plugin demonstrates
+    registration of all four extension-point types.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - plugins
+  - contracts
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - ILocalNodePlugin does not expose Id, Version, Dependencies, OnLoadAsync, OnUnloadAsync
+  - IPluginContext does not expose registration methods for streams, projections, schema versions, and
+    UI blocks
+  - IPluginContext.Services does not expose the host DI container for resolving kernel-registered services
+  - 'Verification check does not pass: Sunfish.Kernel.Runtime exposes ILocalNodePlugin and IPluginContext;
+    reference plugin demonstrates registration of all fo...'
+- id: NODE-15
+  name: IStreamDefinition contract
+  source: ch11 §"Plugin Contracts"
+  source-paper: v13 §5
+  definition: IStreamDefinition declares a CRDT stream contributed by a plugin, carrying a stable stream
+    identifier, schema version, emitted event type names, and the sync-bucket IDs the stream contributes
+    to.
+  must-implement:
+  - Each stream definition declares stable stream ID, schema version, event type names, and bucket contributions
+  - Empty bucket contributions render the stream local-only with no peer propagation
+  verification: IStreamDefinition interface present; reference stream with empty bucket list demonstrates
+    no gossip-layer propagation.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - streams
+  - plugins
+  failed-conditions:
+  - Each stream definition does not declare stable stream ID, schema version, event type names, and bucket
+    contributions
+  - 'Fails to satisfy: Empty bucket contributions render the stream local-only with no peer propagation'
+  - 'Verification check does not pass: IStreamDefinition interface present; reference stream with empty
+    bucket list demonstrates no gossip-layer propagation.'
+- id: NODE-16
+  name: IProjectionBuilder contract with idempotent rebuild
+  source: ch11 §"Plugin Contracts"
+  source-paper: v13 §5
+  definition: IProjectionBuilder registers a derived read-model projection that reads from a source stream,
+    holds no authoritative state, and exposes an idempotent rebuild safe to call repeatedly during schema
+    migration and CRDT compaction.
+  must-implement:
+  - Each projection declares stable projection ID and source stream ID
+  - Projections hold no authoritative state and may be discarded by the kernel
+  - Rebuild method is idempotent and safe under repeated invocation
+  verification: Test invokes projection rebuild twice consecutively and observes byte-identical resulting
+    state.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - projections
+  - cqrs
+  failed-conditions:
+  - Each projection does not declare stable projection ID and source stream ID
+  - 'Fails to satisfy: Projections hold no authoritative state and may be discarded by the kernel'
+  - Rebuild method is not idempotent and safe under repeated invocation
+  - 'Verification check does not pass: Test invokes projection rebuild twice consecutively and observes
+    byte-identical resulting state.'
+- id: NODE-17
+  name: ISchemaVersion contract with pure upcasters
+  source: ch11 §"Plugin Contracts"
+  source-paper: v13 §5
+  definition: ISchemaVersion declares the event types a plugin produces and provides a pure-function upcaster
+    that lifts older event payloads to the current in-memory shape.
+  must-implement:
+  - Each ISchemaVersion declares event type, current canonical version, and accepted older versions
+  - Upcasters are pure functions with no side effects and no I/O
+  - Kernel chains upcasters incrementally from inbound version to current
+  verification: Test passes an N-2 event payload through the upcaster chain and observes deterministic
+    lift to current shape.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - plugins
+  failed-conditions:
+  - Each ISchemaVersion does not declare event type, current canonical version, and accepted older versions
+  - Upcasters are not pure functions with no side effects and no I/O
+  - 'Fails to satisfy: Kernel chains upcasters incrementally from inbound version to current'
+  - 'Verification check does not pass: Test passes an N-2 event payload through the upcaster chain and
+    observes deterministic lift to current shape.'
+- id: NODE-18
+  name: IUiBlockManifest with attestation-gated visibility
+  source: ch11 §"Plugin Contracts"
+  source-paper: v13 §5
+  definition: IUiBlockManifest registers a UI block with stable identifier, display name, category, source
+    stream IDs, and required role attestations, suppressing the block when the current user lacks the
+    attestations required for its underlying streams.
+  must-implement:
+  - Each manifest declares block ID, display name, category, source stream IDs, and required role attestations
+  - Kernel UI layer suppresses blocks whose required attestations the current user lacks
+  - Suppressed blocks do not appear in the block picker
+  - Manifest declares accessibility metadata: roles exposed, live-region policy, keyboard shortcut surface
+  verification: Behavioral test loads a manifest requiring attestation A; user without A observes the
+    block absent from both rendered surface and block picker.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ui
+  - security
+  - attestation
+  security-axis:
+  - authenticity
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Each manifest does not declare block ID, display name, category, source stream IDs, and required role
+    attestations
+  - 'Fails to satisfy: Kernel UI layer suppresses blocks whose required attestations the current user
+    lacks'
+  - 'Fails to satisfy: Suppressed blocks do not appear in the block picker'
+  - '{''Manifest does not declare accessibility metadata'': ''roles exposed, live-region policy, keyboard
+    shortcut surface''}'
+  - 'Verification check does not pass: Behavioral test loads a manifest requiring attestation A; user
+    without A observes the block absent from both rendered su...'
+- id: NODE-19
+  name: SyncState alignment invariant
+  source: 'ch11 §"The UI Kernel: Four-Tier Layering"'
+  source-paper: v13 §5
+  definition: Every infrastructure state visible to the data layer has a corresponding component-level
+    visual state in the UI layer, structurally enforced through the SyncState enumeration with values
+    Healthy, Stale, Offline, ConflictPending, and Quarantine.
+  must-implement:
+  - SyncState enumeration exposes exactly the five named values
+  - No UI tier introduces a UI state that does not correspond to a SyncState value
+  - UI cannot present data as current when the kernel reports Stale, ConflictPending, or Quarantine
+  - Resolvable conflicts are not hidden from users with authority to act on them
+  verification: Static check confirms only the five SyncState values; behavioral test forces ConflictPending
+    in the kernel and observes UI surface reflects it within one render cycle.
+  kleppmann-properties:
+  - P1
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ui
+  - sync-state
+  failed-conditions:
+  - SyncState enumeration does not expose exactly the five named values
+  - 'Fails to satisfy: No UI tier introduces a UI state that does not correspond to a SyncState value'
+  - UI cannot present data as current when the kernel does not report Stale, ConflictPending, or Quarantine
+  - 'Fails to satisfy: Resolvable conflicts are not hidden from users with authority to act on them'
+  - 'Verification check does not pass: Static check confirms only the five SyncState values; behavioral
+    test forces ConflictPending in the kernel and observes ...'
+- id: NODE-20
+  name: Four-tier UI layering
+  source: 'ch11 §"The UI Kernel: Four-Tier Layering"'
+  source-paper: v13 §5
+  definition: The UI kernel is organized as Foundation (design tokens and base contracts), Framework-Agnostic
+    Contracts (renderer and provider interfaces), Adapters and Blocks (Blazor and React implementations
+    plus domain blocks), and Compatibility Layer (third-party-API-shape wrappers).
+  must-implement:
+  - Sunfish.Foundation owns design tokens and base type hierarchy
+  - Sunfish.UICore owns ISunfishRenderer, ISunfishCssProvider, ISunfishIconProvider, SunfishWidgetDescriptor
+    without UI-framework dependencies
+  - Sunfish.UIAdapters.Blazor and @sunfish/ui-adapters-react implement Tier 2 contracts
+  - Sunfish.Compat.* packages provide source-shape parity with third-party libraries via Tier 2 contracts
+  verification: Sunfish.UICore package has no Blazor or React dependencies; assembly inspection confirms
+    the four layered packages exist with the correct dependency direction.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ui
+  - architecture
+  - layering
+  failed-conditions:
+  - 'Fails to satisfy: Sunfish.Foundation owns design tokens and base type hierarchy'
+  - 'Fails to satisfy: Sunfish.UICore owns ISunfishRenderer, ISunfishCssProvider, ISunfishIconProvider,
+    SunfishWidgetDescriptor without UI-framework dependencies'
+  - 'Fails to satisfy: Sunfish.UIAdapters.Blazor and @sunfish/ui-adapters-react implement Tier 2 contracts'
+  - 'Fails to satisfy: Sunfish.Compat.* packages provide source-shape parity with third-party libraries
+    via Tier 2 contracts'
+  - 'Verification check does not pass: Sunfish.UICore package has no Blazor or React dependencies; assembly
+    inspection confirms the four layered packages exist...'
+- id: NODE-21
+  name: Accessibility as Tier 1 contract
+  source: 'ch11 §"The UI Kernel: Four-Tier Layering"'
+  source-paper: v13 §5
+  definition: Accessibility is enforced at the foundation tier rather than as a Tier 3 polish, requiring
+    sync-state components to communicate state through more than color and to pair every icon with a text
+    equivalent.
+  must-implement:
+  - Sync-state components expose role="status", aria-live="polite", and text labels alongside iconography
+  - ISunfishIconProvider implementations pair every icon with a text equivalent
+  - IUiBlockManifest declares accessibility metadata per block
+  verification: Accessibility audit on reference blocks confirms WCAG-compatible role/aria attributes
+    and text-with-icon pairing.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ui
+  - accessibility
+  notes: Local-first architecture preserves AT user data access during connectivity loss; full AT treatment
+    in Ch20.
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Sync-state components expose role="status", aria-live="polite", and text labels
+    alongside iconography'
+  - 'Fails to satisfy: ISunfishIconProvider implementations pair every icon with a text equivalent'
+  - IUiBlockManifest does not declare accessibility metadata per block
+  - 'Verification check does not pass: Accessibility audit on reference blocks confirms WCAG-compatible
+    role/aria attributes and text-with-icon pairing.'
+- id: NODE-22
+  name: Sync daemon as separate long-running process
+  source: ch11 §"Process Boundaries and IPC"
+  source-paper: v13 §5
+  definition: The sync daemon runs as a separate long-running process from the host (MAUI or Blazor shell)
+    so that in-flight gossip rounds, peer connections, peer membership, and the CRDT document store survive
+    host restarts and process cycling.
+  must-implement:
+  - Sync daemon is deployed as an OS-level process distinct from the application host
+  - Daemon owns the connection pool, peer membership list, and CRDT document store
+  - Daemon survives host process termination and restart
+  - Buffered writes reach the durable event log before acknowledgment
+  verification: Behavioral test kills the host process mid-round and confirms daemon continues gossip;
+    restart of host reconnects to the running daemon without state loss.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - process
+  - daemon
+  - ipc
+  notes: Overlaps with Ch14 sync daemon specification.
+  failed-conditions:
+  - Sync daemon is not deployed as an OS-level process distinct from the application host
+  - 'Fails to satisfy: Daemon owns the connection pool, peer membership list, and CRDT document store'
+  - 'Fails to satisfy: Daemon survives host process termination and restart'
+  - 'Fails to satisfy: Buffered writes reach the durable event log before acknowledgment'
+  - 'Verification check does not pass: Behavioral test kills the host process mid-round and confirms daemon
+    continues gossip; restart of host reconnects to the...'
+- id: NODE-23
+  name: Circuit-breaker quarantine queue
+  source: ch11 §"Process Boundaries and IPC"
+  source-paper: v13 §5
+  definition: A queue inside Sunfish.Kernel.Sync buffers inbound and outbound operations through interruptions
+    and holds unverified writes pending re-attestation on the next clean daemon start.
+  must-implement:
+  - Inbound and outbound operations are buffered through host or network interruption
+  - Unverified writes are held pending re-attestation rather than applied speculatively
+  - Buffered state survives abrupt power loss and resumes on clean daemon start
+  verification: Simulated power-loss test confirms buffered ops resume after restart with no double-apply.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - resilience
+  - quarantine
+  - queue
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Inbound and outbound operations are not buffered through host or network interruption
+  - Unverified writes are not held pending re-attestation rather than applied speculatively
+  - 'Fails to satisfy: Buffered state survives abrupt power loss and resumes on clean daemon start'
+  - 'Verification check does not pass: Simulated power-loss test confirms buffered ops resume after restart
+    with no double-apply.'
+- id: NODE-24
+  name: Length-prefixed CBOR IPC channel
+  source: ch11 §"Process Boundaries and IPC"
+  source-paper: v13 §5
+  definition: The host-to-daemon channel uses Unix domain sockets on POSIX and named pipes on Windows,
+    framed as CBOR payloads preceded by a 4-byte big-endian length prefix with frames capped at 16 MiB.
+  must-implement:
+  - POSIX implementation uses UnixDomainSocketEndPoint with file-permission confinement
+  - Windows implementation uses named pipes with OS-level access controls
+  - Every message is a CBOR payload prefixed by a 4-byte big-endian length
+  - Frames exceeding 16 MiB are rejected; chunking is done at the application layer
+  - All IPC messages use CBOR per RFC 8949 with canonical mode for signed messages
+  verification: Wire-format test inspects an IPC frame and confirms the prefix-then-CBOR layout; oversize-frame
+    test confirms rejection.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ipc
+  - cbor
+  - wire-format
+  failed-conditions:
+  - 'Fails to satisfy: POSIX implementation uses UnixDomainSocketEndPoint with file-permission confinement'
+  - 'Fails to satisfy: Windows implementation uses named pipes with OS-level access controls'
+  - Every message is not a CBOR payload prefixed by a 4-byte big-endian length
+  - Frames exceeding 16 MiB are not rejected; chunking is done at the application layer
+  - 'Fails to satisfy: All IPC messages use CBOR per RFC 8949 with canonical mode for signed messages'
+  - 'Verification check does not pass: Wire-format test inspects an IPC frame and confirms the prefix-then-CBOR
+    layout; oversize-frame test confirms rejection.'
+- id: NODE-25
+  name: Authenticated five-phase IPC handshake
+  source: ch11 §"Process Boundaries and IPC"
+  source-paper: v13 §5
+  definition: The daemon enforces a five-phase handshake (HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM, GOSSIP_PING)
+    against every connecting host process, with HELLO carrying an Ed25519 signature over a canonical CBOR
+    array and a +/-30-second replay-protection window.
+  must-implement:
+  - Daemon enforces the five named handshake phases on every connection
+  - HELLO message is signed Ed25519 over canonical CBOR array of [node_id, schema_version, public_key,
+    sent_at]
+  - Daemon verifies HELLO signature against claimed public key and rejects mismatches
+  - Daemon rejects HELLO whose sent_at falls outside +/-30 seconds
+  - Same attestation verification applies to local IPC as to peer-to-peer; no bypass path exists
+  verification: Replay test resends a captured HELLO outside the 30-second window and observes rejection;
+    tampered-signature test observes rejection.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - replay
+  tags:
+  - security
+  - ipc
+  - handshake
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Daemon does not enforce the five named handshake phases on every connection
+  - HELLO message is not signed Ed25519 over canonical CBOR array of [node_id, schema_version, public_key,
+    sent_at]
+  - Daemon does not verifie HELLO signature against claimed public key and rejects mismatches
+  - Daemon does not reject HELLO whose sent_at falls outside +/-30 seconds
+  - Same attestation verification does not applie to local IPC as to peer-to-peer; no bypass path exists
+  - 'Verification check does not pass: Replay test resends a captured HELLO outside the 30-second window
+    and observes rejection; tampered-signature test observ...'
+- id: NODE-26
+  name: Push-based daemon-to-host change notifications
+  source: ch11 §"Process Boundaries and IPC"
+  source-paper: v13 §5
+  definition: After capability negotiation, the daemon pushes change notifications to the host as CRDT
+    deltas arrive from peers and the host does not poll, while command traffic flows host-to-daemon as
+    user-intent operations the daemon translates into CRDT mutations.
+  must-implement:
+  - Host receives change notifications via push, not polling
+  - Host sends create/update/delete commands describing user intent
+  - Daemon translates commands into CRDT mutations compatible with concurrent edits
+  - Daemon validates commands against the CRDT document store before applying and gossiping
+  verification: Behavioral test confirms zero polling traffic on idle channel; command-to-mutation translation
+    test demonstrates conflict-free composition with concurrent peer edits.
+  kleppmann-properties:
+  - P1
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ipc
+  - crdt
+  - command
+  failed-conditions:
+  - 'Fails to satisfy: Host receives change notifications via push, not polling'
+  - 'Fails to satisfy: Host sends create/update/delete commands describing user intent'
+  - 'Fails to satisfy: Daemon translates commands into CRDT mutations compatible with concurrent edits'
+  - Daemon does not validate commands against the CRDT document store before applying and gossiping
+  - 'Verification check does not pass: Behavioral test confirms zero polling traffic on idle channel;
+    command-to-mutation translation test demonstrates conflic...'
+- id: NODE-27
+  name: Ciphertext-only managed relay
+  source: ch11 §"Process Boundaries and IPC"
+  source-paper: v13 §5
+  definition: The managed relay observes and routes ciphertext only, holds no decryption keys, and is
+    required only when nodes on different networks lack a direct IP path.
+  must-implement:
+  - Relay never holds decryption keys
+  - Relay never gains access to plaintext payload content
+  - Same-LAN nodes sync without relay involvement
+  - Cross-network nodes queue CRDT deltas during relay outage and catch up automatically on recovery
+  verification: 'Inspect relay process: confirm no key material is provisioned; wire-trace at relay confirms
+    only ciphertext frames pass through.'
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - data-residency-objection
+  tags:
+  - relay
+  - security
+  - networking
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Relay never holds decryption keys'
+  - 'Fails to satisfy: Relay never gains access to plaintext payload content'
+  - 'Fails to satisfy: Same-LAN nodes sync without relay involvement'
+  - 'Fails to satisfy: Cross-network nodes queue CRDT deltas during relay outage and catch up automatically
+    on recovery'
+  - 'Verification check does not pass: Inspect relay process: confirm no key material is provisioned;
+    wire-trace at relay confirms only ciphertext frames pass ...'
+- id: NODE-28
+  name: Strict layered package dependency direction
+  source: ch11 §"Sunfish Package Map"
+  source-paper: v13 §5
+  definition: Sunfish package dependencies flow strictly from upper layers (plugins) through kernel to
+    foundation, with no lower-layer package importing from a higher layer.
+  must-implement:
+  - Foundation packages have no Sunfish dependencies
+  - Kernel packages depend only on foundation
+  - Plugins depend on kernel and foundation, never the reverse
+  - UI layers respect Foundation -> UICore -> Adapters/Compat layering
+  verification: Static dependency analysis across the Sunfish package set confirms acyclic dependency
+    graph in the documented direction.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - packaging
+  - architecture
+  failed-conditions:
+  - Foundation packages have not no Sunfish dependencies
+  - 'Fails to satisfy: Kernel packages depend only on foundation'
+  - 'Fails to satisfy: Plugins depend on kernel and foundation, never the reverse'
+  - 'Fails to satisfy: UI layers respect Foundation -> UICore -> Adapters/Compat layering'
+  - 'Verification check does not pass: Static dependency analysis across the Sunfish package set confirms
+    acyclic dependency graph in the documented direction.'
+- id: NODE-29
+  name: Sunfish.Kernel facade via type forwarding
+  source: ch11 §"Sunfish Package Map"
+  source-paper: v13 §5
+  definition: The Sunfish.Kernel package re-exports the seven kernel primitives via assembly type forwarding
+    so a consuming package takes a single dependency rather than listing individual Foundation sub-packages,
+    while the live stateful services remain in Sunfish.Kernel.Runtime and other runtime packages.
+  must-implement:
+  - Sunfish.Kernel facade re-exports entity store, version store, audit log, permission evaluator, blob
+    store, schema registry, and event bus types
+  - Live stateful services are owned by Sunfish.Kernel.Runtime and runtime packages, not the facade
+  verification: Assembly inspection of Sunfish.Kernel confirms type-forwarded references; runtime packages
+    own concrete service implementations.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - packaging
+  - facade
+  failed-conditions:
+  - Sunfish.Kernel facade re-does not export entity store, version store, audit log, permission evaluator,
+    blob store, schema registry, and event bus types
+  - Live stateful services are not owned by Sunfish.Kernel.Runtime and runtime packages, not the facade
+  - 'Verification check does not pass: Assembly inspection of Sunfish.Kernel confirms type-forwarded references;
+    runtime packages own concrete service implemen...'
+- id: NODE-30
+  name: TryAddSingleton DI override convention
+  source: ch11 §"Sunfish Package Map"
+  source-paper: v13 §5
+  definition: Each AddSunfish* DI extension uses TryAddSingleton internally so a preceding registration
+    (test double, stub backend, custom transport) takes precedence without modifying the extension method.
+  must-implement:
+  - All AddSunfish* extensions register via TryAddSingleton
+  - Preceding registrations are honored without modification of kernel extension methods
+  - Test fixtures can inject stubs by registering before the production extension
+  verification: Source review of AddSunfish* extensions confirms TryAddSingleton; integration test registers
+    a stub before AddSunfishCrdtEngine() and observes the stub is used.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - di
+  - testing
+  - composition
+  failed-conditions:
+  - 'Fails to satisfy: All AddSunfish* extensions register via TryAddSingleton'
+  - Preceding registrations are not honored without modification of kernel extension methods
+  - Test fixtures cannot inject stubs by registering before the production extension
+  - 'Verification check does not pass: Source review of AddSunfish* extensions confirms TryAddSingleton;
+    integration test registers a stub before AddSunfishCrd...'
+- id: NODE-31
+  name: Local-first encrypted store foundation
+  source: ch11 §"Sunfish Package Map"
+  source-paper: v13 §5
+  definition: Sunfish.Foundation.LocalFirst provides the local encrypted store (SQLCipher-backed), the
+    IOfflineStore contract, and the circuit-breaker quarantine queue as foundational primitives every
+    node depends on.
+  must-implement:
+  - Local store is encrypted at rest (SQLCipher or equivalent)
+  - IOfflineStore contract is implemented as the primary storage surface
+  - Quarantine queue is part of foundation, not kernel runtime
+  verification: Sunfish.Foundation.LocalFirst package exists with encrypted store and IOfflineStore; storage
+    file inspection confirms encryption-at-rest.
+  kleppmann-properties:
+  - P3
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  - key-compromise
+  tags:
+  - storage
+  - encryption
+  - offline
+  notes: Overlaps with Ch15 security and Ch16 durability.
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Local store is not encrypted at rest (SQLCipher or equivalent)
+  - IOfflineStore contract is not implemented as the primary storage surface
+  - Quarantine queue is not part of foundation, not kernel runtime
+  - 'Verification check does not pass: Sunfish.Foundation.LocalFirst package exists with encrypted store
+    and IOfflineStore; storage file inspection confirms en...'

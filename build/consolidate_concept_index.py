@@ -73,6 +73,54 @@ KLEPPMANN_PROPERTIES = {
     "P7": "You retain ultimate ownership and control",
 }
 
+# Kill-triggers per Kleppmann property — escalation criteria when conformance
+# regresses. Surfaced by universal-planning Stage 0 Check 0.11 (zombie-project
+# anti-pattern defense). Lives in metadata, not per-concept.
+KILL_TRIGGERS = {
+    "P1": [
+        "Conformance regresses below 95% for 3 consecutive sprints",
+        "Any user-facing operation crosses 100ms ceiling for common operations",
+        "Main-thread isolation guarantee violated in CI",
+    ],
+    "P2": [
+        "Any data class accessible only on one device by accident (vs. by intentional locality policy)",
+        "Device addition takes >5 minutes including data sync",
+        "Conformance regresses below 90% for 3 consecutive sprints",
+    ],
+    "P3": [
+        "Any 'you must be online' error path discovered in core function",
+        "Reconnection after offline interval loses any pending operations",
+        "Conformance regresses below 95% for 3 consecutive sprints",
+    ],
+    "P4": [
+        "Concurrent edits do not converge after sync within reasonable bounded time",
+        "Per-resource permission bypass discovered",
+        "Collaborator revocation does not propagate to all peers within 24h",
+        "Conformance regresses below 90% for 3 consecutive sprints",
+    ],
+    "P5": [
+        "Any data unreadable after 50 simulated years (format migration test)",
+        "Any custody chain breaks across one generational handoff in test",
+        "Any decision marked irreversible without explicit reversibility-budget consideration",
+        "Conformance regresses below 90% for 3 consecutive sprints",
+    ],
+    "P6": [
+        "Discovery of architectural backdoor in design — full architectural review",
+        "Any content readable by relay (zero-knowledge violation)",
+        "Cryptographic primitive discovered with known weakness — algorithm migration triggered",
+        "Endpoint compromise scope undocumented for any major data class",
+        "Conformance regresses below 95% for 3 consecutive sprints",
+    ],
+    "P7": [
+        "Any data not exportable in open format",
+        "Any deletion that doesn't propagate within reasonable bounded time",
+        "Any sharing grant that cannot be revoked",
+        "Any algorithmic decision affecting user without explanation path",
+        "Key-loss recovery path inadequate (no multi-sig OR custodian OR paper-key fallback)",
+        "Conformance regresses below 90% for 3 consecutive sprints",
+    ],
+}
+
 
 def load_chapter(stem: str) -> dict | None:
     path = PER_CHAPTER_DIR / f"{stem}.yaml"
@@ -188,6 +236,8 @@ def main() -> int:
         "kleppmann-property-glossary": {
             p: KLEPPMANN_PROPERTIES[p] for p in sorted(KLEPPMANN_PROPERTIES.keys())
         },
+        "kill-triggers-by-property": KILL_TRIGGERS,
+        "schema-version-note": "v1.1 — added security-axis, applies-to-roles, failed-conditions per concept; kill-triggers per primitive cluster (this metadata field). See SCHEMA.md.",
     }
 
     master = {

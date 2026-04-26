@@ -1,444 +1,894 @@
 chapter: ch16
 chapter-title: Persistence Beyond the Node
-source-paper-refs: [v13 §2.4, v13 §8, v13 §9, v13 §10, v5 §3.5]
+source-paper-refs:
+- v13 §2.4
+- v13 §8
+- v13 §9
+- v13 §10
+- v5 §3.5
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: DUR-01
-    name: Node as authority over data it holds
-    source: ch16 §"The Problem Single-Node Storage Cannot Solve"
-    source-paper: v13 §2.4
-    definition: Local-first does not mean data lives only on one machine; it means the node is the authority over the data it holds, and persistence beyond the node is composed from explicit additional tiers.
-    must-implement:
-      - Architecture documents how data survives device loss without ceding authority to a vendor
-      - No persistence tier introduces a central server that can override the node's local authority
-    verification: Architecture document specifies persistence tiers and names the authority for each tier as the node, not a vendor service.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [philosophy, persistence, architecture]
-
-  - id: DUR-02
-    name: Five-layer storage architecture
-    source: ch16 §"Five-Layer Storage Architecture"
-    source-paper: v13 §8
-    definition: Persistence is composed of five specialized tiers — local encrypted database, CRDT and event log, user-controlled cloud backup, content-addressed distribution (opt-in), and decentralized archival (opt-in) — rather than a single database system.
-    must-implement:
-      - Implementation distinguishes the five tiers as separately addressable subsystems
-      - Tiers 1-3 are mandatory; Tiers 4-5 are opt-in and absence does not constitute degradation
-      - Each tier resolves a distinct named failure mode
-    verification: Architecture document enumerates the five tiers with named subsystems for each; an implementation that omits Tiers 4-5 is documented as a standard configuration.
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [architecture, persistence, tiers]
-
-  - id: DUR-03
-    name: Event log as source of truth
-    source: ch16 §"Five-Layer Storage Architecture"
-    source-paper: v13 §8
-    definition: An append-only log of all CRDT operations and domain events is the system's source of truth for sync and audit; the local database is a derived projection of the log.
-    must-implement:
-      - Append-only event log is persisted distinctly from the queryable local database
-      - Local database can be rebuilt deterministically from the event log
-      - Event log survives database deletion or corruption
-    verification: Deleting the local database file and replaying the event log reproduces equivalent application state.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [event-log, persistence, crdt]
-
-  - id: DUR-04
-    name: Declarative sync buckets
-    source: ch16 §"Declarative Sync Buckets"
-    source-paper: v13 §8
-    definition: A bucket is a named, declaratively specified subset of the team dataset whose membership is tied to role attestations and enforced by the sync daemon at capability negotiation, not by application-layer filtering after data arrives.
-    must-implement:
-      - Buckets are declared in a static configuration (e.g., YAML) with name, record types, filter, replication mode, and required attestation
-      - Sync daemon evaluates bucket eligibility against verified peer attestations before sending any data
-      - Non-eligible peers never receive bucket events at the protocol layer
-    verification: A peer presenting only `team_member` attestation receives only buckets whose `required_attestation` matches; financial buckets are never forwarded to it on the wire.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [sync, buckets, access-control, minimization]
-
-  - id: DUR-05
-    name: Eager versus lazy bucket replication
-    source: ch16 §"Declarative Sync Buckets"
-    source-paper: v13 §8
-    definition: Each bucket declares a replication mode — eager buckets sync immediately on connect; lazy buckets use demand-driven fetch and represent records locally as stubs.
-    must-implement:
-      - Sync daemon supports both `eager` and `lazy` replication modes per bucket
-      - Lazy bucket records materialize as stubs locally until fetched
-      - Eager bucket records replicate fully on capability negotiation
-    verification: "A bucket configured `replication: lazy` produces stub records on subscribing peers; opening a record triggers a content fetch."
-    kleppmann-properties: [P1, P2]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [sync, buckets, replication]
-
-  - id: DUR-06
-    name: Stub records with content hash
-    source: ch16 §"Lazy Fetch and Storage Budgets"
-    source-paper: v13 §8
-    definition: A stub is a local representation of a lazy or evicted record containing identifier, display metadata, and content hash but no payload, sufficient to render navigation, search, and lists without fetching content.
-    must-implement:
-      - Stub structure includes record identifier, navigation metadata (title, type, author, last-modified), and content hash
-      - Application can render lists, navigation, and search over stubs without fetching content
-      - Stub-to-full transitions verify the content hash before writing to local database
-    verification: Disconnect network; navigation and search over lazy buckets render using stub metadata only.
-    kleppmann-properties: [P1, P3]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [stubs, lazy, content-hash]
-
-  - id: DUR-07
-    name: Configurable local storage budget with LRU eviction
-    source: ch16 §"Lazy Fetch and Storage Budgets"
-    source-paper: v13 §8
-    definition: Nodes enforce a configurable local storage budget (default 10 GB); when approaching the ceiling, the sync daemon evicts least-recently-used records from lazy buckets back to stubs without deleting them.
-    must-implement:
-      - Local storage budget is configurable at the workspace level
-      - Eviction policy converts full lazy records back to stubs preserving identifier, metadata, and content hash
-      - Eager bucket records are not evicted by the budget mechanism
-    verification: Set storage budget below current footprint; eviction reduces local storage and converts evicted records to stubs that remain accessible on demand.
-    kleppmann-properties: [P2]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [storage, eviction, budget]
-
-  - id: DUR-08
-    name: Mandatory content hash verification on fetch
-    source: ch16 §"Lazy Fetch and Storage Budgets"
-    source-paper: v13 §8
-    definition: Every fetched record must have its content hash verified against the stub's stored hash before being written to the local database; mismatched fetches are rejected and re-requested from an alternate peer.
-    must-implement:
-      - Sync daemon computes hash of fetched content and compares against stub hash before commit
-      - Hash mismatch triggers rejection and re-request from a different peer
-      - No code path writes fetched content to local database without hash verification
-    verification: Inject a corrupted content payload from a peer; the receiving node rejects the fetch and re-requests from an alternate peer.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [integrity, content-hash, security]
-
-  - id: DUR-09
-    name: Snapshot as performance optimization over event log
-    source: ch16 §"Snapshot Format and Rehydration"
-    source-paper: v13 §8
-    definition: A snapshot captures the current state of an aggregate at a point in time indexed to the last event it incorporates; snapshots are deletable and regenerable without affecting correctness because the event log remains the source of truth.
-    must-implement:
-      - Snapshot record includes aggregate_id, epoch_id, schema_version, last_event_seq, payload, and creation timestamp
-      - Snapshots are stored separately from the event log
-      - Deleting all snapshots and rehydrating from the log produces equivalent application state
-    verification: Delete the snapshot store; aggregate rehydration replays from the beginning of the event log and reproduces identical state.
-    kleppmann-properties: [P1, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [snapshot, event-log, performance]
-
-  - id: DUR-10
-    name: Epoch- and schema-scoped snapshot rehydration
-    source: ch16 §"Snapshot Format and Rehydration"
-    source-paper: v13 §8
-    definition: Rehydration loads the most recent snapshot, verifies its epoch and schema version match current values, replays subsequent events with upcasters applied for older schema versions, and discards snapshots that do not match.
-    must-implement:
-      - Rehydration verifies snapshot epoch_id and schema_version against current values before use
-      - Mismatched snapshots are discarded and rehydration falls back to event-log replay
-      - Schema upcasters are applied during replay for events from older schema versions
-    verification: Force a snapshot's schema_version to a stale value; rehydration discards it and replays from the log without producing incorrect state.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew]
-    tags: [snapshot, schema, rehydration]
-
-  - id: DUR-11
-    name: Snapshot scheduling policy
-    source: ch16 §"Snapshot Format and Rehydration"
-    source-paper: v13 §8
-    definition: New snapshots are written after rehydration, after a configurable per-document-type operation-count threshold (default 5,000 operations), and on explicit request at application shutdown.
-    must-implement:
-      - Implementation triggers snapshot write after rehydration completes
-      - Per-document-type operation-count threshold is configurable and triggers snapshot writes
-      - Explicit snapshot creation is exposed as an API for shutdown hooks
-    verification: Apply 5,001 operations to an aggregate of a type with default threshold; a new snapshot is written within bounded time.
-    kleppmann-properties: [P1]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [snapshot, scheduling, performance]
-
-  - id: DUR-12
-    name: CRDT garbage collection strategies
-    source: ch16 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §8
-    definition: CRDT documents grow monotonically under naive storage; the architecture mitigates this with three named strategies — library-level compaction, application-level document sharding, and periodic shallow snapshots — with full-history retention as the conservative default.
-    must-implement:
-      - Architecture names the three mitigation strategies and their tradeoffs
-      - Default policy retains full history relying on library-level compaction
-      - Application-level sharding and shallow snapshots are opt-in per document type via the schema
-    verification: Document schema configuration accepts opt-in flags for sharding and shallow-snapshot policies; defaults retain full history.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [crdt, garbage-collection, storage]
-
-  - id: DUR-13
-    name: Shallow-snapshot mergeability tradeoff
-    source: ch16 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §8
-    definition: A shallow snapshot captures current document state without history required to merge with older versions; nodes that discard history below the shallow snapshot cannot merge with peers retaining that older history.
-    must-implement:
-      - Schema declares opt-in for shallow snapshots per document type
-      - System surfaces the mergeability tradeoff at configuration time
-      - Shallow snapshot is reserved for high-write-rate document types (logs, sensor feeds) by policy
-    verification: Schema documentation for shallow-snapshot-enabled types names the lost-mergeability constraint explicitly.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: [partition]
-    tags: [crdt, garbage-collection, tradeoff]
-
-  - id: DUR-14
-    name: Three-state backup UX
-    source: 'ch16 §"Backup UX: Three-State Model"'
-    source-paper: v13 §8
-    definition: Backup status is exposed to the user as one of three states — Protected, Attention, At Risk — each mapping to a single user action (none, back up now, acknowledge), with no exposure of internal replication factors or vector clocks.
-    must-implement:
-      - System surfaces backup state as exactly the three named states
-      - Attention state offers a single dismissible "Back up now" prompt
-      - At Risk state displays a persistent warning that returns each session until backup completes; acknowledgement records awareness but does not clear risk
-    verification: Force backup lag past the policy window; UI transitions to Attention and offers "Back up now"; force lag past the escalation threshold; UI transitions to At Risk with a non-dismissible warning.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [backup, ux, state-machine]
-
-  - id: DUR-15
-    name: Backup state as typed contract, not prescribed UI
-    source: 'ch16 §"Backup UX: Three-State Model"'
-    source-paper: v13 §8
-    definition: The backup state machine is exposed as a typed state by the foundation package; the host application provides the presentation, so the package contract is the state model rather than any specific UI.
-    must-implement:
-      - Foundation package exposes backup state as a typed enum or equivalent
-      - No UI rendering is prescribed by the package
-      - Application can substitute its own presentation while preserving the three-state semantics
-    verification: "`Sunfish.Foundation` exposes a backup state type; no UI components ship in the package."
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [backup, contract, ux]
-
-  - id: DUR-16
-    name: BYOC user-controlled backup destination
-    source: 'ch16 §"Backup UX: Three-State Model"'
-    source-paper: v13 §8
-    definition: The Tier 3 backup adapter accepts any S3-API-compatible endpoint configured by the operator (hyperscaler, EU-resident, sovereign-cloud, on-premise MinIO/Ceph), not a vendor-bound destination.
-    must-implement:
-      - Backup adapter is provider-agnostic and configured per deployment
-      - Adapter accepts any S3-API-compatible endpoint including self-hosted object storage
-      - No code path requires a specific cloud vendor for backup to function
-    verification: Configure backup destination to a self-hosted MinIO instance; full backup-and-restore cycle completes without invoking any vendor-specific API.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
-    tags: [backup, byoc, sovereignty]
-
-  - id: DUR-17
-    name: Backup encryption under user key hierarchy
-    source: 'ch16 §"Backup UX: Three-State Model"'
-    source-paper: v13 §8
-    definition: Backup objects contain a full encrypted snapshot of the node's CRDT event log encrypted under a key derived via HKDF-SHA256 from the same DEK/KEK hierarchy that protects the local database; the storage provider cannot read the backup.
-    must-implement:
-      - Backup encryption key is derived from the same root seed as the local database key
-      - Backup payload is the encrypted serialized event log, not a raw database file
-      - Storage provider has no path to plaintext backup contents
-    verification: Inspect backup objects in storage; payload is opaque ciphertext that cannot be decrypted without the user's key material.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise, vendor-acquisition]
-    tags: [backup, encryption, key-hierarchy]
-    notes: Cross-references Ch15 key hierarchy.
-
-  - id: DUR-18
-    name: Ciphertext-only relay invariant
-    source: ch16 §"Relay Architecture"
-    source-paper: v13 §9
-    definition: The relay routes encrypted CRDT operation frames between authenticated peers without holding decryption keys; it sees peer identities, workspace identifiers, and frame envelopes but no plaintext payload.
-    must-implement:
-      - Relay code path holds no decryption keys for forwarded payloads
-      - All frames the relay forwards are end-to-end encrypted under keys that never leave originating devices
-      - A compromised relay exposes only metadata (who, when, volume), not content
-    verification: Static analysis of relay binary confirms no key material is accepted or stored; integration test confirms forwarded frames are opaque ciphertext to the relay process.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise, vendor-acquisition]
-    tags: [relay, encryption, e2ee]
-
-  - id: DUR-19
-    name: Self-hostable relay binary
-    source: ch16 §"Relay Architecture"
-    source-paper: v13 §9
-    definition: The relay is distributed as a single binary (native executable and OCI container image) deployable on operator-controlled infrastructure with a small resource profile (512 MiB RAM, 2 vCPU, 10 GiB disk for fifty-person teams), implementing the same protocol as the managed relay.
-    must-implement:
-      - Relay ships as both native binary and OCI container image
-      - Self-hosted and managed relays are protocol-indistinguishable to nodes
-      - Node `relayEndpoint` configuration redirects to operator-controlled relays without code changes
-    verification: Deploy self-hosted relay; nodes configured to it complete sync identically to nodes connected to the managed relay.
-    kleppmann-properties: [P3, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, data-residency-objection]
-    tags: [relay, self-host, sovereignty]
-
-  - id: DUR-20
-    name: Open relay protocol prevents vendor lock-in
-    source: ch16 §"Relay Architecture"
-    source-paper: v13 §9
-    definition: The relay protocol is specified in Chapter 14 with sufficient precision for third-party implementation; there is no proprietary wire format or vendor-specific handshake extension, so any compliant relay is indistinguishable from the first-party relay.
-    must-implement:
-      - Relay protocol specification is published under the same license as the kernel
-      - Specification includes wire format, handshake, and routing semantics with no proprietary extensions
-      - A third-party relay implementation can interoperate with first-party nodes without vendor cooperation
-    verification: A third-party relay implementation built from the published specification interoperates with first-party nodes in convergence tests.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition, vendor-outage]
-    tags: [relay, protocol, openness]
-
-  - id: DUR-21
-    name: Relay compelled-access immunity
-    source: ch16 §"Relay Architecture"
-    source-paper: v13 §9
-    definition: A subpoena or compulsion order to the relay operator yields connection logs and message envelopes only — never payload plaintext — because the relay structurally does not possess decryptable content.
-    must-implement:
-      - Relay operator has no technical capability to produce plaintext payloads under legal compulsion
-      - Compelled-access posture is documented as a structural property, not a policy promise
-    verification: Architecture document and threat model state the compelled-access invariant; implementation review confirms no key escrow path exists at the relay layer.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [relay, compelled-access, threat-model]
-
-  - id: DUR-22
-    name: Peer-assisted device recovery via QR attestation transfer
-    source: ch16 §"Non-Technical Disaster Recovery"
-    source-paper: v13 §10
-    definition: A new device recovers by authenticating against the IdP and receiving a one-time QR-encoded key exchange from an existing team member's device that transfers the role attestation bundle and an initial CRDT snapshot of authorized eager-bucket records.
-    must-implement:
-      - New-device flow detects empty local CRDT state on first launch
-      - Existing-member device generates a one-time QR-encoded key exchange for attestation transfer
-      - Transferred attestation bundle is signed by the team's identity authority and cannot be forged by the new device
-      - Scope of transferred data is bounded by the existing member's own attestation set
-    verification: Provision a new device; an existing member's QR scan brings the new device to working state with eager-bucket access in minutes, without contacting a central server beyond the IdP.
-    kleppmann-properties: [P2, P5]
-    scope: inverted-stack-specific
-    failure-modes: [key-loss]
-    tags: [recovery, attestation, qr]
-
-  - id: DUR-23
-    name: Backup-only recovery without peer assistance
-    source: ch16 §"Non-Technical Disaster Recovery"
-    source-paper: v13 §10
-    definition: When no team member is available for QR exchange, a new device authenticates against the IdP, retrieves the most recent backup snapshot from user-controlled object storage, applies it locally, and re-synchronizes with peers to incorporate post-backup changes.
-    must-implement:
-      - System supports recovery from Tier 3 backup without requiring a peer-assisted handoff
-      - Recovery flow re-synchronizes with peers after backup application to capture changes since backup
-      - Recovery produces the same end-state as peer-assisted recovery (full local authority, peer-synced)
-    verification: Disable peer-assisted path; recovery from backup alone restores the node to working state synchronized with peers.
-    kleppmann-properties: [P2, P5]
-    scope: inverted-stack-specific
-    failure-modes: [key-loss]
-    tags: [recovery, backup]
-
-  - id: DUR-24
-    name: Offline recovery bundle
-    source: ch16 §"Non-Technical Disaster Recovery"
-    source-paper: v13 §10
-    definition: Each node optionally generates at onboarding a one-time-use cryptographic blob containing a wrapped recovery key and minimum bootstrap attestation, stored out-of-band by the user, that restores the node from backup without IdP availability and expires on use or on a configurable wall-clock timeout (default 12 months).
-    must-implement:
-      - Node generation flow produces an optional offline recovery bundle at onboarding
-      - Bundle restores read-write local state from backup with no network connectivity
-      - Bundle is single-use; on use the recovered node re-attests against the IdP and rotates to a fresh bundle
-      - Bundle has a configurable wall-clock expiry (default 12 months)
-    verification: Provision a node, capture its offline recovery bundle, then disconnect network and restore to a new device; the new device reaches read-write state without contacting the IdP.
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-loss, vendor-outage]
-    tags: [recovery, offline, attestation]
-    notes: Touches Ch15 key recovery; this concept is the persistence-layer mechanism, distinct from key-hierarchy concepts owned by Ch15.
-
-  - id: DUR-25
-    name: Plain-file export as architectural requirement
-    source: ch16 §"Plain-File Export"
-    source-paper: v13 §10
-    definition: All user data must be exportable as standard formats (SQLite, JSON, CSV, original-format binaries, Markdown) without running the application, as a first-class architectural feature rather than a compliance afterthought.
-    must-implement:
-      - Export pipeline runs from local data without network connectivity
-      - Export emits relational data as SQLite, structured records as JSON, tabular data as CSV, binary assets in original format, and long-form text as Markdown
-      - Export pipeline is exposed by `Sunfish.Foundation` as a background task with a destination-path contract
-      - No host-application UI is prescribed by the export pipeline
-    verification: Run export with network disconnected; resulting directory opens in third-party tools (SQLite client, text editor, spreadsheet) without application software.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [export, formats, long-now]
-
-  - id: DUR-26
-    name: Export determinism and completeness guarantees
-    source: ch16 §"Plain-File Export"
-    source-paper: v13 §10
-    definition: The export process emits no telemetry, requires no network, produces deterministic output (identical state yields identical export), and includes every record the local node holds — full records as content, stubs as metadata-plus-hash.
-    must-implement:
-      - Export emits zero network requests during execution
-      - Identical local state produces byte-identical export directory contents (modulo timestamps in UTC ISO 8601 filenames)
-      - Stubs are exported as metadata plus content hash with content field absent and a documented note
-      - No record present in the local database is omitted from export
-    verification: Run export twice over identical state; diff confirms identical contents. Capture network traffic during export; confirm zero outbound requests.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [export, determinism, completeness]
-
-  - id: DUR-27
-    name: Versioned export manifest
-    source: ch16 §"Plain-File Export"
-    source-paper: v13 §10
-    definition: A machine-readable `manifest.json` at the export root records format version, export timestamp, node identifier, included document types, and the count of stubs versus full records, enabling future readers to determine compatibility before parsing data files.
-    must-implement:
-      - Every export directory contains a `manifest.json` at root and a plain-language `README.txt`
-      - Manifest records format version, timestamp, node identifier, included document types, and stub-vs-full counts
-      - Export format version is versioned independently of the application version
-    verification: Inspect any export directory; `manifest.json` parses with the documented schema and reports a format version.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [export, manifest, format-stability]
-
-  - id: DUR-28
-    name: Markdown as long-now format
-    source: ch16 §"Plain-File Export"
-    source-paper: v13 §10
-    definition: Markdown is included as an export format for long-form document content because it is simultaneously human-readable in any text editor, machine-parseable by any competent library, and version-control friendly without specialized tooling.
-    must-implement:
-      - Long-form document content (notes, descriptions, inline text) is exported as Markdown
-      - Markdown export does not require application-specific tooling to read or parse
-    verification: Open any Markdown export file in a plain text editor; content is human-readable without rendering.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [export, markdown, long-now]
-
-  - id: DUR-29
-    name: Layer 5 decentralized archival as deferred extension point
-    source: ch16 §"Layer 5 — Decentralized Archival (Phase 2)"
-    source-paper: v13 §8
-    definition: Layer 5 is an optional enterprise tier providing cryptographic proof-of-storage for regulated long-term retention; the operational mechanism (Filecoin, Arweave, Merkle-challenge) is deferred to v2.0 and current deployments satisfy retention obligations through Tier 3 BYOC backup with retention policies.
-    must-implement:
-      - Architecture documents Layer 5 as a Phase 2 extension point with no 1.0 specification
-      - 1.0 deployments satisfy retention obligations via Tier 3 BYOC with long-term retention policies
-      - Layer 5 absence is documented as expected, not as a gap
-    verification: Specification document marks Layer 5 as deferred to v2.0 and references Tier 3 retention as the 1.0 satisfier.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [archival, layer-5, deferred]
+- id: DUR-01
+  name: Node as authority over data it holds
+  source: ch16 §"The Problem Single-Node Storage Cannot Solve"
+  source-paper: v13 §2.4
+  definition: Local-first does not mean data lives only on one machine; it means the node is the authority
+    over the data it holds, and persistence beyond the node is composed from explicit additional tiers.
+  must-implement:
+  - Architecture documents how data survives device loss without ceding authority to a vendor
+  - No persistence tier introduces a central server that can override the node's local authority
+  verification: Architecture document specifies persistence tiers and names the authority for each tier
+    as the node, not a vendor service.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - philosophy
+  - persistence
+  - architecture
+  failed-conditions:
+  - 'Fails to satisfy: Architecture documents how data survives device loss without ceding authority to
+    a vendor'
+  - No persistence tier introduces a central server that cannot override the node's local authority
+  - 'Verification check does not pass: Architecture document specifies persistence tiers and names the
+    authority for each tier as the node, not a vendor servic...'
+- id: DUR-02
+  name: Five-layer storage architecture
+  source: ch16 §"Five-Layer Storage Architecture"
+  source-paper: v13 §8
+  definition: Persistence is composed of five specialized tiers — local encrypted database, CRDT and event
+    log, user-controlled cloud backup, content-addressed distribution (opt-in), and decentralized archival
+    (opt-in) — rather than a single database system.
+  must-implement:
+  - Implementation distinguishes the five tiers as separately addressable subsystems
+  - Tiers 1-3 are mandatory; Tiers 4-5 are opt-in and absence does not constitute degradation
+  - Each tier resolves a distinct named failure mode
+  verification: Architecture document enumerates the five tiers with named subsystems for each; an implementation
+    that omits Tiers 4-5 is documented as a standard configuration.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - architecture
+  - persistence
+  - tiers
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Implementation distinguishes the five tiers as separately addressable subsystems'
+  - Tiers 1-3 are not mandatory; Tiers 4-5 are opt-in and absence does not constitute degradation
+  - 'Fails to satisfy: Each tier resolves a distinct named failure mode'
+  - 'Verification check does not pass: Architecture document enumerates the five tiers with named subsystems
+    for each; an implementation that omits Tiers 4-5 i...'
+- id: DUR-03
+  name: Event log as source of truth
+  source: ch16 §"Five-Layer Storage Architecture"
+  source-paper: v13 §8
+  definition: An append-only log of all CRDT operations and domain events is the system's source of truth
+    for sync and audit; the local database is a derived projection of the log.
+  must-implement:
+  - Append-only event log is persisted distinctly from the queryable local database
+  - Local database can be rebuilt deterministically from the event log
+  - Event log survives database deletion or corruption
+  verification: Deleting the local database file and replaying the event log reproduces equivalent application
+    state.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - event-log
+  - persistence
+  - crdt
+  failed-conditions:
+  - Append-only event log is not persisted distinctly from the queryable local database
+  - Local database cannot be rebuilt deterministically from the event log
+  - 'Fails to satisfy: Event log survives database deletion or corruption'
+  - 'Verification check does not pass: Deleting the local database file and replaying the event log reproduces
+    equivalent application state.'
+- id: DUR-04
+  name: Declarative sync buckets
+  source: ch16 §"Declarative Sync Buckets"
+  source-paper: v13 §8
+  definition: A bucket is a named, declaratively specified subset of the team dataset whose membership
+    is tied to role attestations and enforced by the sync daemon at capability negotiation, not by application-layer
+    filtering after data arrives.
+  must-implement:
+  - Buckets are declared in a static configuration (e.g., YAML) with name, record types, filter, replication
+    mode, and required attestation
+  - Sync daemon evaluates bucket eligibility against verified peer attestations before sending any data
+  - Non-eligible peers never receive bucket events at the protocol layer
+  verification: A peer presenting only `team_member` attestation receives only buckets whose `required_attestation`
+    matches; financial buckets are never forwarded to it on the wire.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - sync
+  - buckets
+  - access-control
+  - minimization
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Buckets are not declared in a static configuration (e.g., YAML) with name, record types, filter, replication
+    mode, and required attestation
+  - 'Fails to satisfy: Sync daemon evaluates bucket eligibility against verified peer attestations before
+    sending any data'
+  - 'Fails to satisfy: Non-eligible peers never receive bucket events at the protocol layer'
+  - 'Verification check does not pass: A peer presenting only `team_member` attestation receives only
+    buckets whose `required_attestation` matches; financial b...'
+- id: DUR-05
+  name: Eager versus lazy bucket replication
+  source: ch16 §"Declarative Sync Buckets"
+  source-paper: v13 §8
+  definition: Each bucket declares a replication mode — eager buckets sync immediately on connect; lazy
+    buckets use demand-driven fetch and represent records locally as stubs.
+  must-implement:
+  - Sync daemon supports both `eager` and `lazy` replication modes per bucket
+  - Lazy bucket records materialize as stubs locally until fetched
+  - Eager bucket records replicate fully on capability negotiation
+  verification: 'A bucket configured `replication: lazy` produces stub records on subscribing peers; opening
+    a record triggers a content fetch.'
+  kleppmann-properties:
+  - P1
+  - P2
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - sync
+  - buckets
+  - replication
+  failed-conditions:
+  - Sync daemon does not support both `eager` and `lazy` replication modes per bucket
+  - Lazy bucket does not record materialize as stubs locally until fetched
+  - Eager bucket does not record replicate fully on capability negotiation
+  - 'Verification check does not pass: A bucket configured `replication: lazy` produces stub records on
+    subscribing peers; opening a record triggers a content ...'
+- id: DUR-06
+  name: Stub records with content hash
+  source: ch16 §"Lazy Fetch and Storage Budgets"
+  source-paper: v13 §8
+  definition: A stub is a local representation of a lazy or evicted record containing identifier, display
+    metadata, and content hash but no payload, sufficient to render navigation, search, and lists without
+    fetching content.
+  must-implement:
+  - Stub structure includes record identifier, navigation metadata (title, type, author, last-modified),
+    and content hash
+  - Application can render lists, navigation, and search over stubs without fetching content
+  - Stub-to-full transitions verify the content hash before writing to local database
+  verification: Disconnect network; navigation and search over lazy buckets render using stub metadata
+    only.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - stubs
+  - lazy
+  - content-hash
+  failed-conditions:
+  - Stub structure does not include record identifier, navigation metadata (title, type, author, last-modified),
+    and content hash
+  - Application cannot render lists, navigation, and search over stubs without fetching content
+  - 'Fails to satisfy: Stub-to-full transitions verify the content hash before writing to local database'
+  - 'Verification check does not pass: Disconnect network; navigation and search over lazy buckets render
+    using stub metadata only.'
+- id: DUR-07
+  name: Configurable local storage budget with LRU eviction
+  source: ch16 §"Lazy Fetch and Storage Budgets"
+  source-paper: v13 §8
+  definition: Nodes enforce a configurable local storage budget (default 10 GB); when approaching the
+    ceiling, the sync daemon evicts least-recently-used records from lazy buckets back to stubs without
+    deleting them.
+  must-implement:
+  - Local storage budget is configurable at the workspace level
+  - Eviction policy converts full lazy records back to stubs preserving identifier, metadata, and content
+    hash
+  - Eager bucket records are not evicted by the budget mechanism
+  verification: Set storage budget below current footprint; eviction reduces local storage and converts
+    evicted records to stubs that remain accessible on demand.
+  kleppmann-properties:
+  - P2
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - storage
+  - eviction
+  - budget
+  failed-conditions:
+  - Local storage budget is not configurable at the workspace level
+  - Eviction policy converts full lazy does not record back to stubs preserving identifier, metadata,
+    and content hash
+  - Eager bucket does not record are not evicted by the budget mechanism
+  - 'Verification check does not pass: Set storage budget below current footprint; eviction reduces local
+    storage and converts evicted records to stubs that re...'
+- id: DUR-08
+  name: Mandatory content hash verification on fetch
+  source: ch16 §"Lazy Fetch and Storage Budgets"
+  source-paper: v13 §8
+  definition: Every fetched record must have its content hash verified against the stub's stored hash
+    before being written to the local database; mismatched fetches are rejected and re-requested from
+    an alternate peer.
+  must-implement:
+  - Sync daemon computes hash of fetched content and compares against stub hash before commit
+  - Hash mismatch triggers rejection and re-request from a different peer
+  - No code path writes fetched content to local database without hash verification
+  verification: Inject a corrupted content payload from a peer; the receiving node rejects the fetch and
+    re-requests from an alternate peer.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - integrity
+  - content-hash
+  - security
+  failed-conditions:
+  - 'Fails to satisfy: Sync daemon computes hash of fetched content and compares against stub hash before
+    commit'
+  - 'Fails to satisfy: Hash mismatch triggers rejection and re-request from a different peer'
+  - 'Fails to satisfy: No code path writes fetched content to local database without hash verification'
+  - 'Verification check does not pass: Inject a corrupted content payload from a peer; the receiving node
+    rejects the fetch and re-requests from an alternate p...'
+- id: DUR-09
+  name: Snapshot as performance optimization over event log
+  source: ch16 §"Snapshot Format and Rehydration"
+  source-paper: v13 §8
+  definition: A snapshot captures the current state of an aggregate at a point in time indexed to the
+    last event it incorporates; snapshots are deletable and regenerable without affecting correctness
+    because the event log remains the source of truth.
+  must-implement:
+  - Snapshot record includes aggregate_id, epoch_id, schema_version, last_event_seq, payload, and creation
+    timestamp
+  - Snapshots are stored separately from the event log
+  - Deleting all snapshots and rehydrating from the log produces equivalent application state
+  verification: Delete the snapshot store; aggregate rehydration replays from the beginning of the event
+    log and reproduces identical state.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - snapshot
+  - event-log
+  - performance
+  failed-conditions:
+  - Snapshot record does not include aggregate_id, epoch_id, schema_version, last_event_seq, payload,
+    and creation timestamp
+  - Snapshots are not stored separately from the event log
+  - 'Fails to satisfy: Deleting all snapshots and rehydrating from the log produces equivalent application
+    state'
+  - 'Verification check does not pass: Delete the snapshot store; aggregate rehydration replays from the
+    beginning of the event log and reproduces identical st...'
+- id: DUR-10
+  name: Epoch- and schema-scoped snapshot rehydration
+  source: ch16 §"Snapshot Format and Rehydration"
+  source-paper: v13 §8
+  definition: Rehydration loads the most recent snapshot, verifies its epoch and schema version match
+    current values, replays subsequent events with upcasters applied for older schema versions, and discards
+    snapshots that do not match.
+  must-implement:
+  - Rehydration verifies snapshot epoch_id and schema_version against current values before use
+  - Mismatched snapshots are discarded and rehydration falls back to event-log replay
+  - Schema upcasters are applied during replay for events from older schema versions
+  verification: Force a snapshot's schema_version to a stale value; rehydration discards it and replays
+    from the log without producing incorrect state.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  tags:
+  - snapshot
+  - schema
+  - rehydration
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Rehydration does not verifie snapshot epoch_id and schema_version against current values before use
+  - Mismatched snapshots are not discarded and rehydration falls back to event-log replay
+  - Schema upcasters are not applied during replay for events from older schema versions
+  - 'Verification check does not pass: Force a snapshot''s schema_version to a stale value; rehydration
+    discards it and replays from the log without producing i...'
+- id: DUR-11
+  name: Snapshot scheduling policy
+  source: ch16 §"Snapshot Format and Rehydration"
+  source-paper: v13 §8
+  definition: New snapshots are written after rehydration, after a configurable per-document-type operation-count
+    threshold (default 5,000 operations), and on explicit request at application shutdown.
+  must-implement:
+  - Implementation triggers snapshot write after rehydration completes
+  - Per-document-type operation-count threshold is configurable and triggers snapshot writes
+  - Explicit snapshot creation is exposed as an API for shutdown hooks
+  verification: Apply 5,001 operations to an aggregate of a type with default threshold; a new snapshot
+    is written within bounded time.
+  kleppmann-properties:
+  - P1
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - snapshot
+  - scheduling
+  - performance
+  failed-conditions:
+  - Implementation triggers snapshot write after rehydration does not complete
+  - Per-document-type operation-count threshold is not configurable and triggers snapshot writes
+  - Explicit snapshot creation is not exposed as an API for shutdown hooks
+  - 'Verification check does not pass: Apply 5,001 operations to an aggregate of a type with default threshold;
+    a new snapshot is written within bounded time.'
+- id: DUR-12
+  name: CRDT garbage collection strategies
+  source: ch16 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §8
+  definition: CRDT documents grow monotonically under naive storage; the architecture mitigates this with
+    three named strategies — library-level compaction, application-level document sharding, and periodic
+    shallow snapshots — with full-history retention as the conservative default.
+  must-implement:
+  - Architecture names the three mitigation strategies and their tradeoffs
+  - Default policy retains full history relying on library-level compaction
+  - Application-level sharding and shallow snapshots are opt-in per document type via the schema
+  verification: Document schema configuration accepts opt-in flags for sharding and shallow-snapshot policies;
+    defaults retain full history.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - crdt
+  - garbage-collection
+  - storage
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Architecture names the three mitigation strategies and their tradeoffs'
+  - Default policy does not retain full history relying on library-level compaction
+  - Application-level sharding and shallow snapshots are not opt-in per document type via the schema
+  - 'Verification check does not pass: Document schema configuration accepts opt-in flags for sharding
+    and shallow-snapshot policies; defaults retain full hist...'
+- id: DUR-13
+  name: Shallow-snapshot mergeability tradeoff
+  source: ch16 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §8
+  definition: A shallow snapshot captures current document state without history required to merge with
+    older versions; nodes that discard history below the shallow snapshot cannot merge with peers retaining
+    that older history.
+  must-implement:
+  - Schema declares opt-in for shallow snapshots per document type
+  - System surfaces the mergeability tradeoff at configuration time
+  - Shallow snapshot is reserved for high-write-rate document types (logs, sensor feeds) by policy
+  verification: Schema documentation for shallow-snapshot-enabled types names the lost-mergeability constraint
+    explicitly.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - crdt
+  - garbage-collection
+  - tradeoff
+  failed-conditions:
+  - Schema does not declare opt-in for shallow snapshots per document type
+  - System does not surface the mergeability tradeoff at configuration time
+  - Shallow snapshot is not reserved for high-write-rate document types (logs, sensor feeds) by policy
+  - 'Verification check does not pass: Schema documentation for shallow-snapshot-enabled types names the
+    lost-mergeability constraint explicitly.'
+- id: DUR-14
+  name: Three-state backup UX
+  source: 'ch16 §"Backup UX: Three-State Model"'
+  source-paper: v13 §8
+  definition: Backup status is exposed to the user as one of three states — Protected, Attention, At Risk
+    — each mapping to a single user action (none, back up now, acknowledge), with no exposure of internal
+    replication factors or vector clocks.
+  must-implement:
+  - System surfaces backup state as exactly the three named states
+  - Attention state offers a single dismissible "Back up now" prompt
+  - At Risk state displays a persistent warning that returns each session until backup completes; acknowledgement
+    records awareness but does not clear risk
+  verification: Force backup lag past the policy window; UI transitions to Attention and offers "Back
+    up now"; force lag past the escalation threshold; UI transitions to At Risk with a non-dismissible
+    warning.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - backup
+  - ux
+  - state-machine
+  failed-conditions:
+  - System does not surface backup state as exactly the three named states
+  - 'Fails to satisfy: Attention state offers a single dismissible "Back up now" prompt'
+  - At Risk state displays a persistent warning that returns each session until backup does not complete;
+    acknowledgement records awareness but does not clear risk
+  - 'Verification check does not pass: Force backup lag past the policy window; UI transitions to Attention
+    and offers "Back up now"; force lag past the escala...'
+- id: DUR-15
+  name: Backup state as typed contract, not prescribed UI
+  source: 'ch16 §"Backup UX: Three-State Model"'
+  source-paper: v13 §8
+  definition: The backup state machine is exposed as a typed state by the foundation package; the host
+    application provides the presentation, so the package contract is the state model rather than any
+    specific UI.
+  must-implement:
+  - Foundation package exposes backup state as a typed enum or equivalent
+  - No UI rendering is prescribed by the package
+  - Application can substitute its own presentation while preserving the three-state semantics
+  verification: '`Sunfish.Foundation` exposes a backup state type; no UI components ship in the package.'
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - backup
+  - contract
+  - ux
+  failed-conditions:
+  - Foundation package does not expose backup state as a typed enum or equivalent
+  - No UI rendering is not prescribed by the package
+  - Application cannot substitute its own presentation while preserving the three-state semantics
+  - 'Verification check does not pass: `Sunfish.Foundation` exposes a backup state type; no UI components
+    ship in the package.'
+- id: DUR-16
+  name: BYOC user-controlled backup destination
+  source: 'ch16 §"Backup UX: Three-State Model"'
+  source-paper: v13 §8
+  definition: The Tier 3 backup adapter accepts any S3-API-compatible endpoint configured by the operator
+    (hyperscaler, EU-resident, sovereign-cloud, on-premise MinIO/Ceph), not a vendor-bound destination.
+  must-implement:
+  - Backup adapter is provider-agnostic and configured per deployment
+  - Adapter accepts any S3-API-compatible endpoint including self-hosted object storage
+  - No code path requires a specific cloud vendor for backup to function
+  verification: Configure backup destination to a self-hosted MinIO instance; full backup-and-restore
+    cycle completes without invoking any vendor-specific API.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - backup
+  - byoc
+  - sovereignty
+  failed-conditions:
+  - Backup adapter is not provider-agnostic and configured per deployment
+  - Adapter does not accept any S3-API-compatible endpoint including self-hosted object storage
+  - No code path does not require a specific cloud vendor for backup to function
+  - 'Verification check does not pass: Configure backup destination to a self-hosted MinIO instance; full
+    backup-and-restore cycle completes without invoking a...'
+- id: DUR-17
+  name: Backup encryption under user key hierarchy
+  source: 'ch16 §"Backup UX: Three-State Model"'
+  source-paper: v13 §8
+  definition: Backup objects contain a full encrypted snapshot of the node's CRDT event log encrypted
+    under a key derived via HKDF-SHA256 from the same DEK/KEK hierarchy that protects the local database;
+    the storage provider cannot read the backup.
+  must-implement:
+  - Backup encryption key is derived from the same root seed as the local database key
+  - Backup payload is the encrypted serialized event log, not a raw database file
+  - Storage provider has no path to plaintext backup contents
+  verification: Inspect backup objects in storage; payload is opaque ciphertext that cannot be decrypted
+    without the user's key material.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  - vendor-acquisition
+  tags:
+  - backup
+  - encryption
+  - key-hierarchy
+  notes: Cross-references Ch15 key hierarchy.
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Backup encryption key is not derived from the same root seed as the local database key
+  - Backup payload is not the encrypted serialized event log, not a raw database file
+  - Storage provider has not no path to plaintext backup contents
+  - 'Verification check does not pass: Inspect backup objects in storage; payload is opaque ciphertext
+    that cannot be decrypted without the user''s key material...'
+- id: DUR-18
+  name: Ciphertext-only relay invariant
+  source: ch16 §"Relay Architecture"
+  source-paper: v13 §9
+  definition: The relay routes encrypted CRDT operation frames between authenticated peers without holding
+    decryption keys; it sees peer identities, workspace identifiers, and frame envelopes but no plaintext
+    payload.
+  must-implement:
+  - Relay code path holds no decryption keys for forwarded payloads
+  - All frames the relay forwards are end-to-end encrypted under keys that never leave originating devices
+  - A compromised relay exposes only metadata (who, when, volume), not content
+  verification: Static analysis of relay binary confirms no key material is accepted or stored; integration
+    test confirms forwarded frames are opaque ciphertext to the relay process.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  - vendor-acquisition
+  tags:
+  - relay
+  - encryption
+  - e2ee
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Relay code path holds no decryption keys for forwarded payloads'
+  - All frames the relay forwards are not end-to-end encrypted under keys that never leave originating
+    devices
+  - A compromised relay does not expose only metadata (who, when, volume), not content
+  - 'Verification check does not pass: Static analysis of relay binary confirms no key material is accepted
+    or stored; integration test confirms forwarded fram...'
+- id: DUR-19
+  name: Self-hostable relay binary
+  source: ch16 §"Relay Architecture"
+  source-paper: v13 §9
+  definition: The relay is distributed as a single binary (native executable and OCI container image)
+    deployable on operator-controlled infrastructure with a small resource profile (512 MiB RAM, 2 vCPU,
+    10 GiB disk for fifty-person teams), implementing the same protocol as the managed relay.
+  must-implement:
+  - Relay ships as both native binary and OCI container image
+  - Self-hosted and managed relays are protocol-indistinguishable to nodes
+  - Node `relayEndpoint` configuration redirects to operator-controlled relays without code changes
+  verification: Deploy self-hosted relay; nodes configured to it complete sync identically to nodes connected
+    to the managed relay.
+  kleppmann-properties:
+  - P3
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - data-residency-objection
+  tags:
+  - relay
+  - self-host
+  - sovereignty
+  failed-conditions:
+  - 'Fails to satisfy: Relay ships as both native binary and OCI container image'
+  - Self-hosted and managed relays are not protocol-indistinguishable to nodes
+  - 'Fails to satisfy: Node `relayEndpoint` configuration redirects to operator-controlled relays without
+    code changes'
+  - 'Verification check does not pass: Deploy self-hosted relay; nodes configured to it complete sync
+    identically to nodes connected to the managed relay.'
+- id: DUR-20
+  name: Open relay protocol prevents vendor lock-in
+  source: ch16 §"Relay Architecture"
+  source-paper: v13 §9
+  definition: The relay protocol is specified in Chapter 14 with sufficient precision for third-party
+    implementation; there is no proprietary wire format or vendor-specific handshake extension, so any
+    compliant relay is indistinguishable from the first-party relay.
+  must-implement:
+  - Relay protocol specification is published under the same license as the kernel
+  - Specification includes wire format, handshake, and routing semantics with no proprietary extensions
+  - A third-party relay implementation can interoperate with first-party nodes without vendor cooperation
+  verification: A third-party relay implementation built from the published specification interoperates
+    with first-party nodes in convergence tests.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  - vendor-outage
+  tags:
+  - relay
+  - protocol
+  - openness
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Relay protocol specification is not published under the same license as the kernel
+  - Specification does not include wire format, handshake, and routing semantics with no proprietary extensions
+  - A third-party relay implementation cannot interoperate with first-party nodes without vendor cooperation
+  - 'Verification check does not pass: A third-party relay implementation built from the published specification
+    interoperates with first-party nodes in conver...'
+- id: DUR-21
+  name: Relay compelled-access immunity
+  source: ch16 §"Relay Architecture"
+  source-paper: v13 §9
+  definition: A subpoena or compulsion order to the relay operator yields connection logs and message
+    envelopes only — never payload plaintext — because the relay structurally does not possess decryptable
+    content.
+  must-implement:
+  - Relay operator has no technical capability to produce plaintext payloads under legal compulsion
+  - Compelled-access posture is documented as a structural property, not a policy promise
+  verification: Architecture document and threat model state the compelled-access invariant; implementation
+    review confirms no key escrow path exists at the relay layer.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - relay
+  - compelled-access
+  - threat-model
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Relay operator has not no technical capability to produce plaintext payloads under legal compulsion
+  - Compelled-access posture is not documented as a structural property, not a policy promise
+  - 'Verification check does not pass: Architecture document and threat model state the compelled-access
+    invariant; implementation review confirms no key escro...'
+- id: DUR-22
+  name: Peer-assisted device recovery via QR attestation transfer
+  source: ch16 §"Non-Technical Disaster Recovery"
+  source-paper: v13 §10
+  definition: A new device recovers by authenticating against the IdP and receiving a one-time QR-encoded
+    key exchange from an existing team member's device that transfers the role attestation bundle and
+    an initial CRDT snapshot of authorized eager-bucket records.
+  must-implement:
+  - New-device flow detects empty local CRDT state on first launch
+  - Existing-member device generates a one-time QR-encoded key exchange for attestation transfer
+  - Transferred attestation bundle is signed by the team's identity authority and cannot be forged by
+    the new device
+  - Scope of transferred data is bounded by the existing member's own attestation set
+  verification: Provision a new device; an existing member's QR scan brings the new device to working
+    state with eager-bucket access in minutes, without contacting a central server beyond the IdP.
+  kleppmann-properties:
+  - P2
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-loss
+  tags:
+  - recovery
+  - attestation
+  - qr
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - New-device flow does not detect empty local CRDT state on first launch
+  - Existing-member device does not generate a one-time QR-encoded key exchange for attestation transfer
+  - Transferred attestation bundle is not signed by the team's identity authority and cannot be forged
+    by the new device
+  - Scope of transferred data is not bounded by the existing member's own attestation set
+  - 'Verification check does not pass: Provision a new device; an existing member''s QR scan brings the
+    new device to working state with eager-bucket access in ...'
+- id: DUR-23
+  name: Backup-only recovery without peer assistance
+  source: ch16 §"Non-Technical Disaster Recovery"
+  source-paper: v13 §10
+  definition: When no team member is available for QR exchange, a new device authenticates against the
+    IdP, retrieves the most recent backup snapshot from user-controlled object storage, applies it locally,
+    and re-synchronizes with peers to incorporate post-backup changes.
+  must-implement:
+  - System supports recovery from Tier 3 backup without requiring a peer-assisted handoff
+  - Recovery flow re-synchronizes with peers after backup application to capture changes since backup
+  - Recovery produces the same end-state as peer-assisted recovery (full local authority, peer-synced)
+  verification: Disable peer-assisted path; recovery from backup alone restores the node to working state
+    synchronized with peers.
+  kleppmann-properties:
+  - P2
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-loss
+  tags:
+  - recovery
+  - backup
+  failed-conditions:
+  - System does not support recovery from Tier 3 backup without requiring a peer-assisted handoff
+  - 'Fails to satisfy: Recovery flow re-synchronizes with peers after backup application to capture changes
+    since backup'
+  - 'Fails to satisfy: Recovery produces the same end-state as peer-assisted recovery (full local authority,
+    peer-synced)'
+  - 'Verification check does not pass: Disable peer-assisted path; recovery from backup alone restores
+    the node to working state synchronized with peers.'
+- id: DUR-24
+  name: Offline recovery bundle
+  source: ch16 §"Non-Technical Disaster Recovery"
+  source-paper: v13 §10
+  definition: Each node optionally generates at onboarding a one-time-use cryptographic blob containing
+    a wrapped recovery key and minimum bootstrap attestation, stored out-of-band by the user, that restores
+    the node from backup without IdP availability and expires on use or on a configurable wall-clock timeout
+    (default 12 months).
+  must-implement:
+  - Node generation flow produces an optional offline recovery bundle at onboarding
+  - Bundle restores read-write local state from backup with no network connectivity
+  - Bundle is single-use; on use the recovered node re-attests against the IdP and rotates to a fresh
+    bundle
+  - Bundle has a configurable wall-clock expiry (default 12 months)
+  verification: Provision a node, capture its offline recovery bundle, then disconnect network and restore
+    to a new device; the new device reaches read-write state without contacting the IdP.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-loss
+  - vendor-outage
+  tags:
+  - recovery
+  - offline
+  - attestation
+  notes: Touches Ch15 key recovery; this concept is the persistence-layer mechanism, distinct from key-hierarchy
+    concepts owned by Ch15.
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Node generation flow produces an optional offline recovery bundle at onboarding'
+  - 'Fails to satisfy: Bundle restores read-write local state from backup with no network connectivity'
+  - Bundle is not single-use; on use the recovered node re-attests against the IdP and rotates to a fresh
+    bundle
+  - Bundle has not a configurable wall-clock expiry (default 12 months)
+  - 'Verification check does not pass: Provision a node, capture its offline recovery bundle, then disconnect
+    network and restore to a new device; the new devi...'
+- id: DUR-25
+  name: Plain-file export as architectural requirement
+  source: ch16 §"Plain-File Export"
+  source-paper: v13 §10
+  definition: All user data must be exportable as standard formats (SQLite, JSON, CSV, original-format
+    binaries, Markdown) without running the application, as a first-class architectural feature rather
+    than a compliance afterthought.
+  must-implement:
+  - Export pipeline runs from local data without network connectivity
+  - Export emits relational data as SQLite, structured records as JSON, tabular data as CSV, binary assets
+    in original format, and long-form text as Markdown
+  - Export pipeline is exposed by `Sunfish.Foundation` as a background task with a destination-path contract
+  - No host-application UI is prescribed by the export pipeline
+  verification: Run export with network disconnected; resulting directory opens in third-party tools (SQLite
+    client, text editor, spreadsheet) without application software.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - export
+  - formats
+  - long-now
+  failed-conditions:
+  - 'Fails to satisfy: Export pipeline runs from local data without network connectivity'
+  - Export does not emit relational data as SQLite, structured records as JSON, tabular data as CSV, binary
+    assets in original format, and long-form text as Markdown
+  - Export pipeline is not exposed by `Sunfish.Foundation` as a background task with a destination-path
+    contract
+  - No host-application UI is not prescribed by the export pipeline
+  - 'Verification check does not pass: Run export with network disconnected; resulting directory opens
+    in third-party tools (SQLite client, text editor, spread...'
+- id: DUR-26
+  name: Export determinism and completeness guarantees
+  source: ch16 §"Plain-File Export"
+  source-paper: v13 §10
+  definition: The export process emits no telemetry, requires no network, produces deterministic output
+    (identical state yields identical export), and includes every record the local node holds — full records
+    as content, stubs as metadata-plus-hash.
+  must-implement:
+  - Export emits zero network requests during execution
+  - Identical local state produces byte-identical export directory contents (modulo timestamps in UTC
+    ISO 8601 filenames)
+  - Stubs are exported as metadata plus content hash with content field absent and a documented note
+  - No record present in the local database is omitted from export
+  verification: Run export twice over identical state; diff confirms identical contents. Capture network
+    traffic during export; confirm zero outbound requests.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - export
+  - determinism
+  - completeness
+  failed-conditions:
+  - Export does not emit zero network requests during execution
+  - 'Fails to satisfy: Identical local state produces byte-identical export directory contents (modulo
+    timestamps in UTC ISO 8601 filenames)'
+  - Stubs are not exported as metadata plus content hash with content field absent and a documented note
+  - No record present in the local database is not omitted from export
+  - 'Verification check does not pass: Run export twice over identical state; diff confirms identical
+    contents. Capture network traffic during export; confirm ...'
+- id: DUR-27
+  name: Versioned export manifest
+  source: ch16 §"Plain-File Export"
+  source-paper: v13 §10
+  definition: A machine-readable `manifest.json` at the export root records format version, export timestamp,
+    node identifier, included document types, and the count of stubs versus full records, enabling future
+    readers to determine compatibility before parsing data files.
+  must-implement:
+  - Every export directory contains a `manifest.json` at root and a plain-language `README.txt`
+  - Manifest records format version, timestamp, node identifier, included document types, and stub-vs-full
+    counts
+  - Export format version is versioned independently of the application version
+  verification: Inspect any export directory; `manifest.json` parses with the documented schema and reports
+    a format version.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - export
+  - manifest
+  - format-stability
+  failed-conditions:
+  - 'Fails to satisfy: Every export directory contains a `manifest.json` at root and a plain-language
+    `README.txt`'
+  - Manifest does not record format version, timestamp, node identifier, included document types, and
+    stub-vs-full counts
+  - Export format version is not versioned independently of the application version
+  - 'Verification check does not pass: Inspect any export directory; `manifest.json` parses with the documented
+    schema and reports a format version.'
+- id: DUR-28
+  name: Markdown as long-now format
+  source: ch16 §"Plain-File Export"
+  source-paper: v13 §10
+  definition: Markdown is included as an export format for long-form document content because it is simultaneously
+    human-readable in any text editor, machine-parseable by any competent library, and version-control
+    friendly without specialized tooling.
+  must-implement:
+  - Long-form document content (notes, descriptions, inline text) is exported as Markdown
+  - Markdown export does not require application-specific tooling to read or parse
+  verification: Open any Markdown export file in a plain text editor; content is human-readable without
+    rendering.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - export
+  - markdown
+  - long-now
+  failed-conditions:
+  - Long-form document content (notes, descriptions, inline text) is not exported as Markdown
+  - 'Fails to satisfy: Markdown export does not require application-specific tooling to read or parse'
+  - 'Verification check does not pass: Open any Markdown export file in a plain text editor; content is
+    human-readable without rendering.'
+- id: DUR-29
+  name: Layer 5 decentralized archival as deferred extension point
+  source: ch16 §"Layer 5 — Decentralized Archival (Phase 2)"
+  source-paper: v13 §8
+  definition: Layer 5 is an optional enterprise tier providing cryptographic proof-of-storage for regulated
+    long-term retention; the operational mechanism (Filecoin, Arweave, Merkle-challenge) is deferred to
+    v2.0 and current deployments satisfy retention obligations through Tier 3 BYOC backup with retention
+    policies.
+  must-implement:
+  - Architecture documents Layer 5 as a Phase 2 extension point with no 1.0 specification
+  - 1.0 deployments satisfy retention obligations via Tier 3 BYOC with long-term retention policies
+  - Layer 5 absence is documented as expected, not as a gap
+  verification: Specification document marks Layer 5 as deferred to v2.0 and references Tier 3 retention
+    as the 1.0 satisfier.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - archival
+  - layer-5
+  - deferred
+  failed-conditions:
+  - 'Fails to satisfy: Architecture documents Layer 5 as a Phase 2 extension point with no 1.0 specification'
+  - 'Fails to satisfy: 1.0 deployments satisfy retention obligations via Tier 3 BYOC with long-term retention
+    policies'
+  - Layer 5 absence is not documented as expected, not as a gap
+  - 'Verification check does not pass: Specification document marks Layer 5 as deferred to v2.0 and references
+    Tier 3 retention as the 1.0 satisfier.'

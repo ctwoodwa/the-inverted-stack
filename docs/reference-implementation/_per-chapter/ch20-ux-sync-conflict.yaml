@@ -1,382 +1,830 @@
 chapter: ch20
 chapter-title: UX, Sync, and Conflict
-source-paper-refs: [v13 §13, v13 §14, v5 §6]
+source-paper-refs:
+- v13 §13
+- v13 §14
+- v5 §6
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: UX-01
-    name: Complexity Hiding Standard
-    source: ch20 §"The Complexity Hiding Standard"
-    source-paper: v13 §13
-    definition: A non-technical user must not be able to determine from normal use whether the application is local-first or cloud-first; the only visible difference is that the local-first app keeps working when the internet does not.
-    must-implement:
-      - User-facing strings expose no distributed-systems vocabulary (no "gossip", "relay-only", "peer sync")
-      - No "offline mode" banner or modal differentiates online from offline operation
-      - Application chrome remains constant across connectivity states except for ambient indicators
-    verification: A non-technical reviewer using the app under normal connectivity and full offline cannot identify which state they are in from chrome alone.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, philosophy, plain-language]
-
-  - id: UX-02
-    name: Plain-language register for all user-visible state
-    source: ch20 §"The Complexity Hiding Standard"
-    source-paper: v13 §13
-    definition: Every string a user reads must pass a plain-language test — a practitioner with no knowledge of distributed systems understands it without training.
-    must-implement:
-      - String catalog excludes infrastructure terminology in any user-visible surface
-      - Status messages name user actions and consequences, not protocol states
-      - Translation review enforces the plain-language register in every active locale
-    verification: String audit confirms no occurrences of forbidden terms (gossip, relay, quorum, epoch, attestation, CRDT) in any user-facing locale file.
-    kleppmann-properties: [P1]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, plain-language, i18n]
-
-  - id: UX-03
-    name: Three always-visible status indicators
-    source: ch20 §"The Three Always-Visible Indicators"
-    source-paper: v13 §13
-    definition: The application status bar displays three indicators at all times — node health, link status, and data freshness — non-intrusive under normal conditions and expanding to plain-language labels under degraded conditions.
-    must-implement:
-      - Status bar persists across all application screens
-      - Three indicators (node health, link status, data freshness) are present and ambient under normal conditions
-      - Degraded states surface a short plain-language label and amber/red emphasis
-    verification: Application shell includes a status bar implementing the three indicators; a screenshot under normal connectivity shows ambient icons with no labels.
-    kleppmann-properties: [P1, P3]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ux, status, indicators]
-
-  - id: UX-04
-    name: Node health indicator semantics
-    source: ch20 §"The Three Always-Visible Indicators"
-    source-paper: v13 §13
-    definition: The node health indicator signals whether the local node is operating normally (green = engine and sync daemon running and last self-check passed; amber = degraded; red = node cannot accept writes and requires user action).
-    must-implement:
-      - Indicator reflects engine, sync-daemon, and self-check state
-      - Amber state covers disk-near-capacity, sync-daemon restart, and schema-migration-in-progress
-      - Red state surfaces a plain-language prompt for required user action (e.g., re-sign-in after credential revocation) without naming protocol terms
-    verification: Forcing each underlying condition (low disk, daemon restart, migration, credential revocation) drives the indicator to the documented state and surface text.
-    kleppmann-properties: [P1, P6]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [ux, status, node-health]
-
-  - id: UX-05
-    name: Link status indicator semantics with no red state
-    source: ch20 §"The Three Always-Visible Indicators"
-    source-paper: v13 §13
-    definition: The link status indicator signals connectivity to the team using green (peer reachable, gossip flowing), amber (relay-only), and grey (fully offline) — and never red, because connectivity failure is not an error condition for a local-first node.
-    must-implement:
-      - Indicator distinguishes peer-reachable, relay-only, and offline states
-      - No red state is ever presented for connectivity loss
-      - Offline state is rendered as ambient grey, not as a warning
-    verification: Disconnecting the network drives the indicator to grey without surfacing any error or warning chrome.
-    kleppmann-properties: [P3]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [ux, status, link, offline]
-
-  - id: UX-06
-    name: Data freshness indicator with hidden-by-default policy
-    source: ch20 §"The Three Always-Visible Indicators"
-    source-paper: v13 §13
-    definition: The data freshness indicator is invisible while every active data class is within its staleness threshold and only surfaces when a threshold is close to expiring or has expired.
-    must-implement:
-      - Indicator computes staleness against the configured threshold for each active data class
-      - Indicator is hidden under normal conditions and only renders amber or red when thresholds approach or exceed their limit
-      - Threshold configuration is sourced from the AP/CP classification declared in sync configuration
-    verification: With all data classes within threshold the indicator does not render; advancing system clock past a threshold causes the indicator to appear in the documented state.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [clock-skew]
-    tags: [ux, status, freshness]
-
-  - id: UX-07
-    name: AP/CP visibility per data class
-    source: ch20 §"AP/CP Visibility by Data Class"
-    source-paper: v13 §13
-    definition: Each data class declares its own staleness threshold and UX treatment derived from its AP/CP classification, with tighter thresholds and stricter blocking for data whose stale use causes immediate concrete harm.
-    must-implement:
-      - Each data class declares a staleness threshold and UX treatment in configuration
-      - CP-class actions are blocked while freshness cannot be confirmed; AP-class edits apply locally and propagate
-      - Per-record freshness is computed against the class threshold without per-application code
-    verification: Configuration manifest enumerates data classes with thresholds and treatments; behavioral test confirms a CP-class write is blocked while a matching AP-class write succeeds offline.
-    kleppmann-properties: [P1, P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition, clock-skew]
-    tags: [ux, ap-cp, data-class, freshness]
-
-  - id: UX-08
-    name: Per-record freshness badge bound to AP/CP classification
-    source: ch20 §"AP/CP Visibility by Data Class"
-    source-paper: v13 §13
-    definition: A freshness badge component renders the per-record indicator for any data class, computing staleness against the configured threshold and handling clock-skew, daylight-saving, and suspend/resume edge cases without per-application code.
-    must-implement:
-      - Component binds to the AP/CP classification configured in the sync layer
-      - Component handles suspend/resume and clock adjustments without losing accuracy
-      - Per-application code does not implement freshness timers
-    verification: Suspending the host machine across a threshold boundary, then resuming, drives the badge to the correct post-resume state without the application invoking a timer reset.
-    kleppmann-properties: [P1, P3]
-    scope: inverted-stack-specific
-    failure-modes: [clock-skew]
-    tags: [ux, freshness, component, ap-cp]
-
-  - id: UX-09
-    name: Three-state optimistic write lifecycle
-    source: ch20 §"Optimistic UI and Confirmed States"
-    source-paper: v13 §13
-    definition: An AP-class write moves through three explicit visual states — pending (applied locally, not yet seen by any peer), confirmed (received by at least one peer), and failed (circuit breaker rejected on reconnect) — with the failed state opening the conflict inbox.
-    must-implement:
-      - Writes apply locally on user confirmation and surface a pending visual state immediately
-      - Confirmation state is reached when at least one peer has acknowledged the write
-      - Failed state is distinct from pending and offers a "Review" affordance into the conflict inbox
-    verification: A write performed offline shows pending; reconnecting with no conflict transitions it to confirmed; reconnecting with an unresolvable conflict transitions it to failed and opens the conflict inbox via the Review affordance.
-    kleppmann-properties: [P1, P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, optimistic, write-lifecycle]
-
-  - id: UX-10
-    name: Pending and failed states never collapse
-    source: ch20 §"Optimistic UI and Confirmed States"
-    source-paper: v13 §13
-    definition: A failed write must never remain in the pending visual state, because a user who sees a persistent spinner waits while a user who sees a failure indicator acts.
-    must-implement:
-      - Pending state has a deterministic upper bound after which the UI resolves to confirmed or failed
-      - Circuit-breaker rejection surfaces as a failed state on the affected record
-      - The pending visual state never persists past the documented timeout without a state transition
-    verification: Forcing a circuit-breaker rejection at reconnect resolves the pending visual state to failed within the documented bound, never indefinitely spinning.
-    kleppmann-properties: [P1, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, optimistic, failure-handling]
-
-  - id: UX-11
-    name: Conflict inbox as single resolution surface
-    source: ch20 §"The Conflict Inbox and Bulk Resolution"
-    source-paper: v13 §13
-    definition: All conflict resolution occurs in a dedicated panel — not a modal, not an interstitial — accessible from the status bar and any failed-write indicator.
-    must-implement:
-      - Application exposes one canonical conflict inbox surface, not multiple per-feature dialogs
-      - Inbox is reachable from both the status bar and any failed-write indicator
-      - Conflict resolution UX never blocks unrelated work via modal dialogs
-    verification: Two independent conflict-producing edits route both items to the same inbox panel reachable from the status bar.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, conflict, inbox]
-
-  - id: UX-12
-    name: Conflict grouping by record type and field
-    source: ch20 §"The Conflict Inbox and Bulk Resolution"
-    source-paper: v13 §13
-    definition: 'The conflict inbox groups conflicts by record type and field so a non-technical user sees structured items like "Status conflict on task: Design Review" rather than a raw CRDT diff.'
-    must-implement:
-      - Conflicts are grouped by record type and conflicting field
-      - Group labels use the user-facing entity name and field label, not internal identifiers
-      - Raw CRDT diffs are not surfaced in the default view
-    verification: Producing N conflicts on the same record-type/field shows a single grouped item containing N entries with a human-readable label.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, conflict, grouping]
-
-  - id: UX-13
-    name: Configurable resolution rules constrained by data model
-    source: ch20 §"The Conflict Inbox and Bulk Resolution"
-    source-paper: v13 §13
-    definition: Per-conflict-group resolution offers prefer-mine, prefer-remote, or a configurable merge rule chosen from rules declared per record type — end users cannot select arbitrary merge strategies the data model does not support.
-    must-implement:
-      - Merge rules are declared per record type in application configuration
-      - Resolution UI presents only declared rules for the affected type
-      - Component rejects attempts to apply undeclared rules
-    verification: Configuration declares a numeric "keep higher value" rule; resolution UI for a numeric field offers it and rejects an attempt to apply a non-declared rule.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [ux, conflict, merge-rules]
-
-  - id: UX-14
-    name: Resolve-all-similar bulk action
-    source: ch20 §"The Conflict Inbox and Bulk Resolution"
-    source-paper: v13 §13
-    definition: A bulk affordance applies a chosen rule to every conflict of the same shape in a single operation, with outliers retained for individual review.
-    must-implement:
-      - Bulk action applies the selected rule to all conflicts matching the active group's shape
-      - Outliers that do not match the rule remain in the inbox for individual handling
-      - The bulk action is reachable from the inbox without leaving the surface
-    verification: Producing 40 same-shape conflicts and applying "resolve all similar" with one rule resolves them in one user-visible operation, leaving any outliers visible.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, conflict, bulk]
-
-  - id: UX-15
-    name: Auditable conflict-resolution event log
-    source: ch20 §"The Conflict Inbox and Bulk Resolution"
-    source-paper: v13 §13
-    definition: Every conflict resolution writes an event log entry recording the conflict shape, the rule applied, the resolving user, and the timestamp; no resolution may pass through the system without a corresponding entry.
-    must-implement:
-      - Each resolution emits a structured log entry with shape, rule, user, and timestamp
-      - Log entries are persisted alongside the underlying CRDT events
-      - Resolution paths that bypass logging are rejected at component boundary
-    verification: Performing a resolution and inspecting the event log shows a matching entry; attempting to invoke a non-logging resolution path fails at the component boundary.
-    kleppmann-properties: [P4, P6]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ux, conflict, audit, compliance]
-
-  - id: UX-16
-    name: Three distinct connectivity-failure UX modes
-    source: ch20 §"Designing for Failure Modes"
-    source-paper: v13 §13
-    definition: Full offline, partial connectivity (relay-only), and the quarantine queue are surfaced as three distinct UX modes, not collapsed into a single "offline" treatment.
-    must-implement:
-      - Full offline runs at full fidelity with no degraded banner and no implied apology
-      - Relay-only mode surfaces specific explanations for actions requiring direct peer connectivity
-      - Quarantine queue surfaces a one-sentence count and a single review action on reconnect
-    verification: Each of the three states presents the documented surface in isolation; collapsing any two into a shared treatment fails the test.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [ux, offline, failure-modes]
-
-  - id: UX-17
-    name: Quarantine queue surfaced before sync completes
-    source: ch20 §"Designing for Failure Modes"
-    source-paper: v13 §13
-    definition: When the node reconnects with offline writes pending validation, the quarantine count is surfaced as a one-sentence courtesy with a single review action before sync completes — not as a modal blocker, and not after the fact.
-    must-implement:
-      - Reconnect surfaces the pending-validation count before sync completion
-      - The surface is a non-blocking notification with a single review action
-      - Dismissal allows sync to complete and routes any conflicts to the inbox
-    verification: Producing N offline writes and reconnecting surfaces a count-of-N notification with a Review action; dismissing it completes sync silently and any resulting conflicts appear in the inbox.
-    kleppmann-properties: [P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [ux, quarantine, reconnect]
-
-  - id: UX-18
-    name: Invisible recovery from unexpected shutdown
-    source: ch20 §"Designing for Failure Modes"
-    source-paper: v13 §13
-    definition: After a power-loss or OS-kill termination the node validates the last write-ahead checkpoint, replays pending writes from the CRDT log, and surfaces a single short status only when replay takes more than two seconds — never a crash dialog.
-    must-implement:
-      - Relaunch validates the WAL checkpoint and replays the CRDT log automatically
-      - Workspace opens as soon as replay completes
-      - Replay surface appears only when recovery exceeds two seconds; no crash dialog is presented
-    verification: Killing the node mid-write and relaunching opens the workspace at the prior state; injecting a long-replay condition surfaces the documented status string and no crash dialog.
-    kleppmann-properties: [P1, P3, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, recovery, durability, wal]
-
-  - id: UX-19
-    name: First-run two-choice gate
-    source: ch20 §"The First-Run Experience"
-    source-paper: v5 §6
-    definition: A new user sees exactly two options on first run — Start a new team and Join an existing team — with no onboarding tour, no feature callouts, and no auxiliary links.
-    must-implement:
-      - First-run screen presents exactly the two named options
-      - No tour, callout, or auxiliary action is presented before the choice
-      - The chosen path determines all subsequent first-run flow
-    verification: Fresh-install launch renders only the two-option chooser; instrumentation confirms no other actionable elements are present.
-    kleppmann-properties: [P2, P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ux, onboarding, first-run]
-
-  - id: UX-20
-    name: Mandatory BYOC backup configuration before workspace opens
-    source: ch20 §"The First-Run Experience"
-    source-paper: v13 §13
-    definition: Choosing "Start a new team" prompts for the first BYOC backup configuration before the application opens, framed in plain language with concrete target choices (local folder, OneDrive, Dropbox) — not as a later step.
-    must-implement:
-      - New-team flow blocks workspace open until a backup target is configured
-      - Backup target prompt offers concrete named options, not a generic file picker
-      - The prompt uses plain language that avoids "BYOC" and similar terminology
-    verification: Selecting "Start a new team" presents the backup-target prompt before the workspace renders; the workspace cannot be reached without configuring a target.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-loss]
-    tags: [ux, onboarding, byoc, backup]
-
-  - id: UX-21
-    name: Jurisdictional backup-target labelling and gating
-    source: ch20 §"The First-Run Experience"
-    source-paper: v5 §6
-    definition: Each backup target is labelled with its jurisdiction in plain language, and out-of-jurisdiction options are blocked with a short explanation when the team's declared jurisdiction requires in-country storage.
-    must-implement:
-      - Each backup option displays its jurisdiction (e.g., "OneDrive (Microsoft, United States)")
-      - Out-of-jurisdiction targets are blocked when team policy requires in-country storage
-      - Block surfaces a short plain-language explanation referencing the team policy
-    verification: Configuring a team with an in-country requirement renders only in-country targets as selectable; attempting an out-of-jurisdiction target is blocked with the documented explanation.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [ux, byoc, jurisdiction, compliance]
-
-  - id: UX-22
-    name: QR-based peer-assisted onboarding
-    source: ch20 §"The First-Run Experience"
-    source-paper: v13 §13
-    definition: Choosing "Join an existing team" runs the three-step onboarding flow — scan a QR code on an existing team member's device (or paste the bundle), transfer the role attestation, then sync eager buckets in the background — and shows a sync progress indicator until enough data has landed for a meaningful state.
-    must-implement:
-      - Join flow accepts QR scan and a paste-bundle fallback
-      - Role attestation transfer occurs before any data download
-      - Initial eager-bucket sync displays a progress surface and gates workspace open until a meaningful state is reached
-    verification: Scanning a valid QR transfers the attestation and begins eager-bucket sync; the workspace opens only after the documented progress state is reached.
-    kleppmann-properties: [P2, P4, P6]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [ux, onboarding, qr, attestation]
-
-  - id: UX-23
-    name: Accessibility as a Tier-1 contract
-    source: ch20 §"Accessibility as a Contract"
-    source-paper: v13 §13
-    definition: Every UX surface in the application carries an accessibility contract — semantic ARIA roles, keyboard reachability, declared component metadata, and plain-language assistive-technology text — enforced as rigorously as the write path.
-    must-implement:
-      - Status surfaces use role="status" with aria-live="polite" for ambient changes and role="alert" with aria-live="assertive" for required-action states
-      - Colour is never the sole signal; every indicator pairs colour with localised text
-      - Interactive elements support tab order, Enter and Space activation, and Escape-to-dismiss where dismissal is allowed
-      - Focus after conflict resolution returns to the next pending group, not to the page header
-    verification: Automated accessibility audit on every shipped UI block confirms ARIA roles, keyboard reachability, and colour-plus-text pairing; a screen-reader walkthrough of the conflict inbox resolves a conflict without pointer input and lands focus on the next pending group.
-    kleppmann-properties: [P1, P4]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, accessibility, aria, keyboard]
-
-  - id: UX-24
-    name: Component-manifest accessibility enforcement
-    source: ch20 §"Accessibility as a Contract"
-    source-paper: v5 §6
-    definition: Each UI block declares its ARIA roles, announced state transitions, and keyboard contract via a component manifest, and the platform refuses to register a custom replacement that declares a weaker contract than the component it replaces.
-    must-implement:
-      - UI block manifest declares ARIA role, announced transitions, and keyboard contract
-      - Platform validates the manifest at registration time
-      - Custom replacement components must declare an equal-or-stronger contract or fail registration
-    verification: Registering a custom component whose manifest weakens any declared contract relative to the replaced component fails at registration with a documented error.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ux, accessibility, manifest, ui-blocks]
-
-  - id: UX-25
-    name: Plain-language parity across visual and assistive channels
-    source: ch20 §"Accessibility as a Contract"
-    source-paper: v13 §13
-    definition: Text surfaced to assistive technology must use the same plain-language register as the visible text, with no fallback to technical terminology in ARIA labels.
-    must-implement:
-      - ARIA labels and live-region announcements use the same plain-language strings as visible text
-      - String catalog enforces parity between visible and assistive surfaces per locale
-      - Reviews reject components whose assistive surface drops to technical terminology
-    verification: Locale audit confirms each visible string has a matching assistive string in the same register; a screen-reader pass on the freshness, optimistic-write, and conflict surfaces hears the same plain-language register as the sighted view.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, accessibility, plain-language, i18n]
+- id: UX-01
+  name: Complexity Hiding Standard
+  source: ch20 §"The Complexity Hiding Standard"
+  source-paper: v13 §13
+  definition: A non-technical user must not be able to determine from normal use whether the application
+    is local-first or cloud-first; the only visible difference is that the local-first app keeps working
+    when the internet does not.
+  must-implement:
+  - User-facing strings expose no distributed-systems vocabulary (no "gossip", "relay-only", "peer sync")
+  - No "offline mode" banner or modal differentiates online from offline operation
+  - Application chrome remains constant across connectivity states except for ambient indicators
+  verification: A non-technical reviewer using the app under normal connectivity and full offline cannot
+    identify which state they are in from chrome alone.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - philosophy
+  - plain-language
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: User-facing strings expose no distributed-systems vocabulary (no "gossip", "relay-only",
+    "peer sync")'
+  - 'Fails to satisfy: No "offline mode" banner or modal differentiates online from offline operation'
+  - 'Fails to satisfy: Application chrome remains constant across connectivity states except for ambient
+    indicators'
+  - 'Verification check does not pass: A non-technical reviewer using the app under normal connectivity
+    and full offline cannot identify which state they are i...'
+- id: UX-02
+  name: Plain-language register for all user-visible state
+  source: ch20 §"The Complexity Hiding Standard"
+  source-paper: v13 §13
+  definition: Every string a user reads must pass a plain-language test — a practitioner with no knowledge
+    of distributed systems understands it without training.
+  must-implement:
+  - String catalog excludes infrastructure terminology in any user-visible surface
+  - Status messages name user actions and consequences, not protocol states
+  - Translation review enforces the plain-language register in every active locale
+  verification: String audit confirms no occurrences of forbidden terms (gossip, relay, quorum, epoch,
+    attestation, CRDT) in any user-facing locale file.
+  kleppmann-properties:
+  - P1
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - plain-language
+  - i18n
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: String catalog excludes infrastructure terminology in any user-visible surface'
+  - 'Fails to satisfy: Status messages name user actions and consequences, not protocol states'
+  - Translation review does not enforce the plain-language register in every active locale
+  - 'Verification check does not pass: String audit confirms no occurrences of forbidden terms (gossip,
+    relay, quorum, epoch, attestation, CRDT) in any user-fa...'
+- id: UX-03
+  name: Three always-visible status indicators
+  source: ch20 §"The Three Always-Visible Indicators"
+  source-paper: v13 §13
+  definition: The application status bar displays three indicators at all times — node health, link status,
+    and data freshness — non-intrusive under normal conditions and expanding to plain-language labels
+    under degraded conditions.
+  must-implement:
+  - Status bar persists across all application screens
+  - Three indicators (node health, link status, data freshness) are present and ambient under normal conditions
+  - Degraded states surface a short plain-language label and amber/red emphasis
+  verification: Application shell includes a status bar implementing the three indicators; a screenshot
+    under normal connectivity shows ambient icons with no labels.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ux
+  - status
+  - indicators
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Status bar does not persist across all application screens
+  - Three indicators (node health, link status, data freshness) are not present and ambient under normal
+    conditions
+  - 'Fails to satisfy: Degraded states surface a short plain-language label and amber/red emphasis'
+  - 'Verification check does not pass: Application shell includes a status bar implementing the three
+    indicators; a screenshot under normal connectivity shows ...'
+- id: UX-04
+  name: Node health indicator semantics
+  source: ch20 §"The Three Always-Visible Indicators"
+  source-paper: v13 §13
+  definition: The node health indicator signals whether the local node is operating normally (green =
+    engine and sync daemon running and last self-check passed; amber = degraded; red = node cannot accept
+    writes and requires user action).
+  must-implement:
+  - Indicator reflects engine, sync-daemon, and self-check state
+  - Amber state covers disk-near-capacity, sync-daemon restart, and schema-migration-in-progress
+  - Red state surfaces a plain-language prompt for required user action (e.g., re-sign-in after credential
+    revocation) without naming protocol terms
+  verification: Forcing each underlying condition (low disk, daemon restart, migration, credential revocation)
+    drives the indicator to the documented state and surface text.
+  kleppmann-properties:
+  - P1
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - ux
+  - status
+  - node-health
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Indicator reflects engine, sync-daemon, and self-check state'
+  - Amber state does not cover disk-near-capacity, sync-daemon restart, and schema-migration-in-progress
+  - Red state does not surface a plain-language prompt for required user action (e.g., re-sign-in after
+    credential revocation) without naming protocol terms
+  - 'Verification check does not pass: Forcing each underlying condition (low disk, daemon restart, migration,
+    credential revocation) drives the indicator to t...'
+- id: UX-05
+  name: Link status indicator semantics with no red state
+  source: ch20 §"The Three Always-Visible Indicators"
+  source-paper: v13 §13
+  definition: The link status indicator signals connectivity to the team using green (peer reachable,
+    gossip flowing), amber (relay-only), and grey (fully offline) — and never red, because connectivity
+    failure is not an error condition for a local-first node.
+  must-implement:
+  - Indicator distinguishes peer-reachable, relay-only, and offline states
+  - No red state is ever presented for connectivity loss
+  - Offline state is rendered as ambient grey, not as a warning
+  verification: Disconnecting the network drives the indicator to grey without surfacing any error or
+    warning chrome.
+  kleppmann-properties:
+  - P3
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - ux
+  - status
+  - link
+  - offline
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Indicator distinguishes peer-reachable, relay-only, and offline states'
+  - No red state is not ever presented for connectivity loss
+  - Offline state is not rendered as ambient grey, not as a warning
+  - 'Verification check does not pass: Disconnecting the network drives the indicator to grey without
+    surfacing any error or warning chrome.'
+- id: UX-06
+  name: Data freshness indicator with hidden-by-default policy
+  source: ch20 §"The Three Always-Visible Indicators"
+  source-paper: v13 §13
+  definition: The data freshness indicator is invisible while every active data class is within its staleness
+    threshold and only surfaces when a threshold is close to expiring or has expired.
+  must-implement:
+  - Indicator computes staleness against the configured threshold for each active data class
+  - Indicator is hidden under normal conditions and only renders amber or red when thresholds approach
+    or exceed their limit
+  - Threshold configuration is sourced from the AP/CP classification declared in sync configuration
+  verification: With all data classes within threshold the indicator does not render; advancing system
+    clock past a threshold causes the indicator to appear in the documented state.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - clock-skew
+  tags:
+  - ux
+  - status
+  - freshness
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Indicator computes staleness against the configured threshold for each active data
+    class'
+  - Indicator is not hidden under normal conditions and only renders amber or red when thresholds approach
+    or exceed their limit
+  - Threshold configuration is not sourced from the AP/CP classification declared in sync configuration
+  - 'Verification check does not pass: With all data classes within threshold the indicator does not render;
+    advancing system clock past a threshold causes the...'
+- id: UX-07
+  name: AP/CP visibility per data class
+  source: ch20 §"AP/CP Visibility by Data Class"
+  source-paper: v13 §13
+  definition: Each data class declares its own staleness threshold and UX treatment derived from its AP/CP
+    classification, with tighter thresholds and stricter blocking for data whose stale use causes immediate
+    concrete harm.
+  must-implement:
+  - Each data class declares a staleness threshold and UX treatment in configuration
+  - CP-class actions are blocked while freshness cannot be confirmed; AP-class edits apply locally and
+    propagate
+  - Per-record freshness is computed against the class threshold without per-application code
+  verification: Configuration manifest enumerates data classes with thresholds and treatments; behavioral
+    test confirms a CP-class write is blocked while a matching AP-class write succeeds offline.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  - clock-skew
+  tags:
+  - ux
+  - ap-cp
+  - data-class
+  - freshness
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Each data class does not declare a staleness threshold and UX treatment in configuration
+  - CP-class actions are not blocked while freshness cannot be confirmed; AP-class edits apply locally
+    and propagate
+  - Per-record freshness is not computed against the class threshold without per-application code
+  - 'Verification check does not pass: Configuration manifest enumerates data classes with thresholds
+    and treatments; behavioral test confirms a CP-class write...'
+- id: UX-08
+  name: Per-record freshness badge bound to AP/CP classification
+  source: ch20 §"AP/CP Visibility by Data Class"
+  source-paper: v13 §13
+  definition: A freshness badge component renders the per-record indicator for any data class, computing
+    staleness against the configured threshold and handling clock-skew, daylight-saving, and suspend/resume
+    edge cases without per-application code.
+  must-implement:
+  - Component binds to the AP/CP classification configured in the sync layer
+  - Component handles suspend/resume and clock adjustments without losing accuracy
+  - Per-application code does not implement freshness timers
+  verification: Suspending the host machine across a threshold boundary, then resuming, drives the badge
+    to the correct post-resume state without the application invoking a timer reset.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: inverted-stack-specific
+  failure-modes:
+  - clock-skew
+  tags:
+  - ux
+  - freshness
+  - component
+  - ap-cp
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Component binds to the AP/CP classification configured in the sync layer'
+  - Component does not handle suspend/resume and clock adjustments without losing accuracy
+  - 'Fails to satisfy: Per-application code does not implement freshness timers'
+  - 'Verification check does not pass: Suspending the host machine across a threshold boundary, then resuming,
+    drives the badge to the correct post-resume stat...'
+- id: UX-09
+  name: Three-state optimistic write lifecycle
+  source: ch20 §"Optimistic UI and Confirmed States"
+  source-paper: v13 §13
+  definition: An AP-class write moves through three explicit visual states — pending (applied locally,
+    not yet seen by any peer), confirmed (received by at least one peer), and failed (circuit breaker
+    rejected on reconnect) — with the failed state opening the conflict inbox.
+  must-implement:
+  - Writes apply locally on user confirmation and surface a pending visual state immediately
+  - Confirmation state is reached when at least one peer has acknowledged the write
+  - Failed state is distinct from pending and offers a "Review" affordance into the conflict inbox
+  verification: A write performed offline shows pending; reconnecting with no conflict transitions it
+    to confirmed; reconnecting with an unresolvable conflict transitions it to failed and opens the conflict
+    inbox via the Review affordance.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - optimistic
+  - write-lifecycle
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Writes apply locally on user confirmation and surface a pending visual state immediately'
+  - Confirmation state is not reached when at least one peer has acknowledged the write
+  - Failed state is not distinct from pending and offers a "Review" affordance into the conflict inbox
+  - 'Verification check does not pass: A write performed offline shows pending; reconnecting with no conflict
+    transitions it to confirmed; reconnecting with an...'
+- id: UX-10
+  name: Pending and failed states never collapse
+  source: ch20 §"Optimistic UI and Confirmed States"
+  source-paper: v13 §13
+  definition: A failed write must never remain in the pending visual state, because a user who sees a
+    persistent spinner waits while a user who sees a failure indicator acts.
+  must-implement:
+  - Pending state has a deterministic upper bound after which the UI resolves to confirmed or failed
+  - Circuit-breaker rejection surfaces as a failed state on the affected record
+  - The pending visual state never persists past the documented timeout without a state transition
+  verification: Forcing a circuit-breaker rejection at reconnect resolves the pending visual state to
+    failed within the documented bound, never indefinitely spinning.
+  kleppmann-properties:
+  - P1
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - optimistic
+  - failure-handling
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Pending state has not a deterministic upper bound after which the UI resolves to confirmed or failed
+  - Circuit-breaker rejection does not surface as a failed state on the affected record
+  - The pending visual state never does not persist past the documented timeout without a state transition
+  - 'Verification check does not pass: Forcing a circuit-breaker rejection at reconnect resolves the pending
+    visual state to failed within the documented bound...'
+- id: UX-11
+  name: Conflict inbox as single resolution surface
+  source: ch20 §"The Conflict Inbox and Bulk Resolution"
+  source-paper: v13 §13
+  definition: All conflict resolution occurs in a dedicated panel — not a modal, not an interstitial —
+    accessible from the status bar and any failed-write indicator.
+  must-implement:
+  - Application exposes one canonical conflict inbox surface, not multiple per-feature dialogs
+  - Inbox is reachable from both the status bar and any failed-write indicator
+  - Conflict resolution UX never blocks unrelated work via modal dialogs
+  verification: Two independent conflict-producing edits route both items to the same inbox panel reachable
+    from the status bar.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - conflict
+  - inbox
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Application does not expose one canonical conflict inbox surface, not multiple per-feature dialogs
+  - Inbox is not reachable from both the status bar and any failed-write indicator
+  - 'Fails to satisfy: Conflict resolution UX never blocks unrelated work via modal dialogs'
+  - 'Verification check does not pass: Two independent conflict-producing edits route both items to the
+    same inbox panel reachable from the status bar.'
+- id: UX-12
+  name: Conflict grouping by record type and field
+  source: ch20 §"The Conflict Inbox and Bulk Resolution"
+  source-paper: v13 §13
+  definition: 'The conflict inbox groups conflicts by record type and field so a non-technical user sees
+    structured items like "Status conflict on task: Design Review" rather than a raw CRDT diff.'
+  must-implement:
+  - Conflicts are grouped by record type and conflicting field
+  - Group labels use the user-facing entity name and field label, not internal identifiers
+  - Raw CRDT diffs are not surfaced in the default view
+  verification: Producing N conflicts on the same record-type/field shows a single grouped item containing
+    N entries with a human-readable label.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - conflict
+  - grouping
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Conflicts are not grouped by record type and conflicting field
+  - 'Fails to satisfy: Group labels use the user-facing entity name and field label, not internal identifiers'
+  - 'Fails to satisfy: Raw CRDT diffs are not surfaced in the default view'
+  - 'Verification check does not pass: Producing N conflicts on the same record-type/field shows a single
+    grouped item containing N entries with a human-readab...'
+- id: UX-13
+  name: Configurable resolution rules constrained by data model
+  source: ch20 §"The Conflict Inbox and Bulk Resolution"
+  source-paper: v13 §13
+  definition: Per-conflict-group resolution offers prefer-mine, prefer-remote, or a configurable merge
+    rule chosen from rules declared per record type — end users cannot select arbitrary merge strategies
+    the data model does not support.
+  must-implement:
+  - Merge rules are declared per record type in application configuration
+  - Resolution UI presents only declared rules for the affected type
+  - Component rejects attempts to apply undeclared rules
+  verification: Configuration declares a numeric "keep higher value" rule; resolution UI for a numeric
+    field offers it and rejects an attempt to apply a non-declared rule.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - conflict
+  - merge-rules
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Merge rules are not declared per record type in application configuration
+  - 'Fails to satisfy: Resolution UI presents only declared rules for the affected type'
+  - Component does not reject attempts to apply undeclared rules
+  - 'Verification check does not pass: Configuration declares a numeric "keep higher value" rule; resolution
+    UI for a numeric field offers it and rejects an at...'
+- id: UX-14
+  name: Resolve-all-similar bulk action
+  source: ch20 §"The Conflict Inbox and Bulk Resolution"
+  source-paper: v13 §13
+  definition: A bulk affordance applies a chosen rule to every conflict of the same shape in a single
+    operation, with outliers retained for individual review.
+  must-implement:
+  - Bulk action applies the selected rule to all conflicts matching the active group's shape
+  - Outliers that do not match the rule remain in the inbox for individual handling
+  - The bulk action is reachable from the inbox without leaving the surface
+  verification: Producing 40 same-shape conflicts and applying "resolve all similar" with one rule resolves
+    them in one user-visible operation, leaving any outliers visible.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - conflict
+  - bulk
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Bulk action does not applie the selected rule to all conflicts matching the active group's shape
+  - 'Fails to satisfy: Outliers that do not match the rule remain in the inbox for individual handling'
+  - The bulk action is not reachable from the inbox without leaving the surface
+  - 'Verification check does not pass: Producing 40 same-shape conflicts and applying "resolve all similar"
+    with one rule resolves them in one user-visible ope...'
+- id: UX-15
+  name: Auditable conflict-resolution event log
+  source: ch20 §"The Conflict Inbox and Bulk Resolution"
+  source-paper: v13 §13
+  definition: Every conflict resolution writes an event log entry recording the conflict shape, the rule
+    applied, the resolving user, and the timestamp; no resolution may pass through the system without
+    a corresponding entry.
+  must-implement:
+  - Each resolution emits a structured log entry with shape, rule, user, and timestamp
+  - Log entries are persisted alongside the underlying CRDT events
+  - Resolution paths that bypass logging are rejected at component boundary
+  verification: Performing a resolution and inspecting the event log shows a matching entry; attempting
+    to invoke a non-logging resolution path fails at the component boundary.
+  kleppmann-properties:
+  - P4
+  - P6
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ux
+  - conflict
+  - audit
+  - compliance
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Each resolution does not emit a structured log entry with shape, rule, user, and timestamp
+  - Log entries are not persisted alongside the underlying CRDT events
+  - Resolution paths that bypass logging are not rejected at component boundary
+  - 'Verification check does not pass: Performing a resolution and inspecting the event log shows a matching
+    entry; attempting to invoke a non-logging resoluti...'
+- id: UX-16
+  name: Three distinct connectivity-failure UX modes
+  source: ch20 §"Designing for Failure Modes"
+  source-paper: v13 §13
+  definition: Full offline, partial connectivity (relay-only), and the quarantine queue are surfaced as
+    three distinct UX modes, not collapsed into a single "offline" treatment.
+  must-implement:
+  - Full offline runs at full fidelity with no degraded banner and no implied apology
+  - Relay-only mode surfaces specific explanations for actions requiring direct peer connectivity
+  - Quarantine queue surfaces a one-sentence count and a single review action on reconnect
+  verification: Each of the three states presents the documented surface in isolation; collapsing any
+    two into a shared treatment fails the test.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - ux
+  - offline
+  - failure-modes
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Full offline runs at full fidelity with no degraded banner and no implied apology'
+  - Relay-only mode does not surface specific explanations for actions requiring direct peer connectivity
+  - Quarantine queue does not surface a one-sentence count and a single review action on reconnect
+  - 'Verification check does not pass: Each of the three states presents the documented surface in isolation;
+    collapsing any two into a shared treatment fails ...'
+- id: UX-17
+  name: Quarantine queue surfaced before sync completes
+  source: ch20 §"Designing for Failure Modes"
+  source-paper: v13 §13
+  definition: When the node reconnects with offline writes pending validation, the quarantine count is
+    surfaced as a one-sentence courtesy with a single review action before sync completes — not as a modal
+    blocker, and not after the fact.
+  must-implement:
+  - Reconnect surfaces the pending-validation count before sync completion
+  - The surface is a non-blocking notification with a single review action
+  - Dismissal allows sync to complete and routes any conflicts to the inbox
+  verification: Producing N offline writes and reconnecting surfaces a count-of-N notification with a
+    Review action; dismissing it completes sync silently and any resulting conflicts appear in the inbox.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - quarantine
+  - reconnect
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Reconnect does not surface the pending-validation count before sync completion
+  - The surface is not a non-blocking notification with a single review action
+  - Dismissal does not allow sync to complete and routes any conflicts to the inbox
+  - 'Verification check does not pass: Producing N offline writes and reconnecting surfaces a count-of-N
+    notification with a Review action; dismissing it compl...'
+- id: UX-18
+  name: Invisible recovery from unexpected shutdown
+  source: ch20 §"Designing for Failure Modes"
+  source-paper: v13 §13
+  definition: After a power-loss or OS-kill termination the node validates the last write-ahead checkpoint,
+    replays pending writes from the CRDT log, and surfaces a single short status only when replay takes
+    more than two seconds — never a crash dialog.
+  must-implement:
+  - Relaunch validates the WAL checkpoint and replays the CRDT log automatically
+  - Workspace opens as soon as replay completes
+  - Replay surface appears only when recovery exceeds two seconds; no crash dialog is presented
+  verification: Killing the node mid-write and relaunching opens the workspace at the prior state; injecting
+    a long-replay condition surfaces the documented status string and no crash dialog.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - recovery
+  - durability
+  - wal
+  security-axis:
+  - authenticity
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Relaunch does not validate the WAL checkpoint and replays the CRDT log automatically
+  - Workspace opens as soon as replay does not complete
+  - Replay surface appears only when recovery exceeds two seconds; no crash dialog is not presented
+  - 'Verification check does not pass: Killing the node mid-write and relaunching opens the workspace
+    at the prior state; injecting a long-replay condition sur...'
+- id: UX-19
+  name: First-run two-choice gate
+  source: ch20 §"The First-Run Experience"
+  source-paper: v5 §6
+  definition: A new user sees exactly two options on first run — Start a new team and Join an existing
+    team — with no onboarding tour, no feature callouts, and no auxiliary links.
+  must-implement:
+  - First-run screen presents exactly the two named options
+  - No tour, callout, or auxiliary action is presented before the choice
+  - The chosen path determines all subsequent first-run flow
+  verification: Fresh-install launch renders only the two-option chooser; instrumentation confirms no
+    other actionable elements are present.
+  kleppmann-properties:
+  - P2
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ux
+  - onboarding
+  - first-run
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: First-run screen presents exactly the two named options'
+  - No tour, callout, or auxiliary action is not presented before the choice
+  - 'Fails to satisfy: The chosen path determines all subsequent first-run flow'
+  - 'Verification check does not pass: Fresh-install launch renders only the two-option chooser; instrumentation
+    confirms no other actionable elements are pres...'
+- id: UX-20
+  name: Mandatory BYOC backup configuration before workspace opens
+  source: ch20 §"The First-Run Experience"
+  source-paper: v13 §13
+  definition: Choosing "Start a new team" prompts for the first BYOC backup configuration before the application
+    opens, framed in plain language with concrete target choices (local folder, OneDrive, Dropbox) — not
+    as a later step.
+  must-implement:
+  - New-team flow blocks workspace open until a backup target is configured
+  - Backup target prompt offers concrete named options, not a generic file picker
+  - The prompt uses plain language that avoids "BYOC" and similar terminology
+  verification: Selecting "Start a new team" presents the backup-target prompt before the workspace renders;
+    the workspace cannot be reached without configuring a target.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-loss
+  tags:
+  - ux
+  - onboarding
+  - byoc
+  - backup
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - New-team flow blocks workspace open until a backup target is not configured
+  - 'Fails to satisfy: Backup target prompt offers concrete named options, not a generic file picker'
+  - 'Fails to satisfy: The prompt uses plain language that avoids "BYOC" and similar terminology'
+  - 'Verification check does not pass: Selecting "Start a new team" presents the backup-target prompt
+    before the workspace renders; the workspace cannot be rea...'
+- id: UX-21
+  name: Jurisdictional backup-target labelling and gating
+  source: ch20 §"The First-Run Experience"
+  source-paper: v5 §6
+  definition: Each backup target is labelled with its jurisdiction in plain language, and out-of-jurisdiction
+    options are blocked with a short explanation when the team's declared jurisdiction requires in-country
+    storage.
+  must-implement:
+  - Each backup option displays its jurisdiction (e.g., "OneDrive (Microsoft, United States)")
+  - Out-of-jurisdiction targets are blocked when team policy requires in-country storage
+  - Block surfaces a short plain-language explanation referencing the team policy
+  verification: Configuring a team with an in-country requirement renders only in-country targets as selectable;
+    attempting an out-of-jurisdiction target is blocked with the documented explanation.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - ux
+  - byoc
+  - jurisdiction
+  - compliance
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Each backup option displays its jurisdiction (e.g., "OneDrive (Microsoft, United
+    States)")'
+  - Out-of-jurisdiction targets are not blocked when team policy requires in-country storage
+  - Block does not surface a short plain-language explanation referencing the team policy
+  - 'Verification check does not pass: Configuring a team with an in-country requirement renders only
+    in-country targets as selectable; attempting an out-of-ju...'
+- id: UX-22
+  name: QR-based peer-assisted onboarding
+  source: ch20 §"The First-Run Experience"
+  source-paper: v13 §13
+  definition: Choosing "Join an existing team" runs the three-step onboarding flow — scan a QR code on
+    an existing team member's device (or paste the bundle), transfer the role attestation, then sync eager
+    buckets in the background — and shows a sync progress indicator until enough data has landed for a
+    meaningful state.
+  must-implement:
+  - Join flow accepts QR scan and a paste-bundle fallback
+  - Role attestation transfer occurs before any data download
+  - Initial eager-bucket sync displays a progress surface and gates workspace open until a meaningful
+    state is reached
+  verification: Scanning a valid QR transfers the attestation and begins eager-bucket sync; the workspace
+    opens only after the documented progress state is reached.
+  kleppmann-properties:
+  - P2
+  - P4
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - ux
+  - onboarding
+  - qr
+  - attestation
+  security-axis:
+  - authenticity
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Join flow does not accept QR scan and a paste-bundle fallback
+  - 'Fails to satisfy: Role attestation transfer occurs before any data download'
+  - Initial eager-bucket sync displays a progress surface and gates workspace open until a meaningful
+    state is not reached
+  - 'Verification check does not pass: Scanning a valid QR transfers the attestation and begins eager-bucket
+    sync; the workspace opens only after the documente...'
+- id: UX-23
+  name: Accessibility as a Tier-1 contract
+  source: ch20 §"Accessibility as a Contract"
+  source-paper: v13 §13
+  definition: Every UX surface in the application carries an accessibility contract — semantic ARIA roles,
+    keyboard reachability, declared component metadata, and plain-language assistive-technology text —
+    enforced as rigorously as the write path.
+  must-implement:
+  - Status surfaces use role="status" with aria-live="polite" for ambient changes and role="alert" with
+    aria-live="assertive" for required-action states
+  - Colour is never the sole signal; every indicator pairs colour with localised text
+  - Interactive elements support tab order, Enter and Space activation, and Escape-to-dismiss where dismissal
+    is allowed
+  - Focus after conflict resolution returns to the next pending group, not to the page header
+  verification: Automated accessibility audit on every shipped UI block confirms ARIA roles, keyboard
+    reachability, and colour-plus-text pairing; a screen-reader walkthrough of the conflict inbox resolves
+    a conflict without pointer input and lands focus on the next pending group.
+  kleppmann-properties:
+  - P1
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - accessibility
+  - aria
+  - keyboard
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Status does not surface use role="status" with aria-live="polite" for ambient changes and role="alert"
+    with aria-live="assertive" for required-action states
+  - Colour is not never the sole signal; every indicator pairs colour with localised text
+  - Interactive elements support tab order, Enter and Space activation, and Escape-to-dismiss where dismissal
+    is not allowed
+  - 'Fails to satisfy: Focus after conflict resolution returns to the next pending group, not to the page
+    header'
+  - 'Verification check does not pass: Automated accessibility audit on every shipped UI block confirms
+    ARIA roles, keyboard reachability, and colour-plus-text...'
+- id: UX-24
+  name: Component-manifest accessibility enforcement
+  source: ch20 §"Accessibility as a Contract"
+  source-paper: v5 §6
+  definition: Each UI block declares its ARIA roles, announced state transitions, and keyboard contract
+    via a component manifest, and the platform refuses to register a custom replacement that declares
+    a weaker contract than the component it replaces.
+  must-implement:
+  - UI block manifest declares ARIA role, announced transitions, and keyboard contract
+  - Platform validates the manifest at registration time
+  - Custom replacement components must declare an equal-or-stronger contract or fail registration
+  verification: Registering a custom component whose manifest weakens any declared contract relative to
+    the replaced component fails at registration with a documented error.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ux
+  - accessibility
+  - manifest
+  - ui-blocks
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - UI block manifest does not declare ARIA role, announced transitions, and keyboard contract
+  - Platform does not validate the manifest at registration time
+  - Custom replacement components does not declare an equal-or-stronger contract or fail registration
+  - 'Verification check does not pass: Registering a custom component whose manifest weakens any declared
+    contract relative to the replaced component fails at ...'
+- id: UX-25
+  name: Plain-language parity across visual and assistive channels
+  source: ch20 §"Accessibility as a Contract"
+  source-paper: v13 §13
+  definition: Text surfaced to assistive technology must use the same plain-language register as the visible
+    text, with no fallback to technical terminology in ARIA labels.
+  must-implement:
+  - ARIA labels and live-region announcements use the same plain-language strings as visible text
+  - String catalog enforces parity between visible and assistive surfaces per locale
+  - Reviews reject components whose assistive surface drops to technical terminology
+  verification: Locale audit confirms each visible string has a matching assistive string in the same
+    register; a screen-reader pass on the freshness, optimistic-write, and conflict surfaces hears the
+    same plain-language register as the sighted view.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - accessibility
+  - plain-language
+  - i18n
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: ARIA labels and live-region announcements use the same plain-language strings as
+    visible text'
+  - String catalog does not enforce parity between visible and assistive surfaces per locale
+  - 'Fails to satisfy: Reviews reject components whose assistive surface drops to technical terminology'
+  - 'Verification check does not pass: Locale audit confirms each visible string has a matching assistive
+    string in the same register; a screen-reader pass on ...'

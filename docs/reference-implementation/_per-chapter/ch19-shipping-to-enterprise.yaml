@@ -1,373 +1,749 @@
 chapter: ch19
 chapter-title: Shipping to Enterprise
-source-paper-refs: [v13 §16, v5 §5]
+source-paper-refs:
+- v13 §16
+- v5 §5
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: ENT-01
-    name: Dual-license structure with commercial exception
-    source: ch19 §"The Procurement Conversation"
-    source-paper: v13 §16
-    definition: The open-source core ships under AGPLv3 by default with a parallel commercial license offered to organizations that cannot accept the network-use clause.
-    must-implement:
-      - Repository contains a LICENSES/ directory holding both the AGPLv3 text and a commercial license template
-      - The commercial license grants internal-modification rights, warranty, and a security-patch SLA
-      - Dual-license offer is discoverable from the repository without a sales conversation
-    verification: Repository inspection finds both license texts under LICENSES/ and a top-level NOTICE or README pointer to the commercial exception
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition]
-    tags: [licensing, procurement, governance]
-
-  - id: ENT-02
-    name: Contributor License Agreement precondition
-    source: ch19 §"The Procurement Conversation"
-    source-paper: null
-    definition: An inbound-equals-outbound CLA is in place before any external contribution is accepted, preserving the legal authority to offer the commercial license exception.
-    must-implement:
-      - A CLA is signed by every external contributor before merging any contributed code
-      - The CLA grants inbound rights sufficient to relicense under the commercial exception
-      - CI blocks pull requests from contributors lacking a recorded CLA signature
-    verification: Repository CI configuration enforces a CLA-check status before merge; a signed CLA record exists for every author in git history
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [licensing, governance, contributions]
-
-  - id: ENT-03
-    name: Managed-endpoint packaging contract
-    source: ch19 §"Build and Packaging"
-    source-paper: v13 §16
-    definition: The product ships as a signed MSIX/MSI on Windows and a signed and notarized .pkg or .dmg on macOS, with no archive-and-script delivery path offered to enterprise customers.
-    must-implement:
-      - CI produces a signed MSI or MSIX for Windows on every release
-      - CI produces a signed and notarized .pkg or .dmg for macOS on every release
-      - Installers register the sync daemon as a Windows Service and a launchd LaunchDaemon respectively
-      - Installers run silently with no user prompts
-    verification: Release artifacts include both Windows and macOS installers; silent install completes without UI on a clean managed-endpoint test image
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [packaging, windows, macos, deployment]
-
-  - id: ENT-04
-    name: System-context daemon registration
-    source: ch19 §"Build and Packaging"
-    source-paper: null
-    definition: The sync daemon is installed at system scope — Windows Service or /Library/LaunchDaemons launch agent — so it starts before user login and runs under MDM supervision rather than as a user-context process.
-    must-implement:
-      - Windows installer declares the sync daemon via a service-install element
-      - macOS installer places the launch plist under /Library/LaunchDaemons rather than ~/Library/LaunchAgents
-      - The daemon process survives user logoff and restarts on failure under OS supervision
-    verification: Post-install inspection on each platform confirms the daemon is registered at system scope and is restarted by the OS service manager after a forced kill
-    kleppmann-properties: [P3]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [daemon, service, mdm, lifecycle]
-
-  - id: ENT-05
-    name: macOS Developer ID signing and Apple notarization
-    source: ch19 §"Code Signing and Notarization"
-    source-paper: null
-    definition: Every shipped macOS binary is signed with a Developer ID certificate under the hardened runtime and submitted to Apple notarization, with the notarization ticket stapled into the distributable package.
-    must-implement:
-      - codesign is invoked with --options runtime on every binary in the bundle
-      - Both the foreground app and the sync daemon are independently signed
-      - notarytool submission completes successfully before release
-      - The notarization ticket is stapled into the .pkg or .dmg before publication
-    verification: spctl --assess --type execute on the published artifact returns accepted with notarized status on a clean macOS endpoint
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [code-signing, macos, notarization, supply-chain]
-
-  - id: ENT-06
-    name: Windows Authenticode signing for App Control
-    source: ch19 §"Code Signing and Notarization"
-    source-paper: null
-    definition: Every Windows executable and DLL is Authenticode-signed with an organization-owned certificate chained to a trusted commercial CA so that App Control for Business publisher-trust rules cover the product.
-    must-implement:
-      - signtool signs every .exe and .dll with sha256 digest and an RFC 3161 timestamp
-      - The signing certificate chains to a recognized commercial CA (not self-signed)
-      - signtool verify /pa succeeds against every signed binary
-      - The deployment guide instructs customers to configure App Control rules by trusted publisher rather than per-file hash
-    verification: signtool verify /pa /v on any shipped binary returns success with a chain to a trusted commercial root
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [code-signing, windows, app-control, supply-chain]
-
-  - id: ENT-07
-    name: MDM-platform-agnostic attestation core
-    source: ch19 §"MDM Deployment"
-    source-paper: v13 §16
-    definition: Sunfish.Kernel.Security verifies the enterprise attestation issuer public key from node-config.json regardless of which MDM platform deployed the configuration, so adding a new MDM is a packaging-and-detection-rule exercise rather than a kernel change.
-    must-implement:
-      - Attestation verification consumes only the issuer public key from node-config.json
-      - No code path branches on which MDM platform deployed the configuration
-      - Adding a new MDM platform requires only a packaging recipe and a detection rule
-    verification: Code review confirms no MDM-platform identifier influences attestation verification; integration tests pass identical attestation flows under at least Intune and Jamf packaging
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [mdm, attestation, portability]
-
-  - id: ENT-08
-    name: Six-MDM coverage matrix
-    source: ch19 §"MDM Deployment"
-    source-paper: null
-    definition: The product ships deployment recipes for Intune, Jamf, SOTI MobiControl, IBM MaaS360, Ivanti Endpoint Manager, and SCCM so that GCC, Indian BFSI, APAC, and African enterprise fleets can deploy via their existing MDM platform.
-    must-implement:
-      - Documentation provides a deployment recipe for each of the six named MDM platforms
-      - Each recipe includes a service-registration detection rule and a pre-seeded config deployment path
-      - Each recipe is validated on a representative test fleet before publication
-    verification: docs/ contains a per-MDM deployment runbook for each of the six platforms and each recipe references the same node-config.json schema
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [mdm, regional, deployment]
-
-  - id: ENT-09
-    name: Pre-seeded node-config.json schema
-    source: ch19 §"Pre-Seeded Configuration"
-    source-paper: v13 §16
-    definition: A versioned JSON configuration schema delivered to a platform-specific path before first run that supplies team identity, relay endpoint, allowed buckets, data directory, log level, internal update server URL, and the enterprise attestation issuer public key.
-    must-implement:
-      - node-config.json declares schemaVersion and is validated against the published schema at startup
-      - All required fields (teamId, relayEndpoint, allowedBuckets, dataDirectory, enterpriseAttestationIssuerPublicKey) must be present
-      - The host refuses to start on schema validation failure rather than falling back to defaults
-      - Per-platform paths follow the documented Windows/Linux/macOS conventions
-    verification: Starting the host with a malformed or incomplete node-config.json produces a logged validation error and a non-zero exit; integration test asserts no default-fallback behavior
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew]
-    tags: [config, mdm, schema]
-
-  - id: ENT-10
-    name: Compliance check at every capability negotiation
-    source: ch19 §"Compliance Check at Capability Negotiation"
-    source-paper: v13 §16
-    definition: MDM compliance is re-evaluated at every capability-negotiation handshake rather than once at install, so revocation of MDM compliance propagates to data access within minutes of the next handshake boundary.
-    must-implement:
-      - Relay queries MDM compliance status on every capability-negotiation handshake
-      - Non-compliant nodes receive ERR_ATTESTATION_REQUIRED and have sync suspended
-      - Active sessions do not retain access past the next handshake after compliance loss
-    verification: Integration test marks a node non-compliant mid-session and asserts the next handshake returns ERR_ATTESTATION_REQUIRED within the documented propagation window
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [mdm, compliance, runtime-enforcement]
-
-  - id: ENT-11
-    name: Build-time CycloneDX SBOM generation
-    source: ch19 §"SBOM Generation and CVE Response"
-    source-paper: null
-    definition: A CycloneDX-format SBOM is generated from source at build time as a required CI gate and published alongside every release artifact at a predictable URL.
-    must-implement:
-      - CI generates a CycloneDX JSON SBOM from source on every release build
-      - SBOM generation is a required gate that blocks the release pipeline on failure
-      - The SBOM is published to a predictable URL alongside the release artifact
-      - The SBOM is signed and a SHA-256 digest is published next to it
-    verification: Release pipeline log shows SBOM generation as a required gate; the published mirror serves the SBOM and its SHA-256 at the documented URL
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [sbom, cyclonedx, supply-chain, ci]
-
-  - id: ENT-12
-    name: CVE scan as release gate
-    source: ch19 §"SBOM Generation and CVE Response"
-    source-paper: null
-    definition: A vulnerability scan runs the generated SBOM against a known-CVE database during CI and fails the release on any high or critical finding without a documented suppression entry.
-    must-implement:
-      - CI runs grype (or equivalent) against the build-time SBOM
-      - The scanner is configured to fail the build on high or critical CVEs
-      - Suppression entries require a documented justification and an expiry date
-      - Suppression entries are reviewed before each release
-    verification: Release pipeline configuration shows --fail-on high (or equivalent) wired in; suppression file contains expiry dates and justifications for every entry
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [cve, scanning, supply-chain, ci]
-
-  - id: ENT-13
-    name: Published CVE response SLA
-    source: ch19 §"SBOM Generation and CVE Response"
-    source-paper: v13 §16
-    definition: A written, severity-tiered CVE response commitment specifying advisory and patch timelines is published before procurement asks and demonstrably met in practice.
-    must-implement:
-      - Security policy document states timelines per severity tier (Critical, High, Medium, Low)
-      - Critical (CVSS >= 9.0) commits to public advisory within 48 hours and patch within 14 days
-      - High (CVSS 7.0-8.9) commits to a patch within 30 days
-      - The SLA is published before procurement engagement, not on request
-    verification: A SECURITY.md or equivalent document contains the severity-tiered SLA table; release records show actual response times meeting the published commitments
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: []
-    tags: [security, sla, governance]
-
-  - id: ENT-14
-    name: Pre-rehearsed critical-CVE patch drill
-    source: ch19 §"SBOM Generation and CVE Response"
-    source-paper: null
-    definition: The full critical-patch release sequence — fix, rebuild, regenerate SBOM, rescan, sign and notarize, mirror, and canary push — is rehearsed end-to-end during the first sprint after general availability and the elapsed time measured against the published SLA.
-    must-implement:
-      - A dry-fire patch release is executed against a test artifact within the first GA sprint
-      - Elapsed time per pipeline step is recorded
-      - Steps exceeding their share of the SLA budget are tightened before the next drill
-    verification: Engineering records contain a dated dry-fire patch report with per-step elapsed times and remediation actions for any step exceeding budget
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [incident-response, drill, supply-chain]
-
-  - id: ENT-15
-    name: Named admin revocation command with audit trail
-    source: ch19 §"Admin Tooling for Revocation"
-    source-paper: v13 §16
-    definition: Revoking a user is a single named CLI command that rotates the affected role's KEK, re-wraps DEKs excluding the revoked user, broadcasts a signed revocation through the relay, and writes a revocation record to the audit log.
-    must-implement:
-      - A documented CLI command (sunfish admin revoke --user --team) executes revocation atomically
-      - Execution generates a new KEK for the affected role
-      - All DEKs are re-wrapped under the new KEK excluding the revoked user
-      - A signed revocation message is broadcast through the relay
-      - A revocation record with timestamp and operator identity is written to the audit log
-      - The relay returns ERR_KEY_REVOKED on the revoked node's next handshake
-    verification: Running the revocation command against a test team produces a new KEK, an audit log entry with operator identity, and ERR_KEY_REVOKED on the revoked node's next handshake
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [revocation, admin, audit, key-rotation]
-
-  - id: ENT-16
-    name: Air-gap-strict deployment posture
-    source: ch19 §"Air-Gap Deployment"
-    source-paper: v13 §16
-    definition: The same binary supports a strict air-gap posture configured by pointing updateServerUrl and relayEndpoint at internal infrastructure, omitting telemetry, and applying egress firewall rules — without a separate build artifact.
-    must-implement:
-      - The release binary runs unchanged in connected, proxied, and air-gap-strict postures
-      - node-config.json switches posture by configuration alone
-      - No build flag or separate artifact is required for air-gap operation
-      - Documentation lists exactly which destinations are safe to block and which are not
-    verification: A binary identical to the public release runs in an isolated test network with internal mirror and internal relay only; no outbound public-internet connections are observed
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [air-gap, deployment, sovereignty]
-
-  - id: ENT-17
-    name: Internal update server REST contract
-    source: ch19 §"Air-Gap Deployment"
-    source-paper: null
-    definition: The internal update server exposes a minimal REST surface for latest-version metadata, versioned artifact downloads, and per-release SBOM with SHA-256 digest, allowing offline mirrors to satisfy the same client expectations as the public update feed.
-    must-implement:
-      - GET /releases/latest.json returns version, publish timestamp, artifact URLs, per-artifact SHA-256, and SBOM URL plus SHA-256
-      - GET /releases/{version}/artifacts/{name} returns the named artifact bytes
-      - GET /releases/{version}/Sunfish.cdx.json returns the SBOM
-      - GET /releases/{version}/Sunfish.cdx.sha256 returns the SBOM digest
-      - Nodes verify SHA-256 of every artifact before installing
-      - Nodes archive the SBOM alongside the artifact for audit
-    verification: Conformance test pulls latest.json, downloads the artifact, validates the SHA-256 match, fetches and digest-verifies the SBOM, and rejects any artifact whose digest fails to match
-    kleppmann-properties: [P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [update, air-gap, rest-contract, supply-chain]
-
-  - id: ENT-18
-    name: OCSP and CRL connectivity preservation
-    source: ch19 §"Air-Gap Deployment"
-    source-paper: null
-    definition: Air-gap egress policy must preserve a path to OCSP and CRL responders — internal mirror, certificate pinning with long-lived certs, or open egress to public responders — because blocking revocation checking breaks TLS chain validation across the entire node, not just update checks.
-    must-implement:
-      - Air-gap deployment guidance names OCSP/CRL preservation as non-negotiable
-      - At least one of internal OCSP responder, certificate pinning with long-lived cert, or whitelisted public OCSP egress is configured
-      - The deployment runbook lists OCSP/CRL responders explicitly under "do not block"
-    verification: Air-gap deployment validation includes a TLS handshake to the relay endpoint succeeding without OCSP soft-fail; deployment runbook lists OCSP/CRL on the do-not-block list
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: []
-    tags: [tls, pki, air-gap]
-
-  - id: ENT-19
-    name: Jurisdictional self-hosted Bridge relay
-    source: ch19 §"Self-Hosted Bridge Relay — Deployment Details"
-    source-paper: v13 §16
-    definition: For compliance-mandated markets the self-hosted Bridge relay runs on infrastructure within the required jurisdiction — on-premise, sovereign cloud, or domestic data center — making the relay-sovereignty guarantee legally defensible rather than a marketing claim.
-    must-implement:
-      - Bridge relay deploys as a single statically-compiled binary or OCI container image
-      - Relay listens on TLS 1.3 only and authenticates connections against Ed25519 public keys from enterpriseAttestationIssuerPublicKey
-      - Relay forwards CRDT operation frames without access to payload content
-      - Production deployments run at least two-node HA, with three-node automatic failover for enterprise SLA tiers
-      - Deployment infrastructure is sited within the required regulatory jurisdiction
-    verification: Deployed relay rejects non-TLS-1.3 connections, accepts only attested Ed25519 identities, has no payload-decryption code paths, and is hosted within the regulator-approved jurisdiction (verifiable from cloud-provider region or on-premise inventory)
-    kleppmann-properties: [P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, data-residency-objection]
-    tags: [relay, sovereignty, compliance, deployment]
-
-  - id: ENT-20
-    name: Power-interruption-resilient endpoint specification
-    source: ch19 §"Power-Interruption Resilience"
-    source-paper: v5 §5
-    definition: For deployments in load-shedding or unstable-grid environments the hardware specification names a UPS with at least 30-minute runtime and SSDs with power-loss-protection capacitors as a baseline, not an optional upgrade.
-    must-implement:
-      - Endpoint hardware specification names UPS with >=30-minute runtime for affected regions
-      - Local SQLCipher database resides on an SSD with power-loss-protection capacitors
-      - Sync daemon resumes cleanly from cold restart by replaying the append-only event log
-      - MDM compliance re-attests on first successful handshake after power loss
-    verification: Abrupt-power-loss test drops AC mid-write and confirms event-log durability, clean restart, gossip resumption, and successful MDM re-attestation on next handshake
-    kleppmann-properties: [P3, P5]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [durability, hardware, resilience, regional]
-
-  - id: ENT-21
-    name: Compliance documentation pipeline
-    source: ch19 §"Compliance Documentation Pipeline"
-    source-paper: v13 §16
-    definition: A repeatable workflow that exports the audit log, SBOM, Grype CVE report, MDM compliance manifest, and Bridge relay jurisdictional configuration and assembles them into the format each compliance regime accepts (SOC 2 Type II, GDPR Article 30, EU CRA, regimes in Appendix F).
-    must-implement:
-      - sunfish admin audit-export emits a date-bounded CSV-and-JSON bundle mapping to SOC 2 Trust Services Criteria
-      - A quarterly GDPR Article 30 rollup is assembled from bucket definitions, node-config.json, SBOM, and MDM manifest
-      - SBOMs are signed and attested under SLSA Level 3 to satisfy EU CRA SBOM obligations
-      - Each Appendix F regime has a documented mapping from the common evidence substrate to its required document format
-    verification: Documentation pipeline produces a SOC 2 evidence bundle, a GDPR Article 30 record, and an EU CRA SBOM attestation from a single test deployment without manual data re-entry
-    kleppmann-properties: [P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [compliance, soc2, gdpr, eu-cra, audit]
-
-  - id: ENT-22
-    name: Three-runbook minimum for enterprise GA
-    source: ch19 §"The Operational Runbook Minimum"
-    source-paper: null
-    definition: Enterprise general availability requires three published runbooks — node onboarding, node deprovisioning, and incident response for node or key compromise — each with named commands, expected outputs, and audit-log verification steps.
-    must-implement:
-      - Node onboarding runbook covers IdP confirmation, attestation issuance, pre-seeded config, MDM deployment, and audit-log verification
-      - Node deprovisioning runbook covers admin revocation, MDM wipe, and audit-log archival
-      - Incident response runbook covers immediate revocation on suspicion, forensic-hold coordination, and key-material rotation
-      - Each runbook includes the named command, expected output, and an audit-log verification step
-    verification: docs/runbooks/ contains all three named runbooks with command-output-verification triplets and expected-duration targets
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [runbook, operations, governance]
-
-  - id: ENT-23
-    name: Staged canary update rollout
-    source: 'ch19 §"Runbook 3: Container Update Rollout"'
-    source-paper: null
-    definition: Production updates roll out in three stages — five-to-ten-percent canary, fifty percent, one hundred percent — with twenty-four-hour holds at each stage and a defined rollback by republishing the previous artifact through the same MDM policy on health-check failure.
-    must-implement:
-      - Update rollouts target a 5-10% canary deployment ring first
-      - Each stage holds at least 24 hours before promotion
-      - Health-check criteria include sync-daemon running, no ERR_ events in relay logs, and no MDM compliance failures
-      - Rollback republishes the previous artifact via the same MDM policy
-      - The internal update server continues serving the previous version until rollback completes
-      - Failed rollouts produce an incident report before any retry
-    verification: A staged-rollout dry-run on a test fleet executes all three stages with documented holds and a successful canary-failure rollback within the published health-check criteria
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [rollout, canary, mdm, change-management]
+- id: ENT-01
+  name: Dual-license structure with commercial exception
+  source: ch19 §"The Procurement Conversation"
+  source-paper: v13 §16
+  definition: The open-source core ships under AGPLv3 by default with a parallel commercial license offered
+    to organizations that cannot accept the network-use clause.
+  must-implement:
+  - Repository contains a LICENSES/ directory holding both the AGPLv3 text and a commercial license template
+  - The commercial license grants internal-modification rights, warranty, and a security-patch SLA
+  - Dual-license offer is discoverable from the repository without a sales conversation
+  verification: Repository inspection finds both license texts under LICENSES/ and a top-level NOTICE
+    or README pointer to the commercial exception
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - licensing
+  - procurement
+  - governance
+  failed-conditions:
+  - 'Fails to satisfy: Repository contains a LICENSES/ directory holding both the AGPLv3 text and a commercial
+    license template'
+  - The commercial license does not grant internal-modification rights, warranty, and a security-patch
+    SLA
+  - Dual-license offer is not discoverable from the repository without a sales conversation
+  - 'Verification check does not pass: Repository inspection finds both license texts under LICENSES/
+    and a top-level NOTICE or README pointer to the commercia...'
+- id: ENT-02
+  name: Contributor License Agreement precondition
+  source: ch19 §"The Procurement Conversation"
+  source-paper: null
+  definition: An inbound-equals-outbound CLA is in place before any external contribution is accepted,
+    preserving the legal authority to offer the commercial license exception.
+  must-implement:
+  - A CLA is signed by every external contributor before merging any contributed code
+  - The CLA grants inbound rights sufficient to relicense under the commercial exception
+  - CI blocks pull requests from contributors lacking a recorded CLA signature
+  verification: Repository CI configuration enforces a CLA-check status before merge; a signed CLA record
+    exists for every author in git history
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - licensing
+  - governance
+  - contributions
+  failed-conditions:
+  - A CLA is not signed by every external contributor before merging any contributed code
+  - The CLA does not grant inbound rights sufficient to relicense under the commercial exception
+  - 'Fails to satisfy: CI blocks pull requests from contributors lacking a recorded CLA signature'
+  - 'Verification check does not pass: Repository CI configuration enforces a CLA-check status before
+    merge; a signed CLA record exists for every author in git...'
+- id: ENT-03
+  name: Managed-endpoint packaging contract
+  source: ch19 §"Build and Packaging"
+  source-paper: v13 §16
+  definition: The product ships as a signed MSIX/MSI on Windows and a signed and notarized .pkg or .dmg
+    on macOS, with no archive-and-script delivery path offered to enterprise customers.
+  must-implement:
+  - CI produces a signed MSI or MSIX for Windows on every release
+  - CI produces a signed and notarized .pkg or .dmg for macOS on every release
+  - Installers register the sync daemon as a Windows Service and a launchd LaunchDaemon respectively
+  - Installers run silently with no user prompts
+  verification: Release artifacts include both Windows and macOS installers; silent install completes
+    without UI on a clean managed-endpoint test image
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - packaging
+  - windows
+  - macos
+  - deployment
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: CI produces a signed MSI or MSIX for Windows on every release'
+  - 'Fails to satisfy: CI produces a signed and notarized .pkg or .dmg for macOS on every release'
+  - 'Fails to satisfy: Installers register the sync daemon as a Windows Service and a launchd LaunchDaemon
+    respectively'
+  - 'Fails to satisfy: Installers run silently with no user prompts'
+  - 'Verification check does not pass: Release artifacts include both Windows and macOS installers; silent
+    install completes without UI on a clean managed-endp...'
+- id: ENT-04
+  name: System-context daemon registration
+  source: ch19 §"Build and Packaging"
+  source-paper: null
+  definition: The sync daemon is installed at system scope — Windows Service or /Library/LaunchDaemons
+    launch agent — so it starts before user login and runs under MDM supervision rather than as a user-context
+    process.
+  must-implement:
+  - Windows installer declares the sync daemon via a service-install element
+  - macOS installer places the launch plist under /Library/LaunchDaemons rather than ~/Library/LaunchAgents
+  - The daemon process survives user logoff and restarts on failure under OS supervision
+  verification: Post-install inspection on each platform confirms the daemon is registered at system scope
+    and is restarted by the OS service manager after a forced kill
+  kleppmann-properties:
+  - P3
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - daemon
+  - service
+  - mdm
+  - lifecycle
+  failed-conditions:
+  - Windows installer does not declare the sync daemon via a service-install element
+  - 'Fails to satisfy: macOS installer places the launch plist under /Library/LaunchDaemons rather than
+    ~/Library/LaunchAgents'
+  - 'Fails to satisfy: The daemon process survives user logoff and restarts on failure under OS supervision'
+  - 'Verification check does not pass: Post-install inspection on each platform confirms the daemon is
+    registered at system scope and is restarted by the OS se...'
+- id: ENT-05
+  name: macOS Developer ID signing and Apple notarization
+  source: ch19 §"Code Signing and Notarization"
+  source-paper: null
+  definition: Every shipped macOS binary is signed with a Developer ID certificate under the hardened
+    runtime and submitted to Apple notarization, with the notarization ticket stapled into the distributable
+    package.
+  must-implement:
+  - codesign is invoked with --options runtime on every binary in the bundle
+  - Both the foreground app and the sync daemon are independently signed
+  - notarytool submission completes successfully before release
+  - The notarization ticket is stapled into the .pkg or .dmg before publication
+  verification: spctl --assess --type execute on the published artifact returns accepted with notarized
+    status on a clean macOS endpoint
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - code-signing
+  - macos
+  - notarization
+  - supply-chain
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - codesign is not invoked with --options runtime on every binary in the bundle
+  - Both the foreground app and the sync daemon are not independently signed
+  - notarytool submission does not complete successfully before release
+  - The notarization ticket is not stapled into the .pkg or .dmg before publication
+  - 'Verification check does not pass: spctl --assess --type execute on the published artifact returns
+    accepted with notarized status on a clean macOS endpoint'
+- id: ENT-06
+  name: Windows Authenticode signing for App Control
+  source: ch19 §"Code Signing and Notarization"
+  source-paper: null
+  definition: Every Windows executable and DLL is Authenticode-signed with an organization-owned certificate
+    chained to a trusted commercial CA so that App Control for Business publisher-trust rules cover the
+    product.
+  must-implement:
+  - signtool signs every .exe and .dll with sha256 digest and an RFC 3161 timestamp
+  - The signing certificate chains to a recognized commercial CA (not self-signed)
+  - signtool verify /pa succeeds against every signed binary
+  - The deployment guide instructs customers to configure App Control rules by trusted publisher rather
+    than per-file hash
+  verification: signtool verify /pa /v on any shipped binary returns success with a chain to a trusted
+    commercial root
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - code-signing
+  - windows
+  - app-control
+  - supply-chain
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - signtool does not sign every .exe and .dll with sha256 digest and an RFC 3161 timestamp
+  - 'Fails to satisfy: The signing certificate chains to a recognized commercial CA (not self-signed)'
+  - 'Fails to satisfy: signtool verify /pa succeeds against every signed binary'
+  - 'Fails to satisfy: The deployment guide instructs customers to configure App Control rules by trusted
+    publisher rather than per-file hash'
+  - 'Verification check does not pass: signtool verify /pa /v on any shipped binary returns success with
+    a chain to a trusted commercial root'
+- id: ENT-07
+  name: MDM-platform-agnostic attestation core
+  source: ch19 §"MDM Deployment"
+  source-paper: v13 §16
+  definition: Sunfish.Kernel.Security verifies the enterprise attestation issuer public key from node-config.json
+    regardless of which MDM platform deployed the configuration, so adding a new MDM is a packaging-and-detection-rule
+    exercise rather than a kernel change.
+  must-implement:
+  - Attestation verification consumes only the issuer public key from node-config.json
+  - No code path branches on which MDM platform deployed the configuration
+  - Adding a new MDM platform requires only a packaging recipe and a detection rule
+  verification: Code review confirms no MDM-platform identifier influences attestation verification; integration
+    tests pass identical attestation flows under at least Intune and Jamf packaging
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - mdm
+  - attestation
+  - portability
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Attestation verification consumes only the issuer public key from node-config.json'
+  - 'Fails to satisfy: No code path branches on which MDM platform deployed the configuration'
+  - Adding a new MDM platform does not require only a packaging recipe and a detection rule
+  - 'Verification check does not pass: Code review confirms no MDM-platform identifier influences attestation
+    verification; integration tests pass identical at...'
+- id: ENT-08
+  name: Six-MDM coverage matrix
+  source: ch19 §"MDM Deployment"
+  source-paper: null
+  definition: The product ships deployment recipes for Intune, Jamf, SOTI MobiControl, IBM MaaS360, Ivanti
+    Endpoint Manager, and SCCM so that GCC, Indian BFSI, APAC, and African enterprise fleets can deploy
+    via their existing MDM platform.
+  must-implement:
+  - Documentation provides a deployment recipe for each of the six named MDM platforms
+  - Each recipe includes a service-registration detection rule and a pre-seeded config deployment path
+  - Each recipe is validated on a representative test fleet before publication
+  verification: docs/ contains a per-MDM deployment runbook for each of the six platforms and each recipe
+    references the same node-config.json schema
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - mdm
+  - regional
+  - deployment
+  failed-conditions:
+  - Documentation does not provide a deployment recipe for each of the six named MDM platforms
+  - Each recipe does not include a service-registration detection rule and a pre-seeded config deployment
+    path
+  - Each recipe is not validated on a representative test fleet before publication
+  - 'Verification check does not pass: docs/ contains a per-MDM deployment runbook for each of the six
+    platforms and each recipe references the same node-confi...'
+- id: ENT-09
+  name: Pre-seeded node-config.json schema
+  source: ch19 §"Pre-Seeded Configuration"
+  source-paper: v13 §16
+  definition: A versioned JSON configuration schema delivered to a platform-specific path before first
+    run that supplies team identity, relay endpoint, allowed buckets, data directory, log level, internal
+    update server URL, and the enterprise attestation issuer public key.
+  must-implement:
+  - node-config.json declares schemaVersion and is validated against the published schema at startup
+  - All required fields (teamId, relayEndpoint, allowedBuckets, dataDirectory, enterpriseAttestationIssuerPublicKey)
+    must be present
+  - The host refuses to start on schema validation failure rather than falling back to defaults
+  - Per-platform paths follow the documented Windows/Linux/macOS conventions
+  verification: Starting the host with a malformed or incomplete node-config.json produces a logged validation
+    error and a non-zero exit; integration test asserts no default-fallback behavior
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  tags:
+  - config
+  - mdm
+  - schema
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - node-config.json declares schemaVersion and is not validated against the published schema at startup
+  - All required fields (teamId, relayEndpoint, allowedBuckets, dataDirectory, enterpriseAttestationIssuerPublicKey)
+    does not be present
+  - 'Fails to satisfy: The host refuses to start on schema validation failure rather than falling back
+    to defaults'
+  - 'Fails to satisfy: Per-platform paths follow the documented Windows/Linux/macOS conventions'
+  - 'Verification check does not pass: Starting the host with a malformed or incomplete node-config.json
+    produces a logged validation error and a non-zero exit...'
+- id: ENT-10
+  name: Compliance check at every capability negotiation
+  source: ch19 §"Compliance Check at Capability Negotiation"
+  source-paper: v13 §16
+  definition: MDM compliance is re-evaluated at every capability-negotiation handshake rather than once
+    at install, so revocation of MDM compliance propagates to data access within minutes of the next handshake
+    boundary.
+  must-implement:
+  - Relay queries MDM compliance status on every capability-negotiation handshake
+  - Non-compliant nodes receive ERR_ATTESTATION_REQUIRED and have sync suspended
+  - Active sessions do not retain access past the next handshake after compliance loss
+  verification: Integration test marks a node non-compliant mid-session and asserts the next handshake
+    returns ERR_ATTESTATION_REQUIRED within the documented propagation window
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - mdm
+  - compliance
+  - runtime-enforcement
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Relay queries MDM compliance status on every capability-negotiation handshake'
+  - Non-compliant nodes receive ERR_ATTESTATION_REQUIRED and have not sync suspended
+  - 'Fails to satisfy: Active sessions do not retain access past the next handshake after compliance loss'
+  - 'Verification check does not pass: Integration test marks a node non-compliant mid-session and asserts
+    the next handshake returns ERR_ATTESTATION_REQUIRED ...'
+- id: ENT-11
+  name: Build-time CycloneDX SBOM generation
+  source: ch19 §"SBOM Generation and CVE Response"
+  source-paper: null
+  definition: A CycloneDX-format SBOM is generated from source at build time as a required CI gate and
+    published alongside every release artifact at a predictable URL.
+  must-implement:
+  - CI generates a CycloneDX JSON SBOM from source on every release build
+  - SBOM generation is a required gate that blocks the release pipeline on failure
+  - The SBOM is published to a predictable URL alongside the release artifact
+  - The SBOM is signed and a SHA-256 digest is published next to it
+  verification: Release pipeline log shows SBOM generation as a required gate; the published mirror serves
+    the SBOM and its SHA-256 at the documented URL
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - sbom
+  - cyclonedx
+  - supply-chain
+  - ci
+  failed-conditions:
+  - CI does not generate a CycloneDX JSON SBOM from source on every release build
+  - SBOM generation is not a required gate that blocks the release pipeline on failure
+  - The SBOM is not published to a predictable URL alongside the release artifact
+  - The SBOM is not signed and a SHA-256 digest is published next to it
+  - 'Verification check does not pass: Release pipeline log shows SBOM generation as a required gate;
+    the published mirror serves the SBOM and its SHA-256 at t...'
+- id: ENT-12
+  name: CVE scan as release gate
+  source: ch19 §"SBOM Generation and CVE Response"
+  source-paper: null
+  definition: A vulnerability scan runs the generated SBOM against a known-CVE database during CI and
+    fails the release on any high or critical finding without a documented suppression entry.
+  must-implement:
+  - CI runs grype (or equivalent) against the build-time SBOM
+  - The scanner is configured to fail the build on high or critical CVEs
+  - Suppression entries require a documented justification and an expiry date
+  - Suppression entries are reviewed before each release
+  verification: Release pipeline configuration shows --fail-on high (or equivalent) wired in; suppression
+    file contains expiry dates and justifications for every entry
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - cve
+  - scanning
+  - supply-chain
+  - ci
+  failed-conditions:
+  - 'Fails to satisfy: CI runs grype (or equivalent) against the build-time SBOM'
+  - The scanner is not configured to fail the build on high or critical CVEs
+  - 'Fails to satisfy: Suppression entries require a documented justification and an expiry date'
+  - Suppression entries are not reviewed before each release
+  - 'Verification check does not pass: Release pipeline configuration shows --fail-on high (or equivalent)
+    wired in; suppression file contains expiry dates and...'
+- id: ENT-13
+  name: Published CVE response SLA
+  source: ch19 §"SBOM Generation and CVE Response"
+  source-paper: v13 §16
+  definition: A written, severity-tiered CVE response commitment specifying advisory and patch timelines
+    is published before procurement asks and demonstrably met in practice.
+  must-implement:
+  - Security policy document states timelines per severity tier (Critical, High, Medium, Low)
+  - Critical (CVSS >= 9.0) commits to public advisory within 48 hours and patch within 14 days
+  - High (CVSS 7.0-8.9) commits to a patch within 30 days
+  - The SLA is published before procurement engagement, not on request
+  verification: A SECURITY.md or equivalent document contains the severity-tiered SLA table; release records
+    show actual response times meeting the published commitments
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes: []
+  tags:
+  - security
+  - sla
+  - governance
+  failed-conditions:
+  - 'Fails to satisfy: Security policy document states timelines per severity tier (Critical, High, Medium,
+    Low)'
+  - 'Fails to satisfy: Critical (CVSS >= 9.0) commits to public advisory within 48 hours and patch within
+    14 days'
+  - 'Fails to satisfy: High (CVSS 7.0-8.9) commits to a patch within 30 days'
+  - The SLA is not published before procurement engagement, not on request
+  - 'Verification check does not pass: A SECURITY.md or equivalent document contains the severity-tiered
+    SLA table; release records show actual response times ...'
+- id: ENT-14
+  name: Pre-rehearsed critical-CVE patch drill
+  source: ch19 §"SBOM Generation and CVE Response"
+  source-paper: null
+  definition: The full critical-patch release sequence — fix, rebuild, regenerate SBOM, rescan, sign and
+    notarize, mirror, and canary push — is rehearsed end-to-end during the first sprint after general
+    availability and the elapsed time measured against the published SLA.
+  must-implement:
+  - A dry-fire patch release is executed against a test artifact within the first GA sprint
+  - Elapsed time per pipeline step is recorded
+  - Steps exceeding their share of the SLA budget are tightened before the next drill
+  verification: Engineering records contain a dated dry-fire patch report with per-step elapsed times
+    and remediation actions for any step exceeding budget
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - incident-response
+  - drill
+  - supply-chain
+  failed-conditions:
+  - A dry-fire patch release is not executed against a test artifact within the first GA sprint
+  - Elapsed time per pipeline step is not recorded
+  - Steps exceeding their share of the SLA budget are not tightened before the next drill
+  - 'Verification check does not pass: Engineering records contain a dated dry-fire patch report with
+    per-step elapsed times and remediation actions for any st...'
+- id: ENT-15
+  name: Named admin revocation command with audit trail
+  source: ch19 §"Admin Tooling for Revocation"
+  source-paper: v13 §16
+  definition: Revoking a user is a single named CLI command that rotates the affected role's KEK, re-wraps
+    DEKs excluding the revoked user, broadcasts a signed revocation through the relay, and writes a revocation
+    record to the audit log.
+  must-implement:
+  - A documented CLI command (sunfish admin revoke --user --team) executes revocation atomically
+  - Execution generates a new KEK for the affected role
+  - All DEKs are re-wrapped under the new KEK excluding the revoked user
+  - A signed revocation message is broadcast through the relay
+  - A revocation record with timestamp and operator identity is written to the audit log
+  - The relay returns ERR_KEY_REVOKED on the revoked node's next handshake
+  verification: Running the revocation command against a test team produces a new KEK, an audit log entry
+    with operator identity, and ERR_KEY_REVOKED on the revoked node's next handshake
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - revocation
+  - admin
+  - audit
+  - key-rotation
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - A documented CLI command (sunfish admin revoke --user --team) does not execute revocation atomically
+  - Execution does not generate a new KEK for the affected role
+  - All DEKs are not re-wrapped under the new KEK excluding the revoked user
+  - A signed revocation message is not broadcast through the relay
+  - A revocation record with timestamp and operator identity is not written to the audit log
+  - 'Fails to satisfy: The relay returns ERR_KEY_REVOKED on the revoked node''s next handshake'
+  - 'Verification check does not pass: Running the revocation command against a test team produces a new
+    KEK, an audit log entry with operator identity, and ER...'
+- id: ENT-16
+  name: Air-gap-strict deployment posture
+  source: ch19 §"Air-Gap Deployment"
+  source-paper: v13 §16
+  definition: The same binary supports a strict air-gap posture configured by pointing updateServerUrl
+    and relayEndpoint at internal infrastructure, omitting telemetry, and applying egress firewall rules
+    — without a separate build artifact.
+  must-implement:
+  - The release binary runs unchanged in connected, proxied, and air-gap-strict postures
+  - node-config.json switches posture by configuration alone
+  - No build flag or separate artifact is required for air-gap operation
+  - Documentation lists exactly which destinations are safe to block and which are not
+  verification: A binary identical to the public release runs in an isolated test network with internal
+    mirror and internal relay only; no outbound public-internet connections are observed
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - air-gap
+  - deployment
+  - sovereignty
+  failed-conditions:
+  - 'Fails to satisfy: The release binary runs unchanged in connected, proxied, and air-gap-strict postures'
+  - 'Fails to satisfy: node-config.json switches posture by configuration alone'
+  - No build flag or separate artifact is not required for air-gap operation
+  - Documentation lists exactly which destinations are not safe to block and which are not
+  - 'Verification check does not pass: A binary identical to the public release runs in an isolated test
+    network with internal mirror and internal relay only; ...'
+- id: ENT-17
+  name: Internal update server REST contract
+  source: ch19 §"Air-Gap Deployment"
+  source-paper: null
+  definition: The internal update server exposes a minimal REST surface for latest-version metadata, versioned
+    artifact downloads, and per-release SBOM with SHA-256 digest, allowing offline mirrors to satisfy
+    the same client expectations as the public update feed.
+  must-implement:
+  - GET /releases/latest.json returns version, publish timestamp, artifact URLs, per-artifact SHA-256,
+    and SBOM URL plus SHA-256
+  - GET /releases/{version}/artifacts/{name} returns the named artifact bytes
+  - GET /releases/{version}/Sunfish.cdx.json returns the SBOM
+  - GET /releases/{version}/Sunfish.cdx.sha256 returns the SBOM digest
+  - Nodes verify SHA-256 of every artifact before installing
+  - Nodes archive the SBOM alongside the artifact for audit
+  verification: Conformance test pulls latest.json, downloads the artifact, validates the SHA-256 match,
+    fetches and digest-verifies the SBOM, and rejects any artifact whose digest fails to match
+  kleppmann-properties:
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - update
+  - air-gap
+  - rest-contract
+  - supply-chain
+  failed-conditions:
+  - 'Fails to satisfy: GET /releases/latest.json returns version, publish timestamp, artifact URLs, per-artifact
+    SHA-256, and SBOM URL plus SHA-256'
+  - 'Fails to satisfy: GET /releases/{version}/artifacts/{name} returns the named artifact bytes'
+  - 'Fails to satisfy: GET /releases/{version}/Sunfish.cdx.json returns the SBOM'
+  - 'Fails to satisfy: GET /releases/{version}/Sunfish.cdx.sha256 returns the SBOM digest'
+  - 'Fails to satisfy: Nodes verify SHA-256 of every artifact before installing'
+  - 'Fails to satisfy: Nodes archive the SBOM alongside the artifact for audit'
+  - 'Verification check does not pass: Conformance test pulls latest.json, downloads the artifact, validates
+    the SHA-256 match, fetches and digest-verifies the...'
+- id: ENT-18
+  name: OCSP and CRL connectivity preservation
+  source: ch19 §"Air-Gap Deployment"
+  source-paper: null
+  definition: Air-gap egress policy must preserve a path to OCSP and CRL responders — internal mirror,
+    certificate pinning with long-lived certs, or open egress to public responders — because blocking
+    revocation checking breaks TLS chain validation across the entire node, not just update checks.
+  must-implement:
+  - Air-gap deployment guidance names OCSP/CRL preservation as non-negotiable
+  - At least one of internal OCSP responder, certificate pinning with long-lived cert, or whitelisted
+    public OCSP egress is configured
+  - The deployment runbook lists OCSP/CRL responders explicitly under "do not block"
+  verification: Air-gap deployment validation includes a TLS handshake to the relay endpoint succeeding
+    without OCSP soft-fail; deployment runbook lists OCSP/CRL on the do-not-block list
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes: []
+  tags:
+  - tls
+  - pki
+  - air-gap
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Air-gap deployment guidance names OCSP/CRL preservation as non-negotiable'
+  - At least one of internal OCSP responder, certificate pinning with long-lived cert, or whitelisted
+    public OCSP egress is not configured
+  - 'Fails to satisfy: The deployment runbook lists OCSP/CRL responders explicitly under "do not block"'
+  - 'Verification check does not pass: Air-gap deployment validation includes a TLS handshake to the relay
+    endpoint succeeding without OCSP soft-fail; deployme...'
+- id: ENT-19
+  name: Jurisdictional self-hosted Bridge relay
+  source: ch19 §"Self-Hosted Bridge Relay — Deployment Details"
+  source-paper: v13 §16
+  definition: For compliance-mandated markets the self-hosted Bridge relay runs on infrastructure within
+    the required jurisdiction — on-premise, sovereign cloud, or domestic data center — making the relay-sovereignty
+    guarantee legally defensible rather than a marketing claim.
+  must-implement:
+  - Bridge relay deploys as a single statically-compiled binary or OCI container image
+  - Relay listens on TLS 1.3 only and authenticates connections against Ed25519 public keys from enterpriseAttestationIssuerPublicKey
+  - Relay forwards CRDT operation frames without access to payload content
+  - Production deployments run at least two-node HA, with three-node automatic failover for enterprise
+    SLA tiers
+  - Deployment infrastructure is sited within the required regulatory jurisdiction
+  verification: Deployed relay rejects non-TLS-1.3 connections, accepts only attested Ed25519 identities,
+    has no payload-decryption code paths, and is hosted within the regulator-approved jurisdiction (verifiable
+    from cloud-provider region or on-premise inventory)
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - data-residency-objection
+  tags:
+  - relay
+  - sovereignty
+  - compliance
+  - deployment
+  failed-conditions:
+  - 'Fails to satisfy: Bridge relay deploys as a single statically-compiled binary or OCI container image'
+  - 'Fails to satisfy: Relay listens on TLS 1.3 only and authenticates connections against Ed25519 public
+    keys from enterpriseAttestationIssuerPublicKey'
+  - Relay does not forward CRDT operation frames without access to payload content
+  - 'Fails to satisfy: Production deployments run at least two-node HA, with three-node automatic failover
+    for enterprise SLA tiers'
+  - Deployment infrastructure is not sited within the required regulatory jurisdiction
+  - 'Verification check does not pass: Deployed relay rejects non-TLS-1.3 connections, accepts only attested
+    Ed25519 identities, has no payload-decryption code...'
+- id: ENT-20
+  name: Power-interruption-resilient endpoint specification
+  source: ch19 §"Power-Interruption Resilience"
+  source-paper: v5 §5
+  definition: For deployments in load-shedding or unstable-grid environments the hardware specification
+    names a UPS with at least 30-minute runtime and SSDs with power-loss-protection capacitors as a baseline,
+    not an optional upgrade.
+  must-implement:
+  - Endpoint hardware specification names UPS with >=30-minute runtime for affected regions
+  - Local SQLCipher database resides on an SSD with power-loss-protection capacitors
+  - Sync daemon resumes cleanly from cold restart by replaying the append-only event log
+  - MDM compliance re-attests on first successful handshake after power loss
+  verification: Abrupt-power-loss test drops AC mid-write and confirms event-log durability, clean restart,
+    gossip resumption, and successful MDM re-attestation on next handshake
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - durability
+  - hardware
+  - resilience
+  - regional
+  failed-conditions:
+  - 'Fails to satisfy: Endpoint hardware specification names UPS with >=30-minute runtime for affected
+    regions'
+  - 'Fails to satisfy: Local SQLCipher database resides on an SSD with power-loss-protection capacitors'
+  - 'Fails to satisfy: Sync daemon resumes cleanly from cold restart by replaying the append-only event
+    log'
+  - MDM compliance re-does not attest on first successful handshake after power loss
+  - 'Verification check does not pass: Abrupt-power-loss test drops AC mid-write and confirms event-log
+    durability, clean restart, gossip resumption, and succe...'
+- id: ENT-21
+  name: Compliance documentation pipeline
+  source: ch19 §"Compliance Documentation Pipeline"
+  source-paper: v13 §16
+  definition: A repeatable workflow that exports the audit log, SBOM, Grype CVE report, MDM compliance
+    manifest, and Bridge relay jurisdictional configuration and assembles them into the format each compliance
+    regime accepts (SOC 2 Type II, GDPR Article 30, EU CRA, regimes in Appendix F).
+  must-implement:
+  - sunfish admin audit-export emits a date-bounded CSV-and-JSON bundle mapping to SOC 2 Trust Services
+    Criteria
+  - A quarterly GDPR Article 30 rollup is assembled from bucket definitions, node-config.json, SBOM, and
+    MDM manifest
+  - SBOMs are signed and attested under SLSA Level 3 to satisfy EU CRA SBOM obligations
+  - Each Appendix F regime has a documented mapping from the common evidence substrate to its required
+    document format
+  verification: Documentation pipeline produces a SOC 2 evidence bundle, a GDPR Article 30 record, and
+    an EU CRA SBOM attestation from a single test deployment without manual data re-entry
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - compliance
+  - soc2
+  - gdpr
+  - eu-cra
+  - audit
+  failed-conditions:
+  - sunfish admin audit-export does not emit a date-bounded CSV-and-JSON bundle mapping to SOC 2 Trust
+    Services Criteria
+  - A quarterly GDPR Article 30 rollup is not assembled from bucket definitions, node-config.json, SBOM,
+    and MDM manifest
+  - SBOMs are not signed and attested under SLSA Level 3 to satisfy EU CRA SBOM obligations
+  - Each Appendix F regime has not a documented mapping from the common evidence substrate to its required
+    document format
+  - 'Verification check does not pass: Documentation pipeline produces a SOC 2 evidence bundle, a GDPR
+    Article 30 record, and an EU CRA SBOM attestation from a...'
+- id: ENT-22
+  name: Three-runbook minimum for enterprise GA
+  source: ch19 §"The Operational Runbook Minimum"
+  source-paper: null
+  definition: Enterprise general availability requires three published runbooks — node onboarding, node
+    deprovisioning, and incident response for node or key compromise — each with named commands, expected
+    outputs, and audit-log verification steps.
+  must-implement:
+  - Node onboarding runbook covers IdP confirmation, attestation issuance, pre-seeded config, MDM deployment,
+    and audit-log verification
+  - Node deprovisioning runbook covers admin revocation, MDM wipe, and audit-log archival
+  - Incident response runbook covers immediate revocation on suspicion, forensic-hold coordination, and
+    key-material rotation
+  - Each runbook includes the named command, expected output, and an audit-log verification step
+  verification: docs/runbooks/ contains all three named runbooks with command-output-verification triplets
+    and expected-duration targets
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - runbook
+  - operations
+  - governance
+  failed-conditions:
+  - Node onboarding runbook does not cover IdP confirmation, attestation issuance, pre-seeded config,
+    MDM deployment, and audit-log verification
+  - Node deprovisioning runbook does not cover admin revocation, MDM wipe, and audit-log archival
+  - Incident response runbook does not cover immediate revocation on suspicion, forensic-hold coordination,
+    and key-material rotation
+  - Each runbook does not include the named command, expected output, and an audit-log verification step
+  - 'Verification check does not pass: docs/runbooks/ contains all three named runbooks with command-output-verification
+    triplets and expected-duration targets'
+- id: ENT-23
+  name: Staged canary update rollout
+  source: 'ch19 §"Runbook 3: Container Update Rollout"'
+  source-paper: null
+  definition: Production updates roll out in three stages — five-to-ten-percent canary, fifty percent,
+    one hundred percent — with twenty-four-hour holds at each stage and a defined rollback by republishing
+    the previous artifact through the same MDM policy on health-check failure.
+  must-implement:
+  - Update rollouts target a 5-10% canary deployment ring first
+  - Each stage holds at least 24 hours before promotion
+  - Health-check criteria include sync-daemon running, no ERR_ events in relay logs, and no MDM compliance
+    failures
+  - Rollback republishes the previous artifact via the same MDM policy
+  - The internal update server continues serving the previous version until rollback completes
+  - Failed rollouts produce an incident report before any retry
+  verification: A staged-rollout dry-run on a test fleet executes all three stages with documented holds
+    and a successful canary-failure rollback within the published health-check criteria
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - rollout
+  - canary
+  - mdm
+  - change-management
+  failed-conditions:
+  - 'Fails to satisfy: Update rollouts target a 5-10% canary deployment ring first'
+  - 'Fails to satisfy: Each stage holds at least 24 hours before promotion'
+  - 'Fails to satisfy: Health-check criteria include sync-daemon running, no ERR_ events in relay logs,
+    and no MDM compliance failures'
+  - 'Fails to satisfy: Rollback republishes the previous artifact via the same MDM policy'
+  - The internal update server continues serving the previous version until rollback does not complete
+  - 'Fails to satisfy: Failed rollouts produce an incident report before any retry'
+  - 'Verification check does not pass: A staged-rollout dry-run on a test fleet executes all three stages
+    with documented holds and a successful canary-failure...'

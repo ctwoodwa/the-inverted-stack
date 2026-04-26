@@ -1,242 +1,513 @@
 chapter: ch08
 chapter-title: The Product & Economic Lens
-source-paper-refs: [v13 §17, v5 §7, R1, R2]
+source-paper-refs:
+- v13 §17
+- v5 §7
+- R1
+- R2
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: LENS-P-01
-    name: OSS public-good positioning as commercial strategy
-    source: ch08 §"What Scored Adequately"
-    source-paper: v13 §17
-    definition: Because locally installed software cannot enforce a license server for proprietary features, the commercial model treats the open-source release as the strategic asset and competes on relay quality and support depth rather than feature gating.
-    must-implement:
-      - Full application capability is published under an open-source license rather than gated behind a paid tier
-      - Revenue mechanisms target managed-relay quality, support depth, and compliance amortization rather than feature access
-      - Project positioning is documented as infrastructure rather than as a product with locked features
-    verification: Repository at first public release contains the full application source under an open-source license; pricing page describes the commercial offer in terms of relay, support, and compliance — not feature unlock.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition]
-    tags: [commercial, oss, positioning]
-
-  - id: LENS-P-02
-    name: First-customer archetype with named acquisition channel
-    source: ch08 §"No First Customer Archetype"
-    source-paper: null
-    definition: A specified first customer is recorded as a tuple of job title, company size, problem, and acquisition channel — not as a demographic descriptor — so the customer development plan has an executable first step.
-    must-implement:
-      - Commercial plan names the first customer's job title, company size, and named pain
-      - Commercial plan names at least one specific acquisition channel (industry association, trade publication, or warm-introduction partner)
-      - Generic descriptors (e.g., "developers who care about X") are rejected as insufficient
-    verification: Go-to-market document contains the four required fields (title, size, problem, channel) for the first customer archetype; reviewer can identify the next ten outreach targets without further interpretation.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [commercial, gtm, customer-development]
-
-  - id: LENS-P-03
-    name: Named OSS-to-paid conversion trigger
-    source: ch08 §"No OSS-to-Paid Conversion Mechanism"
-    source-paper: null
-    definition: The commercial model names a specific user-observable event — not a need — that converts a free user into a paying customer, and the product is built so that event predictably occurs.
-    must-implement:
-      - The conversion trigger is named as a discrete event (e.g., "second device or second team member needs to sync and both are behind NAT")
-      - Product UX surfaces the paid path at the moment the trigger fires rather than through periodic upsell
-      - Conversion-rate measurement instruments the trigger event, not generic activity metrics
-    verification: Product analytics define the conversion event as a measurable funnel step; the paid offer is presented in-product at the moment the trigger fires.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [commercial, conversion, product-led-growth]
-
-  - id: LENS-P-04
-    name: Vertical-first market selection on documented downtime cost
-    source: ch08 §"What Changed Between Rounds"
-    source-paper: null
-    definition: The initial target vertical is selected on three specific properties — documented connectivity failures, customer-owned legally significant data, and a measurable downtime cost — rather than on founder affinity or addressable market size.
-    must-implement:
-      - Vertical selection memo names documented connectivity-failure conditions for the target buyer
-      - Vertical selection memo names the legally significant data the buyer owns
-      - Vertical selection memo names the per-incident downtime cost in monetary terms
-      - Construction project management is the named launch vertical for this book's reference implementation
-    verification: Go-to-market document records the three named selection properties for the chosen vertical; the construction-PM choice cites RFI tracking and punch lists as the candidate workflows.
-    kleppmann-properties: [P3, P5]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [commercial, vertical, market-selection]
-
-  - id: LENS-P-05
-    name: Five-step customer development path
-    source: ch08 §"What Changed Between Rounds"
-    source-paper: null
-    definition: A repeatable customer development sequence — identify ten target operators through industry channels, conduct discovery interviews on a single cost-of-failure question, locate the workflow with measurable repeated cost, build directly to that scenario, then measure ninety-day relay activation on one live team.
-    must-implement:
-      - Step 1 names the industry-association or publication channel for identifying ten initial interview targets
-      - Step 2 conducts discovery interviews scoped to the question "when did software failure cost you money?"
-      - Step 3 selects a single workflow with measurable repeated cost
-      - Step 4 builds product narrowly to that workflow rather than to generic features
-      - Step 5 measures relay activation at ninety days on one live team and uses that data to deepen-or-pivot
-    verification: Customer development plan in repository or product wiki contains all five named steps with owners and dates; the ninety-day activation review is on the calendar before step 4 begins.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [commercial, customer-development, process]
-
-  - id: LENS-P-06
-    name: Relay unit economics at three scale tiers
-    source: ch08 §"Unit Economics at Scale"
-    source-paper: v13 §17
-    definition: The commercial model is validated against a worked unit-economics model at 100, 1,000, and 10,000 paying teams, with per-team infrastructure cost held under two dollars per month and per-team pricing in the fifteen-to-twenty-five-dollar range, yielding gross margin above ninety percent at the 1,000-team tier.
-    must-implement:
-      - Unit-economics model documents revenue, infrastructure cost, and gross margin at each of the three named tiers
-      - Per-team infrastructure cost stays under two dollars per month at 1,000 teams
-      - Per-team pricing falls within the documented fifteen-to-twenty-five-dollar range or names the deviation explicitly
-      - Gross margin at the 1,000-team tier is at least ninety percent
-    verification: Financial model spreadsheet contains rows for each tier with revenue, infrastructure, and margin columns; relay capacity test demonstrates approximately 500 concurrent team connections on a single commodity instance.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [commercial, unit-economics, relay]
-
-  - id: LENS-P-07
-    name: Tier-by-tier staffing model
-    source: ch08 §"Unit Economics at Scale"
-    source-paper: null
-    definition: A staffing plan is recorded at each of the 100, 1,000, and 10,000-team tiers showing which roles each tier's revenue can fund, with external capital named explicitly as the bridge for any tier where revenue cannot fund the team required to reach the next tier.
-    must-implement:
-      - Staffing plan names headcount and roles at 100, 1,000, and 10,000 teams
-      - Each tier's plan demonstrates that revenue at that tier funds the team required to reach the next tier, or names external capital as the bridge
-      - The plan distinguishes Bay Area salaries from distributed-team rates as a sensitivity input
-    verification: Operating plan contains a staffing table by tier; investor or board review confirms the bridge financing is named for any non-self-funding tier.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [commercial, staffing, planning]
-
-  - id: LENS-P-08
-    name: Dual-license structure established at repository founding
-    source: ch08 §"The Dual-License Imperative"
-    source-paper: v13 §17
-    definition: The codebase ships under AGPLv3 by default with a parallel commercial license available for organizations that cannot accept the AGPL network use clause, and the dual-license structure plus contributor license agreement is in place before the public repository opens to external contribution.
-    must-implement:
-      - Repository publishes AGPLv3 license at first public commit
-      - Parallel commercial license terms are documented and obtainable without bespoke negotiation
-      - Contributor License Agreement is required from every external contributor before merge
-      - Dual-license structure is not retrofitted after community formation
-      - Managed-relay subscription includes the commercial license as a bundled line item
-    verification: Repository at first public release contains LICENSE (AGPLv3), a documented commercial license path, and a CLA enforcement step in CI; release notes show no retroactive CLA collection in git history.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition]
-    tags: [licensing, commercial, governance, cla]
-
-  - id: LENS-P-09
-    name: Project-entity copyright assignment via CLA
-    source: ch08 §"The Dual-License Imperative"
-    source-paper: null
-    definition: The contributor license agreement assigns copyright in contributed code to the project entity, preserving the entity's authority to offer the commercial license exception over the entire codebase including community contributions.
-    must-implement:
-      - The CLA grants the project entity rights sufficient to relicense the contribution under the commercial exception
-      - CLA collection is automated in the pull-request workflow and blocks merge without a recorded signature
-      - The project entity is a named legal entity capable of holding copyright assignment
-    verification: CLA text in repository assigns inbound rights to a named project entity; CI configuration enforces a CLA-check status before any merge.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [licensing, cla, governance, contributions]
-
-  - id: LENS-P-10
-    name: Relay defensibility through three named moats
-    source: ch08 §"Year-Two Failure Modes"
-    source-paper: null
-    definition: Because the relay protocol is published and the relay binary is open-source, the managed-relay business is defended by three explicit moats — product-integrated onboarding, full-stack support depth, and amortized regulatory and compliance certification — that operate at non-infrastructure margins where commodity providers cannot compete.
-    must-implement:
-      - Relay onboarding completes in seconds from within the application without exposing infrastructure choices to the user
-      - Support team is staffed to resolve cross-layer incidents (application, sync protocol, CRDT semantics, deployment) in one escalation
-      - Compliance program amortizes the named certifications (SOC 2 Type II, ISO 27001, HIPAA BAA, Schrems II, DIFC, India DPDP, plus the regimes named in Appendix F)
-      - Architecture documents that the relay is replaceable infrastructure (not a data custodian) so a buyer can self-host on relationship end without data migration
-    verification: Onboarding test confirms a relay is configured in seconds without exposing infrastructure UI; support runbook covers cross-layer escalation paths; compliance register lists the named certifications with renewal dates; self-host migration path is documented.
-    kleppmann-properties: [P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition, vendor-outage]
-    tags: [commercial, defensibility, relay, compliance, support]
-
-  - id: LENS-P-11
-    name: Self-serve and enterprise tier separation
-    source: ch08 §"Year-Two Failure Modes"
-    source-paper: null
-    definition: The pricing structure separates a self-serve tier priced at the per-team SaaS rate from an enterprise tier with negotiated pricing, contractual terms, and security-review cadence, with a documented headcount or revenue threshold marking the boundary.
-    must-implement:
-      - Pricing page distinguishes self-serve and enterprise tiers
-      - A documented headcount or revenue threshold marks the boundary between tiers
-      - Enterprise tier supports negotiated pricing, master-services-agreement terms, and a security-review cadence
-      - Self-serve customers do not consume sales-engineering or legal-review effort beyond the documented self-serve flow
-    verification: Pricing documentation lists both tiers with the boundary criterion; an enterprise master services agreement template exists; self-serve flow requires no sales touch through purchase.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [commercial, pricing, enterprise, self-serve]
-
-  - id: LENS-P-12
-    name: Documented project governance model
-    source: ch08 §"Year-Two Failure Modes"
-    source-paper: null
-    definition: A governance model — BDFL, contributor council, or lightweight stewardship — is documented publicly before the first external pull request so the first significant disagreement has a defined resolution path rather than producing a community crisis.
-    must-implement:
-      - Repository contains a GOVERNANCE document at first public release
-      - The document names who approves pull requests and who decides protocol changes
-      - The document names the decision-making structure for unresolved disagreements
-      - Governance is documented before the first external contribution is accepted
-    verification: GOVERNANCE document is present in repository at first public commit; document names PR-approval authority, protocol-change authority, and dispute-resolution path.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [governance, oss, contributions]
-
-  - id: LENS-P-13
-    name: Region-specific go-to-market channel matrix
-    source: ch08 §"The Customer Acquisition Channel"
-    source-paper: null
-    definition: The commercial plan names a distinct acquisition channel per major region — product-led for US and European small teams, relationship-led with system integrators for GCC and India BFSI, agritech and fintech network distribution for Sub-Saharan Africa and Latin America, and import-substitution channels for CIS — rather than assuming a single global motion.
-    must-implement:
-      - Go-to-market plan names the dominant channel per named region
-      - The plan identifies system-integrator or association partners by name in relationship-led regions
-      - The plan names regulator-facing assets (RBI compliance documentation, Schrems II equivalence, DIFC equivalence) required as procurement enablers per region
-      - Product-led-growth assumptions are not extrapolated to relationship-led regions
-    verification: Regional go-to-market document contains per-region channel and partner entries for the named regions; procurement-enablement assets are tracked per region.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [commercial, gtm, regional, partnerships]
-
-  - id: LENS-P-14
-    name: Vendor-continuity risk as commercial purchasing argument
-    source: ch08 §"The Commercial Differentiator No Competitor Can Claim"
-    source-paper: v13 §17
-    definition: The architecture's structural ability to keep operating after vendor commercial relationship is severed — empirically anchored by the 2022 Western SaaS withdrawal from Russia and CIS markets — is positioned in procurement materials as a structural commercial claim that cloud-dependent competitors cannot make without re-architecture.
-    must-implement:
-      - Procurement and sales materials name vendor-continuity-on-suspension as a structural property of the architecture
-      - The 2022 SaaS withdrawal is cited as the empirical anchor rather than as a hypothetical
-      - The claim is supported by demonstrable continued operation after disconnection in a tabletop or sandbox test
-      - Cloud-dependent competitors' inability to construct the same claim is articulated explicitly
-    verification: Sales collateral contains the vendor-continuity claim with the 2022 anchor citation; tabletop exercise demonstrates continued local operation after simulated vendor severance.
-    kleppmann-properties: [P3, P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
-    tags: [commercial, procurement, sanctions, vendor-risk]
-
-  - id: LENS-P-15
-    name: Business-model precedence over repository opening
-    source: 'ch08 §"The Principle: Open Source Needs a Business Model Before the Repo Opens"'
-    source-paper: null
-    definition: Because some commercial-model elements (CLA, dual-license, governance) are expensive or impossible to introduce after a community forms, the business model is specified before the repository goes public and repository-opening day is treated as a commercial event rather than only an engineering one.
-    must-implement:
-      - Dual-license structure, CLA enforcement, and governance document are present at first public commit
-      - First-customer archetype, conversion trigger, vertical selection, and unit-economics tiers are documented before the repository accepts external contributions
-      - Repository-opening date is gated on commercial-model completion, not only on engineering readiness
-    verification: Pre-launch checklist names the dual-license, CLA, governance, first-customer archetype, conversion trigger, vertical, and unit-economics artifacts as gating items for repository public release; first public commit contains all named artifacts.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition]
-    tags: [commercial, governance, sequencing, oss]
+- id: LENS-P-01
+  name: OSS public-good positioning as commercial strategy
+  source: ch08 §"What Scored Adequately"
+  source-paper: v13 §17
+  definition: Because locally installed software cannot enforce a license server for proprietary features,
+    the commercial model treats the open-source release as the strategic asset and competes on relay quality
+    and support depth rather than feature gating.
+  must-implement:
+  - Full application capability is published under an open-source license rather than gated behind a paid
+    tier
+  - Revenue mechanisms target managed-relay quality, support depth, and compliance amortization rather
+    than feature access
+  - Project positioning is documented as infrastructure rather than as a product with locked features
+  verification: Repository at first public release contains the full application source under an open-source
+    license; pricing page describes the commercial offer in terms of relay, support, and compliance —
+    not feature unlock.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - commercial
+  - oss
+  - positioning
+  failed-conditions:
+  - Full application capability is not published under an open-source license rather than gated behind
+    a paid tier
+  - 'Fails to satisfy: Revenue mechanisms target managed-relay quality, support depth, and compliance
+    amortization rather than feature access'
+  - Project positioning is not documented as infrastructure rather than as a product with locked features
+  - 'Verification check does not pass: Repository at first public release contains the full application
+    source under an open-source license; pricing page descr...'
+- id: LENS-P-02
+  name: First-customer archetype with named acquisition channel
+  source: ch08 §"No First Customer Archetype"
+  source-paper: null
+  definition: A specified first customer is recorded as a tuple of job title, company size, problem, and
+    acquisition channel — not as a demographic descriptor — so the customer development plan has an executable
+    first step.
+  must-implement:
+  - Commercial plan names the first customer's job title, company size, and named pain
+  - Commercial plan names at least one specific acquisition channel (industry association, trade publication,
+    or warm-introduction partner)
+  - Generic descriptors (e.g., "developers who care about X") are rejected as insufficient
+  verification: Go-to-market document contains the four required fields (title, size, problem, channel)
+    for the first customer archetype; reviewer can identify the next ten outreach targets without further
+    interpretation.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - commercial
+  - gtm
+  - customer-development
+  failed-conditions:
+  - 'Fails to satisfy: Commercial plan names the first customer''s job title, company size, and named
+    pain'
+  - 'Fails to satisfy: Commercial plan names at least one specific acquisition channel (industry association,
+    trade publication, or warm-introduction partner)'
+  - Generic descriptors (e.g., "developers who care about X") are not rejected as insufficient
+  - 'Verification check does not pass: Go-to-market document contains the four required fields (title,
+    size, problem, channel) for the first customer archetype...'
+- id: LENS-P-03
+  name: Named OSS-to-paid conversion trigger
+  source: ch08 §"No OSS-to-Paid Conversion Mechanism"
+  source-paper: null
+  definition: The commercial model names a specific user-observable event — not a need — that converts
+    a free user into a paying customer, and the product is built so that event predictably occurs.
+  must-implement:
+  - The conversion trigger is named as a discrete event (e.g., "second device or second team member needs
+    to sync and both are behind NAT")
+  - Product UX surfaces the paid path at the moment the trigger fires rather than through periodic upsell
+  - Conversion-rate measurement instruments the trigger event, not generic activity metrics
+  verification: Product analytics define the conversion event as a measurable funnel step; the paid offer
+    is presented in-product at the moment the trigger fires.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - commercial
+  - conversion
+  - product-led-growth
+  failed-conditions:
+  - The conversion trigger is not named as a discrete event (e.g., "second device or second team member
+    needs to sync and both are behind NAT")
+  - Product UX does not surface the paid path at the moment the trigger fires rather than through periodic
+    upsell
+  - 'Fails to satisfy: Conversion-rate measurement instruments the trigger event, not generic activity
+    metrics'
+  - 'Verification check does not pass: Product analytics define the conversion event as a measurable funnel
+    step; the paid offer is presented in-product at the...'
+- id: LENS-P-04
+  name: Vertical-first market selection on documented downtime cost
+  source: ch08 §"What Changed Between Rounds"
+  source-paper: null
+  definition: The initial target vertical is selected on three specific properties — documented connectivity
+    failures, customer-owned legally significant data, and a measurable downtime cost — rather than on
+    founder affinity or addressable market size.
+  must-implement:
+  - Vertical selection memo names documented connectivity-failure conditions for the target buyer
+  - Vertical selection memo names the legally significant data the buyer owns
+  - Vertical selection memo names the per-incident downtime cost in monetary terms
+  - Construction project management is the named launch vertical for this book's reference implementation
+  verification: Go-to-market document records the three named selection properties for the chosen vertical;
+    the construction-PM choice cites RFI tracking and punch lists as the candidate workflows.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - commercial
+  - vertical
+  - market-selection
+  failed-conditions:
+  - 'Fails to satisfy: Vertical selection memo names documented connectivity-failure conditions for the
+    target buyer'
+  - 'Fails to satisfy: Vertical selection memo names the legally significant data the buyer owns'
+  - 'Fails to satisfy: Vertical selection memo names the per-incident downtime cost in monetary terms'
+  - Construction project management is not the named launch vertical for this book's reference implementation
+  - 'Verification check does not pass: Go-to-market document records the three named selection properties
+    for the chosen vertical; the construction-PM choice c...'
+- id: LENS-P-05
+  name: Five-step customer development path
+  source: ch08 §"What Changed Between Rounds"
+  source-paper: null
+  definition: A repeatable customer development sequence — identify ten target operators through industry
+    channels, conduct discovery interviews on a single cost-of-failure question, locate the workflow with
+    measurable repeated cost, build directly to that scenario, then measure ninety-day relay activation
+    on one live team.
+  must-implement:
+  - Step 1 names the industry-association or publication channel for identifying ten initial interview
+    targets
+  - Step 2 conducts discovery interviews scoped to the question "when did software failure cost you money?"
+  - Step 3 selects a single workflow with measurable repeated cost
+  - Step 4 builds product narrowly to that workflow rather than to generic features
+  - Step 5 measures relay activation at ninety days on one live team and uses that data to deepen-or-pivot
+  verification: Customer development plan in repository or product wiki contains all five named steps
+    with owners and dates; the ninety-day activation review is on the calendar before step 4 begins.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - commercial
+  - customer-development
+  - process
+  failed-conditions:
+  - 'Fails to satisfy: Step 1 names the industry-association or publication channel for identifying ten
+    initial interview targets'
+  - 'Fails to satisfy: Step 2 conducts discovery interviews scoped to the question "when did software
+    failure cost you money?"'
+  - 'Fails to satisfy: Step 3 selects a single workflow with measurable repeated cost'
+  - 'Fails to satisfy: Step 4 builds product narrowly to that workflow rather than to generic features'
+  - 'Fails to satisfy: Step 5 measures relay activation at ninety days on one live team and uses that
+    data to deepen-or-pivot'
+  - 'Verification check does not pass: Customer development plan in repository or product wiki contains
+    all five named steps with owners and dates; the ninety-...'
+- id: LENS-P-06
+  name: Relay unit economics at three scale tiers
+  source: ch08 §"Unit Economics at Scale"
+  source-paper: v13 §17
+  definition: The commercial model is validated against a worked unit-economics model at 100, 1,000, and
+    10,000 paying teams, with per-team infrastructure cost held under two dollars per month and per-team
+    pricing in the fifteen-to-twenty-five-dollar range, yielding gross margin above ninety percent at
+    the 1,000-team tier.
+  must-implement:
+  - Unit-economics model documents revenue, infrastructure cost, and gross margin at each of the three
+    named tiers
+  - Per-team infrastructure cost stays under two dollars per month at 1,000 teams
+  - Per-team pricing falls within the documented fifteen-to-twenty-five-dollar range or names the deviation
+    explicitly
+  - Gross margin at the 1,000-team tier is at least ninety percent
+  verification: Financial model spreadsheet contains rows for each tier with revenue, infrastructure,
+    and margin columns; relay capacity test demonstrates approximately 500 concurrent team connections
+    on a single commodity instance.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - commercial
+  - unit-economics
+  - relay
+  failed-conditions:
+  - 'Fails to satisfy: Unit-economics model documents revenue, infrastructure cost, and gross margin at
+    each of the three named tiers'
+  - 'Fails to satisfy: Per-team infrastructure cost stays under two dollars per month at 1,000 teams'
+  - 'Fails to satisfy: Per-team pricing falls within the documented fifteen-to-twenty-five-dollar range
+    or names the deviation explicitly'
+  - Gross margin at the 1,000-team tier is not at least ninety percent
+  - 'Verification check does not pass: Financial model spreadsheet contains rows for each tier with revenue,
+    infrastructure, and margin columns; relay capacity...'
+- id: LENS-P-07
+  name: Tier-by-tier staffing model
+  source: ch08 §"Unit Economics at Scale"
+  source-paper: null
+  definition: A staffing plan is recorded at each of the 100, 1,000, and 10,000-team tiers showing which
+    roles each tier's revenue can fund, with external capital named explicitly as the bridge for any tier
+    where revenue cannot fund the team required to reach the next tier.
+  must-implement:
+  - Staffing plan names headcount and roles at 100, 1,000, and 10,000 teams
+  - Each tier's plan demonstrates that revenue at that tier funds the team required to reach the next
+    tier, or names external capital as the bridge
+  - The plan distinguishes Bay Area salaries from distributed-team rates as a sensitivity input
+  verification: Operating plan contains a staffing table by tier; investor or board review confirms the
+    bridge financing is named for any non-self-funding tier.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - commercial
+  - staffing
+  - planning
+  failed-conditions:
+  - 'Fails to satisfy: Staffing plan names headcount and roles at 100, 1,000, and 10,000 teams'
+  - 'Fails to satisfy: Each tier''s plan demonstrates that revenue at that tier funds the team required
+    to reach the next tier, or names external capital as the bridge'
+  - 'Fails to satisfy: The plan distinguishes Bay Area salaries from distributed-team rates as a sensitivity
+    input'
+  - 'Verification check does not pass: Operating plan contains a staffing table by tier; investor or board
+    review confirms the bridge financing is named for an...'
+- id: LENS-P-08
+  name: Dual-license structure established at repository founding
+  source: ch08 §"The Dual-License Imperative"
+  source-paper: v13 §17
+  definition: The codebase ships under AGPLv3 by default with a parallel commercial license available
+    for organizations that cannot accept the AGPL network use clause, and the dual-license structure plus
+    contributor license agreement is in place before the public repository opens to external contribution.
+  must-implement:
+  - Repository publishes AGPLv3 license at first public commit
+  - Parallel commercial license terms are documented and obtainable without bespoke negotiation
+  - Contributor License Agreement is required from every external contributor before merge
+  - Dual-license structure is not retrofitted after community formation
+  - Managed-relay subscription includes the commercial license as a bundled line item
+  verification: Repository at first public release contains LICENSE (AGPLv3), a documented commercial
+    license path, and a CLA enforcement step in CI; release notes show no retroactive CLA collection in
+    git history.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - licensing
+  - commercial
+  - governance
+  - cla
+  failed-conditions:
+  - Repository does not publishe AGPLv3 license at first public commit
+  - Parallel commercial license terms are not documented and obtainable without bespoke negotiation
+  - Contributor License Agreement is not required from every external contributor before merge
+  - 'Fails to satisfy: Dual-license structure is not retrofitted after community formation'
+  - Managed-relay subscription does not include the commercial license as a bundled line item
+  - 'Verification check does not pass: Repository at first public release contains LICENSE (AGPLv3), a
+    documented commercial license path, and a CLA enforcemen...'
+- id: LENS-P-09
+  name: Project-entity copyright assignment via CLA
+  source: ch08 §"The Dual-License Imperative"
+  source-paper: null
+  definition: The contributor license agreement assigns copyright in contributed code to the project entity,
+    preserving the entity's authority to offer the commercial license exception over the entire codebase
+    including community contributions.
+  must-implement:
+  - The CLA grants the project entity rights sufficient to relicense the contribution under the commercial
+    exception
+  - CLA collection is automated in the pull-request workflow and blocks merge without a recorded signature
+  - The project entity is a named legal entity capable of holding copyright assignment
+  verification: CLA text in repository assigns inbound rights to a named project entity; CI configuration
+    enforces a CLA-check status before any merge.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - licensing
+  - cla
+  - governance
+  - contributions
+  failed-conditions:
+  - The CLA does not grant the project entity rights sufficient to relicense the contribution under the
+    commercial exception
+  - CLA collection is not automated in the pull-request workflow and blocks merge without a recorded signature
+  - The project entity is not a named legal entity capable of holding copyright assignment
+  - 'Verification check does not pass: CLA text in repository assigns inbound rights to a named project
+    entity; CI configuration enforces a CLA-check status be...'
+- id: LENS-P-10
+  name: Relay defensibility through three named moats
+  source: ch08 §"Year-Two Failure Modes"
+  source-paper: null
+  definition: Because the relay protocol is published and the relay binary is open-source, the managed-relay
+    business is defended by three explicit moats — product-integrated onboarding, full-stack support depth,
+    and amortized regulatory and compliance certification — that operate at non-infrastructure margins
+    where commodity providers cannot compete.
+  must-implement:
+  - Relay onboarding completes in seconds from within the application without exposing infrastructure
+    choices to the user
+  - Support team is staffed to resolve cross-layer incidents (application, sync protocol, CRDT semantics,
+    deployment) in one escalation
+  - Compliance program amortizes the named certifications (SOC 2 Type II, ISO 27001, HIPAA BAA, Schrems
+    II, DIFC, India DPDP, plus the regimes named in Appendix F)
+  - Architecture documents that the relay is replaceable infrastructure (not a data custodian) so a buyer
+    can self-host on relationship end without data migration
+  verification: Onboarding test confirms a relay is configured in seconds without exposing infrastructure
+    UI; support runbook covers cross-layer escalation paths; compliance register lists the named certifications
+    with renewal dates; self-host migration path is documented.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  - vendor-outage
+  tags:
+  - commercial
+  - defensibility
+  - relay
+  - compliance
+  - support
+  failed-conditions:
+  - Relay onboarding does not complete in seconds from within the application without exposing infrastructure
+    choices to the user
+  - Support team is not staffed to resolve cross-layer incidents (application, sync protocol, CRDT semantics,
+    deployment) in one escalation
+  - 'Fails to satisfy: Compliance program amortizes the named certifications (SOC 2 Type II, ISO 27001,
+    HIPAA BAA, Schrems II, DIFC, India DPDP, plus the regimes named in Appendix F)'
+  - Architecture documents that the relay is not replaceable infrastructure (not a data custodian) so
+    a buyer can self-host on relationship end without data migration
+  - 'Verification check does not pass: Onboarding test confirms a relay is configured in seconds without
+    exposing infrastructure UI; support runbook covers cro...'
+- id: LENS-P-11
+  name: Self-serve and enterprise tier separation
+  source: ch08 §"Year-Two Failure Modes"
+  source-paper: null
+  definition: The pricing structure separates a self-serve tier priced at the per-team SaaS rate from
+    an enterprise tier with negotiated pricing, contractual terms, and security-review cadence, with a
+    documented headcount or revenue threshold marking the boundary.
+  must-implement:
+  - Pricing page distinguishes self-serve and enterprise tiers
+  - A documented headcount or revenue threshold marks the boundary between tiers
+  - Enterprise tier supports negotiated pricing, master-services-agreement terms, and a security-review
+    cadence
+  - Self-serve customers do not consume sales-engineering or legal-review effort beyond the documented
+    self-serve flow
+  verification: Pricing documentation lists both tiers with the boundary criterion; an enterprise master
+    services agreement template exists; self-serve flow requires no sales touch through purchase.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - commercial
+  - pricing
+  - enterprise
+  - self-serve
+  failed-conditions:
+  - 'Fails to satisfy: Pricing page distinguishes self-serve and enterprise tiers'
+  - 'Fails to satisfy: A documented headcount or revenue threshold marks the boundary between tiers'
+  - Enterprise tier does not support negotiated pricing, master-services-agreement terms, and a security-review
+    cadence
+  - 'Fails to satisfy: Self-serve customers do not consume sales-engineering or legal-review effort beyond
+    the documented self-serve flow'
+  - 'Verification check does not pass: Pricing documentation lists both tiers with the boundary criterion;
+    an enterprise master services agreement template exi...'
+- id: LENS-P-12
+  name: Documented project governance model
+  source: ch08 §"Year-Two Failure Modes"
+  source-paper: null
+  definition: A governance model — BDFL, contributor council, or lightweight stewardship — is documented
+    publicly before the first external pull request so the first significant disagreement has a defined
+    resolution path rather than producing a community crisis.
+  must-implement:
+  - Repository contains a GOVERNANCE document at first public release
+  - The document names who approves pull requests and who decides protocol changes
+  - The document names the decision-making structure for unresolved disagreements
+  - Governance is documented before the first external contribution is accepted
+  verification: GOVERNANCE document is present in repository at first public commit; document names PR-approval
+    authority, protocol-change authority, and dispute-resolution path.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - governance
+  - oss
+  - contributions
+  failed-conditions:
+  - 'Fails to satisfy: Repository contains a GOVERNANCE document at first public release'
+  - 'Fails to satisfy: The document names who approves pull requests and who decides protocol changes'
+  - 'Fails to satisfy: The document names the decision-making structure for unresolved disagreements'
+  - Governance is not documented before the first external contribution is accepted
+  - 'Verification check does not pass: GOVERNANCE document is present in repository at first public commit;
+    document names PR-approval authority, protocol-chan...'
+- id: LENS-P-13
+  name: Region-specific go-to-market channel matrix
+  source: ch08 §"The Customer Acquisition Channel"
+  source-paper: null
+  definition: The commercial plan names a distinct acquisition channel per major region — product-led
+    for US and European small teams, relationship-led with system integrators for GCC and India BFSI,
+    agritech and fintech network distribution for Sub-Saharan Africa and Latin America, and import-substitution
+    channels for CIS — rather than assuming a single global motion.
+  must-implement:
+  - Go-to-market plan names the dominant channel per named region
+  - The plan identifies system-integrator or association partners by name in relationship-led regions
+  - The plan names regulator-facing assets (RBI compliance documentation, Schrems II equivalence, DIFC
+    equivalence) required as procurement enablers per region
+  - Product-led-growth assumptions are not extrapolated to relationship-led regions
+  verification: Regional go-to-market document contains per-region channel and partner entries for the
+    named regions; procurement-enablement assets are tracked per region.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - commercial
+  - gtm
+  - regional
+  - partnerships
+  failed-conditions:
+  - 'Fails to satisfy: Go-to-market plan names the dominant channel per named region'
+  - 'Fails to satisfy: The plan identifies system-integrator or association partners by name in relationship-led
+    regions'
+  - 'Fails to satisfy: The plan names regulator-facing assets (RBI compliance documentation, Schrems II
+    equivalence, DIFC equivalence) required as procurement enablers per region'
+  - 'Fails to satisfy: Product-led-growth assumptions are not extrapolated to relationship-led regions'
+  - 'Verification check does not pass: Regional go-to-market document contains per-region channel and
+    partner entries for the named regions; procurement-enable...'
+- id: LENS-P-14
+  name: Vendor-continuity risk as commercial purchasing argument
+  source: ch08 §"The Commercial Differentiator No Competitor Can Claim"
+  source-paper: v13 §17
+  definition: The architecture's structural ability to keep operating after vendor commercial relationship
+    is severed — empirically anchored by the 2022 Western SaaS withdrawal from Russia and CIS markets
+    — is positioned in procurement materials as a structural commercial claim that cloud-dependent competitors
+    cannot make without re-architecture.
+  must-implement:
+  - Procurement and sales materials name vendor-continuity-on-suspension as a structural property of the
+    architecture
+  - The 2022 SaaS withdrawal is cited as the empirical anchor rather than as a hypothetical
+  - The claim is supported by demonstrable continued operation after disconnection in a tabletop or sandbox
+    test
+  - Cloud-dependent competitors' inability to construct the same claim is articulated explicitly
+  verification: Sales collateral contains the vendor-continuity claim with the 2022 anchor citation; tabletop
+    exercise demonstrates continued local operation after simulated vendor severance.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - commercial
+  - procurement
+  - sanctions
+  - vendor-risk
+  failed-conditions:
+  - 'Fails to satisfy: Procurement and sales materials name vendor-continuity-on-suspension as a structural
+    property of the architecture'
+  - The 2022 SaaS withdrawal is not cited as the empirical anchor rather than as a hypothetical
+  - The claim is not supported by demonstrable continued operation after disconnection in a tabletop or
+    sandbox test
+  - Cloud-dependent competitors' inability to construct the same claim is not articulated explicitly
+  - 'Verification check does not pass: Sales collateral contains the vendor-continuity claim with the
+    2022 anchor citation; tabletop exercise demonstrates cont...'
+- id: LENS-P-15
+  name: Business-model precedence over repository opening
+  source: 'ch08 §"The Principle: Open Source Needs a Business Model Before the Repo Opens"'
+  source-paper: null
+  definition: Because some commercial-model elements (CLA, dual-license, governance) are expensive or
+    impossible to introduce after a community forms, the business model is specified before the repository
+    goes public and repository-opening day is treated as a commercial event rather than only an engineering
+    one.
+  must-implement:
+  - Dual-license structure, CLA enforcement, and governance document are present at first public commit
+  - First-customer archetype, conversion trigger, vertical selection, and unit-economics tiers are documented
+    before the repository accepts external contributions
+  - Repository-opening date is gated on commercial-model completion, not only on engineering readiness
+  verification: Pre-launch checklist names the dual-license, CLA, governance, first-customer archetype,
+    conversion trigger, vertical, and unit-economics artifacts as gating items for repository public release;
+    first public commit contains all named artifacts.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - commercial
+  - governance
+  - sequencing
+  - oss
+  failed-conditions:
+  - Dual-license structure, CLA enforcement, and governance document are not present at first public commit
+  - First-customer archetype, conversion trigger, vertical selection, and unit-economics tiers are not
+    documented before the repository accepts external contributions
+  - Repository-opening date is not gated on commercial-model completion, not only on engineering readiness
+  - 'Verification check does not pass: Pre-launch checklist names the dual-license, CLA, governance, first-customer
+    archetype, conversion trigger, vertical, an...'

@@ -1,371 +1,733 @@
 chapter: ch17
 chapter-title: Building Your First Node
-source-paper-refs: [v13 §5, v13 §13, v13 §18]
+source-paper-refs:
+- v13 §5
+- v13 §13
+- v13 §18
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: BUILD-01
-    name: Minimum-viable node deliverable checklist
-    source: ch17 §"What Anchor Gives You Today"
-    source-paper: v13 §13
-    definition: A first-node implementation is complete only when every item on a fixed eight-point checklist (build runs, keypair generated, founder bundle generated, joiner bundle verified, NodeHealth Healthy, document persists across restart, two-instance LAN discovery, status bar visible) passes.
-    must-implement:
-      - First launch builds and runs without error on the chosen target framework
-      - First launch generates and persists a device keypair
-      - Founder bundle generates and base64-encodes
-      - Joiner bundle decodes and verifies a founder signature
-      - NodeHealth transitions to Healthy after OnboardAsync completes
-      - A CRDT document creates, updates, and persists across application restart
-      - Two instances on the same LAN discover each other via mDNS
-      - The status bar surfaces all three operational indicators
-    verification: Run the eight-item checklist on a freshly-cloned build; every item passes before the chapter is considered complete.
-    kleppmann-properties: [P1, P2, P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [playbook, deliverable, verification]
-
-  - id: BUILD-02
-    name: Accelerator-shell-vs-domain-code split
-    source: ch17 §"What Anchor Gives You Today"
-    source-paper: v13 §13
-    definition: The reference accelerator delivers the security and sync infrastructure as wired primitives while the application domain (report catalog, document views, sync UI, packaging, auto-update) is left to the implementer to build on top.
-    must-implement:
-      - Reference shell wires kernel, encrypted store, security, and sync without requiring domain code
-      - Reference shell ships no opinionated domain model
-      - Domain features are added as plugins on top of the shell, not by modifying the shell
-    verification: Inspect a freshly-cloned accelerator — kernel security and sync are functional, no business-domain types are present in the shell project.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [accelerator, scope, separation-of-concerns]
-
-  - id: BUILD-03
-    name: Three-call kernel composition root
-    source: ch17 §"Wiring the Kernel Stack"
-    source-paper: v13 §5
-    definition: The local-first kernel is wired in the application composition root with three ordered DI calls — encrypted store first, runtime second, security third — because each layer depends on the layer registered before it.
-    must-implement:
-      - Composition root registers the encrypted store before the kernel runtime
-      - Composition root registers the kernel runtime before the security layer
-      - Each subsystem (sync, CRDT engine, schema registry, local-first store) is registered by its own extension method called explicitly in the composition root
-      - Registration uses TryAdd-style semantics so test harnesses can swap any subsystem by registering ahead of the default
-    verification: Composition root contains the three named registrations in the prescribed order; reordering causes a deterministic startup failure in the test suite.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [composition-root, di, wiring]
-
-  - id: BUILD-04
-    name: Deterministic kernel startup sequence
-    source: ch17 §"Wiring the Kernel Stack"
-    source-paper: v13 §5
-    definition: After DI registration, the node startup sequence runs in a fixed order — open encrypted database, initialize runtime (sync daemon, mDNS, CRDT engine), load or generate device keypair, evaluate onboarding state, render shell — and the UI shell branch is determined by the persisted onboarding state.
-    must-implement:
-      - Encrypted database opens before the runtime initializes
-      - Device keypair is loaded or generated before the UI shell renders
-      - Onboarding state is evaluated before the UI shell selects a route
-      - UI shell renders the onboarding surface when not onboarded and the workspace when onboarded
-    verification: Trace startup logs of a fresh install and an onboarded install; ordering and shell-branch selection match the documented sequence.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [startup, lifecycle, onboarding]
-
-  - id: BUILD-05
-    name: Onboarding-gated workspace access
-    source: ch17 §"Wiring the Kernel Stack"
-    source-paper: v13 §5
-    definition: The kernel refuses to render or operate the main workspace until a valid attestation has been applied, so the UI cannot present application surface that the security layer has not authorized.
-    must-implement:
-      - Workspace routes are unreachable while the session reports not-onboarded
-      - The kernel — not the UI — is the authority that gates workspace access
-      - UI shell selection reflects the kernel-reported onboarding state
-    verification: Attempt to navigate to a workspace route on a not-onboarded node; navigation is refused at the kernel layer rather than only at the route guard.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [onboarding, security, ui-gating]
-
-  - id: BUILD-06
-    name: First-document development loop
-    source: ch17 §"Your First CRDT Document and Two-Device Sync"
-    source-paper: v13 §13
-    definition: The canonical first-feature loop is to obtain the CRDT engine from DI, create a document by ID, apply a typed update, and subscribe to update events that distinguish local from remote origin.
-    must-implement:
-      - CRDT engine is obtained via the application's DI container
-      - Document creation and open are addressable by stable string ID
-      - Local updates are applied through a typed update API
-      - Update subscription distinguishes local-origin from remote-origin events
-    verification: A worked example in the accelerator's tests creates a document, applies an update, and asserts the subscriber receives the change with the correct origin tag.
-    kleppmann-properties: [P1, P3, P4]
-    scope: foundational
-    failure-modes: []
-    tags: [crdt, dev-loop, first-feature]
-
-  - id: BUILD-07
-    name: Engine-owned persistence (no explicit save)
-    source: ch17 §"Your First CRDT Document and Two-Device Sync"
-    source-paper: v13 §13
-    definition: The CRDT engine persists every applied update automatically into the encrypted store, so application code never issues a save call and a reopened document returns with all prior updates intact.
-    must-implement:
-      - Application code contains no explicit document save or flush call
-      - Document state survives application restart with byte-identical replay
-      - Persistence latency is bounded such that a crash after Apply returns does not lose the update
-    verification: Apply an update, kill the process before any user-initiated save, restart, and confirm the update is present.
-    kleppmann-properties: [P1, P3, P5]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [persistence, crdt, durability]
-
-  - id: BUILD-08
-    name: Zero-config two-instance LAN sync
-    source: ch17 §"Your First CRDT Document and Two-Device Sync"
-    source-paper: v13 §6
-    definition: Two instances of the node started on the same LAN discover each other via mDNS within seconds and complete a peer handshake without any configured IP address, port, or peer list.
-    must-implement:
-      - Second instance is started with only a distinct data directory, no peer configuration
-      - mDNS service record is advertised on runtime start
-      - Link status transitions from offline to healthy when the peer handshake completes
-      - Once linked, an update applied on one instance is delivered to the other via gossip anti-entropy
-    verification: Run two instances with separate data directories on one LAN; confirm link status reaches healthy and a one-side update is observable on the other side without explicit peer configuration.
-    kleppmann-properties: [P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [mdns, sync, lan]
-
-  - id: BUILD-09
-    name: Per-instance data directory isolation for multi-run
-    source: ch17 §"Your First CRDT Document and Two-Device Sync"
-    source-paper: v13 §13
-    definition: Multiple instances on a single machine require explicit per-instance data directory paths so that each instance owns a distinct encrypted store and a distinct mDNS service record.
-    must-implement:
-      - Runtime accepts a per-launch data directory override flag
-      - Two instances launched with the same data directory are detected and the second refuses to start
-      - Each data directory contains a distinct device keypair
-    verification: Launch two instances with the same data directory and observe a deterministic startup refusal; launch them with distinct directories and observe both running concurrently.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [dev-loop, isolation, configuration]
-
-  - id: BUILD-10
-    name: Implementation-status disclosure obligation
-    source: ch17 §"Your First CRDT Document and Two-Device Sync"
-    source-paper: v13 §13
-    definition: When a documented subsystem ships ahead of its specification, the chapter and the running build must explicitly disclose the gap — naming the stub component, what guarantees do not yet hold, and which roadmap milestone closes the gap.
-    must-implement:
-      - Stub or placeholder components carry a runtime marker identifying them as not-production-ready
-      - Documentation names the production target and the roadmap milestone that completes it
-      - Tutorial text states which guarantees are exercised today and which are specification-ahead-of-implementation
-    verification: Inventory of accelerator components labels each as production, beta, or stub; documentation cross-references the corresponding specification chapter and roadmap entry.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [transparency, roadmap, stub-disclosure]
-
-  - id: BUILD-11
-    name: Length-prefixed dual-section onboarding payload
-    source: ch17 §"The QR-Code Onboarding Flow"
-    source-paper: v13 §13
-    definition: Every onboarding payload is a length-prefixed binary envelope containing exactly two sections — a CBOR-encoded attestation bundle and a raw CRDT snapshot — each preceded by a little-endian uint32 byte length.
-    must-implement:
-      - Payload begins with a 4-byte little-endian uint32 specifying CBOR bundle length
-      - CBOR-encoded attestation bundle follows, containing attestation records for team members
-      - A second 4-byte little-endian uint32 specifies snapshot length
-      - Raw snapshot bytes follow
-      - Decoder reads sections by length prefix without any inline delimiters
-    verification: Round-trip encode and decode an onboarding payload; assert the byte layout matches the four-field specification exactly.
-    kleppmann-properties: [P2, P4]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [onboarding, wire-format, cbor]
-
-  - id: BUILD-12
-    name: Founder bundle as self-signed trust root
-    source: ch17 §"The QR-Code Onboarding Flow"
-    source-paper: v13 §13
-    definition: A founder bundle is self-signed (issuer and subject are the same device key) and embeds the founder's Ed25519 public key, establishing the trust root for the team without any external certificate authority.
-    must-implement:
-      - Founder generation produces a bundle where issuer equals subject
-      - The bundle embeds the founder device's Ed25519 public key as IssuerPublicKey
-      - Joiner verification checks signature against the embedded public key
-      - No external CA or third-party issuer is consulted
-    verification: Generate a founder bundle and inspect it — issuer equals subject, IssuerPublicKey is present, verification succeeds against the embedded key alone.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition]
-    tags: [trust-root, attestation, ed25519]
-
-  - id: BUILD-13
-    name: Founder-issued joiner attestation with embedded subject key
-    source: ch17 §"The QR-Code Onboarding Flow"
-    source-paper: v13 §13
-    definition: A joiner bundle is signed by the founder's Ed25519 private key, embeds the joining device's public key as the subject, and is verified against the founder's public key at decode time before any state is mutated.
-    must-implement:
-      - Joiner bundle issuance requires the founder's Ed25519 private key
-      - The joining device's public key is embedded as SubjectPublicKey
-      - Decoder verifies the signature before invoking onboarding state changes
-      - A failed signature verification aborts onboarding and surfaces a typed exception
-    verification: Tamper one byte of a joiner bundle; decode aborts with a signature-mismatch typed exception and the node remains not-onboarded.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise, replay]
-    tags: [attestation, joiner, signature-verification]
-
-  - id: BUILD-14
-    name: Side-channel-agnostic bundle transport
-    source: ch17 §"The QR-Code Onboarding Flow"
-    source-paper: v13 §13
-    definition: Onboarding payload transport is independent of the bundle's security guarantees because trust derives from signature verification rather than channel confidentiality, so paste, QR scan, and deep link are interchangeable transports.
-    must-implement:
-      - Reference transport is paste (base64 string into a UI field)
-      - Camera-based QR scanning and deep-link activation are supported alternatives
-      - Security guarantees do not change with transport choice
-      - An intercepted bundle without the founder private key cannot be used to onboard a fraudulent device
-    verification: Repeat the onboarding flow with paste, QR scan, and deep link transports; the cryptographic verification path is identical in all three cases.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [onboarding, transport, ux]
-
-  - id: BUILD-15
-    name: Typed onboarding decode errors surfaced to UI
-    source: ch17 §"The QR-Code Onboarding Flow"
-    source-paper: v13 §13
-    definition: The onboarding decoder throws a distinct typed exception per failure mode (malformed length prefix, CBOR parse error, signature mismatch) so the UI can render a specific actionable error rather than a generic failure message.
-    must-implement:
-      - Decoder distinguishes length-prefix errors, CBOR parse errors, and signature errors as separate exception types
-      - UI catches each type and renders a per-type user-facing message
-      - No code path collapses these into a generic "invalid bundle" error
-    verification: Inject one of each failure into the decoder; assert each surfaces a distinct typed exception and a distinct UI message.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [error-handling, ux, decode]
-
-  - id: BUILD-16
-    name: Always-visible three-indicator status bar
-    source: ch17 §"Local-First UX Basics"
-    source-paper: v13 §18
-    definition: A local-first node renders a permanently-visible status bar with three indicators — Node Health, Link Status, and Data Freshness — so the user can always perceive how the node's behavior depends on its current network and sync state.
-    must-implement:
-      - Status bar is rendered on every screen, never hidden behind a settings panel
-      - Status bar shows Node Health, Link Status, and Data Freshness as three distinct indicators
-      - Each indicator has named states with documented meanings
-      - Indicators are distinguishable to users with vision impairment (label-or-icon contract)
-    verification: Walk every UI route in the application; the status bar is present on each one with all three indicators rendered.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [ux, observability, status-bar]
-
-  - id: BUILD-17
-    name: Configurable data-freshness threshold as product decision
-    source: ch17 §"Local-First UX Basics"
-    source-paper: v13 §18
-    definition: The staleness threshold that flips Data Freshness from healthy to stale is a configurable product decision (default five minutes) chosen per application context — short for high-frequency collaborative writing, long for intermittent-connectivity field deployments — and fixed before the first user-facing release.
-    must-implement:
-      - Staleness threshold is configurable per deployment
-      - A default value is shipped (five minutes is the reference default)
-      - Threshold is fixed before initial release and changes after release require explicit user-facing communication
-    verification: Configuration surface exposes the threshold; an integration test asserts the indicator transitions to stale at the configured boundary.
-    kleppmann-properties: [P3]
-    scope: foundational
-    failure-modes: []
-    tags: [ux, configuration, product-decision]
-
-  - id: BUILD-18
-    name: Three-state optimistic write button
-    source: ch17 §"Optimistic Write Button States"
-    source-paper: v13 §18
-    definition: Every write surface in a local-first application reflects three local-write states — pending (in-flight to local store), confirmed (durable on local device), failed (local-store error only) — without conflating sync delay with write failure.
-    must-implement:
-      - UI distinguishes pending, confirmed, and failed states for every write surface
-      - Confirmed state fires on local-store completion, not on peer acknowledgment
-      - Failed state appears only on local-store errors, never on sync delays
-      - Sync-delay signal is carried by the Data Freshness indicator, not by the write button
-    verification: Disconnect network and submit a write; the button reaches confirmed and the Data Freshness indicator transitions to stale, but the write does not enter the failed state.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ux, optimistic-write, write-states]
-
-  - id: BUILD-19
-    name: Plugin contract as platform stability boundary
-    source: ch17 §"What to Build Next"
-    source-paper: v13 §13
-    definition: Domain features attach to the node only through the plugin extension-point contract, which is the stability boundary between the platform and the application; pre-1.0 kernel services beneath the contract may change without notice.
-    must-implement:
-      - All domain features are implemented as plugins, not as direct kernel-service consumers
-      - Application code does not call kernel services that are not part of the plugin extension-point surface
-      - The plugin contract is versioned independently of internal kernel APIs
-    verification: Static analysis confirms application code references only the documented extension-point types; references to internal kernel services from application code raise a build warning.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [plugin, stability-boundary, api-versioning]
-
-  - id: BUILD-20
-    name: Five-extension-point plugin surface
-    source: ch17 §"The Full Extension-Point Map"
-    source-paper: v13 §5
-    definition: The complete plugin surface for a domain feature consists of exactly five extension points — ILocalNodePlugin (lifecycle), IStreamDefinition (CRDT streams and sync buckets), IProjectionBuilder (read-model projections), ISchemaVersion (schema versions and upcasters), and IUiBlockManifest (UI blocks).
-    must-implement:
-      - Plugin lifecycle is implemented via ILocalNodePlugin
-      - CRDT streams and sync bucket contributions are declared via IStreamDefinition
-      - Read-model projections register via IProjectionBuilder with idempotent rebuild
-      - Schema versions and upcasters declare via ISchemaVersion
-      - Plugin-specific Blazor or UI components register via IUiBlockManifest
-    verification: A plugin that uses all five extension points loads cleanly; omitting one of the five does not break the others (each is independently optional except ILocalNodePlugin).
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [plugin, extension-points, contracts]
-
-  - id: BUILD-21
-    name: Reverse-DNS plugin identifier with semver version
-    source: ch17 §"What to Build Next"
-    source-paper: v13 §5
-    definition: Each plugin declares a reverse-DNS-style Id (used by the dependency resolver) and a semantic-version Version (logged at load time for diagnostics) so that startup logs uniquely identify the running plugin build.
-    must-implement:
-      - Plugin Id follows reverse-DNS convention
-      - Plugin Version follows semantic versioning
-      - Both are logged at load time
-      - Dependencies of one plugin reference other plugins by reverse-DNS Id
-    verification: Inspect a node's startup logs; every loaded plugin is identified by reverse-DNS Id and a semver string.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [plugin, identifier, diagnostics]
-
-  - id: BUILD-22
-    name: Single-team-per-install v1 scope decision
-    source: ch17 §"What You Are Not Building Yet"
-    source-paper: v13 §13
-    definition: The first-shipped node supports exactly one team per installation by design, with the multi-team workspace-switcher model deferred to v2 because the v2 migration path is additive (per-team HKDF subkeys, per-workspace state isolation) rather than a rewrite.
-    must-implement:
-      - First-version installation supports a single team
-      - Persistence layout is structured so that adding per-team isolation does not require migrating existing single-team data
-      - Documentation states the v2 migration is additive
-    verification: Install the node; only one team can be onboarded; attempting a second team-onboard returns a deterministic refusal with a v2 forward-reference message.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [scope, versioning, multi-team]
-
-  - id: BUILD-23
-    name: Recursive declare-project-add-extend feature loop
-    source: ch17 §"The Minimal Loop"
-    source-paper: v13 §13
-    definition: The development loop for every new domain feature is the same five-step cycle — declare the IStreamDefinition, build the IProjectionBuilder, add the UI surface, run two instances on LAN to validate sync, then implement the next feature as another ILocalNodePlugin returning to step one.
-    must-implement:
-      - Each new feature begins with an IStreamDefinition declaration
-      - Each new feature builds at least one IProjectionBuilder for its read model
-      - Each new feature is integration-tested by running two instances on LAN
-      - Subsequent features are added as additional ILocalNodePlugin implementations, not by modifying earlier plugins
-    verification: A second domain feature is added by following the loop without modifying any file owned by the first feature; both features sync correctly when two instances are run on LAN.
-    kleppmann-properties: [P1, P3, P4, P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [dev-loop, plugin, methodology]
+- id: BUILD-01
+  name: Minimum-viable node deliverable checklist
+  source: ch17 §"What Anchor Gives You Today"
+  source-paper: v13 §13
+  definition: A first-node implementation is complete only when every item on a fixed eight-point checklist
+    (build runs, keypair generated, founder bundle generated, joiner bundle verified, NodeHealth Healthy,
+    document persists across restart, two-instance LAN discovery, status bar visible) passes.
+  must-implement:
+  - First launch builds and runs without error on the chosen target framework
+  - First launch generates and persists a device keypair
+  - Founder bundle generates and base64-encodes
+  - Joiner bundle decodes and verifies a founder signature
+  - NodeHealth transitions to Healthy after OnboardAsync completes
+  - A CRDT document creates, updates, and persists across application restart
+  - Two instances on the same LAN discover each other via mDNS
+  - The status bar surfaces all three operational indicators
+  verification: Run the eight-item checklist on a freshly-cloned build; every item passes before the chapter
+    is considered complete.
+  kleppmann-properties:
+  - P1
+  - P2
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - playbook
+  - deliverable
+  - verification
+  failed-conditions:
+  - 'Fails to satisfy: First launch builds and runs without error on the chosen target framework'
+  - First launch does not generate and persists a device keypair
+  - Founder bundle does not generate and base64-encodes
+  - Joiner bundle decodes and does not verifie a founder signature
+  - NodeHealth transitions to Healthy after OnboardAsync does not complete
+  - A CRDT document creates, updates, and does not persist across application restart
+  - 'Fails to satisfy: Two instances on the same LAN discover each other via mDNS'
+  - The status bar does not surface all three operational indicators
+  - 'Verification check does not pass: Run the eight-item checklist on a freshly-cloned build; every item
+    passes before the chapter is considered complete.'
+- id: BUILD-02
+  name: Accelerator-shell-vs-domain-code split
+  source: ch17 §"What Anchor Gives You Today"
+  source-paper: v13 §13
+  definition: The reference accelerator delivers the security and sync infrastructure as wired primitives
+    while the application domain (report catalog, document views, sync UI, packaging, auto-update) is
+    left to the implementer to build on top.
+  must-implement:
+  - Reference shell wires kernel, encrypted store, security, and sync without requiring domain code
+  - Reference shell ships no opinionated domain model
+  - Domain features are added as plugins on top of the shell, not by modifying the shell
+  verification: Inspect a freshly-cloned accelerator — kernel security and sync are functional, no business-domain
+    types are present in the shell project.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - accelerator
+  - scope
+  - separation-of-concerns
+  failed-conditions:
+  - 'Fails to satisfy: Reference shell wires kernel, encrypted store, security, and sync without requiring
+    domain code'
+  - 'Fails to satisfy: Reference shell ships no opinionated domain model'
+  - Domain features are not added as plugins on top of the shell, not by modifying the shell
+  - 'Verification check does not pass: Inspect a freshly-cloned accelerator — kernel security and sync
+    are functional, no business-domain types are present in ...'
+- id: BUILD-03
+  name: Three-call kernel composition root
+  source: ch17 §"Wiring the Kernel Stack"
+  source-paper: v13 §5
+  definition: The local-first kernel is wired in the application composition root with three ordered DI
+    calls — encrypted store first, runtime second, security third — because each layer depends on the
+    layer registered before it.
+  must-implement:
+  - Composition root registers the encrypted store before the kernel runtime
+  - Composition root registers the kernel runtime before the security layer
+  - Each subsystem (sync, CRDT engine, schema registry, local-first store) is registered by its own extension
+    method called explicitly in the composition root
+  - Registration uses TryAdd-style semantics so test harnesses can swap any subsystem by registering ahead
+    of the default
+  verification: Composition root contains the three named registrations in the prescribed order; reordering
+    causes a deterministic startup failure in the test suite.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - composition-root
+  - di
+  - wiring
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Composition root registers the encrypted store before the kernel runtime'
+  - 'Fails to satisfy: Composition root registers the kernel runtime before the security layer'
+  - Each subsystem (sync, CRDT engine, schema registry, local-first store) is not registered by its own
+    extension method called explicitly in the composition root
+  - Registration uses TryAdd-style semantics so test harnesses cannot swap any subsystem by registering
+    ahead of the default
+  - 'Verification check does not pass: Composition root contains the three named registrations in the
+    prescribed order; reordering causes a deterministic start...'
+- id: BUILD-04
+  name: Deterministic kernel startup sequence
+  source: ch17 §"Wiring the Kernel Stack"
+  source-paper: v13 §5
+  definition: After DI registration, the node startup sequence runs in a fixed order — open encrypted
+    database, initialize runtime (sync daemon, mDNS, CRDT engine), load or generate device keypair, evaluate
+    onboarding state, render shell — and the UI shell branch is determined by the persisted onboarding
+    state.
+  must-implement:
+  - Encrypted database opens before the runtime initializes
+  - Device keypair is loaded or generated before the UI shell renders
+  - Onboarding state is evaluated before the UI shell selects a route
+  - UI shell renders the onboarding surface when not onboarded and the workspace when onboarded
+  verification: Trace startup logs of a fresh install and an onboarded install; ordering and shell-branch
+    selection match the documented sequence.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - startup
+  - lifecycle
+  - onboarding
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Encrypted database opens before the runtime initializes'
+  - Device keypair is not loaded or generated before the UI shell renders
+  - Onboarding state is not evaluated before the UI shell selects a route
+  - 'Fails to satisfy: UI shell renders the onboarding surface when not onboarded and the workspace when
+    onboarded'
+  - 'Verification check does not pass: Trace startup logs of a fresh install and an onboarded install;
+    ordering and shell-branch selection match the documented...'
+- id: BUILD-05
+  name: Onboarding-gated workspace access
+  source: ch17 §"Wiring the Kernel Stack"
+  source-paper: v13 §5
+  definition: The kernel refuses to render or operate the main workspace until a valid attestation has
+    been applied, so the UI cannot present application surface that the security layer has not authorized.
+  must-implement:
+  - Workspace routes are unreachable while the session reports not-onboarded
+  - The kernel — not the UI — is the authority that gates workspace access
+  - UI shell selection reflects the kernel-reported onboarding state
+  verification: Attempt to navigate to a workspace route on a not-onboarded node; navigation is refused
+    at the kernel layer rather than only at the route guard.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - onboarding
+  - security
+  - ui-gating
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Workspace routes are not unreachable while the session reports not-onboarded
+  - The kernel — not the UI — is not the authority that gates workspace access
+  - 'Fails to satisfy: UI shell selection reflects the kernel-reported onboarding state'
+  - 'Verification check does not pass: Attempt to navigate to a workspace route on a not-onboarded node;
+    navigation is refused at the kernel layer rather than ...'
+- id: BUILD-06
+  name: First-document development loop
+  source: ch17 §"Your First CRDT Document and Two-Device Sync"
+  source-paper: v13 §13
+  definition: The canonical first-feature loop is to obtain the CRDT engine from DI, create a document
+    by ID, apply a typed update, and subscribe to update events that distinguish local from remote origin.
+  must-implement:
+  - CRDT engine is obtained via the application's DI container
+  - Document creation and open are addressable by stable string ID
+  - Local updates are applied through a typed update API
+  - Update subscription distinguishes local-origin from remote-origin events
+  verification: A worked example in the accelerator's tests creates a document, applies an update, and
+    asserts the subscriber receives the change with the correct origin tag.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - crdt
+  - dev-loop
+  - first-feature
+  failed-conditions:
+  - CRDT engine is not obtained via the application's DI container
+  - Document creation and open are not addressable by stable string ID
+  - Local updates are not applied through a typed update API
+  - 'Fails to satisfy: Update subscription distinguishes local-origin from remote-origin events'
+  - 'Verification check does not pass: A worked example in the accelerator''s tests creates a document,
+    applies an update, and asserts the subscriber receives t...'
+- id: BUILD-07
+  name: Engine-owned persistence (no explicit save)
+  source: ch17 §"Your First CRDT Document and Two-Device Sync"
+  source-paper: v13 §13
+  definition: The CRDT engine persists every applied update automatically into the encrypted store, so
+    application code never issues a save call and a reopened document returns with all prior updates intact.
+  must-implement:
+  - Application code contains no explicit document save or flush call
+  - Document state survives application restart with byte-identical replay
+  - Persistence latency is bounded such that a crash after Apply returns does not lose the update
+  verification: Apply an update, kill the process before any user-initiated save, restart, and confirm
+    the update is present.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P5
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - persistence
+  - crdt
+  - durability
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Application code contains no explicit document save or flush call'
+  - 'Fails to satisfy: Document state survives application restart with byte-identical replay'
+  - Persistence latency is not bounded such that a crash after Apply returns does not lose the update
+  - 'Verification check does not pass: Apply an update, kill the process before any user-initiated save,
+    restart, and confirm the update is present.'
+- id: BUILD-08
+  name: Zero-config two-instance LAN sync
+  source: ch17 §"Your First CRDT Document and Two-Device Sync"
+  source-paper: v13 §6
+  definition: Two instances of the node started on the same LAN discover each other via mDNS within seconds
+    and complete a peer handshake without any configured IP address, port, or peer list.
+  must-implement:
+  - Second instance is started with only a distinct data directory, no peer configuration
+  - mDNS service record is advertised on runtime start
+  - Link status transitions from offline to healthy when the peer handshake completes
+  - Once linked, an update applied on one instance is delivered to the other via gossip anti-entropy
+  verification: Run two instances with separate data directories on one LAN; confirm link status reaches
+    healthy and a one-side update is observable on the other side without explicit peer configuration.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - mdns
+  - sync
+  - lan
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Second instance is not started with only a distinct data directory, no peer configuration
+  - mDNS service record is not advertised on runtime start
+  - Link status transitions from offline to healthy when the peer handshake does not complete
+  - Once linked, an update applied on one instance is not delivered to the other via gossip anti-entropy
+  - 'Verification check does not pass: Run two instances with separate data directories on one LAN; confirm
+    link status reaches healthy and a one-side update i...'
+- id: BUILD-09
+  name: Per-instance data directory isolation for multi-run
+  source: ch17 §"Your First CRDT Document and Two-Device Sync"
+  source-paper: v13 §13
+  definition: Multiple instances on a single machine require explicit per-instance data directory paths
+    so that each instance owns a distinct encrypted store and a distinct mDNS service record.
+  must-implement:
+  - Runtime accepts a per-launch data directory override flag
+  - Two instances launched with the same data directory are detected and the second refuses to start
+  - Each data directory contains a distinct device keypair
+  verification: Launch two instances with the same data directory and observe a deterministic startup
+    refusal; launch them with distinct directories and observe both running concurrently.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - dev-loop
+  - isolation
+  - configuration
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Runtime does not accept a per-launch data directory override flag
+  - Two instances launched with the same data directory are not detected and the second refuses to start
+  - 'Fails to satisfy: Each data directory contains a distinct device keypair'
+  - 'Verification check does not pass: Launch two instances with the same data directory and observe a
+    deterministic startup refusal; launch them with distinct...'
+- id: BUILD-10
+  name: Implementation-status disclosure obligation
+  source: ch17 §"Your First CRDT Document and Two-Device Sync"
+  source-paper: v13 §13
+  definition: When a documented subsystem ships ahead of its specification, the chapter and the running
+    build must explicitly disclose the gap — naming the stub component, what guarantees do not yet hold,
+    and which roadmap milestone closes the gap.
+  must-implement:
+  - Stub or placeholder components carry a runtime marker identifying them as not-production-ready
+  - Documentation names the production target and the roadmap milestone that completes it
+  - Tutorial text states which guarantees are exercised today and which are specification-ahead-of-implementation
+  verification: Inventory of accelerator components labels each as production, beta, or stub; documentation
+    cross-references the corresponding specification chapter and roadmap entry.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - transparency
+  - roadmap
+  - stub-disclosure
+  failed-conditions:
+  - 'Fails to satisfy: Stub or placeholder components carry a runtime marker identifying them as not-production-ready'
+  - Documentation names the production target and the roadmap milestone that does not complete it
+  - Tutorial text states which guarantees are not exercised today and which are specification-ahead-of-implementation
+  - 'Verification check does not pass: Inventory of accelerator components labels each as production,
+    beta, or stub; documentation cross-references the corresp...'
+- id: BUILD-11
+  name: Length-prefixed dual-section onboarding payload
+  source: ch17 §"The QR-Code Onboarding Flow"
+  source-paper: v13 §13
+  definition: Every onboarding payload is a length-prefixed binary envelope containing exactly two sections
+    — a CBOR-encoded attestation bundle and a raw CRDT snapshot — each preceded by a little-endian uint32
+    byte length.
+  must-implement:
+  - Payload begins with a 4-byte little-endian uint32 specifying CBOR bundle length
+  - CBOR-encoded attestation bundle follows, containing attestation records for team members
+  - A second 4-byte little-endian uint32 specifies snapshot length
+  - Raw snapshot bytes follow
+  - Decoder reads sections by length prefix without any inline delimiters
+  verification: Round-trip encode and decode an onboarding payload; assert the byte layout matches the
+    four-field specification exactly.
+  kleppmann-properties:
+  - P2
+  - P4
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - onboarding
+  - wire-format
+  - cbor
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Payload begins with a 4-byte little-endian uint32 specifying CBOR bundle length'
+  - CBOR-encoded attestation bundle follows, containing attestation does not record for team members
+  - 'Fails to satisfy: A second 4-byte little-endian uint32 specifies snapshot length'
+  - 'Fails to satisfy: Raw snapshot bytes follow'
+  - 'Fails to satisfy: Decoder reads sections by length prefix without any inline delimiters'
+  - 'Verification check does not pass: Round-trip encode and decode an onboarding payload; assert the
+    byte layout matches the four-field specification exactly.'
+- id: BUILD-12
+  name: Founder bundle as self-signed trust root
+  source: ch17 §"The QR-Code Onboarding Flow"
+  source-paper: v13 §13
+  definition: A founder bundle is self-signed (issuer and subject are the same device key) and embeds
+    the founder's Ed25519 public key, establishing the trust root for the team without any external certificate
+    authority.
+  must-implement:
+  - Founder generation produces a bundle where issuer equals subject
+  - The bundle embeds the founder device's Ed25519 public key as IssuerPublicKey
+  - Joiner verification checks signature against the embedded public key
+  - No external CA or third-party issuer is consulted
+  verification: Generate a founder bundle and inspect it — issuer equals subject, IssuerPublicKey is present,
+    verification succeeds against the embedded key alone.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - trust-root
+  - attestation
+  - ed25519
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Founder generation produces a bundle where issuer equals subject'
+  - 'Fails to satisfy: The bundle embeds the founder device''s Ed25519 public key as IssuerPublicKey'
+  - 'Fails to satisfy: Joiner verification checks signature against the embedded public key'
+  - No external CA or third-party issuer is not consulted
+  - 'Verification check does not pass: Generate a founder bundle and inspect it — issuer equals subject,
+    IssuerPublicKey is present, verification succeeds agai...'
+- id: BUILD-13
+  name: Founder-issued joiner attestation with embedded subject key
+  source: ch17 §"The QR-Code Onboarding Flow"
+  source-paper: v13 §13
+  definition: A joiner bundle is signed by the founder's Ed25519 private key, embeds the joining device's
+    public key as the subject, and is verified against the founder's public key at decode time before
+    any state is mutated.
+  must-implement:
+  - Joiner bundle issuance requires the founder's Ed25519 private key
+  - The joining device's public key is embedded as SubjectPublicKey
+  - Decoder verifies the signature before invoking onboarding state changes
+  - A failed signature verification aborts onboarding and surfaces a typed exception
+  verification: Tamper one byte of a joiner bundle; decode aborts with a signature-mismatch typed exception
+    and the node remains not-onboarded.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  - replay
+  tags:
+  - attestation
+  - joiner
+  - signature-verification
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Joiner bundle issuance does not require the founder's Ed25519 private key
+  - The joining device's public key is not embedded as SubjectPublicKey
+  - Decoder does not verifie the signature before invoking onboarding state changes
+  - A failed signature verification aborts onboarding and does not surface a typed exception
+  - 'Verification check does not pass: Tamper one byte of a joiner bundle; decode aborts with a signature-mismatch
+    typed exception and the node remains not-onb...'
+- id: BUILD-14
+  name: Side-channel-agnostic bundle transport
+  source: ch17 §"The QR-Code Onboarding Flow"
+  source-paper: v13 §13
+  definition: Onboarding payload transport is independent of the bundle's security guarantees because
+    trust derives from signature verification rather than channel confidentiality, so paste, QR scan,
+    and deep link are interchangeable transports.
+  must-implement:
+  - Reference transport is paste (base64 string into a UI field)
+  - Camera-based QR scanning and deep-link activation are supported alternatives
+  - Security guarantees do not change with transport choice
+  - An intercepted bundle without the founder private key cannot be used to onboard a fraudulent device
+  verification: Repeat the onboarding flow with paste, QR scan, and deep link transports; the cryptographic
+    verification path is identical in all three cases.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - onboarding
+  - transport
+  - ux
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Reference transport is not paste (base64 string into a UI field)
+  - Camera-based QR scanning and deep-link activation are not supported alternatives
+  - Security does not guarantee do not change with transport choice
+  - 'Fails to satisfy: An intercepted bundle without the founder private key cannot be used to onboard
+    a fraudulent device'
+  - 'Verification check does not pass: Repeat the onboarding flow with paste, QR scan, and deep link transports;
+    the cryptographic verification path is identic...'
+- id: BUILD-15
+  name: Typed onboarding decode errors surfaced to UI
+  source: ch17 §"The QR-Code Onboarding Flow"
+  source-paper: v13 §13
+  definition: The onboarding decoder throws a distinct typed exception per failure mode (malformed length
+    prefix, CBOR parse error, signature mismatch) so the UI can render a specific actionable error rather
+    than a generic failure message.
+  must-implement:
+  - Decoder distinguishes length-prefix errors, CBOR parse errors, and signature errors as separate exception
+    types
+  - UI catches each type and renders a per-type user-facing message
+  - No code path collapses these into a generic "invalid bundle" error
+  verification: Inject one of each failure into the decoder; assert each surfaces a distinct typed exception
+    and a distinct UI message.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - error-handling
+  - ux
+  - decode
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Decoder distinguishes length-prefix errors, CBOR parse errors, and signature errors
+    as separate exception types'
+  - 'Fails to satisfy: UI catches each type and renders a per-type user-facing message'
+  - 'Fails to satisfy: No code path collapses these into a generic "invalid bundle" error'
+  - 'Verification check does not pass: Inject one of each failure into the decoder; assert each surfaces
+    a distinct typed exception and a distinct UI message.'
+- id: BUILD-16
+  name: Always-visible three-indicator status bar
+  source: ch17 §"Local-First UX Basics"
+  source-paper: v13 §18
+  definition: A local-first node renders a permanently-visible status bar with three indicators — Node
+    Health, Link Status, and Data Freshness — so the user can always perceive how the node's behavior
+    depends on its current network and sync state.
+  must-implement:
+  - Status bar is rendered on every screen, never hidden behind a settings panel
+  - Status bar shows Node Health, Link Status, and Data Freshness as three distinct indicators
+  - Each indicator has named states with documented meanings
+  - Indicators are distinguishable to users with vision impairment (label-or-icon contract)
+  verification: Walk every UI route in the application; the status bar is present on each one with all
+    three indicators rendered.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - ux
+  - observability
+  - status-bar
+  failed-conditions:
+  - Status bar is not rendered on every screen, never hidden behind a settings panel
+  - 'Fails to satisfy: Status bar shows Node Health, Link Status, and Data Freshness as three distinct
+    indicators'
+  - Each indicator has not named states with documented meanings
+  - Indicators are not distinguishable to users with vision impairment (label-or-icon contract)
+  - 'Verification check does not pass: Walk every UI route in the application; the status bar is present
+    on each one with all three indicators rendered.'
+- id: BUILD-17
+  name: Configurable data-freshness threshold as product decision
+  source: ch17 §"Local-First UX Basics"
+  source-paper: v13 §18
+  definition: The staleness threshold that flips Data Freshness from healthy to stale is a configurable
+    product decision (default five minutes) chosen per application context — short for high-frequency
+    collaborative writing, long for intermittent-connectivity field deployments — and fixed before the
+    first user-facing release.
+  must-implement:
+  - Staleness threshold is configurable per deployment
+  - A default value is shipped (five minutes is the reference default)
+  - Threshold is fixed before initial release and changes after release require explicit user-facing communication
+  verification: Configuration surface exposes the threshold; an integration test asserts the indicator
+    transitions to stale at the configured boundary.
+  kleppmann-properties:
+  - P3
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ux
+  - configuration
+  - product-decision
+  failed-conditions:
+  - Staleness threshold is not configurable per deployment
+  - A default value is not shipped (five minutes is the reference default)
+  - Threshold is not fixed before initial release and changes after release require explicit user-facing
+    communication
+  - 'Verification check does not pass: Configuration surface exposes the threshold; an integration test
+    asserts the indicator transitions to stale at the confi...'
+- id: BUILD-18
+  name: Three-state optimistic write button
+  source: ch17 §"Optimistic Write Button States"
+  source-paper: v13 §18
+  definition: Every write surface in a local-first application reflects three local-write states — pending
+    (in-flight to local store), confirmed (durable on local device), failed (local-store error only) —
+    without conflating sync delay with write failure.
+  must-implement:
+  - UI distinguishes pending, confirmed, and failed states for every write surface
+  - Confirmed state fires on local-store completion, not on peer acknowledgment
+  - Failed state appears only on local-store errors, never on sync delays
+  - Sync-delay signal is carried by the Data Freshness indicator, not by the write button
+  verification: Disconnect network and submit a write; the button reaches confirmed and the Data Freshness
+    indicator transitions to stale, but the write does not enter the failed state.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ux
+  - optimistic-write
+  - write-states
+  failed-conditions:
+  - 'Fails to satisfy: UI distinguishes pending, confirmed, and failed states for every write surface'
+  - 'Fails to satisfy: Confirmed state fires on local-store completion, not on peer acknowledgment'
+  - 'Fails to satisfy: Failed state appears only on local-store errors, never on sync delays'
+  - Sync-delay signal is not carried by the Data Freshness indicator, not by the write button
+  - 'Verification check does not pass: Disconnect network and submit a write; the button reaches confirmed
+    and the Data Freshness indicator transitions to stal...'
+- id: BUILD-19
+  name: Plugin contract as platform stability boundary
+  source: ch17 §"What to Build Next"
+  source-paper: v13 §13
+  definition: Domain features attach to the node only through the plugin extension-point contract, which
+    is the stability boundary between the platform and the application; pre-1.0 kernel services beneath
+    the contract may change without notice.
+  must-implement:
+  - All domain features are implemented as plugins, not as direct kernel-service consumers
+  - Application code does not call kernel services that are not part of the plugin extension-point surface
+  - The plugin contract is versioned independently of internal kernel APIs
+  verification: Static analysis confirms application code references only the documented extension-point
+    types; references to internal kernel services from application code raise a build warning.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - plugin
+  - stability-boundary
+  - api-versioning
+  failed-conditions:
+  - All domain features are not implemented as plugins, not as direct kernel-service consumers
+  - 'Fails to satisfy: Application code does not call kernel services that are not part of the plugin
+    extension-point surface'
+  - The plugin contract is not versioned independently of internal kernel APIs
+  - 'Verification check does not pass: Static analysis confirms application code references only the documented
+    extension-point types; references to internal k...'
+- id: BUILD-20
+  name: Five-extension-point plugin surface
+  source: ch17 §"The Full Extension-Point Map"
+  source-paper: v13 §5
+  definition: The complete plugin surface for a domain feature consists of exactly five extension points
+    — ILocalNodePlugin (lifecycle), IStreamDefinition (CRDT streams and sync buckets), IProjectionBuilder
+    (read-model projections), ISchemaVersion (schema versions and upcasters), and IUiBlockManifest (UI
+    blocks).
+  must-implement:
+  - Plugin lifecycle is implemented via ILocalNodePlugin
+  - CRDT streams and sync bucket contributions are declared via IStreamDefinition
+  - Read-model projections register via IProjectionBuilder with idempotent rebuild
+  - Schema versions and upcasters declare via ISchemaVersion
+  - Plugin-specific Blazor or UI components register via IUiBlockManifest
+  verification: A plugin that uses all five extension points loads cleanly; omitting one of the five does
+    not break the others (each is independently optional except ILocalNodePlugin).
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - plugin
+  - extension-points
+  - contracts
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - Plugin lifecycle is not implemented via ILocalNodePlugin
+  - CRDT streams and sync bucket contributions are not declared via IStreamDefinition
+  - 'Fails to satisfy: Read-model projections register via IProjectionBuilder with idempotent rebuild'
+  - 'Fails to satisfy: Schema versions and upcasters declare via ISchemaVersion'
+  - 'Fails to satisfy: Plugin-specific Blazor or UI components register via IUiBlockManifest'
+  - 'Verification check does not pass: A plugin that uses all five extension points loads cleanly; omitting
+    one of the five does not break the others (each is ...'
+- id: BUILD-21
+  name: Reverse-DNS plugin identifier with semver version
+  source: ch17 §"What to Build Next"
+  source-paper: v13 §5
+  definition: Each plugin declares a reverse-DNS-style Id (used by the dependency resolver) and a semantic-version
+    Version (logged at load time for diagnostics) so that startup logs uniquely identify the running plugin
+    build.
+  must-implement:
+  - Plugin Id follows reverse-DNS convention
+  - Plugin Version follows semantic versioning
+  - Both are logged at load time
+  - Dependencies of one plugin reference other plugins by reverse-DNS Id
+  verification: Inspect a node's startup logs; every loaded plugin is identified by reverse-DNS Id and
+    a semver string.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - plugin
+  - identifier
+  - diagnostics
+  failed-conditions:
+  - 'Fails to satisfy: Plugin Id follows reverse-DNS convention'
+  - 'Fails to satisfy: Plugin Version follows semantic versioning'
+  - Both are not logged at load time
+  - 'Fails to satisfy: Dependencies of one plugin reference other plugins by reverse-DNS Id'
+  - 'Verification check does not pass: Inspect a node''s startup logs; every loaded plugin is identified
+    by reverse-DNS Id and a semver string.'
+- id: BUILD-22
+  name: Single-team-per-install v1 scope decision
+  source: ch17 §"What You Are Not Building Yet"
+  source-paper: v13 §13
+  definition: The first-shipped node supports exactly one team per installation by design, with the multi-team
+    workspace-switcher model deferred to v2 because the v2 migration path is additive (per-team HKDF subkeys,
+    per-workspace state isolation) rather than a rewrite.
+  must-implement:
+  - First-version installation supports a single team
+  - Persistence layout is structured so that adding per-team isolation does not require migrating existing
+    single-team data
+  - Documentation states the v2 migration is additive
+  verification: Install the node; only one team can be onboarded; attempting a second team-onboard returns
+    a deterministic refusal with a v2 forward-reference message.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - scope
+  - versioning
+  - multi-team
+  failed-conditions:
+  - First-version installation does not support a single team
+  - Persistence layout is not structured so that adding per-team isolation does not require migrating
+    existing single-team data
+  - Documentation states the v2 migration is not additive
+  - 'Verification check does not pass: Install the node; only one team can be onboarded; attempting a
+    second team-onboard returns a deterministic refusal with ...'
+- id: BUILD-23
+  name: Recursive declare-project-add-extend feature loop
+  source: ch17 §"The Minimal Loop"
+  source-paper: v13 §13
+  definition: The development loop for every new domain feature is the same five-step cycle — declare
+    the IStreamDefinition, build the IProjectionBuilder, add the UI surface, run two instances on LAN
+    to validate sync, then implement the next feature as another ILocalNodePlugin returning to step one.
+  must-implement:
+  - Each new feature begins with an IStreamDefinition declaration
+  - Each new feature builds at least one IProjectionBuilder for its read model
+  - Each new feature is integration-tested by running two instances on LAN
+  - Subsequent features are added as additional ILocalNodePlugin implementations, not by modifying earlier
+    plugins
+  verification: A second domain feature is added by following the loop without modifying any file owned
+    by the first feature; both features sync correctly when two instances are run on LAN.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - dev-loop
+  - plugin
+  - methodology
+  failed-conditions:
+  - 'Fails to satisfy: Each new feature begins with an IStreamDefinition declaration'
+  - 'Fails to satisfy: Each new feature builds at least one IProjectionBuilder for its read model'
+  - Each new feature is not integration-tested by running two instances on LAN
+  - Subsequent features are not added as additional ILocalNodePlugin implementations, not by modifying
+    earlier plugins
+  - 'Verification check does not pass: A second domain feature is added by following the loop without
+    modifying any file owned by the first feature; both featu...'

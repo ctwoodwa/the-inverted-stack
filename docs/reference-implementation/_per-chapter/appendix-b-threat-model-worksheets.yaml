@@ -1,388 +1,739 @@
 chapter: appendix-b-threat-model-worksheets
 chapter-title: Threat Model Worksheets
-source-paper-refs: [v13 §11.1]
+source-paper-refs:
+- v13 §11.1
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: SEC-01
-    name: Asset inventory worksheet
-    source: appendix-b §"Section 1 — Asset Inventory Template"
-    source-paper: v13 §11.1
-    definition: A maintained table enumerating every asset whose compromise, loss, or corruption would cause material harm, classified by sensitivity, location, and owner.
-    must-implement:
-      - Maintain an asset inventory listing CRDT documents, KEKs, DEKs, device keypairs, attestation bundles, sync logs, relay caches, MDM config, and audit logs
-      - Assign each asset a classification label (Node-secret, Team-secret, Team-confidential, Team-internal, Encrypted)
-      - Record location, owner, and sensitivity for each asset
-      - Update the inventory whenever the asset set changes
-    verification: Repository contains an asset inventory document covering all canonical asset categories with classification, location, owner, and sensitivity columns populated.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [threat-model, inventory, governance]
-
-  - id: SEC-02
-    name: Asset classification taxonomy
-    source: appendix-b §"Classification definitions for this template"
-    source-paper: v13 §11.1
-    definition: A five-label classification scheme distinguishing Node-secret, Team-secret, Team-confidential, Team-internal, and Encrypted assets by who may know them and how they are protected.
-    must-implement:
-      - Define the five classification labels with explicit semantics
-      - Apply exactly one classification label per asset row
-      - Keep Node-secrets non-transmitted by design
-      - Protect Team-secrets via the KEK hierarchy
-    verification: Asset inventory uses only the defined labels; threat-model docs include classification definitions matching the appendix taxonomy.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [classification, governance]
-
-  - id: SEC-03
-    name: Keystore-binding documentation
-    source: appendix-b §"Customization guidance" (Section 1)
-    source-paper: null
-    definition: A requirement to record which OS keystore protects each Node-secret or Team-secret, naming the platform-specific protection mechanism rather than relying on generic claims of isolation.
-    must-implement:
-      - Record the OS keystore (Windows Credential Manager + TPM, macOS Keychain + Secure Enclave, Linux libsecret + kernel keyring, Android Keystore, iOS Data Protection) backing each secret
-      - Verify actual platform security properties rather than relying on vendor marketing
-    verification: Threat-model document names the keystore protecting each per-platform deployment of secret material.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [keystore, platform]
-
-  - id: SEC-04
-    name: Actor taxonomy worksheet
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: A maintained table enumerating every actor (benign or adversarial) who could realistically interact with the system, with access level, motivation, and capability level recorded for each.
-    must-implement:
-      - List every actor that interacts or could interact with the system, including adversarial ones
-      - Record access level, likely motivation, and capability level per actor
-      - Plan for the actual capability level encountered, not the desired one
-    verification: Threat-model document contains an actor table with access, motivation, and capability columns populated for each named actor.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [threat-model, actors]
-
-  - id: THREAT-01
-    name: External remote attacker
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: An adversary with no initial access who attempts data theft or ransomware against the deployment from outside the trust boundary.
-    must-implement:
-      - Treat external remote attackers as an in-scope actor with low-to-high capability range
-      - Apply network-edge controls and end-to-end encryption to limit remote-attacker reach
-    verification: Actor taxonomy includes a remote external attacker entry; perimeter and transport controls are documented.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [actor, external]
-
-  - id: THREAT-02
-    name: External attacker with physical access
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: An adversary who obtains physical possession of a node device and attempts credential theft or storage extraction.
-    must-implement:
-      - Enforce full-disk encryption on every node
-      - Require device PIN or biometric to unlock keystore-protected material
-      - Disable hibernation and suspend-to-disk to constrain cold-boot exposure
-    verification: MDM policy enforces disk encryption, PIN/biometric, and hibernation disable on all enrolled nodes.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [actor, physical, mdm]
-
-  - id: THREAT-03
-    name: Malicious insider with role access
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: An authorized team member who attempts data exfiltration within the scope of their assigned role.
-    must-implement:
-      - Scope role-based access to the minimum data needed
-      - Audit role-scoped operations to a tamper-evident log
-    verification: Role definitions and audit log coverage are documented; role scope is enforced by KEK hierarchy.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: []
-    tags: [actor, insider]
-
-  - id: THREAT-04
-    name: Compromised relay operator
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: A relay operator whose transport-layer position grants ciphertext visibility and traffic-analysis capability but no plaintext access because keys never leave nodes.
-    must-implement:
-      - Encrypt every sync payload end-to-end before it leaves the node
-      - Never transmit key material to the relay
-      - Document relay capability as Limited (ciphertext only)
-    verification: Wire-protocol implementation encrypts payloads at the node; key-distribution path bypasses the relay.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [actor, relay]
-
-  - id: THREAT-05
-    name: Relay service termination
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: The threat that a relay operator withdraws service due to jurisdiction restriction, sanctions, or commercial decision, producing total relay unavailability.
-    must-implement:
-      - Continue local-node operation when the relay is unreachable
-      - Continue peer-to-peer sync where peers are reachable without the relay
-      - Document a relay-replacement path
-    verification: Disconnect the relay; nodes continue local operation and reachable peer-to-peer sync without degradation.
-    kleppmann-properties: [P3, P5]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [actor, relay, availability]
-
-  - id: THREAT-06
-    name: Former team member
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: A previously authorized member whose future access is blocked by key rotation but whose historical-data exposure remains scoped by the data-at-risk calculation.
-    must-implement:
-      - Rotate KEKs on departure to block future access
-      - Compute and document the historical exposure scope per the data-at-risk calculation
-      - Distinguish remediated future access from unremediated prior exfiltration in incident records
-    verification: Offboarding runbook triggers KEK rotation and logs a data-at-risk computation for the affected role.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [actor, offboarding]
-
-  - id: THREAT-07
-    name: Compromised IdP
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: An identity provider whose signing key is under adversary control, allowing fraudulent role attestations that bypass the attestation trust anchor.
-    must-implement:
-      - Detect IdP compromise and rotate the IdP signing key
-      - Re-issue role attestations after IdP signing-key rotation
-    verification: IdP-compromise runbook exists naming detection signals and the signing-key rotation procedure.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [actor, idp, attestation]
-
-  - id: THREAT-08
-    name: Supply chain attacker
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: An adversary who compromises the build pipeline to ship a backdoored binary capable of exfiltrating keys or plaintext from inside the trust boundary.
-    must-implement:
-      - Sign commits and protect source branches
-      - Produce reproducible builds with SBOM verification
-      - Sign binaries with hardware-backed code-signing keys
-      - Verify package manifest signatures on install
-    verification: Build pipeline produces signed reproducible artifacts; SBOM and signature verification are gating steps in distribution.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [actor, supply-chain, build]
-
-  - id: THREAT-09
-    name: Government authority and regulatory body
-    source: appendix-b §"Section 2 — Actor Taxonomy Template"
-    source-paper: v13 §11.1
-    definition: A statutory actor with legal compulsion power (warrant, subpoena, administrative order, inspection notice, device seizure) whose architectural mitigation is end-to-end encryption with local key management so that compelled relay inspection yields ciphertext only.
-    must-implement:
-      - Hold all key material at the node so the relay can yield only ciphertext under compelled inspection
-      - Document the regulatory basis (Schrems II, PIPL, 242-FZ, DIFC, UAE DPL, RBI, POPIA, NDPR, PIPA) for each market the team operates in
-      - Treat device-present credentials as the boundary of device-seizure exposure
-    verification: Architecture proves keys never reach the relay; legal-response runbook lists applicable jurisdictional authorities and the architectural response.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-compromise]
-    tags: [actor, statutory, compelled-access]
-
-  - id: SEC-05
-    name: Capability-level taxonomy
-    source: appendix-b §"Capability level definitions"
-    source-paper: v13 §11.1
-    definition: A four-level scale (Low, Medium, High, Limited) rating an actor's technical sophistication and structural access constraints, used to size mitigations.
-    must-implement:
-      - Assign each actor exactly one of Low, Medium, High, or Limited
-      - Use Limited only when access is structurally constrained (e.g., ciphertext-only)
-    verification: Actor taxonomy entries each carry one of the four defined capability levels.
-    kleppmann-properties: []
-    scope: foundational
-    failure-modes: []
-    tags: [threat-model, capability]
-
-  - id: SEC-06
-    name: Per-vertical worksheet customization
-    source: appendix-b §"Customization guidance" (Section 2)
-    source-paper: null
-    definition: A requirement that each deployment add asset rows and actor rows specific to its vertical (healthcare, legal, government, defense, regulated finance) before the worksheet is treated as complete.
-    must-implement:
-      - Extend the asset inventory with vertical-specific assets before first deployment
-      - Extend the actor taxonomy with vertical-specific adversaries before first deployment
-      - Document jurisdiction-specific inspection rights for regulated markets
-    verification: Per-deployment threat model includes vertical-specific additions beyond the template baseline.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: []
-    tags: [customization, vertical]
-
-  - id: SEC-07
-    name: Attack tree per worksheet
-    source: 'appendix-b §"Attack Tree — Primary Branch: Laptop Theft at Job Site"'
-    source-paper: v13 §11.1
-    definition: A branch-by-branch decomposition of a primary threat scenario, naming each control checkpoint and its mitigation, and identifying the residual risk where controls do not fully cover the branch.
-    must-implement:
-      - Walk the highest-probability threat scenario branch by branch
-      - Name the mitigation that defeats each branch
-      - Identify and label residual risk that mitigations do not cover
-    verification: Threat-model document contains at least one named attack tree with explicit mitigations and a residual-risk note.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [attack-tree, methodology]
-
-  - id: MITIG-01
-    name: MDM-enforced device hardening
-    source: 'appendix-b §"Attack Tree — Primary Branch: Laptop Theft at Job Site"'
-    source-paper: null
-    definition: An MDM-enforced configuration baseline requiring full-disk encryption, minimum 6-digit PIN, disabled USB boot, locked BIOS settings, and disabled hibernation/suspend-to-disk on every node before it joins the sync mesh.
-    must-implement:
-      - Enforce full-disk encryption (e.g., BitLocker on Windows) via MDM compliance policy
-      - Require minimum 6-digit PIN through MDM
-      - Disable USB boot and lock BIOS settings changes
-      - Disable hibernation files and suspend-to-disk images via MDM
-      - Block sync-mesh enrollment until MDM compliance is confirmed
-    verification: MDM policy file enforces all five controls; nodes failing compliance cannot complete sync-mesh handshake.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [mitigation, mdm, hardening]
-
-  - id: MITIG-02
-    name: Self-hosted relay for traffic-analysis sensitivity
-    source: appendix-b §"Mitigation for residual risk"
-    source-paper: null
-    definition: Deployment of a relay inside the team's own trust boundary so that traffic-pattern observation moves from an external operator to internal IT.
-    must-implement:
-      - Provide a deployable self-hosted relay artifact
-      - Document the operational requirements for internal-IT relay hosting
-    verification: Relay distribution includes a self-hosted deployment package and operations guide.
-    kleppmann-properties: [P3, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage]
-    tags: [mitigation, relay, traffic-analysis]
-
-  - id: SEC-08
-    name: Key-compromise detection checklist
-    source: appendix-b §"Detection Checklist"
-    source-paper: v13 §11.1
-    definition: A standing list of triggers (theft, anomalous audit-log access, credential leak, threat-intel hit, IdP failures, offboarding, abnormal sync-state inconsistency, lawful access demand) that initiate the re-keying procedure on suspicion rather than on confirmation.
-    must-implement:
-      - Initiate re-keying on suspicion, not on confirmation
-      - Cover all eight named trigger categories in the detection checklist
-      - Distinguish infrastructure-failure WAL replay from sync-state inconsistency that signals a security event
-      - Engage legal counsel before responding to lawful access demands
-    verification: Incident-response runbook contains a detection checklist with the eight named triggers and an explicit suspicion-not-confirmation directive.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [incident-response, detection]
-
-  - id: SEC-09
-    name: Re-keying procedure
-    source: appendix-b §"Re-Keying Procedure"
-    source-paper: v13 §11.1
-    definition: An ordered seven-step procedure (with a 1a recovery branch) that generates a fresh KEK, re-wraps DEKs, discards the old KEK, broadcasts revocation, forces re-authentication, notifies users, and re-issues wrapped KEK copies, each step having a named owner and completion condition.
-    must-implement:
-      - Generate a new KEK from cryptographically random material, never derived from the compromised KEK
-      - Check old-KEK availability before attempting re-wrap; document unrecoverable scope when the old KEK is gone
-      - Re-wrap every recoverable DEK in scope under the new KEK
-      - Discard old KEK copies and verify with keystore audit
-      - Broadcast revocation through the relay so reconnecting nodes receive ERR_KEY_REVOKED
-      - Notify all affected role members with KEK creation date, revocation date, and accessible-data scope
-      - Re-issue wrapped KEK copies to current authorized members through the standard distribution path
-    verification: Incident-response runbook lists the seven steps with owners and completion conditions; relay protocol implements the ERR_KEY_REVOKED handshake response.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise, key-loss]
-    tags: [incident-response, re-keying, kek]
-
-  - id: SEC-10
-    name: Unrecoverable-KEK contingency (Step 1a)
-    source: appendix-b §"Re-Keying Procedure" Step 1a
-    source-paper: null
-    definition: The branch of the re-keying procedure executed when the old KEK cannot be retrieved, in which DEKs wrapped under the lost KEK are declared permanently inaccessible, the loss scope is documented, revocation is still broadcast, and the team chooses between BYOC backup reconstruction or accepted loss.
-    must-implement:
-      - Detect old-KEK unavailability before attempting Step 2
-      - Document the scope of unrecoverable data in the incident log
-      - Skip directly to revocation broadcast to prevent further compromise
-      - Surface the reconstruct-from-BYOC-backup vs accept-loss decision to the team
-    verification: Runbook explicitly handles the unrecoverable-KEK branch with a documented decision point and incident-log entry requirement.
-    kleppmann-properties: [P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [key-loss]
-    tags: [incident-response, recovery, byoc]
-
-  - id: SEC-11
-    name: Data-at-risk scope calculation
-    source: appendix-b §"Data-at-Risk Scope Calculation"
-    source-paper: v13 §11.1
-    definition: A bounded calculation of compromise exposure defined by the compromised KEK's keystore creation date as start, the relay-confirmed revocation date as end, and the documents the KEK protected within that window as scope, with documents outside that role or created after revocation explicitly excluded.
-    must-implement:
-      - Use the keystore creation timestamp as the start date, not employee recollection
-      - Use the relay-confirmed revocation timestamp as the end date
-      - Enumerate all documents the compromised KEK protected within the window
-      - Exclude documents in unaffected roles and documents created after the revocation date
-    verification: Incident-response output contains a data-at-risk calculation with documented start, end, scope, and exclusions.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [incident-response, scope, audit]
-
-  - id: SEC-12
-    name: User notification template and 90-day retention floor
-    source: appendix-b §"User Notification Template"
-    source-paper: null
-    definition: A standardized affected-user notification recording recipient, channel, and timestamp, retained for a minimum of 90 days as an audit-log retention floor distinct from regulatory breach-notification deadlines.
-    must-implement:
-      - Send the templated notification to every member of the affected role
-      - Log timestamp, channel, and recipient for each notification
-      - Retain notification records for at least 90 days
-    verification: Audit log contains notification records with the three required fields and a retention policy of at least 90 days.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [incident-response, notification, audit, retention]
-
-  - id: COMP-01
-    name: Jurisdictional breach notification SLA matrix
-    source: appendix-b §"Breach notification deadlines — separate and faster"
-    source-paper: v13 §11.1
-    definition: A matrix mapping each operating jurisdiction to its supervisor-notification window and data-subject-notification window, against which the incident-response SLA is set to the shortest applicable window.
-    must-implement:
-      - Verify and record the supervisor-notification window for each jurisdiction the team operates in
-      - Verify and record the data-subject-notification window for each jurisdiction
-      - Set the incident-response SLA against the shortest applicable window
-      - Treat the GDPR 72-hour window as the shortest common denominator unless a stricter window applies
-    verification: Compliance documentation contains a jurisdiction matrix and an incident SLA equal to the shortest listed window.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, key-compromise]
-    tags: [compliance, breach-notification, jurisdiction]
-
-  - id: COMP-02
-    name: Pre-deployment regulatory validation
-    source: appendix-b §"Applicable regulatory frameworks by region"
-    source-paper: null
-    definition: A pre-production requirement to validate, for every market the team operates in, the breach notification window, retention floor, regulatory inspection rights, and cross-border data transfer rules under the applicable regional frameworks.
-    must-implement:
-      - Identify the applicable regulatory frameworks for each operating market
-      - Validate breach notification window, retention floor, inspection rights, and cross-border transfer rules per market
-      - Complete validation before first production deployment
-    verification: Pre-deployment compliance checklist documents the four validations per operating market.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [compliance, regulatory, pre-deployment]
+- id: SEC-01
+  name: Asset inventory worksheet
+  source: appendix-b §"Section 1 — Asset Inventory Template"
+  source-paper: v13 §11.1
+  definition: A maintained table enumerating every asset whose compromise, loss, or corruption would cause
+    material harm, classified by sensitivity, location, and owner.
+  must-implement:
+  - Maintain an asset inventory listing CRDT documents, KEKs, DEKs, device keypairs, attestation bundles,
+    sync logs, relay caches, MDM config, and audit logs
+  - Assign each asset a classification label (Node-secret, Team-secret, Team-confidential, Team-internal,
+    Encrypted)
+  - Record location, owner, and sensitivity for each asset
+  - Update the inventory whenever the asset set changes
+  verification: Repository contains an asset inventory document covering all canonical asset categories
+    with classification, location, owner, and sensitivity columns populated.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - threat-model
+  - inventory
+  - governance
+  failed-conditions:
+  - Maintain an asset inventory listing CRDT documents, KEKs, DEKs, device keypairs, attestation bundles,
+    sync logs, relay does not cache, MDM config, and audit logs
+  - 'Fails to satisfy: Assign each asset a classification label (Node-secret, Team-secret, Team-confidential,
+    Team-internal, Encrypted)'
+  - 'Fails to satisfy: Record location, owner, and sensitivity for each asset'
+  - 'Fails to satisfy: Update the inventory whenever the asset set changes'
+  - 'Verification check does not pass: Repository contains an asset inventory document covering all canonical
+    asset categories with classification, location, o...'
+- id: SEC-02
+  name: Asset classification taxonomy
+  source: appendix-b §"Classification definitions for this template"
+  source-paper: v13 §11.1
+  definition: A five-label classification scheme distinguishing Node-secret, Team-secret, Team-confidential,
+    Team-internal, and Encrypted assets by who may know them and how they are protected.
+  must-implement:
+  - Define the five classification labels with explicit semantics
+  - Apply exactly one classification label per asset row
+  - Keep Node-secrets non-transmitted by design
+  - Protect Team-secrets via the KEK hierarchy
+  verification: Asset inventory uses only the defined labels; threat-model docs include classification
+    definitions matching the appendix taxonomy.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - classification
+  - governance
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Define the five classification labels with explicit semantics'
+  - 'Fails to satisfy: Apply exactly one classification label per asset row'
+  - 'Fails to satisfy: Keep Node-secrets non-transmitted by design'
+  - 'Fails to satisfy: Protect Team-secrets via the KEK hierarchy'
+  - 'Verification check does not pass: Asset inventory uses only the defined labels; threat-model docs
+    include classification definitions matching the appendix...'
+- id: SEC-03
+  name: Keystore-binding documentation
+  source: appendix-b §"Customization guidance" (Section 1)
+  source-paper: null
+  definition: A requirement to record which OS keystore protects each Node-secret or Team-secret, naming
+    the platform-specific protection mechanism rather than relying on generic claims of isolation.
+  must-implement:
+  - Record the OS keystore (Windows Credential Manager + TPM, macOS Keychain + Secure Enclave, Linux libsecret
+    + kernel keyring, Android Keystore, iOS Data Protection) backing each secret
+  - Verify actual platform security properties rather than relying on vendor marketing
+  verification: Threat-model document names the keystore protecting each per-platform deployment of secret
+    material.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - keystore
+  - platform
+  failed-conditions:
+  - 'Fails to satisfy: Record the OS keystore (Windows Credential Manager + TPM, macOS Keychain + Secure
+    Enclave, Linux libsecret + kernel keyring, Android Keystore, iOS Data Protection) backing each secret'
+  - 'Fails to satisfy: Verify actual platform security properties rather than relying on vendor marketing'
+  - 'Verification check does not pass: Threat-model document names the keystore protecting each per-platform
+    deployment of secret material.'
+- id: SEC-04
+  name: Actor taxonomy worksheet
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: A maintained table enumerating every actor (benign or adversarial) who could realistically
+    interact with the system, with access level, motivation, and capability level recorded for each.
+  must-implement:
+  - List every actor that interacts or could interact with the system, including adversarial ones
+  - Record access level, likely motivation, and capability level per actor
+  - Plan for the actual capability level encountered, not the desired one
+  verification: Threat-model document contains an actor table with access, motivation, and capability
+    columns populated for each named actor.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - threat-model
+  - actors
+  failed-conditions:
+  - 'Fails to satisfy: List every actor that interacts or could interact with the system, including adversarial
+    ones'
+  - 'Fails to satisfy: Record access level, likely motivation, and capability level per actor'
+  - 'Fails to satisfy: Plan for the actual capability level encountered, not the desired one'
+  - 'Verification check does not pass: Threat-model document contains an actor table with access, motivation,
+    and capability columns populated for each named a...'
+- id: THREAT-01
+  name: External remote attacker
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: An adversary with no initial access who attempts data theft or ransomware against the deployment
+    from outside the trust boundary.
+  must-implement:
+  - Treat external remote attackers as an in-scope actor with low-to-high capability range
+  - Apply network-edge controls and end-to-end encryption to limit remote-attacker reach
+  verification: Actor taxonomy includes a remote external attacker entry; perimeter and transport controls
+    are documented.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - actor
+  - external
+  failed-conditions:
+  - 'Fails to satisfy: Treat external remote attackers as an in-scope actor with low-to-high capability
+    range'
+  - 'Fails to satisfy: Apply network-edge controls and end-to-end encryption to limit remote-attacker
+    reach'
+  - 'Verification check does not pass: Actor taxonomy includes a remote external attacker entry; perimeter
+    and transport controls are documented.'
+- id: THREAT-02
+  name: External attacker with physical access
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: An adversary who obtains physical possession of a node device and attempts credential theft
+    or storage extraction.
+  must-implement:
+  - Enforce full-disk encryption on every node
+  - Require device PIN or biometric to unlock keystore-protected material
+  - Disable hibernation and suspend-to-disk to constrain cold-boot exposure
+  verification: MDM policy enforces disk encryption, PIN/biometric, and hibernation disable on all enrolled
+    nodes.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - actor
+  - physical
+  - mdm
+  failed-conditions:
+  - 'Fails to satisfy: Enforce full-disk encryption on every node'
+  - 'Fails to satisfy: Require device PIN or biometric to unlock keystore-protected material'
+  - 'Fails to satisfy: Disable hibernation and suspend-to-disk to constrain cold-boot exposure'
+  - 'Verification check does not pass: MDM policy enforces disk encryption, PIN/biometric, and hibernation
+    disable on all enrolled nodes.'
+- id: THREAT-03
+  name: Malicious insider with role access
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: An authorized team member who attempts data exfiltration within the scope of their assigned
+    role.
+  must-implement:
+  - Scope role-based access to the minimum data needed
+  - Audit role-scoped operations to a tamper-evident log
+  verification: Role definitions and audit log coverage are documented; role scope is enforced by KEK
+    hierarchy.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes: []
+  tags:
+  - actor
+  - insider
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Scope role-based access to the minimum data needed'
+  - 'Fails to satisfy: Audit role-scoped operations to a tamper-evident log'
+  - 'Verification check does not pass: Role definitions and audit log coverage are documented; role scope
+    is enforced by KEK hierarchy.'
+- id: THREAT-04
+  name: Compromised relay operator
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: A relay operator whose transport-layer position grants ciphertext visibility and traffic-analysis
+    capability but no plaintext access because keys never leave nodes.
+  must-implement:
+  - Encrypt every sync payload end-to-end before it leaves the node
+  - Never transmit key material to the relay
+  - Document relay capability as Limited (ciphertext only)
+  verification: Wire-protocol implementation encrypts payloads at the node; key-distribution path bypasses
+    the relay.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - actor
+  - relay
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Encrypt every sync payload end-to-end before it leaves the node'
+  - 'Fails to satisfy: Never transmit key material to the relay'
+  - 'Fails to satisfy: Document relay capability as Limited (ciphertext only)'
+  - 'Verification check does not pass: Wire-protocol implementation encrypts payloads at the node; key-distribution
+    path bypasses the relay.'
+- id: THREAT-05
+  name: Relay service termination
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: The threat that a relay operator withdraws service due to jurisdiction restriction, sanctions,
+    or commercial decision, producing total relay unavailability.
+  must-implement:
+  - Continue local-node operation when the relay is unreachable
+  - Continue peer-to-peer sync where peers are reachable without the relay
+  - Document a relay-replacement path
+  verification: Disconnect the relay; nodes continue local operation and reachable peer-to-peer sync without
+    degradation.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - actor
+  - relay
+  - availability
+  failed-conditions:
+  - Continue local-node operation when the relay is not unreachable
+  - Continue peer-to-peer sync where peers are not reachable without the relay
+  - 'Fails to satisfy: Document a relay-replacement path'
+  - 'Verification check does not pass: Disconnect the relay; nodes continue local operation and reachable
+    peer-to-peer sync without degradation.'
+- id: THREAT-06
+  name: Former team member
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: A previously authorized member whose future access is blocked by key rotation but whose
+    historical-data exposure remains scoped by the data-at-risk calculation.
+  must-implement:
+  - Rotate KEKs on departure to block future access
+  - Compute and document the historical exposure scope per the data-at-risk calculation
+  - Distinguish remediated future access from unremediated prior exfiltration in incident records
+  verification: Offboarding runbook triggers KEK rotation and logs a data-at-risk computation for the
+    affected role.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - actor
+  - offboarding
+  failed-conditions:
+  - 'Fails to satisfy: Rotate KEKs on departure to block future access'
+  - 'Fails to satisfy: Compute and document the historical exposure scope per the data-at-risk calculation'
+  - Distinguish remediated future access from unremediated prior exfiltration in incident does not record
+  - 'Verification check does not pass: Offboarding runbook triggers KEK rotation and logs a data-at-risk
+    computation for the affected role.'
+- id: THREAT-07
+  name: Compromised IdP
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: An identity provider whose signing key is under adversary control, allowing fraudulent role
+    attestations that bypass the attestation trust anchor.
+  must-implement:
+  - Detect IdP compromise and rotate the IdP signing key
+  - Re-issue role attestations after IdP signing-key rotation
+  verification: IdP-compromise runbook exists naming detection signals and the signing-key rotation procedure.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - actor
+  - idp
+  - attestation
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Detect IdP compromise and rotate the IdP signing key'
+  - 'Fails to satisfy: Re-issue role attestations after IdP signing-key rotation'
+  - 'Verification check does not pass: IdP-compromise runbook exists naming detection signals and the
+    signing-key rotation procedure.'
+- id: THREAT-08
+  name: Supply chain attacker
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: An adversary who compromises the build pipeline to ship a backdoored binary capable of exfiltrating
+    keys or plaintext from inside the trust boundary.
+  must-implement:
+  - Sign commits and protect source branches
+  - Produce reproducible builds with SBOM verification
+  - Sign binaries with hardware-backed code-signing keys
+  - Verify package manifest signatures on install
+  verification: Build pipeline produces signed reproducible artifacts; SBOM and signature verification
+    are gating steps in distribution.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - actor
+  - supply-chain
+  - build
+  failed-conditions:
+  - 'Fails to satisfy: Sign commits and protect source branches'
+  - 'Fails to satisfy: Produce reproducible builds with SBOM verification'
+  - 'Fails to satisfy: Sign binaries with hardware-backed code-signing keys'
+  - 'Fails to satisfy: Verify package manifest signatures on install'
+  - 'Verification check does not pass: Build pipeline produces signed reproducible artifacts; SBOM and
+    signature verification are gating steps in distribution.'
+- id: THREAT-09
+  name: Government authority and regulatory body
+  source: appendix-b §"Section 2 — Actor Taxonomy Template"
+  source-paper: v13 §11.1
+  definition: A statutory actor with legal compulsion power (warrant, subpoena, administrative order,
+    inspection notice, device seizure) whose architectural mitigation is end-to-end encryption with local
+    key management so that compelled relay inspection yields ciphertext only.
+  must-implement:
+  - Hold all key material at the node so the relay can yield only ciphertext under compelled inspection
+  - Document the regulatory basis (Schrems II, PIPL, 242-FZ, DIFC, UAE DPL, RBI, POPIA, NDPR, PIPA) for
+    each market the team operates in
+  - Treat device-present credentials as the boundary of device-seizure exposure
+  verification: Architecture proves keys never reach the relay; legal-response runbook lists applicable
+    jurisdictional authorities and the architectural response.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-compromise
+  tags:
+  - actor
+  - statutory
+  - compelled-access
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Hold all key material at the node so the relay cannot yield only ciphertext under compelled inspection
+  - Document the regulatory basis (Schrems II, PIPL, 242-FZ, DIFC, UAE DPL, RBI, POPIA, NDPR, PIPA) for
+    each market the team does not operate in
+  - 'Fails to satisfy: Treat device-present credentials as the boundary of device-seizure exposure'
+  - 'Verification check does not pass: Architecture proves keys never reach the relay; legal-response
+    runbook lists applicable jurisdictional authorities and t...'
+- id: SEC-05
+  name: Capability-level taxonomy
+  source: appendix-b §"Capability level definitions"
+  source-paper: v13 §11.1
+  definition: A four-level scale (Low, Medium, High, Limited) rating an actor's technical sophistication
+    and structural access constraints, used to size mitigations.
+  must-implement:
+  - Assign each actor exactly one of Low, Medium, High, or Limited
+  - Use Limited only when access is structurally constrained (e.g., ciphertext-only)
+  verification: Actor taxonomy entries each carry one of the four defined capability levels.
+  kleppmann-properties: []
+  scope: foundational
+  failure-modes: []
+  tags:
+  - threat-model
+  - capability
+  failed-conditions:
+  - 'Fails to satisfy: Assign each actor exactly one of Low, Medium, High, or Limited'
+  - Use Limited only when access is not structurally constrained (e.g., ciphertext-only)
+  - 'Verification check does not pass: Actor taxonomy entries each carry one of the four defined capability
+    levels.'
+- id: SEC-06
+  name: Per-vertical worksheet customization
+  source: appendix-b §"Customization guidance" (Section 2)
+  source-paper: null
+  definition: A requirement that each deployment add asset rows and actor rows specific to its vertical
+    (healthcare, legal, government, defense, regulated finance) before the worksheet is treated as complete.
+  must-implement:
+  - Extend the asset inventory with vertical-specific assets before first deployment
+  - Extend the actor taxonomy with vertical-specific adversaries before first deployment
+  - Document jurisdiction-specific inspection rights for regulated markets
+  verification: Per-deployment threat model includes vertical-specific additions beyond the template baseline.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes: []
+  tags:
+  - customization
+  - vertical
+  failed-conditions:
+  - 'Fails to satisfy: Extend the asset inventory with vertical-specific assets before first deployment'
+  - 'Fails to satisfy: Extend the actor taxonomy with vertical-specific adversaries before first deployment'
+  - 'Fails to satisfy: Document jurisdiction-specific inspection rights for regulated markets'
+  - 'Verification check does not pass: Per-deployment threat model includes vertical-specific additions
+    beyond the template baseline.'
+- id: SEC-07
+  name: Attack tree per worksheet
+  source: 'appendix-b §"Attack Tree — Primary Branch: Laptop Theft at Job Site"'
+  source-paper: v13 §11.1
+  definition: A branch-by-branch decomposition of a primary threat scenario, naming each control checkpoint
+    and its mitigation, and identifying the residual risk where controls do not fully cover the branch.
+  must-implement:
+  - Walk the highest-probability threat scenario branch by branch
+  - Name the mitigation that defeats each branch
+  - Identify and label residual risk that mitigations do not cover
+  verification: Threat-model document contains at least one named attack tree with explicit mitigations
+    and a residual-risk note.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - attack-tree
+  - methodology
+  failed-conditions:
+  - 'Fails to satisfy: Walk the highest-probability threat scenario branch by branch'
+  - 'Fails to satisfy: Name the mitigation that defeats each branch'
+  - 'Fails to satisfy: Identify and label residual risk that mitigations do not cover'
+  - 'Verification check does not pass: Threat-model document contains at least one named attack tree with
+    explicit mitigations and a residual-risk note.'
+- id: MITIG-01
+  name: MDM-enforced device hardening
+  source: 'appendix-b §"Attack Tree — Primary Branch: Laptop Theft at Job Site"'
+  source-paper: null
+  definition: An MDM-enforced configuration baseline requiring full-disk encryption, minimum 6-digit PIN,
+    disabled USB boot, locked BIOS settings, and disabled hibernation/suspend-to-disk on every node before
+    it joins the sync mesh.
+  must-implement:
+  - Enforce full-disk encryption (e.g., BitLocker on Windows) via MDM compliance policy
+  - Require minimum 6-digit PIN through MDM
+  - Disable USB boot and lock BIOS settings changes
+  - Disable hibernation files and suspend-to-disk images via MDM
+  - Block sync-mesh enrollment until MDM compliance is confirmed
+  verification: MDM policy file enforces all five controls; nodes failing compliance cannot complete sync-mesh
+    handshake.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - mitigation
+  - mdm
+  - hardening
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Enforce full-disk encryption (e.g., BitLocker on Windows) via MDM compliance policy'
+  - 'Fails to satisfy: Require minimum 6-digit PIN through MDM'
+  - 'Fails to satisfy: Disable USB boot and lock BIOS settings changes'
+  - 'Fails to satisfy: Disable hibernation files and suspend-to-disk images via MDM'
+  - Block sync-mesh enrollment until MDM compliance is not confirmed
+  - 'Verification check does not pass: MDM policy file enforces all five controls; nodes failing compliance
+    cannot complete sync-mesh handshake.'
+- id: MITIG-02
+  name: Self-hosted relay for traffic-analysis sensitivity
+  source: appendix-b §"Mitigation for residual risk"
+  source-paper: null
+  definition: Deployment of a relay inside the team's own trust boundary so that traffic-pattern observation
+    moves from an external operator to internal IT.
+  must-implement:
+  - Provide a deployable self-hosted relay artifact
+  - Document the operational requirements for internal-IT relay hosting
+  verification: Relay distribution includes a self-hosted deployment package and operations guide.
+  kleppmann-properties:
+  - P3
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  tags:
+  - mitigation
+  - relay
+  - traffic-analysis
+  failed-conditions:
+  - 'Fails to satisfy: Provide a deployable self-hosted relay artifact'
+  - 'Fails to satisfy: Document the operational requirements for internal-IT relay hosting'
+  - 'Verification check does not pass: Relay distribution includes a self-hosted deployment package and
+    operations guide.'
+- id: SEC-08
+  name: Key-compromise detection checklist
+  source: appendix-b §"Detection Checklist"
+  source-paper: v13 §11.1
+  definition: A standing list of triggers (theft, anomalous audit-log access, credential leak, threat-intel
+    hit, IdP failures, offboarding, abnormal sync-state inconsistency, lawful access demand) that initiate
+    the re-keying procedure on suspicion rather than on confirmation.
+  must-implement:
+  - Initiate re-keying on suspicion, not on confirmation
+  - Cover all eight named trigger categories in the detection checklist
+  - Distinguish infrastructure-failure WAL replay from sync-state inconsistency that signals a security
+    event
+  - Engage legal counsel before responding to lawful access demands
+  verification: Incident-response runbook contains a detection checklist with the eight named triggers
+    and an explicit suspicion-not-confirmation directive.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - incident-response
+  - detection
+  failed-conditions:
+  - 'Fails to satisfy: Initiate re-keying on suspicion, not on confirmation'
+  - 'Fails to satisfy: Cover all eight named trigger categories in the detection checklist'
+  - 'Fails to satisfy: Distinguish infrastructure-failure WAL replay from sync-state inconsistency that
+    signals a security event'
+  - 'Fails to satisfy: Engage legal counsel before responding to lawful access demands'
+  - 'Verification check does not pass: Incident-response runbook contains a detection checklist with the
+    eight named triggers and an explicit suspicion-not-con...'
+- id: SEC-09
+  name: Re-keying procedure
+  source: appendix-b §"Re-Keying Procedure"
+  source-paper: v13 §11.1
+  definition: An ordered seven-step procedure (with a 1a recovery branch) that generates a fresh KEK,
+    re-wraps DEKs, discards the old KEK, broadcasts revocation, forces re-authentication, notifies users,
+    and re-issues wrapped KEK copies, each step having a named owner and completion condition.
+  must-implement:
+  - Generate a new KEK from cryptographically random material, never derived from the compromised KEK
+  - Check old-KEK availability before attempting re-wrap; document unrecoverable scope when the old KEK
+    is gone
+  - Re-wrap every recoverable DEK in scope under the new KEK
+  - Discard old KEK copies and verify with keystore audit
+  - Broadcast revocation through the relay so reconnecting nodes receive ERR_KEY_REVOKED
+  - Notify all affected role members with KEK creation date, revocation date, and accessible-data scope
+  - Re-issue wrapped KEK copies to current authorized members through the standard distribution path
+  verification: Incident-response runbook lists the seven steps with owners and completion conditions;
+    relay protocol implements the ERR_KEY_REVOKED handshake response.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  - key-loss
+  tags:
+  - incident-response
+  - re-keying
+  - kek
+  failed-conditions:
+  - 'Fails to satisfy: Generate a new KEK from cryptographically random material, never derived from the
+    compromised KEK'
+  - Check old-KEK availability before attempting re-wrap; document unrecoverable scope when the old KEK
+    is not gone
+  - 'Fails to satisfy: Re-wrap every recoverable DEK in scope under the new KEK'
+  - 'Fails to satisfy: Discard old KEK copies and verify with keystore audit'
+  - 'Fails to satisfy: Broadcast revocation through the relay so reconnecting nodes receive ERR_KEY_REVOKED'
+  - 'Fails to satisfy: Notify all affected role members with KEK creation date, revocation date, and accessible-data
+    scope'
+  - 'Fails to satisfy: Re-issue wrapped KEK copies to current authorized members through the standard
+    distribution path'
+  - 'Verification check does not pass: Incident-response runbook lists the seven steps with owners and
+    completion conditions; relay protocol implements the ERR...'
+- id: SEC-10
+  name: Unrecoverable-KEK contingency (Step 1a)
+  source: appendix-b §"Re-Keying Procedure" Step 1a
+  source-paper: null
+  definition: The branch of the re-keying procedure executed when the old KEK cannot be retrieved, in
+    which DEKs wrapped under the lost KEK are declared permanently inaccessible, the loss scope is documented,
+    revocation is still broadcast, and the team chooses between BYOC backup reconstruction or accepted
+    loss.
+  must-implement:
+  - Detect old-KEK unavailability before attempting Step 2
+  - Document the scope of unrecoverable data in the incident log
+  - Skip directly to revocation broadcast to prevent further compromise
+  - Surface the reconstruct-from-BYOC-backup vs accept-loss decision to the team
+  verification: Runbook explicitly handles the unrecoverable-KEK branch with a documented decision point
+    and incident-log entry requirement.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-loss
+  tags:
+  - incident-response
+  - recovery
+  - byoc
+  failed-conditions:
+  - 'Fails to satisfy: Detect old-KEK unavailability before attempting Step 2'
+  - 'Fails to satisfy: Document the scope of unrecoverable data in the incident log'
+  - 'Fails to satisfy: Skip directly to revocation broadcast to prevent further compromise'
+  - 'Fails to satisfy: Surface the reconstruct-from-BYOC-backup vs accept-loss decision to the team'
+  - 'Verification check does not pass: Runbook explicitly handles the unrecoverable-KEK branch with a
+    documented decision point and incident-log entry requirem...'
+- id: SEC-11
+  name: Data-at-risk scope calculation
+  source: appendix-b §"Data-at-Risk Scope Calculation"
+  source-paper: v13 §11.1
+  definition: A bounded calculation of compromise exposure defined by the compromised KEK's keystore creation
+    date as start, the relay-confirmed revocation date as end, and the documents the KEK protected within
+    that window as scope, with documents outside that role or created after revocation explicitly excluded.
+  must-implement:
+  - Use the keystore creation timestamp as the start date, not employee recollection
+  - Use the relay-confirmed revocation timestamp as the end date
+  - Enumerate all documents the compromised KEK protected within the window
+  - Exclude documents in unaffected roles and documents created after the revocation date
+  verification: Incident-response output contains a data-at-risk calculation with documented start, end,
+    scope, and exclusions.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - incident-response
+  - scope
+  - audit
+  failed-conditions:
+  - 'Fails to satisfy: Use the keystore creation timestamp as the start date, not employee recollection'
+  - 'Fails to satisfy: Use the relay-confirmed revocation timestamp as the end date'
+  - 'Fails to satisfy: Enumerate all documents the compromised KEK protected within the window'
+  - 'Fails to satisfy: Exclude documents in unaffected roles and documents created after the revocation
+    date'
+  - 'Verification check does not pass: Incident-response output contains a data-at-risk calculation with
+    documented start, end, scope, and exclusions.'
+- id: SEC-12
+  name: User notification template and 90-day retention floor
+  source: appendix-b §"User Notification Template"
+  source-paper: null
+  definition: A standardized affected-user notification recording recipient, channel, and timestamp, retained
+    for a minimum of 90 days as an audit-log retention floor distinct from regulatory breach-notification
+    deadlines.
+  must-implement:
+  - Send the templated notification to every member of the affected role
+  - Log timestamp, channel, and recipient for each notification
+  - Retain notification records for at least 90 days
+  verification: Audit log contains notification records with the three required fields and a retention
+    policy of at least 90 days.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - incident-response
+  - notification
+  - audit
+  - retention
+  failed-conditions:
+  - 'Fails to satisfy: Send the templated notification to every member of the affected role'
+  - 'Fails to satisfy: Log timestamp, channel, and recipient for each notification'
+  - Retain notification does not record for at least 90 days
+  - 'Verification check does not pass: Audit log contains notification records with the three required
+    fields and a retention policy of at least 90 days.'
+- id: COMP-01
+  name: Jurisdictional breach notification SLA matrix
+  source: appendix-b §"Breach notification deadlines — separate and faster"
+  source-paper: v13 §11.1
+  definition: A matrix mapping each operating jurisdiction to its supervisor-notification window and data-subject-notification
+    window, against which the incident-response SLA is set to the shortest applicable window.
+  must-implement:
+  - Verify and record the supervisor-notification window for each jurisdiction the team operates in
+  - Verify and record the data-subject-notification window for each jurisdiction
+  - Set the incident-response SLA against the shortest applicable window
+  - Treat the GDPR 72-hour window as the shortest common denominator unless a stricter window applies
+  verification: Compliance documentation contains a jurisdiction matrix and an incident SLA equal to the
+    shortest listed window.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - key-compromise
+  tags:
+  - compliance
+  - breach-notification
+  - jurisdiction
+  failed-conditions:
+  - Verify and record the supervisor-notification window for each jurisdiction the team does not operate
+    in
+  - 'Fails to satisfy: Verify and record the data-subject-notification window for each jurisdiction'
+  - 'Fails to satisfy: Set the incident-response SLA against the shortest applicable window'
+  - Treat the GDPR 72-hour window as the shortest common denominator unless a stricter window does not
+    applie
+  - 'Verification check does not pass: Compliance documentation contains a jurisdiction matrix and an
+    incident SLA equal to the shortest listed window.'
+- id: COMP-02
+  name: Pre-deployment regulatory validation
+  source: appendix-b §"Applicable regulatory frameworks by region"
+  source-paper: null
+  definition: A pre-production requirement to validate, for every market the team operates in, the breach
+    notification window, retention floor, regulatory inspection rights, and cross-border data transfer
+    rules under the applicable regional frameworks.
+  must-implement:
+  - Identify the applicable regulatory frameworks for each operating market
+  - Validate breach notification window, retention floor, inspection rights, and cross-border transfer
+    rules per market
+  - Complete validation before first production deployment
+  verification: Pre-deployment compliance checklist documents the four validations per operating market.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - compliance
+  - regulatory
+  - pre-deployment
+  failed-conditions:
+  - 'Fails to satisfy: Identify the applicable regulatory frameworks for each operating market'
+  - 'Fails to satisfy: Validate breach notification window, retention floor, inspection rights, and cross-border
+    transfer rules per market'
+  - 'Fails to satisfy: Complete validation before first production deployment'
+  - 'Verification check does not pass: Pre-deployment compliance checklist documents the four validations
+    per operating market.'

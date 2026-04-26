@@ -1,223 +1,455 @@
 chapter: ch02
-chapter-title: "Local-First: From Sync Toy to Serious Stack"
-source-paper-refs: [v13 §2.1-§2.4, v13 §19, v5 §1-§3]
+chapter-title: 'Local-First: From Sync Toy to Serious Stack'
+source-paper-refs:
+- v13 §2.1-§2.4
+- v13 §19
+- v5 §1-§3
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: LF-01
-    name: No spinners, no waiting
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: The software responds instantly because it reads from local state rather than from a network request, with no perceptible round-trip latency for any user-visible operation.
-    must-implement:
-      - Application reads resolve from local storage without a network call
-      - User-visible operations show no loading spinners during normal use
-      - Latency does not depend on network round-trip time for any core operation
-    verification: Disconnect network; instrument all user-visible reads and writes; confirm zero network calls and sub-frame latency for every core operation.
-    kleppmann-properties: [P1]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [philosophy, latency, local-first-properties]
-
-  - id: LF-02
-    name: Work is not trapped on one device
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: User data is structurally accessible across all the user's devices and to designated collaborators without depending on a vendor account or subscription to remain accessible.
-    must-implement:
-      - Data syncs across the user's own devices without vendor account dependency
-      - Data syncs to designated collaborators without subscription gating
-      - Loss of vendor service does not strand data on a single device
-    verification: Cancel the vendor subscription or simulate vendor disappearance; confirm data remains accessible and syncable across devices the user controls.
-    kleppmann-properties: [P2]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [philosophy, multi-device, local-first-properties]
-
-  - id: LF-03
-    name: The network is optional
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: The full application works without any network connection indefinitely and syncs when a connection becomes available, with the local node holding an authoritative copy of all data it is allowed to act on.
-    must-implement:
-      - Every core operation works identically with the network disconnected
-      - The local node holds an authoritative copy of data it can act on, not a stale cache
-      - No operation queues waiting for a server before completing locally
-      - Sync resumes automatically when connectivity returns
-    verification: Disconnect network indefinitely; perform all core operations; confirm identical behavior to online mode and successful convergence after reconnection.
-    kleppmann-properties: [P3]
-    scope: foundational
-    failure-modes: [vendor-outage, partition, peer-discovery-failure]
-    tags: [philosophy, offline-first, local-first-properties]
-
-  - id: LF-04
-    name: Seamless collaboration
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: Multiple people can edit the same data simultaneously without explicit locking, checkout workflows, or a designated human conflict resolver, with convergence guaranteed by merge semantics rather than by a coordinating server.
-    must-implement:
-      - Concurrent edits from multiple peers converge to a defined merged state
-      - No central server is required to adjudicate concurrent writes
-      - No explicit lock or checkout workflow gates concurrent editing
-      - CRDT or equivalent merge semantics provide deterministic convergence
-    verification: Multi-peer concurrent-edit test under partition; confirm byte-identical state on all peers after partition heal without server adjudication.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition, clock-skew]
-    tags: [philosophy, collaboration, crdt, local-first-properties]
-
-  - id: LF-05
-    name: The long now
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: User data outlives the vendor, the subscription, the company's strategic priorities, and the political conditions under which the service operates, by virtue of being stored in an open format on user-controlled hardware.
-    must-implement:
-      - Data is stored in an open, documented format readable by tools other than the originating application
-      - Data lives on hardware the user physically controls
-      - Continued access does not depend on vendor existence, subscription status, or jurisdictional service availability
-      - Sync formats are open or interoperable, not proprietary lock-in
-    verification: Confirm data file format has a public specification readable by at least one independent tool; confirm continued read/write access works after simulated vendor shutdown and after simulated jurisdictional service withdrawal.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
-    tags: [philosophy, durability, portability, local-first-properties]
-
-  - id: LF-06
-    name: Security and privacy by default
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: Data is encrypted end-to-end at rest and in transit by default, with key control held by the user rather than the vendor, raising the cost of compromise from one breach exposing all users to one breach exposing one user.
-    must-implement:
-      - Data at rest is encrypted under keys the user controls
-      - Data in transit is end-to-end encrypted between authorized peers
-      - Vendor or relay infrastructure cannot decrypt user data
-      - Compromise of one node yields one user's data, not all users' data
-    verification: Confirm relay or vendor infrastructure handles ciphertext only; confirm key material does not leave user-controlled hardware; threat-model worksheet demonstrates one-node-compromise containment.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise, key-loss, data-residency-objection]
-    tags: [philosophy, security, encryption, local-first-properties]
-
-  - id: LF-07
-    name: You retain ultimate ownership and control
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: The user structurally — not contractually — decides where data lives, who can access it, and when to delete it, because the bits live on hardware the user controls in a format the user can read under encryption the user can manage.
-    must-implement:
-      - Data resides on hardware physically controlled by the user
-      - Data format is readable by the user without vendor cooperation
-      - Encryption keys are managed by the user, not held in escrow by the vendor
-      - Ownership is structural (architectural) rather than promised by contract
-    verification: Confirm user can copy, back up, and read data files independently of the vendor application; confirm key material is held only on user-controlled hardware.
-    kleppmann-properties: [P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition, data-residency-objection]
-    tags: [philosophy, ownership, local-first-properties]
-
-  - id: THESIS-01
-    name: Seven properties as a minimum bar, not a wishlist
-    source: 'ch02 §"The Seven Ideals"'
-    source-paper: null
-    definition: The seven Kleppmann properties function as a calibrated filter that fails any system satisfying only a subset, not as a menu from which an implementer may select.
-    must-implement:
-      - Conformance evaluation treats the seven properties as a conjunctive set
-      - Partial satisfaction (e.g., five-of-seven) is recorded as non-conformance, not as success
-      - Gradient scoring is permitted alongside but does not replace the binary minimum-bar reading
-    verification: Conformance scorecard reports per-property pass/fail in addition to any gradient score; overall conformance requires all seven to pass.
-    kleppmann-properties: [P1, P2, P3, P4, P5, P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [thesis, conformance, philosophy]
-
-  - id: THESIS-02
-    name: Full node versus smart cache
-    source: 'ch02 §"The Missing Step: Full Node, Not Smart Cache"'
-    source-paper: v13 §2.4
-    definition: A full node runs presentation, application logic, sync daemon, storage, and security primitives locally with the cloud serving as another peer for relay and backup, whereas a smart cache holds a recent copy of server-authoritative state and defers to the server for write authority and business logic.
-    must-implement:
-      - Local node holds authoritative state for data the user is allowed to act on
-      - Business logic and automations execute locally, not on a server
-      - Cloud components serve relay and backup roles, never source-of-truth roles
-      - All five layers (UI, business logic, sync, storage, security) run on the user's device
-    verification: Disconnect from any vendor-operated infrastructure; confirm new records can be created, business automations fire, and concurrent edits converge against local state alone.
-    kleppmann-properties: [P1, P3, P4, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, partition]
-    tags: [thesis, architecture, full-node]
-
-  - id: THESIS-03
-    name: Composition as the contribution
-    source: 'ch02 §"What This Book Adds"'
-    source-paper: v13 §19
-    definition: This book's contribution is the integration of existing proven primitives (CRDT libraries, gossip anti-entropy, desktop-shell-plus-local-server, declarative partial sync, container background services, bidirectional schema lenses) into a coherent enterprise-deployable system, not the invention of new primitives.
-    must-implement:
-      - Architecture reuses audited, production-validated primitives rather than inventing equivalents
-      - Each component has at least one cited production analogue
-      - Integration concerns (consistent invariants across components) are treated as the primary engineering work
-    verification: For every primitive in the architecture, a production analogue is named in the chapter or appendix; integration ADRs document how invariants compose across primitive boundaries.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [thesis, integration, philosophy]
-
-  - id: THESIS-04
-    name: No-novel-cryptography discipline
-    source: 'ch02 §"What This Book Adds"'
-    source-paper: v13 §19
-    definition: Property 6 is feasible only when audited cryptographic primitives (libsodium, age, Argon2id reference) are used opaquely and a DEK/KEK hierarchy composes them against a specification reviewed by a cryptographic engineer, never when novel cryptography is invented.
-    must-implement:
-      - All cryptographic primitives come from audited reference libraries
-      - No new cipher, KDF, or protocol construction is invented in-house
-      - Key hierarchy composition is reviewed by a credentialed cryptographic engineer before deployment
-    verification: SBOM lists cryptographic dependencies; design review record names the cryptographic engineer who approved the key hierarchy; no in-house cipher implementations are present in the codebase.
-    kleppmann-properties: [P6]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [thesis, security, discipline]
-
-  - id: THESIS-05
-    name: Adopt-don't-invent wire format discipline
-    source: 'ch02 §"What This Book Adds"'
-    source-paper: v13 §19
-    definition: Property 5 (the long now) is preserved by adopting an existing portable CRDT format (Yjs or Automerge) rather than inventing a proprietary wire format, because invented formats repeat the Anytype Any-Block portability failure.
-    must-implement:
-      - The CRDT wire format is a documented, third-party-readable specification (Yjs, Automerge, or equivalent)
-      - No proprietary or single-vendor wire format is introduced for portable data
-      - At least one independent tool can parse the wire format
-    verification: Wire format documentation cites the upstream specification; an independent reference implementation parses sample documents; ADR records the adopt-don't-invent decision.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition]
-    tags: [thesis, portability, wire-format, discipline]
-
-  - id: THESIS-06
-    name: Disaggregated managed relay
-    source: 'ch02 §"What This Book Adds"'
-    source-paper: v13 §19
-    definition: A managed relay is a residual vendor dependency that holds ciphertext only and can be self-hosted without protocol changes, distinguishing it structurally from a SaaS vendor that holds decryptable data.
-    must-implement:
-      - The managed relay handles ciphertext exclusively
-      - The relay protocol is documented and supports user self-hosting without modification
-      - Data custody (the keys) remains on user hardware, never on relay infrastructure
-      - Relay failure does not destroy user data, only impairs propagation
-    verification: Wire-protocol specification confirms ciphertext-only relay payloads; deploy a self-hosted relay using the public protocol and confirm interoperability with the managed relay; threat model documents relay as untrusted.
-    kleppmann-properties: [P5, P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [thesis, relay, architecture, trust-boundary]
-
-  - id: THESIS-07
-    name: Per-record CAP positioning
-    source: 'ch02 §"What This Book Adds"'
-    source-paper: v13 §19
-    definition: The architecture treats CRDT-merge records and lease-coordinated records as first-class distinct classes with a defined boundary and handoff between them, rather than forcing all data into a single consistency model.
-    must-implement:
-      - Each record type is classified as AP (CRDT-merged) or CP (lease-coordinated) at schema definition time
-      - The boundary between AP and CP records is explicit and documented
-      - A defined handoff protocol governs interactions that cross the boundary
-    verification: Schema declarations carry an AP/CP tag for each record type; integration tests exercise the handoff protocol between AP and CP records.
-    kleppmann-properties: [P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [thesis, cap, consistency-model]
+- id: LF-01
+  name: No spinners, no waiting
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: The software responds instantly because it reads from local state rather than from a network
+    request, with no perceptible round-trip latency for any user-visible operation.
+  must-implement:
+  - Application reads resolve from local storage without a network call
+  - User-visible operations show no loading spinners during normal use
+  - Latency does not depend on network round-trip time for any core operation
+  verification: Disconnect network; instrument all user-visible reads and writes; confirm zero network
+    calls and sub-frame latency for every core operation.
+  kleppmann-properties:
+  - P1
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - philosophy
+  - latency
+  - local-first-properties
+  failed-conditions:
+  - 'Fails to satisfy: Application reads resolve from local storage without a network call'
+  - 'Fails to satisfy: User-visible operations show no loading spinners during normal use'
+  - 'Fails to satisfy: Latency does not depend on network round-trip time for any core operation'
+  - 'Verification check does not pass: Disconnect network; instrument all user-visible reads and writes;
+    confirm zero network calls and sub-frame latency for e...'
+- id: LF-02
+  name: Work is not trapped on one device
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: User data is structurally accessible across all the user's devices and to designated collaborators
+    without depending on a vendor account or subscription to remain accessible.
+  must-implement:
+  - Data syncs across the user's own devices without vendor account dependency
+  - Data syncs to designated collaborators without subscription gating
+  - Loss of vendor service does not strand data on a single device
+  verification: Cancel the vendor subscription or simulate vendor disappearance; confirm data remains
+    accessible and syncable across devices the user controls.
+  kleppmann-properties:
+  - P2
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - philosophy
+  - multi-device
+  - local-first-properties
+  failed-conditions:
+  - 'Fails to satisfy: Data syncs across the user''s own devices without vendor account dependency'
+  - 'Fails to satisfy: Data syncs to designated collaborators without subscription gating'
+  - 'Fails to satisfy: Loss of vendor service does not strand data on a single device'
+  - 'Verification check does not pass: Cancel the vendor subscription or simulate vendor disappearance;
+    confirm data remains accessible and syncable across dev...'
+- id: LF-03
+  name: The network is optional
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: The full application works without any network connection indefinitely and syncs when a
+    connection becomes available, with the local node holding an authoritative copy of all data it is
+    allowed to act on.
+  must-implement:
+  - Every core operation works identically with the network disconnected
+  - The local node holds an authoritative copy of data it can act on, not a stale cache
+  - No operation queues waiting for a server before completing locally
+  - Sync resumes automatically when connectivity returns
+  verification: Disconnect network indefinitely; perform all core operations; confirm identical behavior
+    to online mode and successful convergence after reconnection.
+  kleppmann-properties:
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - partition
+  - peer-discovery-failure
+  tags:
+  - philosophy
+  - offline-first
+  - local-first-properties
+  failed-conditions:
+  - 'Fails to satisfy: Every core operation works identically with the network disconnected'
+  - The local node holds an authoritative copy of data it cannot act on, not a stale cache
+  - 'Fails to satisfy: No operation queues waiting for a server before completing locally'
+  - 'Fails to satisfy: Sync resumes automatically when connectivity returns'
+  - 'Verification check does not pass: Disconnect network indefinitely; perform all core operations; confirm
+    identical behavior to online mode and successful c...'
+- id: LF-04
+  name: Seamless collaboration
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: Multiple people can edit the same data simultaneously without explicit locking, checkout
+    workflows, or a designated human conflict resolver, with convergence guaranteed by merge semantics
+    rather than by a coordinating server.
+  must-implement:
+  - Concurrent edits from multiple peers converge to a defined merged state
+  - No central server is required to adjudicate concurrent writes
+  - No explicit lock or checkout workflow gates concurrent editing
+  - CRDT or equivalent merge semantics provide deterministic convergence
+  verification: Multi-peer concurrent-edit test under partition; confirm byte-identical state on all peers
+    after partition heal without server adjudication.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - clock-skew
+  tags:
+  - philosophy
+  - collaboration
+  - crdt
+  - local-first-properties
+  failed-conditions:
+  - 'Fails to satisfy: Concurrent edits from multiple peers converge to a defined merged state'
+  - No central server is not required to adjudicate concurrent writes
+  - 'Fails to satisfy: No explicit lock or checkout workflow gates concurrent editing'
+  - 'Fails to satisfy: CRDT or equivalent merge semantics provide deterministic convergence'
+  - 'Verification check does not pass: Multi-peer concurrent-edit test under partition; confirm byte-identical
+    state on all peers after partition heal without ...'
+- id: LF-05
+  name: The long now
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: User data outlives the vendor, the subscription, the company's strategic priorities, and
+    the political conditions under which the service operates, by virtue of being stored in an open format
+    on user-controlled hardware.
+  must-implement:
+  - Data is stored in an open, documented format readable by tools other than the originating application
+  - Data lives on hardware the user physically controls
+  - Continued access does not depend on vendor existence, subscription status, or jurisdictional service
+    availability
+  - Sync formats are open or interoperable, not proprietary lock-in
+  verification: Confirm data file format has a public specification readable by at least one independent
+    tool; confirm continued read/write access works after simulated vendor shutdown and after simulated
+    jurisdictional service withdrawal.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - philosophy
+  - durability
+  - portability
+  - local-first-properties
+  failed-conditions:
+  - Data is not stored in an open, documented format readable by tools other than the originating application
+  - 'Fails to satisfy: Data lives on hardware the user physically controls'
+  - 'Fails to satisfy: Continued access does not depend on vendor existence, subscription status, or jurisdictional
+    service availability'
+  - Sync formats are not open or interoperable, not proprietary lock-in
+  - 'Verification check does not pass: Confirm data file format has a public specification readable by
+    at least one independent tool; confirm continued read/wr...'
+- id: LF-06
+  name: Security and privacy by default
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: Data is encrypted end-to-end at rest and in transit by default, with key control held by
+    the user rather than the vendor, raising the cost of compromise from one breach exposing all users
+    to one breach exposing one user.
+  must-implement:
+  - Data at rest is encrypted under keys the user controls
+  - Data in transit is end-to-end encrypted between authorized peers
+  - Vendor or relay infrastructure cannot decrypt user data
+  - Compromise of one node yields one user's data, not all users' data
+  verification: Confirm relay or vendor infrastructure handles ciphertext only; confirm key material does
+    not leave user-controlled hardware; threat-model worksheet demonstrates one-node-compromise containment.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  - key-loss
+  - data-residency-objection
+  tags:
+  - philosophy
+  - security
+  - encryption
+  - local-first-properties
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Data at rest is not encrypted under keys the user controls
+  - Data in transit is not end-to-end encrypted between authorized peers
+  - 'Fails to satisfy: Vendor or relay infrastructure cannot decrypt user data'
+  - 'Fails to satisfy: Compromise of one node yields one user''s data, not all users'' data'
+  - 'Verification check does not pass: Confirm relay or vendor infrastructure handles ciphertext only;
+    confirm key material does not leave user-controlled hard...'
+- id: LF-07
+  name: You retain ultimate ownership and control
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: The user structurally — not contractually — decides where data lives, who can access it,
+    and when to delete it, because the bits live on hardware the user controls in a format the user can
+    read under encryption the user can manage.
+  must-implement:
+  - Data resides on hardware physically controlled by the user
+  - Data format is readable by the user without vendor cooperation
+  - Encryption keys are managed by the user, not held in escrow by the vendor
+  - Ownership is structural (architectural) rather than promised by contract
+  verification: Confirm user can copy, back up, and read data files independently of the vendor application;
+    confirm key material is held only on user-controlled hardware.
+  kleppmann-properties:
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - philosophy
+  - ownership
+  - local-first-properties
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: Data resides on hardware physically controlled by the user'
+  - Data format is not readable by the user without vendor cooperation
+  - Encryption keys are not managed by the user, not held in escrow by the vendor
+  - Ownership is not structural (architectural) rather than promised by contract
+  - 'Verification check does not pass: Confirm user can copy, back up, and read data files independently
+    of the vendor application; confirm key material is hel...'
+- id: THESIS-01
+  name: Seven properties as a minimum bar, not a wishlist
+  source: ch02 §"The Seven Ideals"
+  source-paper: null
+  definition: The seven Kleppmann properties function as a calibrated filter that fails any system satisfying
+    only a subset, not as a menu from which an implementer may select.
+  must-implement:
+  - Conformance evaluation treats the seven properties as a conjunctive set
+  - Partial satisfaction (e.g., five-of-seven) is recorded as non-conformance, not as success
+  - Gradient scoring is permitted alongside but does not replace the binary minimum-bar reading
+  verification: Conformance scorecard reports per-property pass/fail in addition to any gradient score;
+    overall conformance requires all seven to pass.
+  kleppmann-properties:
+  - P1
+  - P2
+  - P3
+  - P4
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - thesis
+  - conformance
+  - philosophy
+  failed-conditions:
+  - 'Fails to satisfy: Conformance evaluation treats the seven properties as a conjunctive set'
+  - Partial satisfaction (e.g., five-of-seven) is not recorded as non-conformance, not as success
+  - Gradient scoring is not permitted alongside but does not replace the binary minimum-bar reading
+  - 'Verification check does not pass: Conformance scorecard reports per-property pass/fail in addition
+    to any gradient score; overall conformance requires all...'
+- id: THESIS-02
+  name: Full node versus smart cache
+  source: 'ch02 §"The Missing Step: Full Node, Not Smart Cache"'
+  source-paper: v13 §2.4
+  definition: A full node runs presentation, application logic, sync daemon, storage, and security primitives
+    locally with the cloud serving as another peer for relay and backup, whereas a smart cache holds a
+    recent copy of server-authoritative state and defers to the server for write authority and business
+    logic.
+  must-implement:
+  - Local node holds authoritative state for data the user is allowed to act on
+  - Business logic and automations execute locally, not on a server
+  - Cloud components serve relay and backup roles, never source-of-truth roles
+  - All five layers (UI, business logic, sync, storage, security) run on the user's device
+  verification: Disconnect from any vendor-operated infrastructure; confirm new records can be created,
+    business automations fire, and concurrent edits converge against local state alone.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - partition
+  tags:
+  - thesis
+  - architecture
+  - full-node
+  failed-conditions:
+  - Local node holds authoritative state for data the user is not allowed to act on
+  - 'Fails to satisfy: Business logic and automations execute locally, not on a server'
+  - 'Fails to satisfy: Cloud components serve relay and backup roles, never source-of-truth roles'
+  - 'Fails to satisfy: All five layers (UI, business logic, sync, storage, security) run on the user''s
+    device'
+  - 'Verification check does not pass: Disconnect from any vendor-operated infrastructure; confirm new
+    records can be created, business automations fire, and c...'
+- id: THESIS-03
+  name: Composition as the contribution
+  source: ch02 §"What This Book Adds"
+  source-paper: v13 §19
+  definition: This book's contribution is the integration of existing proven primitives (CRDT libraries,
+    gossip anti-entropy, desktop-shell-plus-local-server, declarative partial sync, container background
+    services, bidirectional schema lenses) into a coherent enterprise-deployable system, not the invention
+    of new primitives.
+  must-implement:
+  - Architecture reuses audited, production-validated primitives rather than inventing equivalents
+  - Each component has at least one cited production analogue
+  - Integration concerns (consistent invariants across components) are treated as the primary engineering
+    work
+  verification: For every primitive in the architecture, a production analogue is named in the chapter
+    or appendix; integration ADRs document how invariants compose across primitive boundaries.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - thesis
+  - integration
+  - philosophy
+  failed-conditions:
+  - 'Fails to satisfy: Architecture reuses audited, production-validated primitives rather than inventing
+    equivalents'
+  - Each component has not at least one cited production analogue
+  - Integration concerns (consistent invariants across components) are not treated as the primary engineering
+    work
+  - 'Verification check does not pass: For every primitive in the architecture, a production analogue
+    is named in the chapter or appendix; integration ADRs doc...'
+- id: THESIS-04
+  name: No-novel-cryptography discipline
+  source: ch02 §"What This Book Adds"
+  source-paper: v13 §19
+  definition: Property 6 is feasible only when audited cryptographic primitives (libsodium, age, Argon2id
+    reference) are used opaquely and a DEK/KEK hierarchy composes them against a specification reviewed
+    by a cryptographic engineer, never when novel cryptography is invented.
+  must-implement:
+  - All cryptographic primitives come from audited reference libraries
+  - No new cipher, KDF, or protocol construction is invented in-house
+  - Key hierarchy composition is reviewed by a credentialed cryptographic engineer before deployment
+  verification: SBOM lists cryptographic dependencies; design review record names the cryptographic engineer
+    who approved the key hierarchy; no in-house cipher implementations are present in the codebase.
+  kleppmann-properties:
+  - P6
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - thesis
+  - security
+  - discipline
+  failed-conditions:
+  - 'Fails to satisfy: All cryptographic primitives come from audited reference libraries'
+  - No new cipher, KDF, or protocol construction is not invented in-house
+  - Key hierarchy composition is not reviewed by a credentialed cryptographic engineer before deployment
+  - 'Verification check does not pass: SBOM lists cryptographic dependencies; design review record names
+    the cryptographic engineer who approved the key hierar...'
+- id: THESIS-05
+  name: Adopt-don't-invent wire format discipline
+  source: ch02 §"What This Book Adds"
+  source-paper: v13 §19
+  definition: Property 5 (the long now) is preserved by adopting an existing portable CRDT format (Yjs
+    or Automerge) rather than inventing a proprietary wire format, because invented formats repeat the
+    Anytype Any-Block portability failure.
+  must-implement:
+  - The CRDT wire format is a documented, third-party-readable specification (Yjs, Automerge, or equivalent)
+  - No proprietary or single-vendor wire format is introduced for portable data
+  - At least one independent tool can parse the wire format
+  verification: Wire format documentation cites the upstream specification; an independent reference implementation
+    parses sample documents; ADR records the adopt-don't-invent decision.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - thesis
+  - portability
+  - wire-format
+  - discipline
+  failed-conditions:
+  - The CRDT wire format is not a documented, third-party-readable specification (Yjs, Automerge, or equivalent)
+  - No proprietary or single-vendor wire format is not introduced for portable data
+  - At least one independent tool cannot parse the wire format
+  - 'Verification check does not pass: Wire format documentation cites the upstream specification; an
+    independent reference implementation parses sample docume...'
+- id: THESIS-06
+  name: Disaggregated managed relay
+  source: ch02 §"What This Book Adds"
+  source-paper: v13 §19
+  definition: A managed relay is a residual vendor dependency that holds ciphertext only and can be self-hosted
+    without protocol changes, distinguishing it structurally from a SaaS vendor that holds decryptable
+    data.
+  must-implement:
+  - The managed relay handles ciphertext exclusively
+  - The relay protocol is documented and supports user self-hosting without modification
+  - Data custody (the keys) remains on user hardware, never on relay infrastructure
+  - Relay failure does not destroy user data, only impairs propagation
+  verification: Wire-protocol specification confirms ciphertext-only relay payloads; deploy a self-hosted
+    relay using the public protocol and confirm interoperability with the managed relay; threat model
+    documents relay as untrusted.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - thesis
+  - relay
+  - architecture
+  - trust-boundary
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - The managed relay does not handle ciphertext exclusively
+  - The relay protocol is not documented and supports user self-hosting without modification
+  - 'Fails to satisfy: Data custody (the keys) remains on user hardware, never on relay infrastructure'
+  - 'Fails to satisfy: Relay failure does not destroy user data, only impairs propagation'
+  - 'Verification check does not pass: Wire-protocol specification confirms ciphertext-only relay payloads;
+    deploy a self-hosted relay using the public protoco...'
+- id: THESIS-07
+  name: Per-record CAP positioning
+  source: ch02 §"What This Book Adds"
+  source-paper: v13 §19
+  definition: The architecture treats CRDT-merge records and lease-coordinated records as first-class
+    distinct classes with a defined boundary and handoff between them, rather than forcing all data into
+    a single consistency model.
+  must-implement:
+  - Each record type is classified as AP (CRDT-merged) or CP (lease-coordinated) at schema definition
+    time
+  - The boundary between AP and CP records is explicit and documented
+  - A defined handoff protocol governs interactions that cross the boundary
+  verification: Schema declarations carry an AP/CP tag for each record type; integration tests exercise
+    the handoff protocol between AP and CP records.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - thesis
+  - cap
+  - consistency-model
+  failed-conditions:
+  - Each record type is not classified as AP (CRDT-merged) or CP (lease-coordinated) at schema definition
+    time
+  - The boundary between AP and CP records is not explicit and documented
+  - 'Fails to satisfy: A defined handoff protocol governs interactions that cross the boundary'
+  - 'Verification check does not pass: Schema declarations carry an AP/CP tag for each record type; integration
+    tests exercise the handoff protocol between AP ...'

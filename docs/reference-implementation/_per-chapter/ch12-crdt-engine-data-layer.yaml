@@ -1,493 +1,1012 @@
 chapter: ch12
 chapter-title: CRDT Engine and Data Layer
-source-paper-refs: [v13 §2.2, v13 §2.4, v13 §9, v13 §12, v5 §3.1, ADR 0028]
+source-paper-refs:
+- v13 §2.2
+- v13 §2.4
+- v13 §9
+- v13 §12
+- v5 §3.1
+- ADR 0028
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: CRDT-01
-    name: Three-layer CRDT architecture (data, semantic, view)
-    source: ch12 §"The Three-Layer CRDT Architecture"
-    source-paper: v13 §2.2
-    definition: The data layer's CRDT foundation is decomposed into three layers — data (raw CRDT types), semantic (domain interpretation/invariants), and view (projections for query) — where each layer extends rather than overrides the guarantees beneath it.
-    must-implement:
-      - Raw CRDT type primitives are isolated from domain logic
-      - Semantic layer interprets CRDT changes as domain events and enforces domain invariants
-      - View layer holds no authoritative state and is rebuildable from data plus semantic layers
-    verification: Architecture review confirms separate modules/namespaces for CRDT primitives, domain interpretation, and projections, with no domain types referenced from the data layer.
-    kleppmann-properties: [P4, P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [crdt, architecture, layering, semantic-layer]
-
-  - id: CRDT-02
-    name: CRDT merge mathematical properties (commutativity, associativity, idempotency)
-    source: ch12 §"The Three-Layer CRDT Architecture"
-    source-paper: v13 §2.2
-    definition: A CRDT merge function must satisfy commutativity, associativity, and idempotency so that any two peers applying the same set of operations in any order — including duplicate application — converge to identical state.
-    must-implement:
-      - Merge function is commutative across operation order
-      - Merge function is associative across operation grouping
-      - Applying an operation twice produces the same state as applying it once
-    verification: Property-based test applies randomized operation sequences in different orders and with duplicates, asserting byte-identical convergent state.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [crdt, merge-determinism, math]
-
-  - id: CRDT-03
-    name: CRDT data layer primitives (map, list, text, counter)
-    source: ch12 §"The Three-Layer CRDT Architecture"
-    source-paper: v13 §2.2
-    definition: The data layer exposes four raw CRDT types — map (concurrent key insertions), list (insertion-order-preserving), text (human-legible character-merge), and counter (additive across peers) — none of which carry domain semantics.
-    must-implement:
-      - Map type merges concurrent key insertions deterministically
-      - List type preserves insertion order across peers under concurrent inserts
-      - Text type resolves concurrent character insertions into a human-legible result
-      - Counter type accumulates per-peer increments and converges to the correct sum
-    verification: Per-type convergence tests under concurrent edits assert deterministic output across peers for each primitive.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [crdt, primitives, merge-determinism]
-
-  - id: CRDT-04
-    name: Semantic layer enforces domain invariants
-    source: ch12 §"The Three-Layer CRDT Architecture"
-    source-paper: v13 §2.2
-    definition: The semantic layer interprets CRDT data-layer changes as domain events and enforces invariants that CRDT merge cannot enforce structurally — for example, turning a concurrent posting-amount mutation into a compensating ledger entry rather than a silent corruption.
-    must-implement:
-      - Domain validation runs on every CRDT change interpreted as a domain event
-      - Invalid state transitions surface to a domain-defined resolution path (compensation, conflict inbox, etc.)
-      - Semantic layer has authority that the data layer does not
-    verification: Test injects a CRDT-merged state that violates a domain invariant; assertion confirms semantic layer flags or compensates rather than accepting silently.
-    kleppmann-properties: [P4, P7]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [semantic-layer, invariants, domain]
-
-  - id: CRDT-05
-    name: View layer as derived projections
-    source: ch12 §"The Three-Layer CRDT Architecture"
-    source-paper: v13 §2.2
-    definition: The view layer projects current CRDT state into indexes and read models (balance tables, task boards, aging reports) that hold no authoritative state and must be idempotently rebuildable from the data and semantic layers at any time.
-    must-implement:
-      - Projections are registered through a builder interface (e.g. IProjectionBuilder)
-      - View rebuild is idempotent and may be triggered without notice
-      - View layer holds no state that cannot be rebuilt from data + semantic layers
-    verification: Delete projection store, trigger rebuild, assert resulting projections are byte-identical to pre-deletion state.
-    kleppmann-properties: [P1, P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [view-layer, projections, cqrs]
-
-  - id: CRDT-06
-    name: Per-record CAP positioning
-    source: ch12 §"Per-Record CAP Positioning"
-    source-paper: v13 §2.4
-    definition: CAP is not a global setting — each record class is explicitly assigned to AP (CRDT merge, divergence tolerated) or CP (distributed lease, no divergence) based on whether merge convergence is acceptable for that record's domain semantics.
-    must-implement:
-      - Each record class declares AP or CP positioning at definition time
-      - CP-class designation routes writes through lease coordination before reaching the CRDT store
-      - Designation lives in the plugin's stream definition, not in the data layer
-    verification: Inspect stream definitions for explicit AP/CP designation; verify CP writes traverse the lease coordinator before the CRDT document store.
-    kleppmann-properties: [P3, P4, P7]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [cap, ap, cp, record-class]
-
-  - id: CRDT-07
-    name: AP records — CRDT merge with tolerated divergence
-    source: ch12 §"Per-Record CAP Positioning"
-    source-paper: v13 §2.4
-    definition: AP records (documents, notes, task descriptions, team membership) tolerate concurrent offline divergence because deterministic CRDT merge produces a result the user can review, and the domain consequence of temporary inconsistency is acceptable.
-    must-implement:
-      - AP-classified records accept offline writes without coordination
-      - Reconnect triggers deterministic CRDT merge with no user prompt for the common path
-      - Identity-fact AP records (membership, permissions) re-verify role attestation on reconnect
-    verification: Two-peer offline divergence test for an AP stream confirms reconnect produces deterministic merged state with no manual intervention.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [ap, crdt, merge]
-
-  - id: CRDT-08
-    name: CP records — distributed lease serialization
-    source: ch12 §"Per-Record CAP Positioning"
-    source-paper: v13 §2.4
-    definition: CP records (resource reservations, financial transactions, audit/governance records) prohibit divergence because concurrent writes produce conflicting domain state unrecoverable by merge — they require lease acquisition before any write proceeds.
-    must-implement:
-      - CP-classified writes require lease acquisition prior to commit
-      - Conflicting CP writes surface as user-visible conflicts rather than silent merges
-      - Audit/governance CP records append to an append-only event log
-    verification: Two-peer offline test for a CP reservation stream confirms only one node's reservation commits and the other surfaces a lease-conflict requiring user resolution.
-    kleppmann-properties: [P4, P7]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [cp, lease, flease, reservations]
-
-  - id: CRDT-09
-    name: Circuit breaker quarantine queue for offline CP writes
-    source: ch12 §"Per-Record CAP Positioning"
-    source-paper: v13 §2.4
-    definition: CP-class writes attempted while a node is offline are held in a circuit-breaker quarantine queue and, on reconnect, the breaker attempts to acquire each required lease in submission order before promoting the write to the shared event log.
-    must-implement:
-      - Offline CP writes are not silently dropped or applied locally as committed
-      - Quarantine queue preserves submission order
-      - Reconnect logic attempts lease acquisition per queued write and surfaces conflicts on failure
-    verification: Submit CP writes while offline, reconnect, assert each enters the lease acquisition path and that conflicting writes surface to the conflict inbox.
-    kleppmann-properties: [P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [circuit-breaker, quarantine, cp, offline]
-
-  - id: CRDT-10
-    name: ICrdtEngine adapter abstraction
-    source: 'ch12 §"CRDT Engine Selection: YDotNet, Loro, and the ICrdtEngine Abstraction"'
-    source-paper: v13 §9
-    definition: ICrdtEngine in Sunfish.Kernel.Crdt is the engine-agnostic abstraction exposing only the surface the sync protocol and migration infrastructure need (create/open documents, produce/apply deltas, snapshot/restore, advance version vector), so that no kernel package, plugin, or sync daemon depends on a specific engine implementation.
-    must-implement:
-      - Abstraction exposes document create/open, delta produce/apply, snapshot produce/restore, and version-vector advance
-      - No plugin or sync daemon code references a concrete engine type
-      - Engine name and version string are reported through the abstraction for diagnostics and capability negotiation
-    verification: Static analysis confirms zero references to YDotNet (or any concrete engine) outside the engine adapter package; engine-name string appears in CAPABILITY_NEG advertisements.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [crdt, abstraction, adapter, engine-agnostic]
-
-  - id: CRDT-11
-    name: Engine swap reversibility via event log as source of truth
-    source: 'ch12 §"CRDT Engine Selection: YDotNet, Loro, and the ICrdtEngine Abstraction"'
-    source-paper: v13 §9
-    definition: Swapping the CRDT engine (e.g., YDotNet to Loro) does not require a schema epoch bump because the event log stores domain events rather than CRDT wire format, allowing the live CRDT working surface to be rebuilt from the engine-independent log under the new engine.
-    must-implement:
-      - Event log encodes domain events, not CRDT wire-format payloads
-      - Engine swap procedure rebuilds CRDT documents from the event log
-      - Schema epoch is not bumped solely for engine substitution
-    verification: Test rebuilds CRDT working state from event log under a stub engine, confirming the log replay produces equivalent semantic state independent of original engine.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [crdt, engine-swap, event-log, source-of-truth]
-
-  - id: CRDT-12
-    name: Engine selection criteria (YDotNet default, Loro aspirational, Automerge excluded)
-    source: 'ch12 §"CRDT Engine Selection: YDotNet, Loro, and the ICrdtEngine Abstraction"'
-    source-paper: v13 §9
-    definition: YDotNet is the default production backend for its mature .NET bindings to yrs; Loro is the aspirational primary for its first-class compaction and shallow snapshot model; Automerge is excluded only because no .NET binding currently covers the required sync surface.
-    must-implement:
-      - YDotNet backend is shipped and validated
-      - Loro backend is targeted as the binding surface matures
-      - Engine selection rationale is documented in an ADR
-    verification: ADR exists naming chosen engine and its trade-offs; backend implementations exist behind the ICrdtEngine abstraction.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [crdt, engine, ydotnet, loro, automerge, adr]
-
-  - id: CRDT-13
-    name: Monotonic CRDT growth requires bounded mitigation
-    source: ch12 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §12
-    definition: CRDT documents grow monotonically because tombstones, historical operations, and version-vector metadata accumulate as the document is used — this is a structural property of coordinator-free deterministic merge, not a flaw, and growth must be bounded rather than eliminated.
-    must-implement:
-      - Architecture acknowledges monotonic growth as a property and applies bounding strategies
-      - At least one of library compaction, sharding, or shallow snapshots is applied per document type
-    verification: Long-running soak test on a high-churn document confirms growth is bounded by the configured GC policy rather than unbounded.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [crdt, growth, gc, tombstones]
-
-  - id: CRDT-14
-    name: Library-level compaction
-    source: ch12 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §12
-    definition: Library-level compaction is the engine's built-in pruning of tombstones and superseded operations, treated as a primary engine evaluation criterion because emergent-GC engines (YDotNet) require all-peer acknowledgment before pruning while shallow-snapshot engines (Loro) avoid that dependency.
-    must-implement:
-      - Compaction strategy is specified per chosen engine
-      - For acknowledgment-dependent engines, AckVector tracking gates pruning
-    verification: Engine compaction runs in an integration test and confirms operations older than the acknowledgment watermark are pruned without breaking convergence.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [gc, compaction, engine, ackvector]
-
-  - id: CRDT-15
-    name: Application-level document sharding
-    source: ch12 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §12
-    definition: Document sharding splits a large logical document into sub-documents under named map keys (e.g., per-week log entries under a project map) so that archiving a key garbage-collects the sub-document independently, with the semantic layer declaring shard keys and the data layer executing transparently.
-    must-implement:
-      - Plugin declares which domains use sharded sub-documents and the sharding key
-      - Data layer executes sharding transparently to application code
-      - Archiving a sub-document key triggers independent GC of that shard
-    verification: High-churn domain test creates many shard keys, archives older ones, and confirms older shards are GC'd independently while newer shards remain intact.
-    kleppmann-properties: [P5]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [sharding, gc, sub-document, semantic-layer]
-
-  - id: CRDT-16
-    name: Periodic shallow snapshots
-    source: ch12 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §12
-    definition: A shallow snapshot captures current visible state plus a version vector encoding which operations are included, discards operations older than the snapshot boundary, and becomes the new base for subsequent deltas — opt-in per document type, with full-state transfer required for peers whose vector predates the boundary.
-    must-implement:
-      - Shallow snapshots are opt-in via stream definition
-      - Snapshot boundary is recorded as a version vector
-      - Peers whose vector predates the boundary fall through to full-state snapshot transfer
-    verification: Trigger shallow snapshot on opt-in stream; reconnect a stale peer and assert full-state transfer activates rather than incremental delta.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [snapshot, gc, shallow, opt-in]
-
-  - id: CRDT-17
-    name: Three-tier GC policy (ephemeral, standard, compliance)
-    source: ch12 §"The Three-Tier GC Policy"
-    source-paper: v13 §12
-    definition: Each document type is assigned to one of three GC tiers — ephemeral (aggressive GC, no durability), standard (90/180-day retention with peer-acknowledgment gating), or compliance (no GC, indefinite retention) — based on durability requirements and acknowledgment characteristics.
-    must-implement:
-      - Each stream definition assigns a GC tier
-      - Ephemeral tier discards operations on a short schedule with no peer-ack requirement
-      - Standard tier gates GC on AckVector confirming all active peers received operations
-      - Compliance tier never triggers GC
-    verification: Inspect stream definitions for explicit tier assignment; soak tests for each tier confirm correct retention and pruning behavior.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [gc, tiers, retention, compliance, ephemeral]
-
-  - id: CRDT-18
-    name: AckVector and active peer set semantics
-    source: ch12 §"The Three-Tier GC Policy"
-    source-paper: v13 §12
-    definition: AckVector is a compact per-document per-peer acknowledgment watermark persisted alongside the Layer 2 event log, and the "active peer set" is the set of peers that authenticated a CAPABILITY_NEG handshake within a configurable peer-staleness window (30 days default) — GC proceeds only after all active peers have acknowledged.
-    must-implement:
-      - AckVector tracks each peer's highest-indexed acknowledged operation per document
-      - Active peer set membership respects a configurable staleness window
-      - GC waits for all active peers to acknowledge before pruning standard-tier operations
-      - Administrators may drop staleness-exceeding peers from the active set
-    verification: Multi-peer simulation confirms GC blocks until all active peers ack; dropping a stale peer unblocks GC; returning peer enters stale-peer recovery.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [ackvector, gc, peer-set, staleness]
-
-  - id: CRDT-19
-    name: Stale peer recovery via full-state snapshot transfer
-    source: ch12 §"The Stale Peer Recovery Protocol"
-    source-paper: v13 §12
-    definition: When a reconnecting peer's vector clock predates the local compaction watermark, incremental sync is impossible, so the sync daemon abandons delta exchange and initiates full-state snapshot transfer with source-selection preference, concurrency limits, idempotent resume on interruption, and per-tier behavior.
-    must-implement:
-      - CAPABILITY_NEG compares peer vector against compaction watermark and routes to snapshot transfer when stale
-      - Snapshot source preference favors most recent successful sync partner
-      - Snapshot transfer resumes from byte offset on interruption and verifies integrity hash before commit
-      - Snapshot is applied atomically (full replace or no change)
-      - Per-tier behavior — compliance tier never needs transfer; ephemeral tier rebuilds from next broadcast
-    verification: Force a peer's clock to predate the GC horizon; reconnect and assert full-state transfer activates with correct source selection, resume on disconnect, and atomic application.
-    kleppmann-properties: [P3, P5]
-    scope: inverted-stack-specific
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [recovery, snapshot, stale-peer, capability-neg]
-
-  - id: CRDT-20
-    name: Schema-on-write CRDT operation validation at store entry
-    source: ch12 §"CRDT Operation Validation at Store Entry"
-    source-paper: v13 §12
-    definition: Every CRDT operation — locally produced or peer-received — passes through schema-level validation before insertion into the local CRDT store, gating insertion by record-type check, field constraints, and minimum-supported schema version, with failures quarantined rather than applied.
-    must-implement:
-      - Validation runs on every operation prior to CRDT store insertion
-      - Operations whose schema version is below the node's minimum-supported version are rejected
-      - Field constraints (required fields, types, enum ranges) are checked
-      - Failed operations enter the quarantine queue and surface in the conflict inbox
-    verification: Inject a malformed operation via the sync path and assert it is quarantined and surfaced to the conflict inbox without modifying CRDT state.
-    kleppmann-properties: [P4, P6]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [schema-on-write, validation, quarantine, conflict-inbox]
-
-  - id: CRDT-21
-    name: Schema version negotiation at CAPABILITY_NEG
-    source: ch12 §"CRDT Operation Validation at Store Entry"
-    source-paper: v13 §12
-    definition: Each peer declares its minimum-supported schema version per stream at the CAPABILITY_NEG handshake, the pair converges on the highest mutually-supported version, and operations outside the negotiated compatibility window are rejected with a diagnostic pointing to the upcast path.
-    must-implement:
-      - Handshake exchanges per-stream min-supported schema version
-      - Pair converges on highest mutually supported schema version
-      - Out-of-window operations are rejected with a diagnostic referencing the required upcast
-    verification: Two peers with disparate schema versions complete handshake; assert negotiated version equals the highest common version and out-of-window ops produce diagnostics.
-    kleppmann-properties: [P4]
-    scope: inverted-stack-specific
-    failure-modes: [schema-skew]
-    tags: [schema, negotiation, capability-neg, handshake]
-
-  - id: CRDT-22
-    name: Compliance tier required by data sovereignty regimes
-    source: ch12 §"CRDT Growth and Garbage Collection"
-    source-paper: v13 §12
-    definition: The no-GC compliance tier is a mandatory (not preferred) classification for record types subject to fourteen named data sovereignty regimes across six geographic regions, ensuring growth is bounded only by business volume — the activity the records exist to document.
-    must-implement:
-      - Stream definitions for regulated record types assign the compliance tier explicitly
-      - GDPR Article 17 erasure interaction is handled via crypto-shredding at the DEK level (cross-ref Ch15)
-      - Tier assignment is a domain decision recorded in the plugin
-    verification: Audit confirms regulated streams (e.g. financial postings, audit records) are assigned compliance tier and never have operations pruned.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection]
-    tags: [compliance, gdpr, sovereignty, retention]
-
-  - id: CRDT-23
-    name: Double-entry ledger as canonical CP subsystem
-    source: ch12 §"The Double-Entry Ledger as the Canonical CP Subsystem"
-    source-paper: v13 §2.4
-    definition: The double-entry ledger is the correct model for value records — not a CRDT workaround — because its append-only, immutable, strictly-ordered, balanced-postings structure aligns directly with what CP positioning requires for audit integrity.
-    must-implement:
-      - Every transaction produces at least two postings whose amounts sum to zero
-      - Postings are immutable once committed; corrections occur via compensating entries
-      - Immutability is enforced structurally by the append-only event log
-    verification: Attempt to mutate a committed posting and confirm the operation is rejected; verify ledger integrity check confirms balanced postings per transaction.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [ledger, double-entry, cp, audit, append-only]
-
-  - id: CRDT-24
-    name: Posting engine with idempotency keys
-    source: ch12 §"The Posting Engine"
-    source-paper: v13 §2.4
-    definition: Sunfish.Kernel.Ledger's posting engine converts domain events into ledger entries under distributed lease coordination, and uses idempotency keys carried on domain events so that processing the same event multiple times produces at most one set of postings.
-    must-implement:
-      - Posting writes acquire a quorum-granted lease via Sunfish.Kernel.Lease before commit
-      - Each domain event carries an idempotency key
-      - Duplicate processing of the same idempotency key is a no-op returning the original result
-    verification: Submit the same idempotency-keyed event twice; assert the ledger contains exactly one posting set and the second call returns identical results.
-    kleppmann-properties: [P4, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [ledger, posting-engine, idempotency, lease]
-
-  - id: CRDT-25
-    name: CQRS write/read split for ledger
-    source: ch12 §"CQRS Write/Read Split"
-    source-paper: v13 §2.4
-    definition: The ledger applies CQRS — the immutable posting event stream is the write side, while balance tables, statements, aging reports, and period summaries are derived read-side projections that hold no data unrebuildable by replaying the event stream.
-    must-implement:
-      - Write path appends to the event stream only
-      - Projections derive from the event stream and are rebuildable from it
-      - Business rule aggregates read from the event stream or current lease-protected CP state, never from lagging projections
-    verification: Delete projection store, replay event log, and confirm rebuilt projections match original; assert no business rule reads from projection-only state.
-    kleppmann-properties: [P5]
-    scope: foundational
-    failure-modes: []
-    tags: [cqrs, ledger, projections, event-sourcing]
-
-  - id: CRDT-26
-    name: Period close and rollup snapshots
-    source: ch12 §"Period Close and Rollup Snapshots"
-    source-paper: v13 §2.4
-    definition: At period close, the projection engine computes account balances, P&L, and cash flow as rollup snapshots committed as closing events to the append-only log, and any subsequent postings affecting a closed period are directed to adjustment accounts in the next open period — the closed-period log is never rewritten.
-    must-implement:
-      - Period close emits rollup snapshot events to the append-only log
-      - Postings affecting a closed period route to adjustment accounts in the next open period
-      - Closed-period event log is immutable and never rewritten
-    verification: Close a period, attempt a backdated posting, assert it is recorded as an adjustment in the current period and the closed-period log is unchanged.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [ledger, period-close, rollup, audit]
-
-  - id: CRDT-27
-    name: Five-layer storage architecture
-    source: ch12 §"The Five-Layer Storage Architecture"
-    source-paper: v13 §9
-    definition: The storage architecture places five concerns in five distinct layers — Layer 1 local encrypted database, Layer 2 CRDT and event log, Layer 3 user-controlled cloud backup (always present), Layer 4 content-addressed distribution (opt-in), Layer 5 decentralized archival (opt-in enterprise) — each with independent durability semantics.
-    must-implement:
-      - Layers 1, 2, and 3 are always present in a production node
-      - Each layer has independent durability semantics and failure modes
-      - Layers 4 and 5 are opt-in and do not affect operation when absent
-    verification: Architecture review confirms five-layer separation; failure injection in any layer demonstrates independent failure modes.
-    kleppmann-properties: [P3, P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [storage, architecture, layers]
-
-  - id: CRDT-28
-    name: Layer 1 — local encrypted database (SQLCipher)
-    source: ch12 §"The Five-Layer Storage Architecture"
-    source-paper: v13 §9
-    definition: Layer 1 is the primary operational store — Sunfish.Foundation.LocalFirst's SQLCipher-backed IOfflineStore — applying AES-256 page-level encryption with the key derived from the device's OS-native keystore via Sunfish.Kernel.Security, never stored in plaintext alongside the database.
-    must-implement:
-      - All reads and writes hit Layer 1 first
-      - Encryption key is derived from OS-native keystore, never persisted plaintext alongside the database
-      - Reads are synchronous from the application perspective with no network round-trip
-      - Layer 1 corruption triggers rebuild from Layer 2 event log
-    verification: Inspect database file confirms encryption-at-rest; key material is absent from filesystem; corruption test rebuilds from Layer 2.
-    kleppmann-properties: [P1, P3, P6]
-    scope: inverted-stack-specific
-    failure-modes: [key-loss, key-compromise]
-    tags: [storage, sqlcipher, encryption, layer-1]
-
-  - id: CRDT-29
-    name: Layer 2 — append-only event log as source of truth
-    source: ch12 §"The Five-Layer Storage Architecture"
-    source-paper: v13 §9
-    definition: Layer 2 is the append-only CRDT and event log — the source of truth — to which every CRDT operation, domain event, and ledger posting is durably written (fsync on POSIX, FlushFileBuffers on Windows) before the application receives confirmation, with the only mutating operation being compaction under the three-tier GC policy.
-    must-implement:
-      - Every operation is durably persisted (fsync/FlushFileBuffers) before application acknowledgment
-      - Write path is append-only with no in-place mutation operation
-      - Compaction replaces ranges with snapshots representing equivalent state, never silent deletion
-      - Layer 2 truncation without Layer 3 backup is acknowledged as the one irrecoverable failure mode
-    verification: Power-loss simulation confirms acknowledged writes survive recovery; static analysis confirms no in-place mutation API on the log; compaction test confirms snapshot equivalence.
-    kleppmann-properties: [P3, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [storage, event-log, append-only, durability, layer-2]
-
-  - id: CRDT-30
-    name: Layer 3 — user-controlled cloud backup
-    source: ch12 §"The Five-Layer Storage Architecture"
-    source-paper: v13 §9
-    definition: Layer 3 streams the event log to object storage under the user's own credentials and chosen jurisdiction, with the provider adapter supporting any S3-compatible endpoint (sovereign clouds, EU-resident providers, on-premise MinIO/Ceph) so the user controls credentials, bucket, residency, and retention.
-    must-implement:
-      - Backup adapter accepts any S3-compatible endpoint
-      - User supplies and retains backup credentials
-      - User selects jurisdictional residency and retention policy
-      - Disaster recovery proceeds via new device install + backup credentials + restore from object storage
-    verification: Configure backup against multiple S3 endpoints (AWS, Hetzner, MinIO); destroy local node; restore from backup credentials only and confirm full state recovery.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-outage, data-residency-objection]
-    tags: [storage, backup, s3, sovereignty, layer-3]
-
-  - id: CRDT-31
-    name: Layer 4 — content-addressed binary distribution (opt-in)
-    source: ch12 §"The Five-Layer Storage Architecture"
-    source-paper: v13 §9
-    definition: Layer 4 synchronizes binary assets across nodes using content-hash addressing as the storage key, providing integrity verification and deduplication as structural properties — opt-in because text-and-structured-data nodes do not need the infrastructure overhead.
-    must-implement:
-      - Asset storage key is the content hash
-      - Two nodes with the same asset confirm identity by hash without redundant transfer
-      - Layer is opt-in via deployment configuration
-    verification: Two nodes independently receive the same binary; hash comparison confirms identity and no redundant transfer occurs.
-    kleppmann-properties: [P4, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [storage, content-addressed, deduplication, layer-4, opt-in]
-
-  - id: CRDT-32
-    name: Layer 5 — decentralized archival with proof-of-storage (opt-in enterprise)
-    source: ch12 §"The Five-Layer Storage Architecture"
-    source-paper: v13 §9
-    definition: Layer 5 commits signed archive segments from the event log to a decentralized storage network that issues cryptographic proofs of storage and integrity, satisfying regulated-industry audit requirements where self-attesting archives would not pass scrutiny — opt-in and never an operational dependency.
-    must-implement:
-      - Archive segments are cryptographically signed before commit
-      - Proofs of storage are retrievable for audit
-      - Local Layers 1 and 2 remain valid and operational regardless of Layer 5 availability
-    verification: Submit segment to Layer 5; retrieve proof; verify proof cryptographically; disconnect Layer 5 and confirm node operates normally.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [storage, archival, proof-of-storage, compliance, layer-5, opt-in]
+- id: CRDT-01
+  name: Three-layer CRDT architecture (data, semantic, view)
+  source: ch12 §"The Three-Layer CRDT Architecture"
+  source-paper: v13 §2.2
+  definition: The data layer's CRDT foundation is decomposed into three layers — data (raw CRDT types),
+    semantic (domain interpretation/invariants), and view (projections for query) — where each layer extends
+    rather than overrides the guarantees beneath it.
+  must-implement:
+  - Raw CRDT type primitives are isolated from domain logic
+  - Semantic layer interprets CRDT changes as domain events and enforces domain invariants
+  - View layer holds no authoritative state and is rebuildable from data plus semantic layers
+  verification: Architecture review confirms separate modules/namespaces for CRDT primitives, domain interpretation,
+    and projections, with no domain types referenced from the data layer.
+  kleppmann-properties:
+  - P4
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - crdt
+  - architecture
+  - layering
+  - semantic-layer
+  failed-conditions:
+  - Raw CRDT type primitives are not isolated from domain logic
+  - Semantic layer interprets CRDT changes as domain events and does not enforce domain invariants
+  - View layer holds no authoritative state and is not rebuildable from data plus semantic layers
+  - 'Verification check does not pass: Architecture review confirms separate modules/namespaces for CRDT
+    primitives, domain interpretation, and projections, wi...'
+- id: CRDT-02
+  name: CRDT merge mathematical properties (commutativity, associativity, idempotency)
+  source: ch12 §"The Three-Layer CRDT Architecture"
+  source-paper: v13 §2.2
+  definition: A CRDT merge function must satisfy commutativity, associativity, and idempotency so that
+    any two peers applying the same set of operations in any order — including duplicate application —
+    converge to identical state.
+  must-implement:
+  - Merge function is commutative across operation order
+  - Merge function is associative across operation grouping
+  - Applying an operation twice produces the same state as applying it once
+  verification: Property-based test applies randomized operation sequences in different orders and with
+    duplicates, asserting byte-identical convergent state.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - crdt
+  - merge-determinism
+  - math
+  failed-conditions:
+  - Merge function is not commutative across operation order
+  - Merge function is not associative across operation grouping
+  - 'Fails to satisfy: Applying an operation twice produces the same state as applying it once'
+  - 'Verification check does not pass: Property-based test applies randomized operation sequences in different
+    orders and with duplicates, asserting byte-ident...'
+- id: CRDT-03
+  name: CRDT data layer primitives (map, list, text, counter)
+  source: ch12 §"The Three-Layer CRDT Architecture"
+  source-paper: v13 §2.2
+  definition: The data layer exposes four raw CRDT types — map (concurrent key insertions), list (insertion-order-preserving),
+    text (human-legible character-merge), and counter (additive across peers) — none of which carry domain
+    semantics.
+  must-implement:
+  - Map type merges concurrent key insertions deterministically
+  - List type preserves insertion order across peers under concurrent inserts
+  - Text type resolves concurrent character insertions into a human-legible result
+  - Counter type accumulates per-peer increments and converges to the correct sum
+  verification: Per-type convergence tests under concurrent edits assert deterministic output across peers
+    for each primitive.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - crdt
+  - primitives
+  - merge-determinism
+  failed-conditions:
+  - 'Fails to satisfy: Map type merges concurrent key insertions deterministically'
+  - List type does not preserve insertion order across peers under concurrent inserts
+  - 'Fails to satisfy: Text type resolves concurrent character insertions into a human-legible result'
+  - Counter type accumulates per-peer increments and does not converge to the correct sum
+  - 'Verification check does not pass: Per-type convergence tests under concurrent edits assert deterministic
+    output across peers for each primitive.'
+- id: CRDT-04
+  name: Semantic layer enforces domain invariants
+  source: ch12 §"The Three-Layer CRDT Architecture"
+  source-paper: v13 §2.2
+  definition: The semantic layer interprets CRDT data-layer changes as domain events and enforces invariants
+    that CRDT merge cannot enforce structurally — for example, turning a concurrent posting-amount mutation
+    into a compensating ledger entry rather than a silent corruption.
+  must-implement:
+  - Domain validation runs on every CRDT change interpreted as a domain event
+  - Invalid state transitions surface to a domain-defined resolution path (compensation, conflict inbox,
+    etc.)
+  - Semantic layer has authority that the data layer does not
+  verification: Test injects a CRDT-merged state that violates a domain invariant; assertion confirms
+    semantic layer flags or compensates rather than accepting silently.
+  kleppmann-properties:
+  - P4
+  - P7
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - semantic-layer
+  - invariants
+  - domain
+  failed-conditions:
+  - 'Fails to satisfy: Domain validation runs on every CRDT change interpreted as a domain event'
+  - 'Fails to satisfy: Invalid state transitions surface to a domain-defined resolution path (compensation,
+    conflict inbox, etc.)'
+  - Semantic layer has not authority that the data layer does not
+  - 'Verification check does not pass: Test injects a CRDT-merged state that violates a domain invariant;
+    assertion confirms semantic layer flags or compensate...'
+- id: CRDT-05
+  name: View layer as derived projections
+  source: ch12 §"The Three-Layer CRDT Architecture"
+  source-paper: v13 §2.2
+  definition: The view layer projects current CRDT state into indexes and read models (balance tables,
+    task boards, aging reports) that hold no authoritative state and must be idempotently rebuildable
+    from the data and semantic layers at any time.
+  must-implement:
+  - Projections are registered through a builder interface (e.g. IProjectionBuilder)
+  - View rebuild is idempotent and may be triggered without notice
+  - View layer holds no state that cannot be rebuilt from data + semantic layers
+  verification: Delete projection store, trigger rebuild, assert resulting projections are byte-identical
+    to pre-deletion state.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - view-layer
+  - projections
+  - cqrs
+  failed-conditions:
+  - Projections are not registered through a builder interface (e.g. IProjectionBuilder)
+  - View rebuild is not idempotent and may be triggered without notice
+  - 'Fails to satisfy: View layer holds no state that cannot be rebuilt from data + semantic layers'
+  - 'Verification check does not pass: Delete projection store, trigger rebuild, assert resulting projections
+    are byte-identical to pre-deletion state.'
+- id: CRDT-06
+  name: Per-record CAP positioning
+  source: ch12 §"Per-Record CAP Positioning"
+  source-paper: v13 §2.4
+  definition: CAP is not a global setting — each record class is explicitly assigned to AP (CRDT merge,
+    divergence tolerated) or CP (distributed lease, no divergence) based on whether merge convergence
+    is acceptable for that record's domain semantics.
+  must-implement:
+  - Each record class declares AP or CP positioning at definition time
+  - CP-class designation routes writes through lease coordination before reaching the CRDT store
+  - Designation lives in the plugin's stream definition, not in the data layer
+  verification: Inspect stream definitions for explicit AP/CP designation; verify CP writes traverse the
+    lease coordinator before the CRDT document store.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - cap
+  - ap
+  - cp
+  - record-class
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Each record class does not declare AP or CP positioning at definition time
+  - CP-class designation does not route writes through lease coordination before reaching the CRDT store
+  - 'Fails to satisfy: Designation lives in the plugin''s stream definition, not in the data layer'
+  - 'Verification check does not pass: Inspect stream definitions for explicit AP/CP designation; verify
+    CP writes traverse the lease coordinator before the CR...'
+- id: CRDT-07
+  name: AP records — CRDT merge with tolerated divergence
+  source: ch12 §"Per-Record CAP Positioning"
+  source-paper: v13 §2.4
+  definition: AP records (documents, notes, task descriptions, team membership) tolerate concurrent offline
+    divergence because deterministic CRDT merge produces a result the user can review, and the domain
+    consequence of temporary inconsistency is acceptable.
+  must-implement:
+  - AP-classified records accept offline writes without coordination
+  - Reconnect triggers deterministic CRDT merge with no user prompt for the common path
+  - Identity-fact AP records (membership, permissions) re-verify role attestation on reconnect
+  verification: Two-peer offline divergence test for an AP stream confirms reconnect produces deterministic
+    merged state with no manual intervention.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - ap
+  - crdt
+  - merge
+  failed-conditions:
+  - AP-classified does not record accept offline writes without coordination
+  - 'Fails to satisfy: Reconnect triggers deterministic CRDT merge with no user prompt for the common
+    path'
+  - Identity-fact AP does not record (membership, permissions) re-verify role attestation on reconnect
+  - 'Verification check does not pass: Two-peer offline divergence test for an AP stream confirms reconnect
+    produces deterministic merged state with no manual ...'
+- id: CRDT-08
+  name: CP records — distributed lease serialization
+  source: ch12 §"Per-Record CAP Positioning"
+  source-paper: v13 §2.4
+  definition: CP records (resource reservations, financial transactions, audit/governance records) prohibit
+    divergence because concurrent writes produce conflicting domain state unrecoverable by merge — they
+    require lease acquisition before any write proceeds.
+  must-implement:
+  - CP-classified writes require lease acquisition prior to commit
+  - Conflicting CP writes surface as user-visible conflicts rather than silent merges
+  - Audit/governance CP records append to an append-only event log
+  verification: Two-peer offline test for a CP reservation stream confirms only one node's reservation
+    commits and the other surfaces a lease-conflict requiring user resolution.
+  kleppmann-properties:
+  - P4
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - cp
+  - lease
+  - flease
+  - reservations
+  failed-conditions:
+  - 'Fails to satisfy: CP-classified writes require lease acquisition prior to commit'
+  - 'Fails to satisfy: Conflicting CP writes surface as user-visible conflicts rather than silent merges'
+  - Audit/governance CP does not record append to an append-only event log
+  - 'Verification check does not pass: Two-peer offline test for a CP reservation stream confirms only
+    one node''s reservation commits and the other surfaces a ...'
+- id: CRDT-09
+  name: Circuit breaker quarantine queue for offline CP writes
+  source: ch12 §"Per-Record CAP Positioning"
+  source-paper: v13 §2.4
+  definition: CP-class writes attempted while a node is offline are held in a circuit-breaker quarantine
+    queue and, on reconnect, the breaker attempts to acquire each required lease in submission order before
+    promoting the write to the shared event log.
+  must-implement:
+  - Offline CP writes are not silently dropped or applied locally as committed
+  - Quarantine queue preserves submission order
+  - Reconnect logic attempts lease acquisition per queued write and surfaces conflicts on failure
+  verification: Submit CP writes while offline, reconnect, assert each enters the lease acquisition path
+    and that conflicting writes surface to the conflict inbox.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - circuit-breaker
+  - quarantine
+  - cp
+  - offline
+  failed-conditions:
+  - 'Fails to satisfy: Offline CP writes are not silently dropped or applied locally as committed'
+  - Quarantine queue does not preserve submission order
+  - Reconnect logic attempts lease acquisition per queued write and does not surface conflicts on failure
+  - 'Verification check does not pass: Submit CP writes while offline, reconnect, assert each enters the
+    lease acquisition path and that conflicting writes sur...'
+- id: CRDT-10
+  name: ICrdtEngine adapter abstraction
+  source: 'ch12 §"CRDT Engine Selection: YDotNet, Loro, and the ICrdtEngine Abstraction"'
+  source-paper: v13 §9
+  definition: ICrdtEngine in Sunfish.Kernel.Crdt is the engine-agnostic abstraction exposing only the
+    surface the sync protocol and migration infrastructure need (create/open documents, produce/apply
+    deltas, snapshot/restore, advance version vector), so that no kernel package, plugin, or sync daemon
+    depends on a specific engine implementation.
+  must-implement:
+  - Abstraction exposes document create/open, delta produce/apply, snapshot produce/restore, and version-vector
+    advance
+  - No plugin or sync daemon code references a concrete engine type
+  - Engine name and version string are reported through the abstraction for diagnostics and capability
+    negotiation
+  verification: Static analysis confirms zero references to YDotNet (or any concrete engine) outside the
+    engine adapter package; engine-name string appears in CAPABILITY_NEG advertisements.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - crdt
+  - abstraction
+  - adapter
+  - engine-agnostic
+  failed-conditions:
+  - Abstraction does not expose document create/open, delta produce/apply, snapshot produce/restore, and
+    version-vector advance
+  - 'Fails to satisfy: No plugin or sync daemon code references a concrete engine type'
+  - Engine name and version string are not reported through the abstraction for diagnostics and capability
+    negotiation
+  - 'Verification check does not pass: Static analysis confirms zero references to YDotNet (or any concrete
+    engine) outside the engine adapter package; engine-...'
+- id: CRDT-11
+  name: Engine swap reversibility via event log as source of truth
+  source: 'ch12 §"CRDT Engine Selection: YDotNet, Loro, and the ICrdtEngine Abstraction"'
+  source-paper: v13 §9
+  definition: Swapping the CRDT engine (e.g., YDotNet to Loro) does not require a schema epoch bump because
+    the event log stores domain events rather than CRDT wire format, allowing the live CRDT working surface
+    to be rebuilt from the engine-independent log under the new engine.
+  must-implement:
+  - Event log encodes domain events, not CRDT wire-format payloads
+  - Engine swap procedure rebuilds CRDT documents from the event log
+  - Schema epoch is not bumped solely for engine substitution
+  verification: Test rebuilds CRDT working state from event log under a stub engine, confirming the log
+    replay produces equivalent semantic state independent of original engine.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - crdt
+  - engine-swap
+  - event-log
+  - source-of-truth
+  failed-conditions:
+  - 'Fails to satisfy: Event log encodes domain events, not CRDT wire-format payloads'
+  - 'Fails to satisfy: Engine swap procedure rebuilds CRDT documents from the event log'
+  - 'Fails to satisfy: Schema epoch is not bumped solely for engine substitution'
+  - 'Verification check does not pass: Test rebuilds CRDT working state from event log under a stub engine,
+    confirming the log replay produces equivalent seman...'
+- id: CRDT-12
+  name: Engine selection criteria (YDotNet default, Loro aspirational, Automerge excluded)
+  source: 'ch12 §"CRDT Engine Selection: YDotNet, Loro, and the ICrdtEngine Abstraction"'
+  source-paper: v13 §9
+  definition: YDotNet is the default production backend for its mature .NET bindings to yrs; Loro is the
+    aspirational primary for its first-class compaction and shallow snapshot model; Automerge is excluded
+    only because no .NET binding currently covers the required sync surface.
+  must-implement:
+  - YDotNet backend is shipped and validated
+  - Loro backend is targeted as the binding surface matures
+  - Engine selection rationale is documented in an ADR
+  verification: ADR exists naming chosen engine and its trade-offs; backend implementations exist behind
+    the ICrdtEngine abstraction.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - crdt
+  - engine
+  - ydotnet
+  - loro
+  - automerge
+  - adr
+  failed-conditions:
+  - YDotNet backend is not shipped and validated
+  - Loro backend is not targeted as the binding surface matures
+  - Engine selection rationale is not documented in an ADR
+  - 'Verification check does not pass: ADR exists naming chosen engine and its trade-offs; backend implementations
+    exist behind the ICrdtEngine abstraction.'
+- id: CRDT-13
+  name: Monotonic CRDT growth requires bounded mitigation
+  source: ch12 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §12
+  definition: CRDT documents grow monotonically because tombstones, historical operations, and version-vector
+    metadata accumulate as the document is used — this is a structural property of coordinator-free deterministic
+    merge, not a flaw, and growth must be bounded rather than eliminated.
+  must-implement:
+  - Architecture acknowledges monotonic growth as a property and applies bounding strategies
+  - At least one of library compaction, sharding, or shallow snapshots is applied per document type
+  verification: Long-running soak test on a high-churn document confirms growth is bounded by the configured
+    GC policy rather than unbounded.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - crdt
+  - growth
+  - gc
+  - tombstones
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Architecture acknowledges monotonic growth as a property and does not applie bounding strategies
+  - At least one of library compaction, sharding, or shallow snapshots is not applied per document type
+  - 'Verification check does not pass: Long-running soak test on a high-churn document confirms growth
+    is bounded by the configured GC policy rather than unbou...'
+- id: CRDT-14
+  name: Library-level compaction
+  source: ch12 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §12
+  definition: Library-level compaction is the engine's built-in pruning of tombstones and superseded operations,
+    treated as a primary engine evaluation criterion because emergent-GC engines (YDotNet) require all-peer
+    acknowledgment before pruning while shallow-snapshot engines (Loro) avoid that dependency.
+  must-implement:
+  - Compaction strategy is specified per chosen engine
+  - For acknowledgment-dependent engines, AckVector tracking gates pruning
+  verification: Engine compaction runs in an integration test and confirms operations older than the acknowledgment
+    watermark are pruned without breaking convergence.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - gc
+  - compaction
+  - engine
+  - ackvector
+  failed-conditions:
+  - Compaction strategy is not specified per chosen engine
+  - 'Fails to satisfy: For acknowledgment-dependent engines, AckVector tracking gates pruning'
+  - 'Verification check does not pass: Engine compaction runs in an integration test and confirms operations
+    older than the acknowledgment watermark are pruned...'
+- id: CRDT-15
+  name: Application-level document sharding
+  source: ch12 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §12
+  definition: Document sharding splits a large logical document into sub-documents under named map keys
+    (e.g., per-week log entries under a project map) so that archiving a key garbage-collects the sub-document
+    independently, with the semantic layer declaring shard keys and the data layer executing transparently.
+  must-implement:
+  - Plugin declares which domains use sharded sub-documents and the sharding key
+  - Data layer executes sharding transparently to application code
+  - Archiving a sub-document key triggers independent GC of that shard
+  verification: High-churn domain test creates many shard keys, archives older ones, and confirms older
+    shards are GC'd independently while newer shards remain intact.
+  kleppmann-properties:
+  - P5
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - sharding
+  - gc
+  - sub-document
+  - semantic-layer
+  failed-conditions:
+  - Plugin does not declare which domains use sharded sub-documents and the sharding key
+  - Data layer does not execute sharding transparently to application code
+  - 'Fails to satisfy: Archiving a sub-document key triggers independent GC of that shard'
+  - 'Verification check does not pass: High-churn domain test creates many shard keys, archives older
+    ones, and confirms older shards are GC''d independently wh...'
+- id: CRDT-16
+  name: Periodic shallow snapshots
+  source: ch12 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §12
+  definition: A shallow snapshot captures current visible state plus a version vector encoding which operations
+    are included, discards operations older than the snapshot boundary, and becomes the new base for subsequent
+    deltas — opt-in per document type, with full-state transfer required for peers whose vector predates
+    the boundary.
+  must-implement:
+  - Shallow snapshots are opt-in via stream definition
+  - Snapshot boundary is recorded as a version vector
+  - Peers whose vector predates the boundary fall through to full-state snapshot transfer
+  verification: Trigger shallow snapshot on opt-in stream; reconnect a stale peer and assert full-state
+    transfer activates rather than incremental delta.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - snapshot
+  - gc
+  - shallow
+  - opt-in
+  failed-conditions:
+  - Shallow snapshots are not opt-in via stream definition
+  - Snapshot boundary is not recorded as a version vector
+  - 'Fails to satisfy: Peers whose vector predates the boundary fall through to full-state snapshot transfer'
+  - 'Verification check does not pass: Trigger shallow snapshot on opt-in stream; reconnect a stale peer
+    and assert full-state transfer activates rather than i...'
+- id: CRDT-17
+  name: Three-tier GC policy (ephemeral, standard, compliance)
+  source: ch12 §"The Three-Tier GC Policy"
+  source-paper: v13 §12
+  definition: Each document type is assigned to one of three GC tiers — ephemeral (aggressive GC, no durability),
+    standard (90/180-day retention with peer-acknowledgment gating), or compliance (no GC, indefinite
+    retention) — based on durability requirements and acknowledgment characteristics.
+  must-implement:
+  - Each stream definition assigns a GC tier
+  - Ephemeral tier discards operations on a short schedule with no peer-ack requirement
+  - Standard tier gates GC on AckVector confirming all active peers received operations
+  - Compliance tier never triggers GC
+  verification: Inspect stream definitions for explicit tier assignment; soak tests for each tier confirm
+    correct retention and pruning behavior.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - gc
+  - tiers
+  - retention
+  - compliance
+  - ephemeral
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Each stream definition assigns a GC tier'
+  - 'Fails to satisfy: Ephemeral tier discards operations on a short schedule with no peer-ack requirement'
+  - 'Fails to satisfy: Standard tier gates GC on AckVector confirming all active peers received operations'
+  - 'Fails to satisfy: Compliance tier never triggers GC'
+  - 'Verification check does not pass: Inspect stream definitions for explicit tier assignment; soak tests
+    for each tier confirm correct retention and pruning ...'
+- id: CRDT-18
+  name: AckVector and active peer set semantics
+  source: ch12 §"The Three-Tier GC Policy"
+  source-paper: v13 §12
+  definition: AckVector is a compact per-document per-peer acknowledgment watermark persisted alongside
+    the Layer 2 event log, and the "active peer set" is the set of peers that authenticated a CAPABILITY_NEG
+    handshake within a configurable peer-staleness window (30 days default) — GC proceeds only after all
+    active peers have acknowledged.
+  must-implement:
+  - AckVector tracks each peer's highest-indexed acknowledged operation per document
+  - Active peer set membership respects a configurable staleness window
+  - GC waits for all active peers to acknowledge before pruning standard-tier operations
+  - Administrators may drop staleness-exceeding peers from the active set
+  verification: Multi-peer simulation confirms GC blocks until all active peers ack; dropping a stale
+    peer unblocks GC; returning peer enters stale-peer recovery.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - ackvector
+  - gc
+  - peer-set
+  - staleness
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - AckVector does not track each peer's highest-indexed acknowledged operation per document
+  - 'Fails to satisfy: Active peer set membership respects a configurable staleness window'
+  - 'Fails to satisfy: GC waits for all active peers to acknowledge before pruning standard-tier operations'
+  - 'Fails to satisfy: Administrators may drop staleness-exceeding peers from the active set'
+  - 'Verification check does not pass: Multi-peer simulation confirms GC blocks until all active peers
+    ack; dropping a stale peer unblocks GC; returning peer e...'
+- id: CRDT-19
+  name: Stale peer recovery via full-state snapshot transfer
+  source: ch12 §"The Stale Peer Recovery Protocol"
+  source-paper: v13 §12
+  definition: When a reconnecting peer's vector clock predates the local compaction watermark, incremental
+    sync is impossible, so the sync daemon abandons delta exchange and initiates full-state snapshot transfer
+    with source-selection preference, concurrency limits, idempotent resume on interruption, and per-tier
+    behavior.
+  must-implement:
+  - CAPABILITY_NEG compares peer vector against compaction watermark and routes to snapshot transfer when
+    stale
+  - Snapshot source preference favors most recent successful sync partner
+  - Snapshot transfer resumes from byte offset on interruption and verifies integrity hash before commit
+  - Snapshot is applied atomically (full replace or no change)
+  - Per-tier behavior — compliance tier never needs transfer; ephemeral tier rebuilds from next broadcast
+  verification: Force a peer's clock to predate the GC horizon; reconnect and assert full-state transfer
+    activates with correct source selection, resume on disconnect, and atomic application.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - recovery
+  - snapshot
+  - stale-peer
+  - capability-neg
+  failed-conditions:
+  - CAPABILITY_NEG compares peer vector against compaction watermark and does not route to snapshot transfer
+    when stale
+  - 'Fails to satisfy: Snapshot source preference favors most recent successful sync partner'
+  - Snapshot transfer resumes from byte offset on interruption and does not verifie integrity hash before
+    commit
+  - Snapshot is not applied atomically (full replace or no change)
+  - 'Fails to satisfy: Per-tier behavior — compliance tier never needs transfer; ephemeral tier rebuilds
+    from next broadcast'
+  - 'Verification check does not pass: Force a peer''s clock to predate the GC horizon; reconnect and
+    assert full-state transfer activates with correct source s...'
+- id: CRDT-20
+  name: Schema-on-write CRDT operation validation at store entry
+  source: ch12 §"CRDT Operation Validation at Store Entry"
+  source-paper: v13 §12
+  definition: Every CRDT operation — locally produced or peer-received — passes through schema-level validation
+    before insertion into the local CRDT store, gating insertion by record-type check, field constraints,
+    and minimum-supported schema version, with failures quarantined rather than applied.
+  must-implement:
+  - Validation runs on every operation prior to CRDT store insertion
+  - Operations whose schema version is below the node's minimum-supported version are rejected
+  - Field constraints (required fields, types, enum ranges) are checked
+  - Failed operations enter the quarantine queue and surface in the conflict inbox
+  verification: Inject a malformed operation via the sync path and assert it is quarantined and surfaced
+    to the conflict inbox without modifying CRDT state.
+  kleppmann-properties:
+  - P4
+  - P6
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema-on-write
+  - validation
+  - quarantine
+  - conflict-inbox
+  failed-conditions:
+  - 'Fails to satisfy: Validation runs on every operation prior to CRDT store insertion'
+  - Operations whose schema version is not below the node's minimum-supported version are rejected
+  - Field constraints (required fields, types, enum ranges) are not checked
+  - 'Fails to satisfy: Failed operations enter the quarantine queue and surface in the conflict inbox'
+  - 'Verification check does not pass: Inject a malformed operation via the sync path and assert it is
+    quarantined and surfaced to the conflict inbox without m...'
+- id: CRDT-21
+  name: Schema version negotiation at CAPABILITY_NEG
+  source: ch12 §"CRDT Operation Validation at Store Entry"
+  source-paper: v13 §12
+  definition: Each peer declares its minimum-supported schema version per stream at the CAPABILITY_NEG
+    handshake, the pair converges on the highest mutually-supported version, and operations outside the
+    negotiated compatibility window are rejected with a diagnostic pointing to the upcast path.
+  must-implement:
+  - Handshake exchanges per-stream min-supported schema version
+  - Pair converges on highest mutually supported schema version
+  - Out-of-window operations are rejected with a diagnostic referencing the required upcast
+  verification: Two peers with disparate schema versions complete handshake; assert negotiated version
+    equals the highest common version and out-of-window ops produce diagnostics.
+  kleppmann-properties:
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - schema-skew
+  tags:
+  - schema
+  - negotiation
+  - capability-neg
+  - handshake
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Handshake exchanges per-stream min-supported schema version'
+  - Pair does not converge on highest mutually supported schema version
+  - Out-of-window operations are not rejected with a diagnostic referencing the required upcast
+  - 'Verification check does not pass: Two peers with disparate schema versions complete handshake; assert
+    negotiated version equals the highest common version...'
+- id: CRDT-22
+  name: Compliance tier required by data sovereignty regimes
+  source: ch12 §"CRDT Growth and Garbage Collection"
+  source-paper: v13 §12
+  definition: The no-GC compliance tier is a mandatory (not preferred) classification for record types
+    subject to fourteen named data sovereignty regimes across six geographic regions, ensuring growth
+    is bounded only by business volume — the activity the records exist to document.
+  must-implement:
+  - Stream definitions for regulated record types assign the compliance tier explicitly
+  - GDPR Article 17 erasure interaction is handled via crypto-shredding at the DEK level (cross-ref Ch15)
+  - Tier assignment is a domain decision recorded in the plugin
+  verification: Audit confirms regulated streams (e.g. financial postings, audit records) are assigned
+    compliance tier and never have operations pruned.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - compliance
+  - gdpr
+  - sovereignty
+  - retention
+  failed-conditions:
+  - 'Fails to satisfy: Stream definitions for regulated record types assign the compliance tier explicitly'
+  - GDPR Article 17 erasure interaction is not handled via crypto-shredding at the DEK level (cross-ref
+    Ch15)
+  - Tier assignment is not a domain decision recorded in the plugin
+  - 'Verification check does not pass: Audit confirms regulated streams (e.g. financial postings, audit
+    records) are assigned compliance tier and never have op...'
+- id: CRDT-23
+  name: Double-entry ledger as canonical CP subsystem
+  source: ch12 §"The Double-Entry Ledger as the Canonical CP Subsystem"
+  source-paper: v13 §2.4
+  definition: The double-entry ledger is the correct model for value records — not a CRDT workaround —
+    because its append-only, immutable, strictly-ordered, balanced-postings structure aligns directly
+    with what CP positioning requires for audit integrity.
+  must-implement:
+  - Every transaction produces at least two postings whose amounts sum to zero
+  - Postings are immutable once committed; corrections occur via compensating entries
+  - Immutability is enforced structurally by the append-only event log
+  verification: Attempt to mutate a committed posting and confirm the operation is rejected; verify ledger
+    integrity check confirms balanced postings per transaction.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ledger
+  - double-entry
+  - cp
+  - audit
+  - append-only
+  failed-conditions:
+  - 'Fails to satisfy: Every transaction produces at least two postings whose amounts sum to zero'
+  - Postings are not immutable once committed; corrections occur via compensating entries
+  - Immutability is not enforced structurally by the append-only event log
+  - 'Verification check does not pass: Attempt to mutate a committed posting and confirm the operation
+    is rejected; verify ledger integrity check confirms bala...'
+- id: CRDT-24
+  name: Posting engine with idempotency keys
+  source: ch12 §"The Posting Engine"
+  source-paper: v13 §2.4
+  definition: Sunfish.Kernel.Ledger's posting engine converts domain events into ledger entries under
+    distributed lease coordination, and uses idempotency keys carried on domain events so that processing
+    the same event multiple times produces at most one set of postings.
+  must-implement:
+  - Posting writes acquire a quorum-granted lease via Sunfish.Kernel.Lease before commit
+  - Each domain event carries an idempotency key
+  - Duplicate processing of the same idempotency key is a no-op returning the original result
+  verification: Submit the same idempotency-keyed event twice; assert the ledger contains exactly one
+    posting set and the second call returns identical results.
+  kleppmann-properties:
+  - P4
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - ledger
+  - posting-engine
+  - idempotency
+  - lease
+  failed-conditions:
+  - 'Fails to satisfy: Posting writes acquire a quorum-granted lease via Sunfish.Kernel.Lease before commit'
+  - Each domain event does not carrie an idempotency key
+  - Duplicate processing of the same idempotency key is not a no-op returning the original result
+  - 'Verification check does not pass: Submit the same idempotency-keyed event twice; assert the ledger
+    contains exactly one posting set and the second call re...'
+- id: CRDT-25
+  name: CQRS write/read split for ledger
+  source: ch12 §"CQRS Write/Read Split"
+  source-paper: v13 §2.4
+  definition: The ledger applies CQRS — the immutable posting event stream is the write side, while balance
+    tables, statements, aging reports, and period summaries are derived read-side projections that hold
+    no data unrebuildable by replaying the event stream.
+  must-implement:
+  - Write path appends to the event stream only
+  - Projections derive from the event stream and are rebuildable from it
+  - Business rule aggregates read from the event stream or current lease-protected CP state, never from
+    lagging projections
+  verification: Delete projection store, replay event log, and confirm rebuilt projections match original;
+    assert no business rule reads from projection-only state.
+  kleppmann-properties:
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - cqrs
+  - ledger
+  - projections
+  - event-sourcing
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Write path appends to the event stream only'
+  - Projections derive from the event stream and are not rebuildable from it
+  - Business rule does not aggregate read from the event stream or current lease-protected CP state, never
+    from lagging projections
+  - 'Verification check does not pass: Delete projection store, replay event log, and confirm rebuilt
+    projections match original; assert no business rule reads...'
+- id: CRDT-26
+  name: Period close and rollup snapshots
+  source: ch12 §"Period Close and Rollup Snapshots"
+  source-paper: v13 §2.4
+  definition: At period close, the projection engine computes account balances, P&L, and cash flow as
+    rollup snapshots committed as closing events to the append-only log, and any subsequent postings affecting
+    a closed period are directed to adjustment accounts in the next open period — the closed-period log
+    is never rewritten.
+  must-implement:
+  - Period close emits rollup snapshot events to the append-only log
+  - Postings affecting a closed period route to adjustment accounts in the next open period
+  - Closed-period event log is immutable and never rewritten
+  verification: Close a period, attempt a backdated posting, assert it is recorded as an adjustment in
+    the current period and the closed-period log is unchanged.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ledger
+  - period-close
+  - rollup
+  - audit
+  failed-conditions:
+  - Period close does not emit rollup snapshot events to the append-only log
+  - 'Fails to satisfy: Postings affecting a closed period route to adjustment accounts in the next open
+    period'
+  - Closed-period event log is not immutable and never rewritten
+  - 'Verification check does not pass: Close a period, attempt a backdated posting, assert it is recorded
+    as an adjustment in the current period and the closed...'
+- id: CRDT-27
+  name: Five-layer storage architecture
+  source: ch12 §"The Five-Layer Storage Architecture"
+  source-paper: v13 §9
+  definition: The storage architecture places five concerns in five distinct layers — Layer 1 local encrypted
+    database, Layer 2 CRDT and event log, Layer 3 user-controlled cloud backup (always present), Layer
+    4 content-addressed distribution (opt-in), Layer 5 decentralized archival (opt-in enterprise) — each
+    with independent durability semantics.
+  must-implement:
+  - Layers 1, 2, and 3 are always present in a production node
+  - Each layer has independent durability semantics and failure modes
+  - Layers 4 and 5 are opt-in and do not affect operation when absent
+  verification: Architecture review confirms five-layer separation; failure injection in any layer demonstrates
+    independent failure modes.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - storage
+  - architecture
+  - layers
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Layers 1, 2, and 3 are not always present in a production node
+  - Each layer has not independent durability semantics and failure modes
+  - Layers 4 and 5 are not opt-in and do not affect operation when absent
+  - 'Verification check does not pass: Architecture review confirms five-layer separation; failure injection
+    in any layer demonstrates independent failure mode...'
+- id: CRDT-28
+  name: Layer 1 — local encrypted database (SQLCipher)
+  source: ch12 §"The Five-Layer Storage Architecture"
+  source-paper: v13 §9
+  definition: Layer 1 is the primary operational store — Sunfish.Foundation.LocalFirst's SQLCipher-backed
+    IOfflineStore — applying AES-256 page-level encryption with the key derived from the device's OS-native
+    keystore via Sunfish.Kernel.Security, never stored in plaintext alongside the database.
+  must-implement:
+  - All reads and writes hit Layer 1 first
+  - Encryption key is derived from OS-native keystore, never persisted plaintext alongside the database
+  - Reads are synchronous from the application perspective with no network round-trip
+  - Layer 1 corruption triggers rebuild from Layer 2 event log
+  verification: Inspect database file confirms encryption-at-rest; key material is absent from filesystem;
+    corruption test rebuilds from Layer 2.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-loss
+  - key-compromise
+  tags:
+  - storage
+  - sqlcipher
+  - encryption
+  - layer-1
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - 'Fails to satisfy: All reads and writes hit Layer 1 first'
+  - Encryption key is not derived from OS-native keystore, never persisted plaintext alongside the database
+  - Reads are not synchronous from the application perspective with no network round-trip
+  - 'Fails to satisfy: Layer 1 corruption triggers rebuild from Layer 2 event log'
+  - 'Verification check does not pass: Inspect database file confirms encryption-at-rest; key material
+    is absent from filesystem; corruption test rebuilds from...'
+- id: CRDT-29
+  name: Layer 2 — append-only event log as source of truth
+  source: ch12 §"The Five-Layer Storage Architecture"
+  source-paper: v13 §9
+  definition: Layer 2 is the append-only CRDT and event log — the source of truth — to which every CRDT
+    operation, domain event, and ledger posting is durably written (fsync on POSIX, FlushFileBuffers on
+    Windows) before the application receives confirmation, with the only mutating operation being compaction
+    under the three-tier GC policy.
+  must-implement:
+  - Every operation is durably persisted (fsync/FlushFileBuffers) before application acknowledgment
+  - Write path is append-only with no in-place mutation operation
+  - Compaction replaces ranges with snapshots representing equivalent state, never silent deletion
+  - Layer 2 truncation without Layer 3 backup is acknowledged as the one irrecoverable failure mode
+  verification: Power-loss simulation confirms acknowledged writes survive recovery; static analysis confirms
+    no in-place mutation API on the log; compaction test confirms snapshot equivalence.
+  kleppmann-properties:
+  - P3
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - storage
+  - event-log
+  - append-only
+  - durability
+  - layer-2
+  failed-conditions:
+  - Every operation is not durably persisted (fsync/FlushFileBuffers) before application acknowledgment
+  - Write path is not append-only with no in-place mutation operation
+  - 'Fails to satisfy: Compaction replaces ranges with snapshots representing equivalent state, never
+    silent deletion'
+  - Layer 2 truncation without Layer 3 backup is not acknowledged as the one irrecoverable failure mode
+  - 'Verification check does not pass: Power-loss simulation confirms acknowledged writes survive recovery;
+    static analysis confirms no in-place mutation API o...'
+- id: CRDT-30
+  name: Layer 3 — user-controlled cloud backup
+  source: ch12 §"The Five-Layer Storage Architecture"
+  source-paper: v13 §9
+  definition: Layer 3 streams the event log to object storage under the user's own credentials and chosen
+    jurisdiction, with the provider adapter supporting any S3-compatible endpoint (sovereign clouds, EU-resident
+    providers, on-premise MinIO/Ceph) so the user controls credentials, bucket, residency, and retention.
+  must-implement:
+  - Backup adapter accepts any S3-compatible endpoint
+  - User supplies and retains backup credentials
+  - User selects jurisdictional residency and retention policy
+  - Disaster recovery proceeds via new device install + backup credentials + restore from object storage
+  verification: Configure backup against multiple S3 endpoints (AWS, Hetzner, MinIO); destroy local node;
+    restore from backup credentials only and confirm full state recovery.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-outage
+  - data-residency-objection
+  tags:
+  - storage
+  - backup
+  - s3
+  - sovereignty
+  - layer-3
+  failed-conditions:
+  - Backup adapter does not accept any S3-compatible endpoint
+  - User supplies and does not retain backup credentials
+  - 'Fails to satisfy: User selects jurisdictional residency and retention policy'
+  - 'Fails to satisfy: Disaster recovery proceeds via new device install + backup credentials + restore
+    from object storage'
+  - 'Verification check does not pass: Configure backup against multiple S3 endpoints (AWS, Hetzner, MinIO);
+    destroy local node; restore from backup credential...'
+- id: CRDT-31
+  name: Layer 4 — content-addressed binary distribution (opt-in)
+  source: ch12 §"The Five-Layer Storage Architecture"
+  source-paper: v13 §9
+  definition: Layer 4 synchronizes binary assets across nodes using content-hash addressing as the storage
+    key, providing integrity verification and deduplication as structural properties — opt-in because
+    text-and-structured-data nodes do not need the infrastructure overhead.
+  must-implement:
+  - Asset storage key is the content hash
+  - Two nodes with the same asset confirm identity by hash without redundant transfer
+  - Layer is opt-in via deployment configuration
+  verification: Two nodes independently receive the same binary; hash comparison confirms identity and
+    no redundant transfer occurs.
+  kleppmann-properties:
+  - P4
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - storage
+  - content-addressed
+  - deduplication
+  - layer-4
+  - opt-in
+  failed-conditions:
+  - Asset storage key is not the content hash
+  - 'Fails to satisfy: Two nodes with the same asset confirm identity by hash without redundant transfer'
+  - Layer is not opt-in via deployment configuration
+  - 'Verification check does not pass: Two nodes independently receive the same binary; hash comparison
+    confirms identity and no redundant transfer occurs.'
+- id: CRDT-32
+  name: Layer 5 — decentralized archival with proof-of-storage (opt-in enterprise)
+  source: ch12 §"The Five-Layer Storage Architecture"
+  source-paper: v13 §9
+  definition: Layer 5 commits signed archive segments from the event log to a decentralized storage network
+    that issues cryptographic proofs of storage and integrity, satisfying regulated-industry audit requirements
+    where self-attesting archives would not pass scrutiny — opt-in and never an operational dependency.
+  must-implement:
+  - Archive segments are cryptographically signed before commit
+  - Proofs of storage are retrievable for audit
+  - Local Layers 1 and 2 remain valid and operational regardless of Layer 5 availability
+  verification: Submit segment to Layer 5; retrieve proof; verify proof cryptographically; disconnect
+    Layer 5 and confirm node operates normally.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - storage
+  - archival
+  - proof-of-storage
+  - compliance
+  - layer-5
+  - opt-in
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - Archive segments are not cryptographically signed before commit
+  - Proofs of storage are not retrievable for audit
+  - 'Fails to satisfy: Local Layers 1 and 2 remain valid and operational regardless of Layer 5 availability'
+  - 'Verification check does not pass: Submit segment to Layer 5; retrieve proof; verify proof cryptographically;
+    disconnect Layer 5 and confirm node operates ...'

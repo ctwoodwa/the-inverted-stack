@@ -1,235 +1,570 @@
 chapter: appendix-d-testing-the-inverted-stack
 chapter-title: Testing the Inverted Stack
-source-paper-refs: [v13 §15]
+source-paper-refs:
+- v13 §15
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: TEST-01
-    name: Five-level testing pyramid
-    source: 'appendix-d §"Section 1: The Five-Level Testing Pyramid"'
-    source-paper: v13 §15
-    definition: A tiered test architecture in which CRDT property tests, real-dependency integration tests, fault injection, deterministic simulation, and chaos testing each run at a defined cadence with mandatory pass conditions before first production release.
-    must-implement:
-      - Levels 1 and 2 execute on every pull request
-      - Level 3 fault injection executes nightly
-      - Level 4 deterministic simulation executes weekly or per release candidate
-      - Level 5 chaos executes in staging before each major release
-      - Each scenario specifies setup, action, and a pass/fail condition
-    verification: CI configuration shows distinct jobs for each level with the prescribed triggers and time budgets, and every scenario in the suite carries an explicit pass condition.
-    kleppmann-properties: [P3, P4, P5, P6]
-    scope: foundational
-    failure-modes: [partition, schema-skew, key-loss, key-compromise, replay, clock-skew, peer-discovery-failure]
-    tags: [testing, ci, methodology, conformance]
-
-  - id: TEST-02
-    name: Property-based CRDT tests for convergence, idempotency, commutativity, and monotonicity
-    source: appendix-d §"Level 1 — Property-Based Tests"
-    source-paper: v13 §15
-    definition: A Level 1 test class in which a property-based framework generates thousands of random operation sequences to verify that CRDT merge satisfies convergence, idempotency, commutativity (or join-semilattice merge for state-based CRDTs), and monotonicity.
-    must-implement:
-      - Use FsCheck (.NET) or fast-check (JavaScript) or equivalent property-based framework
-      - Generate at least 10,000 random operation sequences per property per test run
-      - Assert convergence, idempotency, commutativity, and monotonicity as separate properties
-      - Report the minimal failing sequence on violation
-    verification: Test suite output shows at least 10,000 generated cases per CRDT property, with shrinking enabled and named property assertions distinct from example-based tests.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [testing, property-based, crdt, level-1]
-
-  - id: TEST-03
-    name: Real-daemon integration tests via Testcontainers
-    source: appendix-d §"Level 2 — Integration Tests (Real Dependencies)"
-    source-paper: v13 §15
-    definition: A Level 2 test class that exercises the full sync handshake (HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM, GOSSIP_PING) against a real local-node process spun up via Testcontainers, asserting on resulting CRDT state rather than wire messages.
-    must-implement:
-      - Spin up a real local-node instance per test suite using Testcontainers
-      - Execute the full five-step handshake end to end
-      - Assert on post-exchange CRDT state, not on wire message sequences
-      - Forbid mocking the sync daemon for integration coverage
-    verification: Integration test fixtures launch a containerized node, complete the handshake, and assertions reference CRDT state hashes; CI environment provides Docker.
-    kleppmann-properties: [P3, P4]
-    scope: inverted-stack-specific
-    failure-modes: [peer-discovery-failure]
-    tags: [testing, integration, sync-protocol, level-2, testcontainers]
-
-  - id: TEST-04
-    name: Fault injection for partition, packet loss, and crash
-    source: appendix-d §"Level 3 — Fault Injection in CI"
-    source-paper: v13 §15
-    definition: A Level 3 test class that uses a network proxy such as toxiproxy with Testcontainers to inject node crashes mid-handshake, relay unreachability during DELTA_STREAM, and consecutive GOSSIP_PING losses, then asserts the system recovers to a CRDT state identical to the no-fault outcome.
-    must-implement:
-      - Inject a node crash mid-handshake and assert peer recovery to consistent state
-      - Make the relay unreachable during DELTA_STREAM and assert sender queues and retransmits on reconnect
-      - Drop three consecutive GOSSIP_PING intervals and assert degraded-but-consistent recovery without manual intervention
-      - Pass condition for every scenario is byte-identical recovered state, not absence of crash
-    verification: Nightly CI job runs each fault scenario through toxiproxy and asserts post-recovery CRDT hash equals the no-fault baseline.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [testing, fault-injection, toxiproxy, level-3]
-
-  - id: TEST-05
-    name: Deterministic simulation harness with virtual clock and message scheduler
-    source: appendix-d §"Level 4 — Deterministic Simulation"
-    source-paper: v13 §15
-    definition: A Level 4 in-process test harness that boots N node instances under a controllable virtual clock and a deterministic message scheduler, enabling exhaustive coverage of mixed-version sync, offline epoch transitions, and Flease edge cases that real-time tests cannot reach reliably.
-    must-implement:
-      - Provide a global monotonic virtual clock advanced in discrete ticks by the test driver
-      - Provide a pluggable scheduler that can delay, reorder, or drop messages per test
-      - Boot N node instances in-process, each with an isolated SQLCipher store, wired to the scheduler instead of real sockets
-      - Provide invariant assertion hooks for CRDT convergence, ledger balance, lease exclusivity, and epoch monotonicity
-      - Design the harness against the Appendix A wire protocol specification before implementation
-    verification: Repository contains a simulation harness whose tests resolve all timeouts against the virtual clock and pass deterministically on repeated runs with the same seed.
-    kleppmann-properties: [P3, P4, P5]
-    scope: inverted-stack-specific
-    failure-modes: [partition, schema-skew, clock-skew]
-    tags: [testing, simulation, deterministic, virtual-clock, level-4]
-
-  - id: TEST-06
-    name: Chaos testing in staging under representative load
-    source: appendix-d §"Level 5 — Chaos Testing in Staging"
-    source-paper: v13 §15
-    definition: A Level 5 test class that runs Pumba, Gremlin, or equivalent chaos tooling against a multi-node staging environment loaded at median-production traffic, with the explicit goal of discovering unanticipated failure modes rather than verifying known properties.
-    must-implement:
-      - Operate a permanent multi-node staging environment representative of production
-      - Apply process kill, latency injection, node-offline flips, and link-corruption chaos
-      - Sustain median-production load throughout chaos runs
-      - Document every observed anomaly, whether or not it manifests as a visible failure
-    verification: Pre-major-release pipeline executes a 24–48 hour chaos run with logged anomalies and recovery times, archived against the release tag.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure, clock-skew]
-    tags: [testing, chaos, staging, level-5]
-
-  - id: TEST-07
-    name: CRDT growth tests for bounded resource use
-    source: 'appendix-d §"Section 2: CRDT Growth Tests"'
-    source-paper: v13 §15
-    definition: A weekly and pre-release test class that simulates median-vertical usage at 30, 90, and 365 day horizons and measures CRDT document size to verify the system stays within its configured storage budget, that compaction reduces size when fired, and that per-shard size stays below the shallow snapshot threshold.
-    must-implement:
-      - Simulate median-activity usage at 30, 90, and 365 day horizons
-      - Assert 365-day document size stays within the configured storage budget (default 10 GB per node)
-      - Assert library-level compaction measurably reduces size when its threshold is reached
-      - Assert per-shard size stays below the shallow snapshot threshold and shallow mode activates correctly when crossed
-    verification: Weekly CI job runs the growth simulation and emits per-horizon size metrics that the build gate compares to budget thresholds.
-    kleppmann-properties: [P1, P5]
-    scope: foundational
-    failure-modes: []
-    tags: [testing, growth, compaction, sharding, weekly]
-
-  - id: TEST-08
-    name: Mandatory partition and reconnect scenarios
-    source: appendix-d §"Partition and Reconnect"
-    source-paper: v13 §15
-    definition: A required scenario set covering 30-day offline divergence with merge, 90-day extended-offline baseline with intermittent windows, CP quorum loss, 1,000+ queued operations on standard and constrained hardware, abrupt power interruption during WAL write, and 30-day air-gapped operation, each with explicit pass conditions before first production release.
-    must-implement:
-      - Two nodes diverge offline for 30 simulated days then merge with no data loss to identical CRDT state
-      - Sustain 90 simulated days of offline operation with daily 10-minute sync windows and no operation loss
-      - Block CP writes under quorum loss with a clear unavailable indicator and no silent drop
-      - Apply 1,000+ queued operations on reconnect without timeout, OOM, or duplication, on both standard and 2 GB RAM / 16 GB storage hardware
-      - SIGKILL during WAL write at random byte offsets 100+ times with full recovery and no partial-as-committed records
-      - Operate air-gapped for 30 simulated days with zero relay egress packets recorded in the network log
-    verification: Test report archives per-scenario pass/fail with CRDT state dumps, network captures showing zero relay traffic during air-gap, and recovery logs after each WAL kill.
-    kleppmann-properties: [P3, P4, P5, P7]
-    scope: foundational
-    failure-modes: [partition, peer-discovery-failure]
-    tags: [testing, partition, offline, wal, air-gap, mandatory]
-
-  - id: TEST-09
-    name: Schema migration scenarios across version skew
-    source: appendix-d §"Schema Migration"
-    source-paper: v13 §15
-    definition: A required scenario set covering N-to-N-1 bidirectional sync via lenses, offline epoch transition recovery without manual intervention, and the couch-device case where a node lagging 3+ major versions is rejected at capability negotiation rather than migrated lossily.
-    must-implement:
-      - Exchange CRDT deltas between schema N and schema N-1 nodes with bidirectional lens translation and no data loss
-      - Allow an offline node to download the post-transition epoch snapshot and resume sync without operator intervention
-      - Reject capability negotiation with ERR_VERSION_INCOMPATIBLE when the schema gap exceeds the configured maximum
-      - Encode the maximum auto-bridged schema gap as an explicit policy and test the boundary
-    verification: Test suite includes mixed-version pairs, an offline-during-epoch fixture, and an over-gap connection attempt asserting the precise error code and update prompt.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [schema-skew]
-    tags: [testing, schema, migration, lens, epoch, mandatory]
-
-  - id: TEST-10
-    name: Flease edge case scenarios
-    source: appendix-d §"Flease Edge Cases"
-    source-paper: v13 §15
-    definition: A required scenario set covering CP lease holder crash mid-write (partial write quarantined and visible, lease re-acquired by a peer after timeout) and partition during lease negotiation (both sides identify no-quorum and block writes with no split-brain).
-    must-implement:
-      - On lease holder crash mid-write, expire the lease after the configured timeout (default 30 seconds) and let a peer acquire a new lease
-      - Quarantine partial writes from a crashed lease holder and surface them for operator review rather than silently merging
-      - Under partition during CAPABILITY_NEG lease request, have both partitions independently report no-quorum and block writes with no split-brain
-    verification: Test injects each scenario and asserts the partial write appears in a quarantine queue, lease ownership transfers cleanly, and no two partitions claim the lease concurrently.
-    kleppmann-properties: [P4, P6]
-    scope: inverted-stack-specific
-    failure-modes: [partition]
-    tags: [testing, flease, lease, quarantine, mandatory]
-
-  - id: TEST-11
-    name: Security scenarios for encryption, key rotation, and audit
-    source: appendix-d §"Security"
-    source-paper: v13 §15
-    definition: A required scenario set producing regulator-grade evidence covering SQLCipher unreadability without keys, post-rotation key revocation, historical document re-keying under a new KEK, data-boundary negative tests with relay disabled, relay-operator inability to decrypt, attestation revocation, and tamper-evident audit trail completeness.
-    must-implement:
-      - Verify a copied SQLCipher file is unreadable without the encryption key
-      - Verify a revoked member receives ERR_KEY_REVOKED and cannot decrypt documents written after rotation
-      - Re-wrap all DEKs from KEK version K to K+1 with no document accessible under the old KEK and all accessible under the new
-      - Capture full network egress while relay is disabled and assert zero relay-destination packets
-      - Capture all relay-transiting bytes and verify ciphertext cannot be decrypted with relay-side keys alone
-      - Reject attestation bundles whose issuer appears on the revocation list with ERR_KEY_REVOKED and a logged audit entry
-      - Verify the audit log holds every operation in strict monotonic sequence with a passing tamper-evidence integrity check
-    verification: Per-scenario evidence column captures packet captures, audit log exports with verified Merkle root, relay log entries with issuer fingerprint, and ciphertext samples — archived per release.
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [key-loss, key-compromise, replay]
-    tags: [testing, security, encryption, key-rotation, audit, attestation, evidence, mandatory]
-
-  - id: TEST-12
-    name: Ledger invariant scenarios under failure and duplication
-    source: appendix-d §"Ledger"
-    source-paper: v13 §15
-    definition: A required scenario set asserting that the sum-to-zero ledger invariant holds across the complete account set after a posting-node crash and retry, and that idempotency keys prevent duplicate postings when an identical domain event is submitted twice.
-    must-implement:
-      - Verify exactly one posting set exists after a mid-transaction crash and retry, with no duplicate postings
-      - Verify sum-to-zero across the full related-account set, not only directly involved accounts
-      - Verify idempotency keys cause a duplicate domain event to produce exactly one set of postings
-    verification: Test sums the ledger across all related accounts after each scenario and asserts a single posting set keyed by the idempotency token.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition, replay]
-    tags: [testing, ledger, invariants, idempotency, sum-to-zero, mandatory]
-
-  - id: TEST-13
-    name: Tiered CI configuration with archived test artefacts
-    source: 'appendix-d §"Section 4: CI Configuration Guidance"'
-    source-paper: v13 §15
-    definition: A four-tier CI configuration (per-PR, nightly, weekly/RC, pre-major-release) that gates merges on L1+L2, runs L3 nightly, executes L4 simulation weekly or per RC, and runs L5 chaos before major releases, with archived test report, scenario evidence, harness configuration, and SBOM per release.
-    must-implement:
-      - Gate every PR merge on L1 (<5 min) and L2 (<15 min) tests
-      - Run L3 nightly within a 2-hour budget with P1 incident on failure
-      - Run L4 simulation weekly and on RC tags, blocking the RC on failure
-      - Run L5 chaos for 24–48 hours before major release on a permanently maintained representative staging environment
-      - Capture and archive per-release test report, scenario evidence, harness configuration, and SBOM tied to the release version and code SHA
-    verification: CI definitions show four named tiers with the prescribed triggers, time budgets, and artefact-upload steps producing an archive linked to each release tag.
-    kleppmann-properties: [P5, P6]
-    scope: foundational
-    failure-modes: []
-    tags: [ci, tiers, artefacts, sbom, procurement, evidence]
-
-  - id: TEST-14
-    name: Accessibility test for sync-state announcements
-    source: appendix-d §"CI Configuration Guidance"
-    source-paper: v13 §15
-    definition: A test scenario asserting that sync-state transitions (sync-healthy, stale, offline, conflict-pending, revocation) are exposed through the platform accessibility tree (aria-live on web, UIAccessibilityTraits on iOS, AccessibilityNodeInfo on Android) and announced on change.
-    must-implement:
-      - Expose every sync-state value through the platform accessibility tree on each supported platform
-      - Fire a state-change announcement on every sync-state transition
-      - Forbid communicating sync state through colour or icon alone
-    verification: UI test triggers each sync-state transition and asserts the platform accessibility API receives the corresponding announcement on web, iOS, and Android targets.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: []
-    tags: [testing, accessibility, ux, sync-state, wcag]
+- id: TEST-01
+  name: Five-level testing pyramid
+  source: 'appendix-d §"Section 1: The Five-Level Testing Pyramid"'
+  source-paper: v13 §15
+  definition: A tiered test architecture in which CRDT property tests, real-dependency integration tests,
+    fault injection, deterministic simulation, and chaos testing each run at a defined cadence with mandatory
+    pass conditions before first production release.
+  must-implement:
+  - Levels 1 and 2 execute on every pull request
+  - Level 3 fault injection executes nightly
+  - Level 4 deterministic simulation executes weekly or per release candidate
+  - Level 5 chaos executes in staging before each major release
+  - Each scenario specifies setup, action, and a pass/fail condition
+  verification: CI configuration shows distinct jobs for each level with the prescribed triggers and time
+    budgets, and every scenario in the suite carries an explicit pass condition.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  - P6
+  scope: foundational
+  failure-modes:
+  - partition
+  - schema-skew
+  - key-loss
+  - key-compromise
+  - replay
+  - clock-skew
+  - peer-discovery-failure
+  tags:
+  - testing
+  - ci
+  - methodology
+  - conformance
+  failed-conditions:
+  - 'Fails to satisfy: Levels 1 and 2 execute on every pull request'
+  - Level 3 fault injection does not execute nightly
+  - Level 4 deterministic simulation does not execute weekly or per release candidate
+  - Level 5 chaos does not execute in staging before each major release
+  - 'Fails to satisfy: Each scenario specifies setup, action, and a pass/fail condition'
+  - 'Verification check does not pass: CI configuration shows distinct jobs for each level with the prescribed
+    triggers and time budgets, and every scenario in...'
+- id: TEST-02
+  name: Property-based CRDT tests for convergence, idempotency, commutativity, and monotonicity
+  source: appendix-d §"Level 1 — Property-Based Tests"
+  source-paper: v13 §15
+  definition: A Level 1 test class in which a property-based framework generates thousands of random operation
+    sequences to verify that CRDT merge satisfies convergence, idempotency, commutativity (or join-semilattice
+    merge for state-based CRDTs), and monotonicity.
+  must-implement:
+  - Use FsCheck (.NET) or fast-check (JavaScript) or equivalent property-based framework
+  - Generate at least 10,000 random operation sequences per property per test run
+  - Assert convergence, idempotency, commutativity, and monotonicity as separate properties
+  - Report the minimal failing sequence on violation
+  verification: Test suite output shows at least 10,000 generated cases per CRDT property, with shrinking
+    enabled and named property assertions distinct from example-based tests.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - testing
+  - property-based
+  - crdt
+  - level-1
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Use FsCheck (.NET) or fast-check (JavaScript) or equivalent property-based framework'
+  - 'Fails to satisfy: Generate at least 10,000 random operation sequences per property per test run'
+  - 'Fails to satisfy: Assert convergence, idempotency, commutativity, and monotonicity as separate properties'
+  - 'Fails to satisfy: Report the minimal failing sequence on violation'
+  - 'Verification check does not pass: Test suite output shows at least 10,000 generated cases per CRDT
+    property, with shrinking enabled and named property ass...'
+- id: TEST-03
+  name: Real-daemon integration tests via Testcontainers
+  source: appendix-d §"Level 2 — Integration Tests (Real Dependencies)"
+  source-paper: v13 §15
+  definition: A Level 2 test class that exercises the full sync handshake (HELLO, CAPABILITY_NEG, ACK,
+    DELTA_STREAM, GOSSIP_PING) against a real local-node process spun up via Testcontainers, asserting
+    on resulting CRDT state rather than wire messages.
+  must-implement:
+  - Spin up a real local-node instance per test suite using Testcontainers
+  - Execute the full five-step handshake end to end
+  - Assert on post-exchange CRDT state, not on wire message sequences
+  - Forbid mocking the sync daemon for integration coverage
+  verification: Integration test fixtures launch a containerized node, complete the handshake, and assertions
+    reference CRDT state hashes; CI environment provides Docker.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: inverted-stack-specific
+  failure-modes:
+  - peer-discovery-failure
+  tags:
+  - testing
+  - integration
+  - sync-protocol
+  - level-2
+  - testcontainers
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Spin up a real local-node instance per test suite using Testcontainers'
+  - 'Fails to satisfy: Execute the full five-step handshake end to end'
+  - 'Fails to satisfy: Assert on post-exchange CRDT state, not on wire message sequences'
+  - 'Fails to satisfy: Forbid mocking the sync daemon for integration coverage'
+  - 'Verification check does not pass: Integration test fixtures launch a containerized node, complete
+    the handshake, and assertions reference CRDT state hashe...'
+- id: TEST-04
+  name: Fault injection for partition, packet loss, and crash
+  source: appendix-d §"Level 3 — Fault Injection in CI"
+  source-paper: v13 §15
+  definition: A Level 3 test class that uses a network proxy such as toxiproxy with Testcontainers to
+    inject node crashes mid-handshake, relay unreachability during DELTA_STREAM, and consecutive GOSSIP_PING
+    losses, then asserts the system recovers to a CRDT state identical to the no-fault outcome.
+  must-implement:
+  - Inject a node crash mid-handshake and assert peer recovery to consistent state
+  - Make the relay unreachable during DELTA_STREAM and assert sender queues and retransmits on reconnect
+  - Drop three consecutive GOSSIP_PING intervals and assert degraded-but-consistent recovery without manual
+    intervention
+  - Pass condition for every scenario is byte-identical recovered state, not absence of crash
+  verification: Nightly CI job runs each fault scenario through toxiproxy and asserts post-recovery CRDT
+    hash equals the no-fault baseline.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - testing
+  - fault-injection
+  - toxiproxy
+  - level-3
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Inject a node crash mid-handshake and assert peer recovery to consistent state'
+  - 'Fails to satisfy: Make the relay unreachable during DELTA_STREAM and assert sender queues and retransmits
+    on reconnect'
+  - 'Fails to satisfy: Drop three consecutive GOSSIP_PING intervals and assert degraded-but-consistent
+    recovery without manual intervention'
+  - Pass condition for every scenario is not byte-identical recovered state, not absence of crash
+  - 'Verification check does not pass: Nightly CI job runs each fault scenario through toxiproxy and asserts
+    post-recovery CRDT hash equals the no-fault baseli...'
+- id: TEST-05
+  name: Deterministic simulation harness with virtual clock and message scheduler
+  source: appendix-d §"Level 4 — Deterministic Simulation"
+  source-paper: v13 §15
+  definition: A Level 4 in-process test harness that boots N node instances under a controllable virtual
+    clock and a deterministic message scheduler, enabling exhaustive coverage of mixed-version sync, offline
+    epoch transitions, and Flease edge cases that real-time tests cannot reach reliably.
+  must-implement:
+  - Provide a global monotonic virtual clock advanced in discrete ticks by the test driver
+  - Provide a pluggable scheduler that can delay, reorder, or drop messages per test
+  - Boot N node instances in-process, each with an isolated SQLCipher store, wired to the scheduler instead
+    of real sockets
+  - Provide invariant assertion hooks for CRDT convergence, ledger balance, lease exclusivity, and epoch
+    monotonicity
+  - Design the harness against the Appendix A wire protocol specification before implementation
+  verification: Repository contains a simulation harness whose tests resolve all timeouts against the
+    virtual clock and pass deterministically on repeated runs with the same seed.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  - schema-skew
+  - clock-skew
+  tags:
+  - testing
+  - simulation
+  - deterministic
+  - virtual-clock
+  - level-4
+  failed-conditions:
+  - 'Fails to satisfy: Provide a global monotonic virtual clock advanced in discrete ticks by the test
+    driver'
+  - Provide a pluggable scheduler that cannot delay, reorder, or drop messages per test
+  - 'Fails to satisfy: Boot N node instances in-process, each with an isolated SQLCipher store, wired
+    to the scheduler instead of real sockets'
+  - 'Fails to satisfy: Provide invariant assertion hooks for CRDT convergence, ledger balance, lease exclusivity,
+    and epoch monotonicity'
+  - 'Fails to satisfy: Design the harness against the Appendix A wire protocol specification before implementation'
+  - 'Verification check does not pass: Repository contains a simulation harness whose tests resolve all
+    timeouts against the virtual clock and pass determinist...'
+- id: TEST-06
+  name: Chaos testing in staging under representative load
+  source: appendix-d §"Level 5 — Chaos Testing in Staging"
+  source-paper: v13 §15
+  definition: A Level 5 test class that runs Pumba, Gremlin, or equivalent chaos tooling against a multi-node
+    staging environment loaded at median-production traffic, with the explicit goal of discovering unanticipated
+    failure modes rather than verifying known properties.
+  must-implement:
+  - Operate a permanent multi-node staging environment representative of production
+  - Apply process kill, latency injection, node-offline flips, and link-corruption chaos
+  - Sustain median-production load throughout chaos runs
+  - Document every observed anomaly, whether or not it manifests as a visible failure
+  verification: Pre-major-release pipeline executes a 24–48 hour chaos run with logged anomalies and recovery
+    times, archived against the release tag.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  - clock-skew
+  tags:
+  - testing
+  - chaos
+  - staging
+  - level-5
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Operate a permanent multi-node staging environment representative of production'
+  - 'Fails to satisfy: Apply process kill, latency injection, node-offline flips, and link-corruption
+    chaos'
+  - 'Fails to satisfy: Sustain median-production load throughout chaos runs'
+  - 'Fails to satisfy: Document every observed anomaly, whether or not it manifests as a visible failure'
+  - 'Verification check does not pass: Pre-major-release pipeline executes a 24–48 hour chaos run with
+    logged anomalies and recovery times, archived against th...'
+- id: TEST-07
+  name: CRDT growth tests for bounded resource use
+  source: 'appendix-d §"Section 2: CRDT Growth Tests"'
+  source-paper: v13 §15
+  definition: A weekly and pre-release test class that simulates median-vertical usage at 30, 90, and
+    365 day horizons and measures CRDT document size to verify the system stays within its configured
+    storage budget, that compaction reduces size when fired, and that per-shard size stays below the shallow
+    snapshot threshold.
+  must-implement:
+  - Simulate median-activity usage at 30, 90, and 365 day horizons
+  - Assert 365-day document size stays within the configured storage budget (default 10 GB per node)
+  - Assert library-level compaction measurably reduces size when its threshold is reached
+  - Assert per-shard size stays below the shallow snapshot threshold and shallow mode activates correctly
+    when crossed
+  verification: Weekly CI job runs the growth simulation and emits per-horizon size metrics that the build
+    gate compares to budget thresholds.
+  kleppmann-properties:
+  - P1
+  - P5
+  scope: foundational
+  failure-modes: []
+  tags:
+  - testing
+  - growth
+  - compaction
+  - sharding
+  - weekly
+  security-axis:
+  - authenticity
+  failed-conditions:
+  - 'Fails to satisfy: Simulate median-activity usage at 30, 90, and 365 day horizons'
+  - 'Fails to satisfy: Assert 365-day document size stays within the configured storage budget (default
+    10 GB per node)'
+  - Assert library-level compaction measurably reduces size when its threshold is not reached
+  - 'Fails to satisfy: Assert per-shard size stays below the shallow snapshot threshold and shallow mode
+    activates correctly when crossed'
+  - 'Verification check does not pass: Weekly CI job runs the growth simulation and emits per-horizon
+    size metrics that the build gate compares to budget thres...'
+- id: TEST-08
+  name: Mandatory partition and reconnect scenarios
+  source: appendix-d §"Partition and Reconnect"
+  source-paper: v13 §15
+  definition: A required scenario set covering 30-day offline divergence with merge, 90-day extended-offline
+    baseline with intermittent windows, CP quorum loss, 1,000+ queued operations on standard and constrained
+    hardware, abrupt power interruption during WAL write, and 30-day air-gapped operation, each with explicit
+    pass conditions before first production release.
+  must-implement:
+  - Two nodes diverge offline for 30 simulated days then merge with no data loss to identical CRDT state
+  - Sustain 90 simulated days of offline operation with daily 10-minute sync windows and no operation
+    loss
+  - Block CP writes under quorum loss with a clear unavailable indicator and no silent drop
+  - Apply 1,000+ queued operations on reconnect without timeout, OOM, or duplication, on both standard
+    and 2 GB RAM / 16 GB storage hardware
+  - SIGKILL during WAL write at random byte offsets 100+ times with full recovery and no partial-as-committed
+    records
+  - Operate air-gapped for 30 simulated days with zero relay egress packets recorded in the network log
+  verification: Test report archives per-scenario pass/fail with CRDT state dumps, network captures showing
+    zero relay traffic during air-gap, and recovery logs after each WAL kill.
+  kleppmann-properties:
+  - P3
+  - P4
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - partition
+  - peer-discovery-failure
+  tags:
+  - testing
+  - partition
+  - offline
+  - wal
+  - air-gap
+  - mandatory
+  failed-conditions:
+  - 'Fails to satisfy: Two nodes diverge offline for 30 simulated days then merge with no data loss to
+    identical CRDT state'
+  - 'Fails to satisfy: Sustain 90 simulated days of offline operation with daily 10-minute sync windows
+    and no operation loss'
+  - 'Fails to satisfy: Block CP writes under quorum loss with a clear unavailable indicator and no silent
+    drop'
+  - 'Fails to satisfy: Apply 1,000+ queued operations on reconnect without timeout, OOM, or duplication,
+    on both standard and 2 GB RAM / 16 GB storage hardware'
+  - SIGKILL during WAL write at random byte offsets 100+ times with full recovery and no partial-as-committed
+    does not record
+  - 'Fails to satisfy: Operate air-gapped for 30 simulated days with zero relay egress packets recorded
+    in the network log'
+  - 'Verification check does not pass: Test report archives per-scenario pass/fail with CRDT state dumps,
+    network captures showing zero relay traffic during ai...'
+- id: TEST-09
+  name: Schema migration scenarios across version skew
+  source: appendix-d §"Schema Migration"
+  source-paper: v13 §15
+  definition: A required scenario set covering N-to-N-1 bidirectional sync via lenses, offline epoch transition
+    recovery without manual intervention, and the couch-device case where a node lagging 3+ major versions
+    is rejected at capability negotiation rather than migrated lossily.
+  must-implement:
+  - Exchange CRDT deltas between schema N and schema N-1 nodes with bidirectional lens translation and
+    no data loss
+  - Allow an offline node to download the post-transition epoch snapshot and resume sync without operator
+    intervention
+  - Reject capability negotiation with ERR_VERSION_INCOMPATIBLE when the schema gap exceeds the configured
+    maximum
+  - Encode the maximum auto-bridged schema gap as an explicit policy and test the boundary
+  verification: Test suite includes mixed-version pairs, an offline-during-epoch fixture, and an over-gap
+    connection attempt asserting the precise error code and update prompt.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - schema-skew
+  tags:
+  - testing
+  - schema
+  - migration
+  - lens
+  - epoch
+  - mandatory
+  failed-conditions:
+  - 'Fails to satisfy: Exchange CRDT deltas between schema N and schema N-1 nodes with bidirectional lens
+    translation and no data loss'
+  - 'Fails to satisfy: Allow an offline node to download the post-transition epoch snapshot and resume
+    sync without operator intervention'
+  - 'Fails to satisfy: Reject capability negotiation with ERR_VERSION_INCOMPATIBLE when the schema gap
+    exceeds the configured maximum'
+  - 'Fails to satisfy: Encode the maximum auto-bridged schema gap as an explicit policy and test the boundary'
+  - 'Verification check does not pass: Test suite includes mixed-version pairs, an offline-during-epoch
+    fixture, and an over-gap connection attempt asserting t...'
+- id: TEST-10
+  name: Flease edge case scenarios
+  source: appendix-d §"Flease Edge Cases"
+  source-paper: v13 §15
+  definition: A required scenario set covering CP lease holder crash mid-write (partial write quarantined
+    and visible, lease re-acquired by a peer after timeout) and partition during lease negotiation (both
+    sides identify no-quorum and block writes with no split-brain).
+  must-implement:
+  - On lease holder crash mid-write, expire the lease after the configured timeout (default 30 seconds)
+    and let a peer acquire a new lease
+  - Quarantine partial writes from a crashed lease holder and surface them for operator review rather
+    than silently merging
+  - Under partition during CAPABILITY_NEG lease request, have both partitions independently report no-quorum
+    and block writes with no split-brain
+  verification: Test injects each scenario and asserts the partial write appears in a quarantine queue,
+    lease ownership transfers cleanly, and no two partitions claim the lease concurrently.
+  kleppmann-properties:
+  - P4
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  tags:
+  - testing
+  - flease
+  - lease
+  - quarantine
+  - mandatory
+  failed-conditions:
+  - 'Fails to satisfy: On lease holder crash mid-write, expire the lease after the configured timeout
+    (default 30 seconds) and let a peer acquire a new lease'
+  - 'Fails to satisfy: Quarantine partial writes from a crashed lease holder and surface them for operator
+    review rather than silently merging'
+  - Under partition during CAPABILITY_NEG lease request, have not both partitions independently report
+    no-quorum and block writes with no split-brain
+  - 'Verification check does not pass: Test injects each scenario and asserts the partial write appears
+    in a quarantine queue, lease ownership transfers cleanl...'
+- id: TEST-11
+  name: Security scenarios for encryption, key rotation, and audit
+  source: appendix-d §"Security"
+  source-paper: v13 §15
+  definition: A required scenario set producing regulator-grade evidence covering SQLCipher unreadability
+    without keys, post-rotation key revocation, historical document re-keying under a new KEK, data-boundary
+    negative tests with relay disabled, relay-operator inability to decrypt, attestation revocation, and
+    tamper-evident audit trail completeness.
+  must-implement:
+  - Verify a copied SQLCipher file is unreadable without the encryption key
+  - Verify a revoked member receives ERR_KEY_REVOKED and cannot decrypt documents written after rotation
+  - Re-wrap all DEKs from KEK version K to K+1 with no document accessible under the old KEK and all accessible
+    under the new
+  - Capture full network egress while relay is disabled and assert zero relay-destination packets
+  - Capture all relay-transiting bytes and verify ciphertext cannot be decrypted with relay-side keys
+    alone
+  - Reject attestation bundles whose issuer appears on the revocation list with ERR_KEY_REVOKED and a
+    logged audit entry
+  - Verify the audit log holds every operation in strict monotonic sequence with a passing tamper-evidence
+    integrity check
+  verification: Per-scenario evidence column captures packet captures, audit log exports with verified
+    Merkle root, relay log entries with issuer fingerprint, and ciphertext samples — archived per release.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  - key-compromise
+  - replay
+  tags:
+  - testing
+  - security
+  - encryption
+  - key-rotation
+  - audit
+  - attestation
+  - evidence
+  - mandatory
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Verify a copied SQLCipher file is not unreadable without the encryption key
+  - 'Fails to satisfy: Verify a revoked member receives ERR_KEY_REVOKED and cannot decrypt documents written
+    after rotation'
+  - 'Fails to satisfy: Re-wrap all DEKs from KEK version K to K+1 with no document accessible under the
+    old KEK and all accessible under the new'
+  - Capture full network egress while relay is not disabled and assert zero relay-destination packets
+  - 'Fails to satisfy: Capture all relay-transiting bytes and verify ciphertext cannot be decrypted with
+    relay-side keys alone'
+  - 'Fails to satisfy: Reject attestation bundles whose issuer appears on the revocation list with ERR_KEY_REVOKED
+    and a logged audit entry'
+  - 'Fails to satisfy: Verify the audit log holds every operation in strict monotonic sequence with a
+    passing tamper-evidence integrity check'
+  - 'Verification check does not pass: Per-scenario evidence column captures packet captures, audit log
+    exports with verified Merkle root, relay log entries wi...'
+- id: TEST-12
+  name: Ledger invariant scenarios under failure and duplication
+  source: appendix-d §"Ledger"
+  source-paper: v13 §15
+  definition: A required scenario set asserting that the sum-to-zero ledger invariant holds across the
+    complete account set after a posting-node crash and retry, and that idempotency keys prevent duplicate
+    postings when an identical domain event is submitted twice.
+  must-implement:
+  - Verify exactly one posting set exists after a mid-transaction crash and retry, with no duplicate postings
+  - Verify sum-to-zero across the full related-account set, not only directly involved accounts
+  - Verify idempotency keys cause a duplicate domain event to produce exactly one set of postings
+  verification: Test sums the ledger across all related accounts after each scenario and asserts a single
+    posting set keyed by the idempotency token.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - replay
+  tags:
+  - testing
+  - ledger
+  - invariants
+  - idempotency
+  - sum-to-zero
+  - mandatory
+  failed-conditions:
+  - Verify exactly one posting set does not exist after a mid-transaction crash and retry, with no duplicate
+    postings
+  - 'Fails to satisfy: Verify sum-to-zero across the full related-account set, not only directly involved
+    accounts'
+  - 'Fails to satisfy: Verify idempotency keys cause a duplicate domain event to produce exactly one set
+    of postings'
+  - 'Verification check does not pass: Test sums the ledger across all related accounts after each scenario
+    and asserts a single posting set keyed by the idemp...'
+- id: TEST-13
+  name: Tiered CI configuration with archived test artefacts
+  source: 'appendix-d §"Section 4: CI Configuration Guidance"'
+  source-paper: v13 §15
+  definition: A four-tier CI configuration (per-PR, nightly, weekly/RC, pre-major-release) that gates
+    merges on L1+L2, runs L3 nightly, executes L4 simulation weekly or per RC, and runs L5 chaos before
+    major releases, with archived test report, scenario evidence, harness configuration, and SBOM per
+    release.
+  must-implement:
+  - Gate every PR merge on L1 (<5 min) and L2 (<15 min) tests
+  - Run L3 nightly within a 2-hour budget with P1 incident on failure
+  - Run L4 simulation weekly and on RC tags, blocking the RC on failure
+  - Run L5 chaos for 24–48 hours before major release on a permanently maintained representative staging
+    environment
+  - Capture and archive per-release test report, scenario evidence, harness configuration, and SBOM tied
+    to the release version and code SHA
+  verification: CI definitions show four named tiers with the prescribed triggers, time budgets, and artefact-upload
+    steps producing an archive linked to each release tag.
+  kleppmann-properties:
+  - P5
+  - P6
+  scope: foundational
+  failure-modes: []
+  tags:
+  - ci
+  - tiers
+  - artefacts
+  - sbom
+  - procurement
+  - evidence
+  failed-conditions:
+  - 'Fails to satisfy: Gate every PR merge on L1 (<5 min) and L2 (<15 min) tests'
+  - 'Fails to satisfy: Run L3 nightly within a 2-hour budget with P1 incident on failure'
+  - 'Fails to satisfy: Run L4 simulation weekly and on RC tags, blocking the RC on failure'
+  - 'Fails to satisfy: Run L5 chaos for 24–48 hours before major release on a permanently maintained representative
+    staging environment'
+  - 'Fails to satisfy: Capture and archive per-release test report, scenario evidence, harness configuration,
+    and SBOM tied to the release version and code SHA'
+  - 'Verification check does not pass: CI definitions show four named tiers with the prescribed triggers,
+    time budgets, and artefact-upload steps producing an ...'
+- id: TEST-14
+  name: Accessibility test for sync-state announcements
+  source: appendix-d §"CI Configuration Guidance"
+  source-paper: v13 §15
+  definition: A test scenario asserting that sync-state transitions (sync-healthy, stale, offline, conflict-pending,
+    revocation) are exposed through the platform accessibility tree (aria-live on web, UIAccessibilityTraits
+    on iOS, AccessibilityNodeInfo on Android) and announced on change.
+  must-implement:
+  - Expose every sync-state value through the platform accessibility tree on each supported platform
+  - Fire a state-change announcement on every sync-state transition
+  - Forbid communicating sync state through colour or icon alone
+  verification: UI test triggers each sync-state transition and asserts the platform accessibility API
+    receives the corresponding announcement on web, iOS, and Android targets.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes: []
+  tags:
+  - testing
+  - accessibility
+  - ux
+  - sync-state
+  - wcag
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Expose every sync-state value through the platform accessibility tree on each supported
+    platform'
+  - 'Fails to satisfy: Fire a state-change announcement on every sync-state transition'
+  - 'Fails to satisfy: Forbid communicating sync state through colour or icon alone'
+  - 'Verification check does not pass: UI test triggers each sync-state transition and asserts the platform
+    accessibility API receives the corresponding announ...'

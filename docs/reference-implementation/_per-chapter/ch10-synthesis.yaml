@@ -1,265 +1,550 @@
 chapter: ch10
-chapter-title: "Synthesis: What the Council Finally Agreed On"
-source-paper-refs: [R1, R2]
+chapter-title: 'Synthesis: What the Council Finally Agreed On'
+source-paper-refs:
+- R1
+- R2
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: LENS-01
-    name: Block-vs-condition verdict semantics
-    source: 'ch10 §"Round 1: The Architecture Fails"'
-    source-paper: null
-    definition: Council review distinguishes BLOCK verdicts (correctness or commercial gaps that prevent proceeding regardless of average score) from CONDITION verdicts (specific changes required before sign-off but compatible with proceeding).
-    must-implement:
-      - Architecture review process records each reviewer's verdict as one of BLOCK, PROCEED WITH CONDITIONS, or PROCEED
-      - A single BLOCK halts progression regardless of aggregate scores
-      - Conditions are tracked as named, addressable items that map to specific architecture changes
-    verification: Review-cycle artifact lists per-reviewer verdicts and conditions; any BLOCK present prevents the artifact from advancing to specification stage.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: []
-    tags: [governance, review]
-
-  - id: LENS-02
-    name: Send-tier subscription filtering as data minimization invariant
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: v13 §7
-    definition: Subscription filtering enforces role-scoped data minimization at the sending node before transmission, not at the receiver or in the application layer.
-    must-implement:
-      - Sync daemon evaluates subscription filters before any payload leaves the sending node
-      - Receiver-side filtering is not the primary enforcement point
-      - Application-layer filters do not substitute for protocol-layer filtering
-    verification: Sync daemon trace shows that data outside a peer's subscription scope is never serialized for that peer; integration test asserts a peer with a restricted role never receives out-of-scope ciphertext on the wire.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise, data-residency-objection]
-    tags: [sync, data-minimization, security]
-
-  - id: LENS-03
-    name: MDM compliance gate at capability negotiation
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: v13 §7
-    definition: A node must pass an MDM compliance check during the sync daemon handshake before any data exchange or capability negotiation completes.
-    must-implement:
-      - Sync daemon handshake includes a compliance attestation phase before capability exchange
-      - A node that fails the compliance check is rejected before subscription filters or data exchange occur
-      - Compliance gating lives in the daemon protocol, not in an application policy layer
-    verification: Sync daemon protocol specification defines a pre-capability compliance phase; behavioral test confirms a non-compliant node is rejected at handshake before any data frame is transmitted.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [enterprise, mdm, sync, handshake]
-
-  - id: LENS-04
-    name: Three-tier CRDT applicability model
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: v13 §6
-    definition: Data is partitioned into three tiers — AP CRDT-merged content, CP single-writer operations under lease coordination, and append-only ledger entries outside the CRDT — based on whether automatic merge is semantically valid.
-    must-implement:
-      - Documents and collaborative content use CRDT merge in an AP tier
-      - Operations requiring single-writer semantics (sequential IDs, inventory, slots, financial totals) use distributed lease coordination in a CP tier
-      - Ledger entries are append-only, posted by a domain ledger engine, and not subject to CRDT merge
-    verification: Architecture documents the tier classification per data type; tier-violating writes (e.g., concurrent CRDT merge of a CP-tier counter) are rejected by the data layer.
-    kleppmann-properties: [P3, P4]
-    scope: foundational
-    failure-modes: [partition]
-    tags: [crdt, consistency, data-tiers]
-
-  - id: LENS-05
-    name: DEK/KEK envelope encryption with role-scoped rotation
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: v13 §8
-    definition: Each document holds a Data Encryption Key wrapped by role-scoped Key Encryption Keys, organized as a four-level hierarchy (root org key to role KEKs to per-node wrapped keys to per-record DEKs) such that role revocation rotates the affected KEK and re-wraps in-scope DEKs.
-    must-implement:
-      - Each document is encrypted under a per-document DEK
-      - Role KEKs wrap DEKs only for documents the role is authorized to access
-      - Role revocation triggers KEK rotation and re-wrapping of in-scope DEKs
-      - Compromise of a role KEK does not yield access to documents outside that role's scope
-      - The key hierarchy is exactly: root org key, role KEKs, per-node wrapped keys, per-record DEKs
-    verification: Security architecture chapter specifies the four-level hierarchy; revocation test confirms that after rotation the old KEK no longer decrypts in-scope documents and never decrypted out-of-scope documents.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise, key-loss]
-    tags: [security, encryption, key-management]
-
-  - id: LENS-06
-    name: Dual-license structure established at founding
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: null
-    definition: The codebase ships under AGPLv3 with a parallel commercial license available for organizations that cannot accept the AGPLv3 network use clause, and the dual-license structure plus contributor license agreement is in place before the public repository opens.
-    must-implement:
-      - Repository publishes AGPLv3 license at first public commit
-      - Parallel commercial license terms are published or available on request from first public commit
-      - Contributor License Agreement is required from every contributor from first public commit
-      - License structure is not retrofitted after community formation
-    verification: Repository at first public release contains LICENSE (AGPLv3), a documented commercial license path, and a CLA process; git history shows the license files present at the initial commit.
-    kleppmann-properties: [P5, P7]
-    scope: inverted-stack-specific
-    failure-modes: [vendor-acquisition]
-    tags: [licensing, commercial, governance]
-
-  - id: LENS-07
-    name: Non-technical disaster recovery path
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: null
-    definition: A non-technical user can recover their complete data after total device failure without contacting support and without developer-only tooling.
-    must-implement:
-      - Recovery flow is documented as a UX walkthrough usable by a non-developer
-      - Recovery requires only artifacts a non-technical user can manage (recovery phrase, backup file, or equivalent)
-      - Recovery does not depend on vendor support intervention
-    verification: Documented walkthrough exists; usability test with a non-technical participant completes restore on a fresh device without developer assistance.
-    kleppmann-properties: [P2, P5, P7]
-    scope: foundational
-    failure-modes: [key-loss]
-    tags: [ux, disaster-recovery, ownership]
-
-  - id: LENS-08
-    name: Plain-file export without vendor cooperation
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: null
-    definition: A user can export all of their data to standard plain-file formats (CSV, JSON, plain files) using only a standard file manager, with no vendor service call and no special tooling.
-    must-implement:
-      - Export produces standard formats (CSV, JSON, plain files) accessible via a standard file manager
-      - Export executes without any network call to a vendor service
-      - Export covers all user-owned records held by the node
-      - Export discloses categories where regulatory custody overrides user export rights
-    verification: Disconnect node from network; trigger export; verify produced files open in standard tools and contain the user's full record set; verify any withheld categories are listed with the regulatory basis.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition]
-    tags: [export, ownership, portability]
-
-  - id: LENS-09
-    name: Pre-GA blocker classification of cross-lens conflicts
-    source: 'ch10 §"Round 2: The Architecture Survives (with Conditions)"'
-    source-paper: null
-    definition: When security and commercial timelines conflict over readiness, both requirements are classified as pre-GA blockers rather than allowing one lens to defer to a post-GA roadmap.
-    must-implement:
-      - Key-compromise incident response is executable by a non-cryptographer IT administrator before first external release
-      - Dual-license structure and first-customer acquisition path are in place before first external release
-      - Neither security nor commercial item ships independently of the other
-    verification: Release-readiness checklist names both items as gating conditions for GA; release artifact records both as satisfied.
-    kleppmann-properties: [P6]
-    scope: inverted-stack-specific
-    failure-modes: [key-compromise]
-    tags: [release, governance]
-
-  - id: LENS-10
-    name: Documented-gap shipping discipline
-    source: 'ch10 §"Round 2: The Architecture Survives (with Conditions)"'
-    source-paper: null
-    definition: Where correctness rigor and unit-economics pressure conflict, the protocol ships with known rough edges named explicitly in the public specification rather than being silently deferred or perfected before release.
-    must-implement:
-      - Public specification names known protocol gaps (e.g., stale peer recovery, buffer behavior under prolonged partition) at release time
-      - Each named gap has an owner and a tracked remediation path
-      - Gaps are not silently elided from the specification to ease shipping
-    verification: Public spec contains a named "Known Gaps" section enumerating each documented limitation with remediation status.
-    kleppmann-properties: []
-    scope: inverted-stack-specific
-    failure-modes: [partition, schema-skew]
-    tags: [governance, specification, transparency]
-
-  - id: LENS-11
-    name: Intermittent connectivity as baseline operating condition
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: v13 §3
-    definition: The architecture treats intermittent connectivity as the default operating environment for the target user population, not as an edge case the system gracefully degrades into.
-    must-implement:
-      - Core operations complete identically online and offline
-      - No feature is gated on continuous connectivity for its primary path
-      - Degraded modes are not used to mask online-required behavior
-    verification: Disconnect network for an extended period; full feature set executes against the local node with no functional regression versus the online state.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [vendor-outage, partition, peer-discovery-failure]
-    tags: [offline-first, deployment, philosophy]
-
-  - id: LENS-12
-    name: Sanctions-grade availability as design anchor
-    source: 'ch10 §"The Seven Non-Negotiables"'
-    source-paper: null
-    definition: The architecture treats the documented 2022 Western SaaS withdrawal from Russia and CIS markets as the empirical anchor against which availability, encryption, and ownership invariants are validated, not as a hypothetical threat model.
-    must-implement:
-      - Ciphertext is held locally so that loss of relay access does not expose plaintext
-      - The three-tier CRDT model and plain-file export preserve operational continuity independent of vendor availability
-      - The dual-license structure prevents vendor removal of the software itself, not only the service
-    verification: Tabletop exercise simulating sudden vendor withdrawal demonstrates continued local operation, retained data, and standalone software availability.
-    kleppmann-properties: [P3, P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
-    tags: [availability, sanctions, vendor-risk]
-
-  - id: LENS-13
-    name: Crypto-shredding as erasure-rights resolution with documented limits
-    source: 'ch10 §"The Open Questions"'
-    source-paper: v13 §10
-    definition: Erasure rights against CRDT full-history retention are resolved by destroying the per-document DEK, rendering the data cryptographically inaccessible, and the architecture documents that cryptographic inaccessibility is not the same as physical erasure under every regulatory regime.
-    must-implement:
-      - Erasure request triggers destruction of the per-document DEK
-      - Architecture documents which jurisdictions accept crypto-shredding as fulfilling erasure rights and which do not
-      - The crypto-shredding limitation is named in the public compliance specification rather than implied
-    verification: Compliance documentation maps each named jurisdiction (GDPR, LGPD, POPIA, NDPR, DPDP, PIPA, PIPL, etc.) to its treatment of crypto-shredding; behavioral test confirms DEK destruction on erasure request.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-loss]
-    tags: [compliance, gdpr, crypto-shredding, erasure]
-
-  - id: LENS-14
-    name: Per-deployment relay residency as regulatory contract
-    source: 'ch10 §"The Open Questions"'
-    source-paper: v13 §10
-    definition: The managed relay's legal residency is a per-deployment choice driven by the buyer's jurisdictional regime (Schrems II for EU, 242-FZ for Russia, DIFC 2020 for UAE financial firms, PIPL for China), and a self-hosted relay path exists for deployments where managed residency cannot satisfy the regime.
-    must-implement:
-      - Managed relay offers jurisdictionally-resident deployment options matched to named regulatory regimes
-      - Self-hosted relay path is available and documented for high-sensitivity deployments
-      - Relay metadata residency is treated as in-scope for jurisdictional review, not only payload residency
-    verification: Deployment documentation lists supported relay residency options per jurisdiction; self-hosted relay package is published with operator documentation.
-    kleppmann-properties: [P6, P7]
-    scope: inverted-stack-specific
-    failure-modes: [data-residency-objection, vendor-outage]
-    tags: [relay, jurisdiction, deployment, compliance]
-
-  - id: LENS-15
-    name: Local key custody as architectural answer to compelled disclosure
-    source: 'ch10 §"The Open Questions"'
-    source-paper: v13 §8
-    definition: Encryption keys never leave the user-controlled device, so a relay or cloud operator served with a compelled-disclosure order cannot produce decryptable content because no decryptable content is in their custody.
-    must-implement:
-      - Private key material remains on the user's device and is never uploaded to relay or vendor infrastructure
-      - Relay processes only ciphertext payloads
-      - Architecture states explicitly that relay operator compliance with disclosure orders cannot yield plaintext
-    verification: Audit of relay storage and logs confirms no key material is present; cryptographic protocol specification documents that relay never receives a private key.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [key-compromise]
-    tags: [security, key-custody, threat-model]
-
-  - id: LENS-16
-    name: Domain-invariant validation as deployment responsibility
-    source: 'ch10 §"The Open Questions"'
-    source-paper: null
-    definition: Structural validity of a CRDT operation does not imply semantic correctness, and each deployment is responsible for specifying and enforcing its own domain-level merge invariants on top of the architecture's structural validation layer.
-    must-implement:
-      - Architecture provides an operation validation layer at insertion that enforces structural validity
-      - Each deployment defines and enforces domain-specific semantic invariants
-      - A semantically invalid but structurally valid operation does not silently propagate convergence-breaking corruption across peers
-    verification: Validation layer rejects an operation that violates a registered domain invariant; multi-peer test demonstrates that domain-invariant violation at one peer does not propagate as accepted state to other peers.
-    kleppmann-properties: [P4]
-    scope: foundational
-    failure-modes: [partition, schema-skew]
-    tags: [crdt, validation, domain-modeling]
-
-  - id: LENS-17
-    name: Default-no analytics with deliberate model selection
-    source: 'ch10 §"The Open Questions"'
-    source-paper: null
-    definition: Local-first architecture has no server-side analytics endpoint by default, and the analytics model (opt-in telemetry only, aggregate via relay metadata, or none) must be selected and specified before implementation teams face delivery pressure to add one.
-    must-implement:
-      - No server-side analytics endpoint is added by default
-      - The analytics model is named in the architecture specification before alpha implementation
-      - Any opt-in telemetry is opt-in by user action, not opt-out
-    verification: Architecture document names the chosen analytics model and the rationale; sync daemon and node kernel contain no implicit telemetry channel.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: []
-    tags: [analytics, telemetry, philosophy]
+- id: LENS-01
+  name: Block-vs-condition verdict semantics
+  source: 'ch10 §"Round 1: The Architecture Fails"'
+  source-paper: null
+  definition: Council review distinguishes BLOCK verdicts (correctness or commercial gaps that prevent
+    proceeding regardless of average score) from CONDITION verdicts (specific changes required before
+    sign-off but compatible with proceeding).
+  must-implement:
+  - Architecture review process records each reviewer's verdict as one of BLOCK, PROCEED WITH CONDITIONS,
+    or PROCEED
+  - A single BLOCK halts progression regardless of aggregate scores
+  - Conditions are tracked as named, addressable items that map to specific architecture changes
+  verification: Review-cycle artifact lists per-reviewer verdicts and conditions; any BLOCK present prevents
+    the artifact from advancing to specification stage.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes: []
+  tags:
+  - governance
+  - review
+  failed-conditions:
+  - Architecture review process does not record each reviewer's verdict as one of BLOCK, PROCEED WITH
+    CONDITIONS, or PROCEED
+  - 'Fails to satisfy: A single BLOCK halts progression regardless of aggregate scores'
+  - Conditions are not tracked as named, addressable items that map to specific architecture changes
+  - 'Verification check does not pass: Review-cycle artifact lists per-reviewer verdicts and conditions;
+    any BLOCK present prevents the artifact from advancing...'
+- id: LENS-02
+  name: Send-tier subscription filtering as data minimization invariant
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: v13 §7
+  definition: Subscription filtering enforces role-scoped data minimization at the sending node before
+    transmission, not at the receiver or in the application layer.
+  must-implement:
+  - Sync daemon evaluates subscription filters before any payload leaves the sending node
+  - Receiver-side filtering is not the primary enforcement point
+  - Application-layer filters do not substitute for protocol-layer filtering
+  verification: Sync daemon trace shows that data outside a peer's subscription scope is never serialized
+    for that peer; integration test asserts a peer with a restricted role never receives out-of-scope
+    ciphertext on the wire.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  - data-residency-objection
+  tags:
+  - sync
+  - data-minimization
+  - security
+  failed-conditions:
+  - 'Fails to satisfy: Sync daemon evaluates subscription filters before any payload leaves the sending
+    node'
+  - 'Fails to satisfy: Receiver-side filtering is not the primary enforcement point'
+  - 'Fails to satisfy: Application-layer filters do not substitute for protocol-layer filtering'
+  - 'Verification check does not pass: Sync daemon trace shows that data outside a peer''s subscription
+    scope is never serialized for that peer; integration tes...'
+- id: LENS-03
+  name: MDM compliance gate at capability negotiation
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: v13 §7
+  definition: A node must pass an MDM compliance check during the sync daemon handshake before any data
+    exchange or capability negotiation completes.
+  must-implement:
+  - Sync daemon handshake includes a compliance attestation phase before capability exchange
+  - A node that fails the compliance check is rejected before subscription filters or data exchange occur
+  - Compliance gating lives in the daemon protocol, not in an application policy layer
+  verification: Sync daemon protocol specification defines a pre-capability compliance phase; behavioral
+    test confirms a non-compliant node is rejected at handshake before any data frame is transmitted.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - enterprise
+  - mdm
+  - sync
+  - handshake
+  security-axis:
+  - confidentiality
+  - authenticity
+  failed-conditions:
+  - Sync daemon handshake does not include a compliance attestation phase before capability exchange
+  - A node that fails the compliance check is not rejected before subscription filters or data exchange
+    occur
+  - 'Fails to satisfy: Compliance gating lives in the daemon protocol, not in an application policy layer'
+  - 'Verification check does not pass: Sync daemon protocol specification defines a pre-capability compliance
+    phase; behavioral test confirms a non-compliant n...'
+- id: LENS-04
+  name: Three-tier CRDT applicability model
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: v13 §6
+  definition: Data is partitioned into three tiers — AP CRDT-merged content, CP single-writer operations
+    under lease coordination, and append-only ledger entries outside the CRDT — based on whether automatic
+    merge is semantically valid.
+  must-implement:
+  - Documents and collaborative content use CRDT merge in an AP tier
+  - Operations requiring single-writer semantics (sequential IDs, inventory, slots, financial totals)
+    use distributed lease coordination in a CP tier
+  - Ledger entries are append-only, posted by a domain ledger engine, and not subject to CRDT merge
+  verification: Architecture documents the tier classification per data type; tier-violating writes (e.g.,
+    concurrent CRDT merge of a CP-tier counter) are rejected by the data layer.
+  kleppmann-properties:
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  tags:
+  - crdt
+  - consistency
+  - data-tiers
+  failed-conditions:
+  - 'Fails to satisfy: Documents and collaborative content use CRDT merge in an AP tier'
+  - 'Fails to satisfy: Operations requiring single-writer semantics (sequential IDs, inventory, slots,
+    financial totals) use distributed lease coordination in a CP tier'
+  - Ledger entries are not append-only, posted by a domain ledger engine, and not subject to CRDT merge
+  - 'Verification check does not pass: Architecture documents the tier classification per data type; tier-violating
+    writes (e.g., concurrent CRDT merge of a CP...'
+- id: LENS-05
+  name: DEK/KEK envelope encryption with role-scoped rotation
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: v13 §8
+  definition: Each document holds a Data Encryption Key wrapped by role-scoped Key Encryption Keys, organized
+    as a four-level hierarchy (root org key to role KEKs to per-node wrapped keys to per-record DEKs)
+    such that role revocation rotates the affected KEK and re-wraps in-scope DEKs.
+  must-implement:
+  - Each document is encrypted under a per-document DEK
+  - Role KEKs wrap DEKs only for documents the role is authorized to access
+  - Role revocation triggers KEK rotation and re-wrapping of in-scope DEKs
+  - Compromise of a role KEK does not yield access to documents outside that role's scope
+  - The key hierarchy is exactly: root org key, role KEKs, per-node wrapped keys, per-record DEKs
+  verification: Security architecture chapter specifies the four-level hierarchy; revocation test confirms
+    that after rotation the old KEK no longer decrypts in-scope documents and never decrypted out-of-scope
+    documents.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  - key-loss
+  tags:
+  - security
+  - encryption
+  - key-management
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Each document is not encrypted under a per-document DEK
+  - Role KEKs wrap DEKs only for documents the role is not authorized to access
+  - 'Fails to satisfy: Role revocation triggers KEK rotation and re-wrapping of in-scope DEKs'
+  - 'Fails to satisfy: Compromise of a role KEK does not yield access to documents outside that role''s
+    scope'
+  - '{''The key hierarchy is not exactly'': ''root org key, role KEKs, per-node wrapped keys, per-record
+    DEKs''}'
+  - 'Verification check does not pass: Security architecture chapter specifies the four-level hierarchy;
+    revocation test confirms that after rotation the old K...'
+- id: LENS-06
+  name: Dual-license structure established at founding
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: null
+  definition: The codebase ships under AGPLv3 with a parallel commercial license available for organizations
+    that cannot accept the AGPLv3 network use clause, and the dual-license structure plus contributor
+    license agreement is in place before the public repository opens.
+  must-implement:
+  - Repository publishes AGPLv3 license at first public commit
+  - Parallel commercial license terms are published or available on request from first public commit
+  - Contributor License Agreement is required from every contributor from first public commit
+  - License structure is not retrofitted after community formation
+  verification: Repository at first public release contains LICENSE (AGPLv3), a documented commercial
+    license path, and a CLA process; git history shows the license files present at the initial commit.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - licensing
+  - commercial
+  - governance
+  failed-conditions:
+  - Repository does not publishe AGPLv3 license at first public commit
+  - Parallel commercial license terms are not published or available on request from first public commit
+  - Contributor License Agreement is not required from every contributor from first public commit
+  - 'Fails to satisfy: License structure is not retrofitted after community formation'
+  - 'Verification check does not pass: Repository at first public release contains LICENSE (AGPLv3), a
+    documented commercial license path, and a CLA process; g...'
+- id: LENS-07
+  name: Non-technical disaster recovery path
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: null
+  definition: A non-technical user can recover their complete data after total device failure without
+    contacting support and without developer-only tooling.
+  must-implement:
+  - Recovery flow is documented as a UX walkthrough usable by a non-developer
+  - Recovery requires only artifacts a non-technical user can manage (recovery phrase, backup file, or
+    equivalent)
+  - Recovery does not depend on vendor support intervention
+  verification: Documented walkthrough exists; usability test with a non-technical participant completes
+    restore on a fresh device without developer assistance.
+  kleppmann-properties:
+  - P2
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  tags:
+  - ux
+  - disaster-recovery
+  - ownership
+  failed-conditions:
+  - Recovery flow is not documented as a UX walkthrough usable by a non-developer
+  - Recovery requires only artifacts a non-technical user cannot manage (recovery phrase, backup file,
+    or equivalent)
+  - 'Fails to satisfy: Recovery does not depend on vendor support intervention'
+  - 'Verification check does not pass: Documented walkthrough exists; usability test with a non-technical
+    participant completes restore on a fresh device witho...'
+- id: LENS-08
+  name: Plain-file export without vendor cooperation
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: null
+  definition: A user can export all of their data to standard plain-file formats (CSV, JSON, plain files)
+    using only a standard file manager, with no vendor service call and no special tooling.
+  must-implement:
+  - Export produces standard formats (CSV, JSON, plain files) accessible via a standard file manager
+  - Export executes without any network call to a vendor service
+  - Export covers all user-owned records held by the node
+  - Export discloses categories where regulatory custody overrides user export rights
+  verification: Disconnect node from network; trigger export; verify produced files open in standard tools
+    and contain the user's full record set; verify any withheld categories are listed with the regulatory
+    basis.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  tags:
+  - export
+  - ownership
+  - portability
+  failed-conditions:
+  - 'Fails to satisfy: Export produces standard formats (CSV, JSON, plain files) accessible via a standard
+    file manager'
+  - Export does not execute without any network call to a vendor service
+  - Export does not cover all user-owned records held by the node
+  - 'Fails to satisfy: Export discloses categories where regulatory custody overrides user export rights'
+  - 'Verification check does not pass: Disconnect node from network; trigger export; verify produced files
+    open in standard tools and contain the user''s full r...'
+- id: LENS-09
+  name: Pre-GA blocker classification of cross-lens conflicts
+  source: 'ch10 §"Round 2: The Architecture Survives (with Conditions)"'
+  source-paper: null
+  definition: When security and commercial timelines conflict over readiness, both requirements are classified
+    as pre-GA blockers rather than allowing one lens to defer to a post-GA roadmap.
+  must-implement:
+  - Key-compromise incident response is executable by a non-cryptographer IT administrator before first
+    external release
+  - Dual-license structure and first-customer acquisition path are in place before first external release
+  - Neither security nor commercial item ships independently of the other
+  verification: Release-readiness checklist names both items as gating conditions for GA; release artifact
+    records both as satisfied.
+  kleppmann-properties:
+  - P6
+  scope: inverted-stack-specific
+  failure-modes:
+  - key-compromise
+  tags:
+  - release
+  - governance
+  failed-conditions:
+  - Key-compromise incident response is not executable by a non-cryptographer IT administrator before
+    first external release
+  - Dual-license structure and first-customer acquisition path are not in place before first external
+    release
+  - 'Fails to satisfy: Neither security nor commercial item ships independently of the other'
+  - 'Verification check does not pass: Release-readiness checklist names both items as gating conditions
+    for GA; release artifact records both as satisfied.'
+- id: LENS-10
+  name: Documented-gap shipping discipline
+  source: 'ch10 §"Round 2: The Architecture Survives (with Conditions)"'
+  source-paper: null
+  definition: Where correctness rigor and unit-economics pressure conflict, the protocol ships with known
+    rough edges named explicitly in the public specification rather than being silently deferred or perfected
+    before release.
+  must-implement:
+  - Public specification names known protocol gaps (e.g., stale peer recovery, buffer behavior under prolonged
+    partition) at release time
+  - Each named gap has an owner and a tracked remediation path
+  - Gaps are not silently elided from the specification to ease shipping
+  verification: Public spec contains a named "Known Gaps" section enumerating each documented limitation
+    with remediation status.
+  kleppmann-properties: []
+  scope: inverted-stack-specific
+  failure-modes:
+  - partition
+  - schema-skew
+  tags:
+  - governance
+  - specification
+  - transparency
+  failed-conditions:
+  - 'Fails to satisfy: Public specification names known protocol gaps (e.g., stale peer recovery, buffer
+    behavior under prolonged partition) at release time'
+  - Each named gap has not an owner and a tracked remediation path
+  - 'Fails to satisfy: Gaps are not silently elided from the specification to ease shipping'
+  - 'Verification check does not pass: Public spec contains a named "Known Gaps" section enumerating each
+    documented limitation with remediation status.'
+- id: LENS-11
+  name: Intermittent connectivity as baseline operating condition
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: v13 §3
+  definition: The architecture treats intermittent connectivity as the default operating environment for
+    the target user population, not as an edge case the system gracefully degrades into.
+  must-implement:
+  - Core operations complete identically online and offline
+  - No feature is gated on continuous connectivity for its primary path
+  - Degraded modes are not used to mask online-required behavior
+  verification: Disconnect network for an extended period; full feature set executes against the local
+    node with no functional regression versus the online state.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - partition
+  - peer-discovery-failure
+  tags:
+  - offline-first
+  - deployment
+  - philosophy
+  failed-conditions:
+  - 'Fails to satisfy: Core operations complete identically online and offline'
+  - No feature is not gated on continuous connectivity for its primary path
+  - 'Fails to satisfy: Degraded modes are not used to mask online-required behavior'
+  - 'Verification check does not pass: Disconnect network for an extended period; full feature set executes
+    against the local node with no functional regressio...'
+- id: LENS-12
+  name: Sanctions-grade availability as design anchor
+  source: ch10 §"The Seven Non-Negotiables"
+  source-paper: null
+  definition: The architecture treats the documented 2022 Western SaaS withdrawal from Russia and CIS
+    markets as the empirical anchor against which availability, encryption, and ownership invariants are
+    validated, not as a hypothetical threat model.
+  must-implement:
+  - Ciphertext is held locally so that loss of relay access does not expose plaintext
+  - The three-tier CRDT model and plain-file export preserve operational continuity independent of vendor
+    availability
+  - The dual-license structure prevents vendor removal of the software itself, not only the service
+  verification: Tabletop exercise simulating sudden vendor withdrawal demonstrates continued local operation,
+    retained data, and standalone software availability.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - availability
+  - sanctions
+  - vendor-risk
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Ciphertext is not held locally so that loss of relay access does not expose plaintext
+  - 'Fails to satisfy: The three-tier CRDT model and plain-file export preserve operational continuity
+    independent of vendor availability'
+  - The dual-license structure does not prevent vendor removal of the software itself, not only the service
+  - 'Verification check does not pass: Tabletop exercise simulating sudden vendor withdrawal demonstrates
+    continued local operation, retained data, and standal...'
+- id: LENS-13
+  name: Crypto-shredding as erasure-rights resolution with documented limits
+  source: ch10 §"The Open Questions"
+  source-paper: v13 §10
+  definition: Erasure rights against CRDT full-history retention are resolved by destroying the per-document
+    DEK, rendering the data cryptographically inaccessible, and the architecture documents that cryptographic
+    inaccessibility is not the same as physical erasure under every regulatory regime.
+  must-implement:
+  - Erasure request triggers destruction of the per-document DEK
+  - Architecture documents which jurisdictions accept crypto-shredding as fulfilling erasure rights and
+    which do not
+  - The crypto-shredding limitation is named in the public compliance specification rather than implied
+  verification: Compliance documentation maps each named jurisdiction (GDPR, LGPD, POPIA, NDPR, DPDP,
+    PIPA, PIPL, etc.) to its treatment of crypto-shredding; behavioral test confirms DEK destruction on
+    erasure request.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-loss
+  tags:
+  - compliance
+  - gdpr
+  - crypto-shredding
+  - erasure
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - 'Fails to satisfy: Erasure request triggers destruction of the per-document DEK'
+  - 'Fails to satisfy: Architecture documents which jurisdictions accept crypto-shredding as fulfilling
+    erasure rights and which do not'
+  - The crypto-shredding limitation is not named in the public compliance specification rather than implied
+  - 'Verification check does not pass: Compliance documentation maps each named jurisdiction (GDPR, LGPD,
+    POPIA, NDPR, DPDP, PIPA, PIPL, etc.) to its treatment...'
+- id: LENS-14
+  name: Per-deployment relay residency as regulatory contract
+  source: ch10 §"The Open Questions"
+  source-paper: v13 §10
+  definition: The managed relay's legal residency is a per-deployment choice driven by the buyer's jurisdictional
+    regime (Schrems II for EU, 242-FZ for Russia, DIFC 2020 for UAE financial firms, PIPL for China),
+    and a self-hosted relay path exists for deployments where managed residency cannot satisfy the regime.
+  must-implement:
+  - Managed relay offers jurisdictionally-resident deployment options matched to named regulatory regimes
+  - Self-hosted relay path is available and documented for high-sensitivity deployments
+  - Relay metadata residency is treated as in-scope for jurisdictional review, not only payload residency
+  verification: Deployment documentation lists supported relay residency options per jurisdiction; self-hosted
+    relay package is published with operator documentation.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: inverted-stack-specific
+  failure-modes:
+  - data-residency-objection
+  - vendor-outage
+  tags:
+  - relay
+  - jurisdiction
+  - deployment
+  - compliance
+  failed-conditions:
+  - 'Fails to satisfy: Managed relay offers jurisdictionally-resident deployment options matched to named
+    regulatory regimes'
+  - Self-hosted relay path is not available and documented for high-sensitivity deployments
+  - Relay metadata residency is not treated as in-scope for jurisdictional review, not only payload residency
+  - 'Verification check does not pass: Deployment documentation lists supported relay residency options
+    per jurisdiction; self-hosted relay package is publishe...'
+- id: LENS-15
+  name: Local key custody as architectural answer to compelled disclosure
+  source: ch10 §"The Open Questions"
+  source-paper: v13 §8
+  definition: Encryption keys never leave the user-controlled device, so a relay or cloud operator served
+    with a compelled-disclosure order cannot produce decryptable content because no decryptable content
+    is in their custody.
+  must-implement:
+  - Private key material remains on the user's device and is never uploaded to relay or vendor infrastructure
+  - Relay processes only ciphertext payloads
+  - Architecture states explicitly that relay operator compliance with disclosure orders cannot yield
+    plaintext
+  verification: Audit of relay storage and logs confirms no key material is present; cryptographic protocol
+    specification documents that relay never receives a private key.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - key-compromise
+  tags:
+  - security
+  - key-custody
+  - threat-model
+  security-axis:
+  - confidentiality
+  failed-conditions:
+  - Private key material remains on the user's device and is not never uploaded to relay or vendor infrastructure
+  - 'Fails to satisfy: Relay processes only ciphertext payloads'
+  - 'Fails to satisfy: Architecture states explicitly that relay operator compliance with disclosure orders
+    cannot yield plaintext'
+  - 'Verification check does not pass: Audit of relay storage and logs confirms no key material is present;
+    cryptographic protocol specification documents that...'
+- id: LENS-16
+  name: Domain-invariant validation as deployment responsibility
+  source: ch10 §"The Open Questions"
+  source-paper: null
+  definition: Structural validity of a CRDT operation does not imply semantic correctness, and each deployment
+    is responsible for specifying and enforcing its own domain-level merge invariants on top of the architecture's
+    structural validation layer.
+  must-implement:
+  - Architecture provides an operation validation layer at insertion that enforces structural validity
+  - Each deployment defines and enforces domain-specific semantic invariants
+  - A semantically invalid but structurally valid operation does not silently propagate convergence-breaking
+    corruption across peers
+  verification: Validation layer rejects an operation that violates a registered domain invariant; multi-peer
+    test demonstrates that domain-invariant violation at one peer does not propagate as accepted state
+    to other peers.
+  kleppmann-properties:
+  - P4
+  scope: foundational
+  failure-modes:
+  - partition
+  - schema-skew
+  tags:
+  - crdt
+  - validation
+  - domain-modeling
+  failed-conditions:
+  - Architecture does not provide an operation validation layer at insertion that enforces structural
+    validity
+  - Each deployment defines and does not enforce domain-specific semantic invariants
+  - 'Fails to satisfy: A semantically invalid but structurally valid operation does not silently propagate
+    convergence-breaking corruption across peers'
+  - 'Verification check does not pass: Validation layer rejects an operation that violates a registered
+    domain invariant; multi-peer test demonstrates that dom...'
+- id: LENS-17
+  name: Default-no analytics with deliberate model selection
+  source: ch10 §"The Open Questions"
+  source-paper: null
+  definition: Local-first architecture has no server-side analytics endpoint by default, and the analytics
+    model (opt-in telemetry only, aggregate via relay metadata, or none) must be selected and specified
+    before implementation teams face delivery pressure to add one.
+  must-implement:
+  - No server-side analytics endpoint is added by default
+  - The analytics model is named in the architecture specification before alpha implementation
+  - Any opt-in telemetry is opt-in by user action, not opt-out
+  verification: Architecture document names the chosen analytics model and the rationale; sync daemon
+    and node kernel contain no implicit telemetry channel.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes: []
+  tags:
+  - analytics
+  - telemetry
+  - philosophy
+  failed-conditions:
+  - No server-side analytics endpoint is not added by default
+  - The analytics model is not named in the architecture specification before alpha implementation
+  - Any opt-in telemetry is not opt-in by user action, not opt-out
+  - 'Verification check does not pass: Architecture document names the chosen analytics model and the
+    rationale; sync daemon and node kernel contain no implici...'

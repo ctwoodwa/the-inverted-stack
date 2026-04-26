@@ -1,172 +1,386 @@
 chapter: ch01
-chapter-title: "When SaaS Fights Reality"
-source-paper-refs: [v13 §3, v13 Executive Summary, v13 §14.1, v13 §20.4, v5 §1]
+chapter-title: When SaaS Fights Reality
+source-paper-refs:
+- v13 §3
+- v13 Executive Summary
+- v13 §14.1
+- v13 §20.4
+- v5 §1
 extraction-date: 2026-04-26
 extracted-by: subagent
-
 concepts:
-  - id: THESIS-01
-    name: The SaaS bundle as conjoined value-and-cost
-    source: 'ch01 §"The Bundle Nobody Agreed To"'
-    source-paper: v13 §3
-    definition: SaaS packages three desirable properties (real-time collaboration, multi-device access, zero maintenance) inseparably with three undesirable conditions (data on vendor infrastructure, vendor-discretion pricing, vendor-contingent service continuity), accepted as a single take-it-or-leave-it deal because the technology of the time made the conditions appear structurally required to deliver the properties.
-    must-implement: []
-    verification: null
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
-    tags: [philosophy, thesis, saas-critique]
-    notes: The bundle frame is the organizing thesis Ch01 establishes; the rest of the book argues the bundle is now separable.
-
-  - id: THESIS-02
-    name: Vendor outage as deadline-coincident failure
-    source: 'ch01 §"The Outage That Takes Your Work With It"'
-    source-paper: v13 §3
-    definition: A failure mode in which the SaaS provider's infrastructure becomes unavailable (full outage or undisclosed degraded performance) and renders user data inaccessible at the moment of greatest operational need, with cascading exposure when many vendors share the same underlying cloud region.
-    must-implement:
-      - Application reads and writes complete locally without dependency on vendor reachability
-      - Application surfaces no functional difference between connected and disconnected operation for core workflows
-      - Application does not silently queue submissions whose persistence cannot be confirmed
-    verification: Disconnect network from the device; application performs all core read, write, search, and submission operations identically to the connected case.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [availability, failure-mode, dependency-chain]
-
-  - id: THESIS-03
-    name: Vendor disappearance as routine product end-state
-    source: 'ch01 §"The Vendor That Disappears"'
-    source-paper: v13 §3
-    definition: A failure mode in which the SaaS provider is acquired, sunset, pivoted, or runs out of runway, terminating service on a vendor-controlled timeline and leaving users with whatever export the vendor chooses to provide in whatever format the vendor chooses to emit.
-    must-implement:
-      - User data is stored in a format the user can read without the vendor's tools
-      - Application continues to function on user-controlled hardware after vendor termination
-      - Schema, attachments, comment threads, and relationship structure remain coherent without vendor-side reconstruction
-    verification: Remove all vendor-side services; application launches, reads historical data, and continues normal operation against the local store.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition]
-    tags: [longevity, vendor-risk, failure-mode]
-
-  - id: THESIS-04
-    name: Capability degradation under offline conditions
-    source: 'ch01 §"The Connectivity That Wasn''t There"'
-    source-paper: v13 §3
-    definition: A failure mode in which a SaaS application reduces to a read-only cache, queued submissions of uncertain success, or total inoperability when network connectivity is intermittent, weak, restricted, or absent — disproportionately affecting field, rural, clinical, industrial, air-gapped, and majority-world users whose baseline operating environment is non-continuous connectivity.
-    must-implement:
-      - All core operations including create, update, search, and report execute against local storage with no functional difference from the connected case
-      - Submission persistence is locally durable and acknowledged at write time
-      - No feature is gated on persistent connectivity
-    verification: Place device in airplane mode for the duration of a complete representative workflow; confirm every action completes locally and converges on later reconnect with no user intervention.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [offline-first, connectivity, accessibility, global-baseline]
-
-  - id: THESIS-05
-    name: Data inaccessibility despite nominal ownership
-    source: 'ch01 §"The Data You Can''t Get Back"'
-    source-paper: v13 §3
-    definition: A failure mode in which user data is contractually owned by the user but operationally inaccessible due to export rate limits, proprietary formats that strip semantic structure, feature-gated export behind paid tiers, or short post-cancellation retrieval windows.
-    must-implement:
-      - User data is stored locally in a documented, schema-described format
-      - Bulk export of all user data completes in bounded time without rate limiting
-      - Export preserves attachments with metadata, comment threading, and custom-field semantics
-      - No retrieval depends on an active subscription or vendor billing state
-    verification: Run a documented export procedure on a representative dataset; confirm the export round-trips into a third-party tool with attachments, threading, and field semantics intact.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition, data-residency-objection]
-    tags: [portability, custody, format-lock-in, failure-mode]
-
-  - id: THESIS-06
-    name: Post-adoption pricing capture
-    source: 'ch01 §"The Price That Changes After You''ve Committed"'
-    source-paper: v13 §3
-    definition: A failure mode in which switching costs accumulated through training, integrations, historical data, and learned workflows allow vendors to raise prices, move features behind higher tiers, or change contractual terms after the customer has lost realistic exit leverage, with per-seat pricing and integration ecosystems compounding the lock-in as teams grow.
-    must-implement:
-      - Architecture removes the structural switching cost by keeping data, schema, and workflow on user infrastructure
-      - No core capability is gated on a vendor subscription tier
-      - Integration with other tools occurs through user-controlled interfaces, not vendor-locked connectors
-    verification: Cancel any optional vendor relay or sync service; confirm the application retains all core functionality on the local node alone.
-    kleppmann-properties: [P5, P7]
-    scope: foundational
-    failure-modes: [vendor-acquisition]
-    tags: [pricing, lock-in, switching-cost, failure-mode]
-
-  - id: THESIS-07
-    name: Third-party veto over vendor-custodied data
-    source: 'ch01 §"The Third-Party Veto"'
-    source-paper: v13 §3
-    definition: A failure mode in which an external authority — sanctions regime, data residency regulator, court order, or national security designation — compels the vendor to suspend service or compels the customer to cease use, ending the relationship regardless of either party's preferences because data custody at the vendor concentrates the exposure surface there.
-    must-implement:
-      - Authoritative state for user data resides on hardware the user controls
-      - Application functions independently of any vendor-side service for core workflows
-      - Any optional relay holds ciphertext only and is replaceable by a user-controlled relay without data migration
-    verification: Specification documents the data custody boundary; deployment guide demonstrates substituting a user-controlled relay for a vendor relay with no application-level changes.
-    kleppmann-properties: [P5, P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection, vendor-acquisition]
-    tags: [sovereignty, regulatory, sanctions, failure-mode]
-    notes: Distinct from the first five failure modes in originating outside the vendor-customer relationship; addressed in Appendix F regulatory coverage.
-
-  - id: THESIS-08
-    name: Architectural reversal of data custody
-    source: 'ch01 §"The Dependency That Looks Inevitable"'
-    source-paper: v13 Executive Summary
-    definition: The thesis-level architectural inversion that moves authoritative state from vendor infrastructure to user infrastructure, demoting the vendor's role from primary data plane to optional relay peer, made feasible by three independently matured technology shifts (production CRDTs, edge gossip protocols, the local service pattern).
-    must-implement:
-      - Authoritative copy of user data lives on the user's device or user-controlled infrastructure
-      - Vendor or shared services participate, when present, as peers or relays rather than as authoritative state holders
-      - The architecture composes production-proven CRDT, gossip, and local-service-pattern components rather than introducing novel primitives
-    verification: Architecture documents identify the device-resident authoritative store; sync protocol documents identify any cloud component as relay or peer rather than primary; component inventory cites mature open implementations for each substrate.
-    kleppmann-properties: [P3, P5, P7]
-    scope: foundational
-    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
-    tags: [thesis, inversion, architecture]
-
-  - id: THESIS-09
-    name: No-degraded-mode commitment
-    source: 'ch01 §"The Connectivity That Wasn''t There"'
-    source-paper: v13 §3
-    definition: An architectural commitment that the application exposes no reduced-capability operating mode under offline, partitioned, or vendor-unreachable conditions — every core capability behaves identically whether the network is present or absent.
-    must-implement:
-      - No feature presents an offline-only read-only state
-      - No submission path queues with uncertain persistence semantics
-      - Search, reporting, create, update, and delete operate against local storage with the same latency and correctness profile online and offline
-      - The application surfaces no banner, modal, or capability gate that distinguishes connected from disconnected state for core workflows
-    verification: Behavioral test runs the full core workflow with the network disabled and asserts byte-identical outcomes (modulo timestamps) to the connected baseline; UI inspection confirms no degraded-mode indicator appears.
-    kleppmann-properties: [P1, P3]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [offline-first, ux, commitment, accessibility]
-    notes: Specifically named for accessibility-technology users for whom degraded mode is functionally equivalent to inaccessibility.
-
-  - id: THESIS-10
-    name: Asymmetric exposure of small-and-medium organizations
-    source: 'ch01 §"Who Pays the Most"'
-    source-paper: v13 §14.1
-    definition: The observation that the SaaS bundle's undesirable conditions fall hardest on small and medium professional service firms because they sign standard terms without negotiated SLA, escrow, or portability clauses, while bearing direct professional, regulatory, and client-relationship consequences from any of the six failure modes.
-    must-implement:
-      - The architecture provides default protections (data custody, portability, durability) without requiring per-customer contractual negotiation
-      - Compliance posture for regulated professions (legal, medical, construction, finance) is met by default deployment, not by enterprise add-ons
-    verification: Default deployment of the architecture passes a representative SMB compliance checklist (HIPAA, professional responsibility, jurisdictional residency) without enterprise-tier features enabled.
-    kleppmann-properties: [P6, P7]
-    scope: foundational
-    failure-modes: [data-residency-objection]
-    tags: [market, sovereignty, smb, compliance]
-
-  - id: THESIS-11
-    name: Paper-fallback as evidence of mediation rather than value
-    source: 'ch01 §"The Work That Doesn''t Stop"'
-    source-paper: v13 §20.4
-    definition: The observation that organizations under SaaS outage continue operating via analog fallbacks (paper charts, whiteboards, fax, manual reconciliation) demonstrates that the SaaS layer was largely mediating work that continued to happen, while the digital affordances (search, cross-history pattern detection, analytic queries) were the genuine value lost — value that a local-first node preserves through the outage.
-    must-implement:
-      - Local node retains full digital affordances (search, reporting, cross-record analytics) during vendor or network unavailability
-      - Reconciliation overhead after a connectivity gap reduces from days of post-incident transcription to automatic convergence on reconnect
-      - Paper backup remains an available last resort but ceases to be the only operating mode
-    verification: Field test simulates vendor unavailability for a representative workday; node retains search, reporting, and analytic queries against local data; on reconnect, no manual transcription or back-fill is required.
-    kleppmann-properties: [P1, P3, P4]
-    scope: foundational
-    failure-modes: [vendor-outage]
-    tags: [resilience, value-attribution, continuity]
+- id: THESIS-01
+  name: The SaaS bundle as conjoined value-and-cost
+  source: ch01 §"The Bundle Nobody Agreed To"
+  source-paper: v13 §3
+  definition: SaaS packages three desirable properties (real-time collaboration, multi-device access,
+    zero maintenance) inseparably with three undesirable conditions (data on vendor infrastructure, vendor-discretion
+    pricing, vendor-contingent service continuity), accepted as a single take-it-or-leave-it deal because
+    the technology of the time made the conditions appear structurally required to deliver the properties.
+  must-implement: []
+  verification: null
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - philosophy
+  - thesis
+  - saas-critique
+  notes: The bundle frame is the organizing thesis Ch01 establishes; the rest of the book argues the bundle
+    is now separable.
+  failed-conditions: []
+- id: THESIS-02
+  name: Vendor outage as deadline-coincident failure
+  source: ch01 §"The Outage That Takes Your Work With It"
+  source-paper: v13 §3
+  definition: A failure mode in which the SaaS provider's infrastructure becomes unavailable (full outage
+    or undisclosed degraded performance) and renders user data inaccessible at the moment of greatest
+    operational need, with cascading exposure when many vendors share the same underlying cloud region.
+  must-implement:
+  - Application reads and writes complete locally without dependency on vendor reachability
+  - Application surfaces no functional difference between connected and disconnected operation for core
+    workflows
+  - Application does not silently queue submissions whose persistence cannot be confirmed
+  verification: Disconnect network from the device; application performs all core read, write, search,
+    and submission operations identically to the connected case.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - availability
+  - failure-mode
+  - dependency-chain
+  failed-conditions:
+  - 'Fails to satisfy: Application reads and writes complete locally without dependency on vendor reachability'
+  - Application does not surface no functional difference between connected and disconnected operation
+    for core workflows
+  - 'Fails to satisfy: Application does not silently queue submissions whose persistence cannot be confirmed'
+  - 'Verification check does not pass: Disconnect network from the device; application performs all core
+    read, write, search, and submission operations identic...'
+- id: THESIS-03
+  name: Vendor disappearance as routine product end-state
+  source: ch01 §"The Vendor That Disappears"
+  source-paper: v13 §3
+  definition: A failure mode in which the SaaS provider is acquired, sunset, pivoted, or runs out of runway,
+    terminating service on a vendor-controlled timeline and leaving users with whatever export the vendor
+    chooses to provide in whatever format the vendor chooses to emit.
+  must-implement:
+  - User data is stored in a format the user can read without the vendor's tools
+  - Application continues to function on user-controlled hardware after vendor termination
+  - Schema, attachments, comment threads, and relationship structure remain coherent without vendor-side
+    reconstruction
+  verification: Remove all vendor-side services; application launches, reads historical data, and continues
+    normal operation against the local store.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - longevity
+  - vendor-risk
+  - failure-mode
+  failed-conditions:
+  - User data is not stored in a format the user can read without the vendor's tools
+  - 'Fails to satisfy: Application continues to function on user-controlled hardware after vendor termination'
+  - 'Fails to satisfy: Schema, attachments, comment threads, and relationship structure remain coherent
+    without vendor-side reconstruction'
+  - 'Verification check does not pass: Remove all vendor-side services; application launches, reads historical
+    data, and continues normal operation against the...'
+- id: THESIS-04
+  name: Capability degradation under offline conditions
+  source: ch01 §"The Connectivity That Wasn't There"
+  source-paper: v13 §3
+  definition: A failure mode in which a SaaS application reduces to a read-only cache, queued submissions
+    of uncertain success, or total inoperability when network connectivity is intermittent, weak, restricted,
+    or absent — disproportionately affecting field, rural, clinical, industrial, air-gapped, and majority-world
+    users whose baseline operating environment is non-continuous connectivity.
+  must-implement:
+  - All core operations including create, update, search, and report execute against local storage with
+    no functional difference from the connected case
+  - Submission persistence is locally durable and acknowledged at write time
+  - No feature is gated on persistent connectivity
+  verification: Place device in airplane mode for the duration of a complete representative workflow;
+    confirm every action completes locally and converges on later reconnect with no user intervention.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - offline-first
+  - connectivity
+  - accessibility
+  - global-baseline
+  failed-conditions:
+  - 'Fails to satisfy: All core operations including create, update, search, and report execute against
+    local storage with no functional difference from the connected case'
+  - Submission persistence is not locally durable and acknowledged at write time
+  - No feature is not gated on persistent connectivity
+  - 'Verification check does not pass: Place device in airplane mode for the duration of a complete representative
+    workflow; confirm every action completes loc...'
+- id: THESIS-05
+  name: Data inaccessibility despite nominal ownership
+  source: ch01 §"The Data You Can't Get Back"
+  source-paper: v13 §3
+  definition: A failure mode in which user data is contractually owned by the user but operationally inaccessible
+    due to export rate limits, proprietary formats that strip semantic structure, feature-gated export
+    behind paid tiers, or short post-cancellation retrieval windows.
+  must-implement:
+  - User data is stored locally in a documented, schema-described format
+  - Bulk export of all user data completes in bounded time without rate limiting
+  - Export preserves attachments with metadata, comment threading, and custom-field semantics
+  - No retrieval depends on an active subscription or vendor billing state
+  verification: Run a documented export procedure on a representative dataset; confirm the export round-trips
+    into a third-party tool with attachments, threading, and field semantics intact.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - portability
+  - custody
+  - format-lock-in
+  - failure-mode
+  applies-to-roles:
+  - full-node
+  - full-node-multi-user
+  failed-conditions:
+  - User data is not stored locally in a documented, schema-described format
+  - Bulk export of all user data does not complete in bounded time without rate limiting
+  - Export does not preserve attachments with metadata, comment threading, and custom-field semantics
+  - 'Fails to satisfy: No retrieval depends on an active subscription or vendor billing state'
+  - 'Verification check does not pass: Run a documented export procedure on a representative dataset;
+    confirm the export round-trips into a third-party tool wi...'
+- id: THESIS-06
+  name: Post-adoption pricing capture
+  source: ch01 §"The Price That Changes After You've Committed"
+  source-paper: v13 §3
+  definition: A failure mode in which switching costs accumulated through training, integrations, historical
+    data, and learned workflows allow vendors to raise prices, move features behind higher tiers, or change
+    contractual terms after the customer has lost realistic exit leverage, with per-seat pricing and integration
+    ecosystems compounding the lock-in as teams grow.
+  must-implement:
+  - Architecture removes the structural switching cost by keeping data, schema, and workflow on user infrastructure
+  - No core capability is gated on a vendor subscription tier
+  - Integration with other tools occurs through user-controlled interfaces, not vendor-locked connectors
+  verification: Cancel any optional vendor relay or sync service; confirm the application retains all
+    core functionality on the local node alone.
+  kleppmann-properties:
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-acquisition
+  tags:
+  - pricing
+  - lock-in
+  - switching-cost
+  - failure-mode
+  failed-conditions:
+  - 'Fails to satisfy: Architecture removes the structural switching cost by keeping data, schema, and
+    workflow on user infrastructure'
+  - No core capability is not gated on a vendor subscription tier
+  - 'Fails to satisfy: Integration with other tools occurs through user-controlled interfaces, not vendor-locked
+    connectors'
+  - 'Verification check does not pass: Cancel any optional vendor relay or sync service; confirm the application
+    retains all core functionality on the local no...'
+- id: THESIS-07
+  name: Third-party veto over vendor-custodied data
+  source: ch01 §"The Third-Party Veto"
+  source-paper: v13 §3
+  definition: A failure mode in which an external authority — sanctions regime, data residency regulator,
+    court order, or national security designation — compels the vendor to suspend service or compels the
+    customer to cease use, ending the relationship regardless of either party's preferences because data
+    custody at the vendor concentrates the exposure surface there.
+  must-implement:
+  - Authoritative state for user data resides on hardware the user controls
+  - Application functions independently of any vendor-side service for core workflows
+  - Any optional relay holds ciphertext only and is replaceable by a user-controlled relay without data
+    migration
+  verification: Specification documents the data custody boundary; deployment guide demonstrates substituting
+    a user-controlled relay for a vendor relay with no application-level changes.
+  kleppmann-properties:
+  - P5
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  - vendor-acquisition
+  tags:
+  - sovereignty
+  - regulatory
+  - sanctions
+  - failure-mode
+  notes: Distinct from the first five failure modes in originating outside the vendor-customer relationship;
+    addressed in Appendix F regulatory coverage.
+  failed-conditions:
+  - 'Fails to satisfy: Authoritative state for user data resides on hardware the user controls'
+  - 'Fails to satisfy: Application functions independently of any vendor-side service for core workflows'
+  - Any optional relay holds ciphertext only and is not replaceable by a user-controlled relay without
+    data migration
+  - 'Verification check does not pass: Specification documents the data custody boundary; deployment guide
+    demonstrates substituting a user-controlled relay fo...'
+- id: THESIS-08
+  name: Architectural reversal of data custody
+  source: ch01 §"The Dependency That Looks Inevitable"
+  source-paper: v13 Executive Summary
+  definition: The thesis-level architectural inversion that moves authoritative state from vendor infrastructure
+    to user infrastructure, demoting the vendor's role from primary data plane to optional relay peer,
+    made feasible by three independently matured technology shifts (production CRDTs, edge gossip protocols,
+    the local service pattern).
+  must-implement:
+  - Authoritative copy of user data lives on the user's device or user-controlled infrastructure
+  - Vendor or shared services participate, when present, as peers or relays rather than as authoritative
+    state holders
+  - The architecture composes production-proven CRDT, gossip, and local-service-pattern components rather
+    than introducing novel primitives
+  verification: Architecture documents identify the device-resident authoritative store; sync protocol
+    documents identify any cloud component as relay or peer rather than primary; component inventory cites
+    mature open implementations for each substrate.
+  kleppmann-properties:
+  - P3
+  - P5
+  - P7
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  - vendor-acquisition
+  - data-residency-objection
+  tags:
+  - thesis
+  - inversion
+  - architecture
+  failed-conditions:
+  - 'Fails to satisfy: Authoritative copy of user data lives on the user''s device or user-controlled
+    infrastructure'
+  - 'Fails to satisfy: Vendor or shared services participate, when present, as peers or relays rather
+    than as authoritative state holders'
+  - 'Fails to satisfy: The architecture composes production-proven CRDT, gossip, and local-service-pattern
+    components rather than introducing novel primitives'
+  - 'Verification check does not pass: Architecture documents identify the device-resident authoritative
+    store; sync protocol documents identify any cloud comp...'
+- id: THESIS-09
+  name: No-degraded-mode commitment
+  source: ch01 §"The Connectivity That Wasn't There"
+  source-paper: v13 §3
+  definition: An architectural commitment that the application exposes no reduced-capability operating
+    mode under offline, partitioned, or vendor-unreachable conditions — every core capability behaves
+    identically whether the network is present or absent.
+  must-implement:
+  - No feature presents an offline-only read-only state
+  - No submission path queues with uncertain persistence semantics
+  - Search, reporting, create, update, and delete operate against local storage with the same latency
+    and correctness profile online and offline
+  - The application surfaces no banner, modal, or capability gate that distinguishes connected from disconnected
+    state for core workflows
+  verification: Behavioral test runs the full core workflow with the network disabled and asserts byte-identical
+    outcomes (modulo timestamps) to the connected baseline; UI inspection confirms no degraded-mode indicator
+    appears.
+  kleppmann-properties:
+  - P1
+  - P3
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - offline-first
+  - ux
+  - commitment
+  - accessibility
+  notes: Specifically named for accessibility-technology users for whom degraded mode is functionally
+    equivalent to inaccessibility.
+  failed-conditions:
+  - 'Fails to satisfy: No feature presents an offline-only read-only state'
+  - 'Fails to satisfy: No submission path queues with uncertain persistence semantics'
+  - 'Fails to satisfy: Search, reporting, create, update, and delete operate against local storage with
+    the same latency and correctness profile online and offline'
+  - The application does not surface no banner, modal, or capability gate that distinguishes connected
+    from disconnected state for core workflows
+  - 'Verification check does not pass: Behavioral test runs the full core workflow with the network disabled
+    and asserts byte-identical outcomes (modulo timest...'
+- id: THESIS-10
+  name: Asymmetric exposure of small-and-medium organizations
+  source: ch01 §"Who Pays the Most"
+  source-paper: v13 §14.1
+  definition: The observation that the SaaS bundle's undesirable conditions fall hardest on small and
+    medium professional service firms because they sign standard terms without negotiated SLA, escrow,
+    or portability clauses, while bearing direct professional, regulatory, and client-relationship consequences
+    from any of the six failure modes.
+  must-implement:
+  - The architecture provides default protections (data custody, portability, durability) without requiring
+    per-customer contractual negotiation
+  - Compliance posture for regulated professions (legal, medical, construction, finance) is met by default
+    deployment, not by enterprise add-ons
+  verification: Default deployment of the architecture passes a representative SMB compliance checklist
+    (HIPAA, professional responsibility, jurisdictional residency) without enterprise-tier features enabled.
+  kleppmann-properties:
+  - P6
+  - P7
+  scope: foundational
+  failure-modes:
+  - data-residency-objection
+  tags:
+  - market
+  - sovereignty
+  - smb
+  - compliance
+  failed-conditions:
+  - The architecture does not provide default protections (data custody, portability, durability) without
+    requiring per-customer contractual negotiation
+  - Compliance posture for regulated professions (legal, medical, construction, finance) is not met by
+    default deployment, not by enterprise add-ons
+  - 'Verification check does not pass: Default deployment of the architecture passes a representative
+    SMB compliance checklist (HIPAA, professional responsibil...'
+- id: THESIS-11
+  name: Paper-fallback as evidence of mediation rather than value
+  source: ch01 §"The Work That Doesn't Stop"
+  source-paper: v13 §20.4
+  definition: The observation that organizations under SaaS outage continue operating via analog fallbacks
+    (paper charts, whiteboards, fax, manual reconciliation) demonstrates that the SaaS layer was largely
+    mediating work that continued to happen, while the digital affordances (search, cross-history pattern
+    detection, analytic queries) were the genuine value lost — value that a local-first node preserves
+    through the outage.
+  must-implement:
+  - Local node retains full digital affordances (search, reporting, cross-record analytics) during vendor
+    or network unavailability
+  - Reconciliation overhead after a connectivity gap reduces from days of post-incident transcription
+    to automatic convergence on reconnect
+  - Paper backup remains an available last resort but ceases to be the only operating mode
+  verification: Field test simulates vendor unavailability for a representative workday; node retains
+    search, reporting, and analytic queries against local data; on reconnect, no manual transcription
+    or back-fill is required.
+  kleppmann-properties:
+  - P1
+  - P3
+  - P4
+  scope: foundational
+  failure-modes:
+  - vendor-outage
+  tags:
+  - resilience
+  - value-attribution
+  - continuity
+  failed-conditions:
+  - Local node does not retain full digital affordances (search, reporting, cross-record analytics) during
+    vendor or network unavailability
+  - 'Fails to satisfy: Reconciliation overhead after a connectivity gap reduces from days of post-incident
+    transcription to automatic convergence on reconnect'
+  - 'Fails to satisfy: Paper backup remains an available last resort but ceases to be the only operating
+    mode'
+  - 'Verification check does not pass: Field test simulates vendor unavailability for a representative
+    workday; node retains search, reporting, and analytic qu...'
