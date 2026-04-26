@@ -284,28 +284,96 @@ def _expand_numbers(t: str) -> str:
     # to read normally. Decimals like "3.5%" are also handled.
     t = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"\1 percent", t)
 
-    # Currency shorthand with magnitude suffix.
+    # Currency with magnitude (letter suffix or full word). Choose singular
+    # "dollar" vs plural "dollars" by attributive-vs-predicative position:
+    #
+    #   attributive (modifies a following noun)  -> singular "dollar"
+    #     "$4.2 million renovation"   -> "4.2 million dollar renovation"
+    #     "$50M Series A round"       -> "50 million dollar Series A round"
+    #
+    #   predicative (the amount itself, before preposition / conjunction /
+    #   verb / sentence end)         -> plural "dollars"
+    #     "spent $4.2 million."       -> "spent 4.2 million dollars."
+    #     "Revenue of $10 billion."   -> "Revenue of 10 billion dollars."
+    #     "$10B in funding"           -> "10 billion dollars in funding"
+    #     "$10 million and counting"  -> "10 million dollars and counting"
     suffix_map = {"K": "thousand", "M": "million", "B": "billion", "T": "trillion"}
-    def _currency_sub(m: re.Match) -> str:
-        amount = m.group(1)
-        suffix = m.group(2).upper()
-        word = suffix_map[suffix]
-        return f"{amount} {word} dollars"
+    _NON_ATTRIBUTIVE_FOLLOWERS = {
+        # Coordinating conjunctions / list markers
+        "and", "or", "but", "plus", "minus", "nor",
+        # Prepositions commonly following amounts
+        "in", "of", "for", "to", "on", "per", "from", "over", "under",
+        "with", "after", "before", "between", "among", "across", "through",
+        "into", "onto", "upon", "since", "until", "against", "beyond",
+        "above", "below", "by", "at", "around", "near", "without",
+        # BE / HAVE / DO / modal auxiliaries
+        "is", "was", "are", "were", "be", "been", "being",
+        "has", "had", "have", "having",
+        "will", "would", "shall", "should", "could", "might", "may", "can",
+        "do", "does", "did", "done", "doing",
+    }
 
-    t = re.sub(r"\$(\d+(?:\.\d+)?)\s*([KMBTkmbt])\b", _currency_sub, t)
-    # Currency with full-word magnitude: "$4.2 million" -> "4.2 million dollars".
-    # Without this, the plain-$N pattern below would strip just the dollar sign
-    # and leave the magnitude word stranded ("4.2 dollars million" — wrong word
-    # order). Match the full pattern first so the plain-$N pass doesn't see it.
+    # Prepositions / verbs / quantifiers that, when they PRECEDE the amount,
+    # make the amount predicative regardless of what follows. "Revenue of
+    # $10 billion last year" — the "of" makes "$10 billion" a quantity,
+    # not an adjective modifying "last year."
+    _PRECEDED_BY_PREDICATIVE = {
+        "of", "for", "with", "at", "by", "to", "in", "on", "from",
+        "around", "about", "over", "under", "above", "below", "near",
+        "between", "approximately", "roughly", "nearly", "almost", "exactly",
+        "spent", "raised", "earned", "lost", "paid", "owes", "owed", "saved",
+        "worth", "valued",
+    }
+
+    def _decide_dollar_word(before_text: str, after_text: str) -> str:
+        """Return 'dollar' or 'dollars' based on context surrounding the amount."""
+        # Predicative if PRECEDED by a preposition / quantifier / money verb.
+        # Look back for the most recent word before the $.
+        prev_match = re.search(r"(\w+)\W*$", before_text)
+        if prev_match and prev_match.group(1).lower() in _PRECEDED_BY_PREDICATIVE:
+            return "dollars"
+        # Predicative if FOLLOWED by punctuation / preposition / verb / conjunction.
+        stripped = after_text.lstrip()
+        if not stripped or stripped[0] in '.,;:!?)':
+            return "dollars"
+        next_match = re.match(r"\w+", stripped)
+        if not next_match:
+            return "dollars"
+        if next_match.group(0).lower() in _NON_ATTRIBUTIVE_FOLLOWERS:
+            return "dollars"
+        # Default: attributive (the amount is modifying the next noun).
+        return "dollar"
+
+    def _currency_letter_sub(m: re.Match) -> str:
+        amount = m.group(1)
+        word = suffix_map[m.group(2).upper()]
+        before = m.string[max(0, m.start() - 30):m.start()]
+        after = m.string[m.end():m.end() + 30]
+        return f"{amount} {word} {_decide_dollar_word(before, after)}"
+
+    def _currency_word_sub(m: re.Match) -> str:
+        amount = m.group(1)
+        magnitude = m.group(2).lower()
+        before = m.string[max(0, m.start() - 30):m.start()]
+        after = m.string[m.end():m.end() + 30]
+        return f"{amount} {magnitude} {_decide_dollar_word(before, after)}"
+
+    t = re.sub(r"\$(\d+(?:\.\d+)?)\s*([KMBTkmbt])\b", _currency_letter_sub, t)
     t = re.sub(
         r"\$(\d+(?:\.\d+)?)\s+(thousand|million|billion|trillion)\b",
-        r"\1 \2 dollars",
+        _currency_word_sub,
         t,
         flags=re.IGNORECASE,
     )
     # Plain "$N" without magnitude suffix: espeak reads as "dollar N" which
-    # sounds inverted. Convert "$N" to "N dollars" instead.
-    t = re.sub(r"\$(\d+(?:\.\d+)?)\b", r"\1 dollars", t)
+    # sounds inverted. Convert to "N dollar(s)" using the same heuristic.
+    def _currency_plain_sub(m: re.Match) -> str:
+        amount = m.group(1)
+        before = m.string[max(0, m.start() - 30):m.start()]
+        after = m.string[m.end():m.end() + 30]
+        return f"{amount} {_decide_dollar_word(before, after)}"
+
+    t = re.sub(r"\$(\d+(?:\.\d+)?)\b", _currency_plain_sub, t)
 
     return t
 
