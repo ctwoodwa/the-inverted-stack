@@ -70,3 +70,53 @@ def test_returns_empty_when_final_dir_missing(tmp_path):
 
     stale = check_stale.find_stale_drafts(tmp_path / "chapters")
     assert stale == []
+
+
+def test_promoted_chapter_with_matching_manifest_is_not_stale(tmp_path):
+    """Phase 4 promotion overwrites source with draft, updating mtime past
+    the draft's. If a manifest exists alongside source AND its
+    promoted_sha256 matches the source's actual SHA, the chapter is
+    post-promotion (not stale)."""
+    import hashlib
+    import json
+    src = tmp_path / "chapters" / "part-1" / "ch01.md"
+    src.parent.mkdir(parents=True)
+    src.write_text("promoted content", encoding="utf-8")
+
+    draft = tmp_path / "chapters" / "_voice-drafts" / "final" / "ch01.md"
+    draft.parent.mkdir(parents=True)
+    draft.write_text("promoted content", encoding="utf-8")
+    # Draft is older than source (post-promotion mtime inversion).
+    old = time.time() - 3600
+    os.utime(draft, (old, old))
+
+    # Matching manifest at source location.
+    sha = hashlib.sha256(src.read_bytes()).hexdigest()
+    manifest = src.with_suffix(".manifest.json")
+    manifest.write_text(json.dumps({"promoted_sha256": sha}), encoding="utf-8")
+
+    stale = check_stale.find_stale_drafts(tmp_path / "chapters")
+    assert "ch01" not in stale, "promoted chapter must not be flagged as stale"
+
+
+def test_promoted_chapter_with_mismatched_manifest_is_stale(tmp_path):
+    """If a manifest exists but the source SHA does not match the manifest's
+    promoted_sha256, the source has been edited post-promotion and the
+    chapter IS stale (need to re-run voice-pass and re-promote)."""
+    import json
+    src = tmp_path / "chapters" / "part-1" / "ch01.md"
+    src.parent.mkdir(parents=True)
+    src.write_text("post-promotion edit", encoding="utf-8")
+
+    draft = tmp_path / "chapters" / "_voice-drafts" / "final" / "ch01.md"
+    draft.parent.mkdir(parents=True)
+    draft.write_text("draft content", encoding="utf-8")
+    old = time.time() - 3600
+    os.utime(draft, (old, old))
+
+    # Manifest with WRONG sha (doesn't match current source).
+    manifest = src.with_suffix(".manifest.json")
+    manifest.write_text(json.dumps({"promoted_sha256": "f" * 64}), encoding="utf-8")
+
+    stale = check_stale.find_stale_drafts(tmp_path / "chapters")
+    assert "ch01" in stale, "post-promotion edit must be flagged as stale"
