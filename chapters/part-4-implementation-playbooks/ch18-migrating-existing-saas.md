@@ -1,4 +1,4 @@
-# Chapter 18 — Migrating an Existing SaaS
+# Chapter 18 — Migrating an Existing SaaS (Software as a Service)
 
 <!-- icm/prose-review -->
 
@@ -11,17 +11,17 @@ This chapter is for the team already running a hosted SaaS product — the team 
 
 ### Glossary (for readers entering here)
 
-**Zone C** is the hybrid architecture — local-first data plane with a SaaS control plane for signup, billing, and cross-tenant coordination. Chapter 4 defines the full decision framework across three zones. **CRDTs** (Conflict-free Replicated Data Types) are data structures that merge concurrent edits deterministically without server coordination; Chapter 12 covers the engine. **AP-class records** tolerate brief divergence across peers and merge through CRDT semantics. **CP-class records** require linearizable writes under distributed lease coordination (Chapter 14). **Hosted-node peer** is a Sunfish node that runs on server infrastructure alongside user-device nodes, participating in sync as a ciphertext-only peer. It holds encrypted deltas. It holds no decryption keys.
+**Zone C** is the hybrid architecture — local-first data plane with a SaaS control plane for signup, billing, and cross-tenant coordination. Chapter 4 defines the full decision framework across three zones. **CRDTs** (Conflict-free Replicated Data Types) are data structures that merge concurrent edits deterministically without server coordination; Chapter 12 covers the engine. **AP-class records** tolerate brief divergence across peers and merge through CRDT (Conflict-free Replicated Data Type) semantics. **CP-class records** require linearizable writes under distributed lease coordination (Chapter 14). **Hosted-node peer** is a Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish)) node that runs on server infrastructure alongside user-device nodes, participating in sync as a ciphertext-only peer. It holds encrypted deltas. It holds no decryption keys.
 
 ### When to Migrate: The Triggers
 
 Teams do not migrate from SaaS to local-first on aesthetic grounds. Five triggers — and only these five — justify the engineering investment.
 
-- **Compliance mandate received.** A customer or regulator requires that data reside on user-controlled infrastructure. Common triggers include the EU's Schrems II combined with GDPR Article 30. The UAE's DIFC DPL 2020 prohibits foreign-cloud regulated data for DIFC-licensed financial entities. India's DPDP Act 2023, paired with the RBI data localization circular, extends the same constraint. Russia's Federal Law 242-FZ extends it again. Parallel mandates across APAC, Africa, and the Americas appear in Appendix F. Any one of these turns "nice to have" into "ship by the next procurement cycle or lose the account."
+- **Compliance mandate received.** A customer or regulator requires that data reside on user-controlled infrastructure. Common triggers include the EU's Schrems II combined with GDPR (General Data Protection Regulation) Article 30. The UAE's DIFC (Dubai International Financial Centre) DPL (Data Protection Law) 2020 prohibits foreign-cloud regulated data for DIFC-licensed financial entities. India's DPDP (Digital Personal Data Protection) Act 2023, paired with the RBI (Reserve Bank of India) data localization circular, extends the same constraint. Russia's Federal Law 242-FZ extends it again. Parallel mandates across APAC (Asia-Pacific), Africa, and the Americas appear in Appendix F. Any one of these turns "nice to have" into "ship by the next procurement cycle or lose the account."
 
 - **Data residency objection appearing in enterprise sales.** The sales team is losing deals at the data-sovereignty review. The architecture's relay-ciphertext-only guarantee answers this structurally rather than contractually — not in a vendor letter, in the wire protocol itself.
 
-- **SaaS vendor reliability event or service termination.** In 2022, Adobe and Autodesk and Microsoft and Figma — and dozens of other Western SaaS vendors — suspended or terminated service across Russia and CIS markets under sanctions enforcement. Hundreds of thousands of organizations lost access to their own operational workflows with days of notice. Organizations under import substitution mandates, or operating in jurisdictions where vendor-level compelled access is a documented threat model, treat this as Failure Mode 0. The vendor suspends service. Your customers need an architecture that survives it.
+- **SaaS vendor reliability event or service termination.** In 2022, Adobe and Autodesk and Microsoft and Figma ([figma.com](https://www.figma.com/), the design tool) — and dozens of other Western SaaS vendors — suspended or terminated service across Russia and CIS (Commonwealth of Independent States) markets under sanctions enforcement. Hundreds of thousands of organizations lost access to their own operational workflows with days of notice. Organizations under import substitution mandates, or operating in jurisdictions where vendor-level compelled access is a documented threat model, treat this as Failure Mode 0. The vendor suspends service. Your customers need an architecture that survives it.
 
 - **Customer churn driven by data sovereignty.** Repeated loss of accounts citing "the data lives on your servers" as a concrete objection — not a hypothetical one.
 
@@ -113,7 +113,7 @@ The migration runs in four phases. You can pause at the end of any phase indefin
 
 ### Phase 1 — Shadow Mode (Weeks 1–8)
 
-**What.** Deploy a local node alongside your existing SaaS. The local node mirrors all data read-only. Writes still flow through the server API. Users see faster reads. The server remains authoritative for everything.
+**What.** Deploy a local node alongside your existing SaaS. The local node mirrors all data read-only. Writes still flow through the server API (Application Programming Interface). Users see faster reads. The server remains authoritative for everything.
 
 **How.** Add `Sunfish.Foundation.LocalFirst` to your service registration with shadow-read-only mode:
 
@@ -185,7 +185,7 @@ services.AddSunfishKernelSync();
 services.AddSunfishKernelSecurity();
 ```
 
-`Sunfish.Kernel.Security` issues device keypairs at first launch. Role attestations govern what the hosted-node peer can access. The hosted-node peer holds ciphertext for catch-up-on-reconnect. It cannot decrypt without a team-issued attestation. Configure BYOC backup for new workspaces at provisioning time. The hosted-node peer is not a backup. It is a relay cache — see Chapter 16 for the storage guarantees. Teams that skip BYOC backup configuration discover this only during an incident. An incident is a bad classroom.
+`Sunfish.Kernel.Security` issues device keypairs at first launch. Role attestations govern what the hosted-node peer can access. The hosted-node peer holds ciphertext for catch-up-on-reconnect. It cannot decrypt without a team-issued attestation. Configure BYOC (Bring Your Own Cloud) backup for new workspaces at provisioning time. The hosted-node peer is not a backup. It is a relay cache — see Chapter 16 for the storage guarantees. Teams that skip BYOC backup configuration discover this only during an incident. An incident is a bad classroom.
 
 **Success criteria.** New workspaces operate at full fidelity without server connectivity. Gossip anti-entropy converges within the 30-second interval under your test topology. The hosted-node peer holds ciphertext-only — verify this with the Bridge audit tooling before shipping.
 

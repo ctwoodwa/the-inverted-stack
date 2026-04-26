@@ -22,11 +22,11 @@ Ink & Switch publishes detailed post-mortems of real local-first projects — Pu
 
 ---
 
-## Section 2: CRDT Libraries
+## Section 2: CRDT (Conflict-free Replicated Data Type) Libraries
 
-[3] K. Jahns, "Yjs: A CRDT for building collaborative applications," GitHub. [Online]. Available: https://github.com/yjs/yjs
+[3] K. Jahns, "Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library): A CRDT for building collaborative applications," GitHub. [Online]. Available: https://github.com/yjs/yjs
 
-Yjs is the most mature, most widely deployed CRDT library available. Its documentation covers every integration point. Its ecosystem — y-websocket, y-indexeddb, y-monaco — is broad. Multiple production teams have benchmarked its performance at scale. If you are building on JavaScript, or if you can adopt a webview approach, Yjs is the default choice. The Sunfish reference implementation currently uses YDotNet — the Yjs .NET port via Rust FFI — as the working engine. Loro (ADR 0028) is the aspirational primary target once loro-cs matures.
+Yjs is the most mature, most widely deployed CRDT library available. Its documentation covers every integration point. Its ecosystem — y-websocket, y-indexeddb, y-monaco — is broad. Multiple production teams have benchmarked its performance at scale. If you are building on JavaScript, or if you can adopt a webview approach, Yjs is the default choice. The Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish)) reference implementation currently uses YDotNet (the .NET CRDT engine port of Yjs via Rust FFI) — the Yjs .NET port via Rust FFI (Foreign Function Interface) — as the working engine. Loro ([github.com/loro-dev/loro](https://github.com/loro-dev/loro), a Rust-core CRDT library) (ADR (Architecture Decision Record) 0028) is the aspirational primary target once loro-cs matures.
 
 [4] Yjs Contributors, "y-crdt / yrs: The Rust port of the Yjs CRDT library," GitHub. [Online]. Available: https://github.com/y-crdt/y-crdt
 
@@ -34,13 +34,13 @@ The Rust port of Yjs — also called yrs — and the foundation for YDotNet, the
 
 [5] Loro Contributors, "Loro: A CRDT library with rich text support," GitHub. [Online]. Available: https://github.com/loro-dev/loro
 
-Loro is the aspirational primary CRDT engine for Sunfish (see ADR 0028 in the reference implementation). It offers a Rust core with efficient binary encoding, shallow snapshot support, and strong performance on high-churn documents. Its C# bindings (loro-cs) are community-maintained and minimal as of this writing. Evaluate API coverage and maintenance status before you adopt loro-cs in a production system. The loro-dev/loro repository is the right place to track progress on the .NET story.
+Loro is the aspirational primary CRDT engine for Sunfish (see ADR 0028 in the reference implementation). It offers a Rust core with efficient binary encoding, shallow snapshot support, and strong performance on high-churn documents. Its C# bindings (loro-cs) are community-maintained and minimal as of this writing. Evaluate API (Application Programming Interface) coverage and maintenance status before you adopt loro-cs in a production system. The loro-dev/loro repository is the right place to track progress on the .NET story.
 
-[6] Automerge Contributors, "Automerge: A JSON-like data structure which can be modified concurrently," GitHub. [Online]. Available: https://github.com/automerge/automerge
+[6] Automerge ([github.com/automerge/automerge](https://github.com/automerge/automerge), a JSON-like CRDT library) Contributors, "Automerge: A JSON-like data structure which can be modified concurrently," GitHub. [Online]. Available: https://github.com/automerge/automerge
 
 Automerge is an excellent design reference. It has a clean, well-documented API and a substantial body of supporting research behind it. The Automerge WASM build and JavaScript SDK are production-grade. As of this writing, Automerge has no first-class .NET binding. If your target platform is JavaScript or TypeScript, evaluate Automerge alongside Yjs.
 
-**Platform note.** Enterprise field-operations software in the GCC, South Asia, and Africa is predominantly Android (Java/Kotlin) and .NET (C# MAUI, WPF) rather than JavaScript. For Android-first deployments, evaluate `automerge-kotlin` (the community port) alongside YDotNet running through Xamarin.Android bindings. For .NET-first deployments, YDotNet via the yrs FFI is the current production path. The JavaScript defaults implicit in the Yjs and Automerge annotations above require translation for these platforms.
+**Platform note.** Enterprise field-operations software in the GCC (Gulf Cooperation Council), South Asia, and Africa is predominantly Android (Java/Kotlin) and .NET (C# MAUI (.NET Multi-platform App UI), WPF) rather than JavaScript. For Android-first deployments, evaluate `automerge-kotlin` (the community port) alongside YDotNet running through Xamarin.Android bindings. For .NET-first deployments, YDotNet via the yrs FFI is the current production path. The JavaScript defaults implicit in the Yjs and Automerge annotations above require translation for these platforms.
 
 ---
 
@@ -94,7 +94,7 @@ SQLCipher is the encryption-at-rest layer for the local document store. The docu
 
 The cryptographic primitives library that Sunfish — and most comparable architectures — uses for Ed25519 signatures, ChaCha20-Poly1305 authenticated encryption, and Argon2id key derivation. libsodium's API documentation is the authoritative reference for algorithm parameters and side-channel-safe usage patterns. The "Usage" section is the practitioner's first read. The "Security considerations" section is where audit-driven questions get answered.
 
-[18] A. Biryukov, D. Dinu, and D. Khovratovich, "Argon2: The memory-hard function for password hashing and other applications," in *Proc. IEEE European Symposium on Security and Privacy (EuroS&P)*, Saarbrücken, Germany, Mar. 2016, pp. 292–302. (Also IETF RFC 9106, Sep. 2021.)
+[18] A. Biryukov, D. Dinu, and D. Khovratovich, "Argon2: The memory-hard function for password hashing and other applications," in *Proc. IEEE European Symposium on Security and Privacy (EuroS&P)*, Saarbrücken, Germany, Mar. 2016, pp. 292–302. (Also IETF (Internet Engineering Task Force) RFC (Request for Comments) 9106, Sep. 2021.)
 
 Argon2id is the key derivation function for the SQLCipher passphrase-to-key mapping and for the founder bootstrap in Chapter 17. The paper establishes the memory-hardness properties. RFC 9106 is the normative specification for parameter selection. Use the RFC 9106 parameters unless you have a specific reason otherwise.
 
@@ -118,47 +118,47 @@ Schrems II. The ruling that invalidated Privacy Shield and imposed strict supple
 
 [22] Government of India, The Digital Personal Data Protection Act, 2023 (Act No. 22 of 2023), Aug. 11, 2023.
 
-DPDP. Sections 8 (purpose specification) and 12 (right to erasure) are the direct analogues of GDPR Articles 5 and 17 for Indian operations. Section 16 covers cross-border transfer and is structurally similar to Schrems II reasoning. RBI's April 6, 2018 circular on Storage of Payment System Data establishes stricter localization requirements for BFSI data. Consult it alongside DPDP for financial-services deployments.
+DPDP. Sections 8 (purpose specification) and 12 (right to erasure) are the direct analogues of GDPR Articles 5 and 17 for Indian operations. Section 16 covers cross-border transfer and is structurally similar to Schrems II reasoning. RBI (Reserve Bank of India)'s April 6, 2018 circular on Storage of Payment System Data establishes stricter localization requirements for BFSI (Banking, Financial Services, and Insurance) data. Consult it alongside DPDP for financial-services deployments.
 
 [23] Standing Committee of the National People's Congress, People's Republic of China, "Personal Information Protection Law," effective Nov. 1, 2021.
 
 PIPL. Articles 38–43 establish cross-border transfer restrictions stricter than GDPR. For data on Chinese citizens, local-first architecture is often the only compliant path. Article 47 establishes the right to deletion. Article 57 requires breach notification to the Cyberspace Administration of China within three working days.
 
-[24] Personal Information Protection Commission, Japan, "Act on the Protection of Personal Information (APPI / PIPA)," Act No. 57 of 2003, revised 2022.
+[24] Personal Information Protection Commission, Japan, "Act on the Protection of Personal Information (APPI / PIPA (Personal Information Protection Act))," Act No. 57 of 2003, revised 2022.
 
 Japan PIPA. The 2022 revision tightened cross-border transfer rules and expanded breach notification obligations. Article 36 establishes the right to request cessation of processing — the same CRDT-log erasure implications discussed in the epilogue.
 
 [25] Personal Information Protection Commission, Republic of Korea, "Personal Information Protection Act," Act No. 10465, 2011, most recently revised 2023.
 
-Korea PIPA. The ISMS-P (Information Security and Personal Information Management System) certification program is the procurement gate for Korean public sector and major enterprise deployments. Local-first architecture simplifies ISMS-P compliance in ways the certification body has documented publicly.
+Korea PIPA. The ISMS-P (Information Security Management System – Personal) (Information Security and Personal Information Management System) certification program is the procurement gate for Korean public sector and major enterprise deployments. Local-first architecture simplifies ISMS-P compliance in ways the certification body has documented publicly.
 
 [26] United Arab Emirates, "Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data," published Sep. 2021, effective Jan. 2, 2022. Dubai International Financial Centre, "DIFC Data Protection Law No. 5 of 2020," effective Jul. 1, 2020.
 
 UAE DPL 2022 and DIFC DPL 2020. Practitioners deploying in Dubai financial services should start with the DIFC DPL — the older and more mature of the two. Practitioners deploying in mainland UAE follow the federal DPL. Both require clarity on whether personal data crosses a free-zone boundary or the UAE border.
 
-[27] Republic of South Africa, "Protection of Personal Information Act, 2013 (Act No. 4 of 2013)," effective Jul. 1, 2021. Federal Republic of Nigeria, "Nigeria Data Protection Act, 2023" (re-enacting NDPR 2019).
+[27] Republic of South Africa, "Protection of Personal Information Act, 2013 (Act No. 4 of 2013)," effective Jul. 1, 2021. Federal Republic of Nigeria, "Nigeria Data Protection Act, 2023" (re-enacting NDPR (Nigeria Data Protection Regulation) 2019).
 
-POPIA (South Africa) and NDPA (Nigeria). Both establish breach notification obligations and restrict cross-border transfer without adequate protection findings. POPIA Section 72 covers cross-border transfer. NDPA Section 41 covers lawful transfers. Local-first architecture provides a defensible answer to both — the data never crosses the border.
+POPIA (Protection of Personal Information Act) (South Africa) and NDPA (Nigeria Data Protection Act) (Nigeria). Both establish breach notification obligations and restrict cross-border transfer without adequate protection findings. POPIA Section 72 covers cross-border transfer. NDPA Section 41 covers lawful transfers. Local-first architecture provides a defensible answer to both — the data never crosses the border.
 
-[28] Presidency of the Federative Republic of Brazil, "Lei No. 13.709, de 14 de agosto de 2018 (LGPD)," published Aug. 15, 2018, effective Sep. 18, 2020.
+[28] Presidency of the Federative Republic of Brazil, "Lei No. 13.709, de 14 de agosto de 2018 (LGPD (Lei Geral de Proteção de Dados))," published Aug. 15, 2018, effective Sep. 18, 2020.
 
 LGPD. Article 18 establishes the right to deletion. Article 48 requires breach notification to the ANPD (Brazilian Data Protection Authority). The structure is close to GDPR. The analogous right-to-erasure challenges for CRDT operation logs apply identically.
 
 [29] Federation Council of the Federal Assembly of the Russian Federation, "Federal Law No. 242-FZ," Jul. 21, 2014, effective Sep. 1, 2015.
 
-Federal Law 242-FZ. Establishes the requirement that personal data of Russian citizens be stored on servers physically located in Russia. Predates GDPR by two years. Served as the template for subsequent CIS data localization laws — Kazakhstan, Belarus. Enforcement is real. Roskomnadzor blocked LinkedIn in 2016 for non-compliance.
+Federal Law 242-FZ. Establishes the requirement that personal data of Russian citizens be stored on servers physically located in Russia. Predates GDPR by two years. Served as the template for subsequent CIS (Commonwealth of Independent States) data localization laws — Kazakhstan, Belarus. Enforcement is real. Roskomnadzor blocked LinkedIn in 2016 for non-compliance.
 
 ---
 
 ## Section 6: Production Analogues
 
-[30] T. Palmer, "Scaling the Linear sync engine to 100M+ records," Linear Engineering Blog, 2023. [Online]. Available: https://linear.app/blog/scaling-the-linear-sync-engine
+[30] T. Palmer, "Scaling the Linear ([linear.app](https://linear.app/), the issue tracker) sync engine to 100M+ records," Linear Engineering Blog, 2023. [Online]. Available: https://linear.app/blog/scaling-the-linear-sync-engine
 
 Linear's architecture is the closest public analogue to the AP-first data model in this book. Their client-replica approach — sync everything to the client, render from local state, treat the server as a replication peer rather than the authority — validates the core design at commercial scale. The linked post covers write-order semantics, transaction boundaries, and partial sync for large workspaces. It is the most detailed production account of the model currently available in English. For additional posts, search the Linear blog for "sync engine."
 
 [31] Actual Budget Contributors, "Actual: A local-first personal finance app," GitHub. [Online]. Available: https://github.com/actualbudget/actual
 
-The closest commercial analogue to Zone A — the pure local-first node. Actual stores all financial data locally, syncs peer-to-peer, and supports a self-hosted server for optional backup. Its architecture makes the trade-offs explicit. No server-side features. No analytics. No SaaS onboarding funnel. No per-seat billing. Study the Actual architecture before you finalize your Zone A monetization model.
+The closest commercial analogue to Zone A — the pure local-first node. Actual stores all financial data locally, syncs peer-to-peer, and supports a self-hosted server for optional backup. Its architecture makes the trade-offs explicit. No server-side features. No analytics. No SaaS (Software as a Service) onboarding funnel. No per-seat billing. Study the Actual architecture before you finalize your Zone A monetization model.
 
 [32] Safaricom PLC and collaborators, "M-PESA System Architecture Documentation," Safaricom and GSMA Mobile Money programme resources; see also "M-PESA: The mobile payments revolution," Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) case study, 2021.
 
@@ -170,11 +170,11 @@ FarmerLine serves millions of smallholder farmers across Ghana, Nigeria, and nei
 
 [34] Nubank, "How Nubank builds for offline-first mobile experiences," Nubank Engineering Blog. [Online]. Available: https://building.nubank.com.br/
 
-The largest LATAM digital bank, serving over 100 million customers across Brazil, Mexico, and Colombia. Nubank's engineering blog documents offline-first mobile architecture patterns that serve rural customers with intermittent connectivity — the LATAM field-operations scenario the book's Chapter 1 vignette describes. Search the blog for "offline" or "eventual consistency" to find relevant posts.
+The largest LATAM (Latin America) digital bank, serving over 100 million customers across Brazil, Mexico, and Colombia. Nubank's engineering blog documents offline-first mobile architecture patterns that serve rural customers with intermittent connectivity — the LATAM field-operations scenario the book's Chapter 1 vignette describes. Search the blog for "offline" or "eventual consistency" to find relevant posts.
 
 [35] Apache Software Foundation, "Apache CouchDB Documentation," and PouchDB Contributors, "PouchDB: The Database That Syncs," [Online]. Available: https://docs.couchdb.org/ and https://pouchdb.com/
 
-CouchDB and PouchDB are the longest-running production-grade offline-first database ecosystem. Deployment case studies span regulated healthcare (Medic Mobile's SMS-based health worker platform), education, and field operations. The replication protocol documentation is required reading for anyone evaluating bucket-based sync at scale. CouchDB's replication semantics predate CRDTs and resolve conflicts through multi-version concurrency control with application-level resolution. The architectural choice is different from CRDTs. The comparison illuminates the CRDT decision.
+CouchDB and PouchDB are the longest-running production-grade offline-first database ecosystem. Deployment case studies span regulated healthcare (Medic Mobile's SMS-based health worker platform), education, and field operations. The replication protocol documentation is required reading for anyone evaluating bucket-based sync at scale. CouchDB's replication semantics predate CRDTs (Conflict-free Replicated Data Types) and resolve conflicts through multi-version concurrency control with application-level resolution. The architectural choice is different from CRDTs. The comparison illuminates the CRDT decision.
 
 ---
 
@@ -188,7 +188,7 @@ Cambria lets you translate a document from schema version N to version N+1 and b
 
 ## Section 8: Vendor Dependency Risk Case Studies
 
-[37] "Western software companies' responses to the Russia-Ukraine conflict: 2022 service terminations, restrictions, and suspensions," composite of primary sources including Adobe press release (March 2022), Autodesk support communication (March 2022), Microsoft commercial activity announcement (March 2022), Figma platform notice (September 2022), and industry reporting in *The Verge*, *Reuters*, and *Interfax*.
+[37] "Western software companies' responses to the Russia-Ukraine conflict: 2022 service terminations, restrictions, and suspensions," composite of primary sources including Adobe press release (March 2022), Autodesk support communication (March 2022), Microsoft commercial activity announcement (March 2022), Figma ([figma.com](https://www.figma.com/), the design tool) platform notice (September 2022), and industry reporting in *The Verge*, *Reuters*, and *Interfax*.
 
 The largest documented demonstration of vendor dependency risk in enterprise software history. Over a period of months in 2022, major Western SaaS providers suspended, restricted, or terminated service across Russia, Belarus, and adjacent CIS markets. Organizations that depended on vendor-hosted tooling for their operations lost access to their own data, to design systems, and to business-critical workflows. The event is the empirical case study for this book's thesis. For practitioners arguing the vendor dependency case in procurement review, cite the composite reality of the 2022 terminations rather than any single source. The documented breadth — not any individual incident — is the evidence.
 

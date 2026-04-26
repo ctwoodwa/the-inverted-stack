@@ -9,23 +9,23 @@
 
 ## What This Chapter Gets You
 
-By the end of this chapter, a local-first node is running on your development machine. A device-bound Ed25519 keypair. A three-step onboarding flow completed. A CRDT document exchanged with a second instance over LAN. Live sync status in the UI. Nothing is placeholder by the time you finish section 6. Section 7 points you forward.
+By the end of this chapter, a local-first node is running on your development machine. A device-bound Ed25519 keypair. A three-step onboarding flow completed. A CRDT (Conflict-free Replicated Data Type) document exchanged with a second instance over LAN. Live sync status in the UI. Nothing is placeholder by the time you finish section 6. Section 7 points you forward.
 
 This chapter is a playbook, not a specification. When you need to understand *why* a component exists — what the CRDT engine abstraction does, how the sync daemon protocol works, what the role attestation model guarantees — read Part III. Chapter 11 covers node architecture. Chapter 12 covers the CRDT engine and data layer. Chapter 15 covers the security model. Here, you walk the minimal path from zero to running.
 
 ---
 
-## 1. Start with Sunfish Anchor
+## 1. Start with Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish)) Anchor
 
 Marcus lost his bid data. Not because it was destroyed. He lost it because someone else controlled the infrastructure it lived on. Everything you wire up in this chapter inverts that arrangement. The data stays on the device that needs it. The infrastructure answers to you.
 
 ### Before You Begin
 
-You need: .NET SDK 11.0 or later (`dotnet --version` returns `11.0.x`); the MAUI workloads installed (`dotnet workload install maui`); Git; and access to NuGet.org or your organization's internal package mirror. If your network restricts public package access — common in GCC enterprise, Indian BFSI, CIS import-substitution, and proxied Latin American environments — configure a mirrored `nuget.config` pointing at your internal feed before running any `dotnet` command in this chapter.
+You need: .NET SDK 11.0 or later (`dotnet --version` returns `11.0.x`); the MAUI (.NET Multi-platform App UI) workloads installed (`dotnet workload install maui`); Git; and access to NuGet.org or your organization's internal package mirror. If your network restricts public package access — common in GCC (Gulf Cooperation Council) enterprise, Indian BFSI (Banking, Financial Services, and Insurance), CIS (Commonwealth of Independent States) import-substitution, and proxied Latin American environments — configure a mirrored `nuget.config` pointing at your internal feed before running any `dotnet` command in this chapter.
 
 A local-first node is a desktop application that holds the authoritative copy of its own data and synchronizes with peers through a CRDT engine. A CRDT (Conflict-free Replicated Data Type) is a data structure that merges concurrent edits deterministically without a central coordinator. Zone A is the deployment profile where every user runs a full local-first node — as distinct from Zone C, where a hosted node participates alongside local nodes (Chapter 18). Chapters 1–4 establish why this matters. Chapter 17 gets you running.
 
-Anchor is the canonical Zone-A local-first node. A .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell *by design*. The kernel is wired. The onboarding flow is real. The security primitives are live. The report catalog, sync toggle, and platform packaging are deferred. The CRDT engine currently ships as `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" — pending the YDotNet integration in an upcoming Sunfish wave. That is not a deficit. That is the point. You inherit the hard parts — the security and sync scaffolding — without a pre-baked application domain on top, and with honest visibility into which subsystems are production-ready today and which are specification-ahead-of-implementation.
+Anchor is the canonical Zone-A local-first node. A .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell *by design*. The kernel is wired. The onboarding flow is real. The security primitives are live. The report catalog, sync toggle, and platform packaging are deferred. The CRDT engine currently ships as `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" — pending the YDotNet (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI) integration in an upcoming Sunfish wave. That is not a deficit. That is the point. You inherit the hard parts — the security and sync scaffolding — without a pre-baked application domain on top, and with honest visibility into which subsystems are production-ready today and which are specification-ahead-of-implementation.
 
 Clone the repository and build for Windows:
 
@@ -202,7 +202,7 @@ Every onboarding payload is a binary blob with four fields concatenated in this 
 [M bytes: raw snapshot bytes]
 ```
 
-The 4-byte length prefix for each section lets the decoder know how many bytes to read before moving to the next field. The format uses no delimiters and no version byte at the outer envelope — the CBOR bundle carries the attestation records for all team members.
+The 4-byte length prefix for each section lets the decoder know how many bytes to read before moving to the next field. The format uses no delimiters and no version byte at the outer envelope — the CBOR (Concise Binary Object Representation) bundle carries the attestation records for all team members.
 
 The snapshot section carries the initial state of all CRDT documents the new member needs to bootstrap with. On a fresh team, this is empty or minimal. On an established team with months of history, this is a compacted snapshot of current state — not the full event log, just the merged head. Chapter 16 covers snapshot rehydration in detail.
 
@@ -406,7 +406,7 @@ Three topics are deferred.
 
 **Bridge integration.** Anchor is a Zone-A node. If your architecture includes a Zone-C cloud relay, see Chapter 18, which covers the sync boundary between the local node and the cloud. Do not add Bridge calls to Anchor until you have read the relay trust model in Chapter 15.
 
-**Multi-team support.** Anchor v1 ships single-team per install. V2 adopts a workspace-switcher model — one installation, multiple teams, per-team HKDF subkeys, per-workspace state isolation. Build for single-team in v1. The v2 migration path is additive, not a rewrite.
+**Multi-team support.** Anchor v1 ships single-team per install. V2 adopts a workspace-switcher model — one installation, multiple teams, per-team HKDF (HMAC-based Key Derivation Function) subkeys, per-workspace state isolation. Build for single-team in v1. The v2 migration path is additive, not a rewrite.
 
 **Platform packaging.** Installers, code signing, and auto-update are deferred. During development, `dotnet run` is sufficient. Chapter 19 covers the packaging and enterprise deployment pipeline when you are ready to ship.
 
@@ -435,4 +435,4 @@ The cycle from step E to I is the development loop for every feature you add. De
 
 The shell is no longer empty. What you put in it is up to you.
 
-Chapter 18 covers the other direction: migrating an existing SaaS application to co-exist with local nodes. If you are greenfield, skip to Chapter 19 for enterprise packaging. If you have existing users on a cloud service and need to introduce local-first incrementally, Chapter 18 is your next read.
+Chapter 18 covers the other direction: migrating an existing SaaS (Software as a Service) application to co-exist with local nodes. If you are greenfield, skip to Chapter 19 for enterprise packaging. If you have existing users on a cloud service and need to introduce local-first incrementally, Chapter 18 is your next read.

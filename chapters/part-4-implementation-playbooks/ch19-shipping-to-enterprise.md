@@ -15,9 +15,9 @@ You have a working local-first node. Now you have to ship it to an organization 
 
 The first conversation with enterprise legal will focus on licensing. Open-source core sounds attractive — until the legal team runs it against their approved-licenses list and finds AGPLv3. The network-use clause requires you to publish modifications when you run the software as a service, even for internal use. That clause triggers a categorical block at many corporate legal shops. This is not negotiable on their side. It is, however, solvable on yours.
 
-AGPLv3 plus a managed relay subscription produces one predictable line item: the relay subscription fee. No per-seat count to audit. No usage-based surprise. The open-source core removes the vendor lock-in objection that killed the last three SaaS proposals the CTO sat through. That story is genuinely compelling.
+AGPLv3 plus a managed relay subscription produces one predictable line item: the relay subscription fee. No per-seat count to audit. No usage-based surprise. The open-source core removes the vendor lock-in objection that killed the last three SaaS (Software as a Service) proposals the CTO (Chief Technology Officer) sat through. That story is genuinely compelling.
 
-The resolution to the AGPLv3 block is a dual-license structure. Publish the core under AGPLv3 as the default. Offer a commercial license exception to organizations that cannot accept the network-use clause. The commercial license is a standard negotiated agreement: it permits internal modification without publishing obligation, grants a warranty, and specifies SLA terms for security patches.
+The resolution to the AGPLv3 block is a dual-license structure. Publish the core under AGPLv3 as the default. Offer a commercial license exception to organizations that cannot accept the network-use clause. The commercial license is a standard negotiated agreement: it permits internal modification without publishing obligation, grants a warranty, and specifies SLA (Service Level Agreement) terms for security patches.
 
 Two decisions you must make before the first enterprise conversation, not after:
 
@@ -33,13 +33,13 @@ Enterprise IT deploys software. It does not unzip archives and run scripts. Your
 
 The reference implementation targets two packaging formats, one per major managed-endpoint platform:
 
-**Windows: MSIX or signed MSI.** The installer provisions the MAUI host application and registers the sync daemon as a Windows Service. Service registration means the daemon starts before any user logs in, survives user logoff, and can be restarted by the Service Control Manager on failure. Use the `<ServiceInstall>` element in a WiX installer to declare the service, or the MSIX `<uap5:StartupTask>` extension for store-distributed packages. Silent install with no UI:
+**Windows: MSIX or signed MSI.** The installer provisions the MAUI (.NET Multi-platform App UI) host application and registers the sync daemon as a Windows Service. Service registration means the daemon starts before any user logs in, survives user logoff, and can be restarted by the Service Control Manager on failure. Use the `<ServiceInstall>` element in a WiX installer to declare the service, or the MSIX `<uap5:StartupTask>` extension for store-distributed packages. Silent install with no UI:
 
 ```bash
 msiexec /i Sunfish.msi /qn /norestart INSTALLFOLDER="C:\ProgramData\Sunfish" SERVICESTART=1
 ```
 
-**macOS: signed and notarized .pkg or .dmg.** The package installs a `.app` bundle for the MAUI foreground application and a `launchd` launch agent for the sync daemon. The launch agent plist goes to `/Library/LaunchDaemons/` (system context, no user login required) rather than `~/Library/LaunchAgents/`. The distinction matters for enterprise deployment: system-context daemons run under MDM supervision, which is where the compliance hooks live.
+**macOS: signed and notarized .pkg or .dmg.** The package installs a `.app` bundle for the MAUI foreground application and a `launchd` launch agent for the sync daemon. The launch agent plist goes to `/Library/LaunchDaemons/` (system context, no user login required) rather than `~/Library/LaunchAgents/`. The distinction matters for enterprise deployment: system-context daemons run under MDM (Mobile Device Management) supervision, which is where the compliance hooks live.
 
 Both formats integrate with Intune and Jamf for policy-driven deployment. Neither format requires user interaction during install. Neither format modifies PATH or installs global developer tooling.
 
@@ -143,11 +143,11 @@ launchctl list | grep com.sunfish.local-node-host && echo "installed" || exit 1
 
 ### SOTI MobiControl
 
-SOTI MobiControl is the dominant MDM platform in GCC enterprise fleets — UAE/DIFC-licensed financial firms, Saudi Arabian public sector, Qatari telecoms — and a significant presence in Sub-Saharan African enterprise. Create a SOTI Advanced Application Package (AAP) from the `.msi` payload. Add the same Windows Service registry detection rule as Intune (SOTI reads it identically). Target by device group. SOTI profiles deploy `node-config.json` to `%ProgramData%\Sunfish\` using the File Sync component; mark the file as MDM-managed so subsequent node reads pick up the pre-seeded configuration rather than generating a default.
+SOTI MobiControl is the dominant MDM platform in GCC (Gulf Cooperation Council) enterprise fleets — UAE/DIFC (Dubai International Financial Centre)-licensed financial firms, Saudi Arabian public sector, Qatari telecoms — and a significant presence in Sub-Saharan African enterprise. Create a SOTI Advanced Application Package (AAP) from the `.msi` payload. Add the same Windows Service registry detection rule as Intune (SOTI reads it identically). Target by device group. SOTI profiles deploy `node-config.json` to `%ProgramData%\Sunfish\` using the File Sync component; mark the file as MDM-managed so subsequent node reads pick up the pre-seeded configuration rather than generating a default.
 
 ### IBM MaaS360
 
-IBM MaaS360 covers GCC, Indian BFSI (RBI-regulated entities), APAC enterprise, and African financial services. Upload the `.msi` as a Windows app distribution. Configure the same Service detection check. Scope to a Smart Group by device. Pre-seeded configuration deploys through MaaS360's Corporate Doc Content module, which handles the same `node-config.json` file placement with MDM-managed read-only attributes.
+IBM MaaS360 covers GCC, Indian BFSI (Banking, Financial Services, and Insurance) (RBI (Reserve Bank of India)-regulated entities), APAC (Asia-Pacific) enterprise, and African financial services. Upload the `.msi` as a Windows app distribution. Configure the same Service detection check. Scope to a Smart Group by device. Pre-seeded configuration deploys through MaaS360's Corporate Doc Content module, which handles the same `node-config.json` file placement with MDM-managed read-only attributes.
 
 ### Ivanti Endpoint Manager
 
@@ -339,7 +339,7 @@ The `latest.json` response:
 
 Nodes verify the SHA-256 of every artifact before installing. They fetch and archive the SBOM alongside the artifact for audit. These are not optional behaviors. Nodes that skip verification are a supply chain attack surface.
 
-**One network destination you must not block:** OCSP and CRL responders. Blocking certificate revocation checking breaks TLS certificate chain validation across the entire node, not just update checks. Configure an internal OCSP responder and point nodes to it, or use certificate pinning with a sufficiently long-lived cert. Do not leave OCSP blocked with no alternative.
+**One network destination you must not block:** OCSP and CRL responders. Blocking certificate revocation checking breaks TLS (Transport Layer Security) certificate chain validation across the entire node, not just update checks. Configure an internal OCSP responder and point nodes to it, or use certificate pinning with a sufficiently long-lived cert. Do not leave OCSP blocked with no alternative.
 
 The safe-to-block list for air-gap environments:
 
@@ -353,11 +353,11 @@ The safe-to-block list for air-gap environments:
 
 ### Self-Hosted Bridge Relay — Deployment Details
 
-Ch16 specifies the Bridge relay architecture in full; this section covers the operational details an enterprise IT team needs to deploy it. The relay ships as a single statically-compiled binary and as an OCI container image (`sunfish/bridge-relay`). Resource profile for a 50-person team: 512 MiB RAM, 2 vCPU, 10 GiB disk for operational logs, no persistent state required beyond the subscription routing table. A 500-person enterprise deployment runs on 2 GiB RAM, 4 vCPU with a horizontal-scaling configuration behind a TLS-terminating load balancer. The relay listens on port 443 (TLS 1.3 required), authenticates connections against Ed25519 public keys registered in `enterpriseAttestationIssuerPublicKey`, and forwards CRDT operation frames at the network layer without access to payload content.
+Ch16 specifies the Bridge relay architecture in full; this section covers the operational details an enterprise IT team needs to deploy it. The relay ships as a single statically-compiled binary and as an OCI container image (`sunfish/bridge-relay`). Resource profile for a 50-person team: 512 MiB RAM, 2 vCPU, 10 GiB disk for operational logs, no persistent state required beyond the subscription routing table. A 500-person enterprise deployment runs on 2 GiB RAM, 4 vCPU with a horizontal-scaling configuration behind a TLS-terminating load balancer. The relay listens on port 443 (TLS 1.3 required), authenticates connections against Ed25519 public keys registered in `enterpriseAttestationIssuerPublicKey`, and forwards CRDT (Conflict-free Replicated Data Type) operation frames at the network layer without access to payload content.
 
-Jurisdictional deployment matters. For compliance-mandated markets — DIFC-licensed firms under UAE DPL 2022 and DIFC DPL 2020, Indian BFSI under RBI data localization, EU organizations under Schrems II, CIS organizations under Russia Federal Law 242-FZ and import substitution mandates, and the broader compliance matrix in Appendix F — the self-hosted Bridge relay must run on infrastructure within the required jurisdiction (on-premise VM, sovereign cloud, or domestic data center). This is not a preference. It is the compliance configuration that makes the relay-sovereignty guarantee legally defensible. Two-node HA deployment is the minimum for production use; three-node with automatic failover is the recommended profile for enterprise SLAs.
+Jurisdictional deployment matters. For compliance-mandated markets — DIFC-licensed firms under UAE DPL (Data Protection Law) 2022 and DIFC DPL 2020, Indian BFSI under RBI data localization, EU organizations under Schrems II, CIS (Commonwealth of Independent States) organizations under Russia Federal Law 242-FZ and import substitution mandates, and the broader compliance matrix in Appendix F — the self-hosted Bridge relay must run on infrastructure within the required jurisdiction (on-premise VM, sovereign cloud, or domestic data center). This is not a preference. It is the compliance configuration that makes the relay-sovereignty guarantee legally defensible. Two-node HA deployment is the minimum for production use; three-node with automatic failover is the recommended profile for enterprise SLAs.
 
-The 2022 SaaS service terminations are the documented historical demonstration of why self-hosted relay matters. Adobe. Autodesk. Microsoft. Figma. Dozens of others suspended service across Russia and CIS markets under sanctions enforcement. Organizations whose relay infrastructure was a vendor-operated SaaS lost access to their own data when the vendor was directed to stop serving them. The self-hosted Bridge relay is the architectural answer — not a theoretical safeguard, but the specific infrastructure deployment posture that converts a survivable-by-SLA problem into a non-problem.
+The 2022 SaaS service terminations are the documented historical demonstration of why self-hosted relay matters. Adobe. Autodesk. Microsoft. Figma ([figma.com](https://www.figma.com/), the design tool). Dozens of others suspended service across Russia and CIS markets under sanctions enforcement. Organizations whose relay infrastructure was a vendor-operated SaaS lost access to their own data when the vendor was directed to stop serving them. The self-hosted Bridge relay is the architectural answer — not a theoretical safeguard, but the specific infrastructure deployment posture that converts a survivable-by-SLA problem into a non-problem.
 
 ### Power-Interruption Resilience
 
@@ -371,7 +371,7 @@ Producing the documentation enterprise regulators require is itself an operation
 
 **SOC 2 Type II evidence package.** The node's audit log (Chapter 15 specifies the tamper-evident structure) is the operational evidence source for access-control and data-handling SOC 2 controls. Export the audit log monthly with the `sunfish admin audit-export --from <date> --to <date>` command; the export produces a CSV-and-JSON bundle that maps directly onto the SOC 2 Trust Services Criteria (CC6 for logical access, CC7 for system operations, CC8 for change management). The SBOM, the Grype CVE report, and the MDM compliance attestation report together satisfy CC7.2 vulnerability management.
 
-**GDPR Article 30 records of processing activities.** Assemble from the bucket definitions (what categories of personal data the node processes), the node-config.json (where data is stored and for what purpose), the SBOM (what processing tools are used), and the MDM deployment manifest (which endpoints hold which data categories). A quarterly rollup of these into a GDPR Article 30 document satisfies EU controller obligations. Add the Bridge relay's data processing agreement — naming the relay operator as an Article 28 processor and stating the supplementary measures under Schrems II — for any cross-border deployment.
+**GDPR (General Data Protection Regulation) Article 30 records of processing activities.** Assemble from the bucket definitions (what categories of personal data the node processes), the node-config.json (where data is stored and for what purpose), the SBOM (what processing tools are used), and the MDM deployment manifest (which endpoints hold which data categories). A quarterly rollup of these into a GDPR Article 30 document satisfies EU controller obligations. Add the Bridge relay's data processing agreement — naming the relay operator as an Article 28 processor and stating the supplementary measures under Schrems II — for any cross-border deployment.
 
 **EU Cyber Resilience Act SBOM obligations.** The CRA entered into force October 2024 with a 36-month transition for product-specific SBOM obligations. Syft-generated CycloneDX SBOMs signed and attested under SLSA Level 3 satisfy the operative CRA requirements for software products sold in EU markets. Publish the signed SBOM at a predictable URL so EU enterprise buyers can verify before procurement completes.
 
@@ -400,7 +400,7 @@ Enterprise customers require runbooks before they sign. Deliver three runbooks b
 
 ### Runbook 0: Node Onboarding (New Employee)
 
-**Trigger:** A new employee joins the organization and needs a provisioned Sunfish node.
+**Trigger:** A new employee joins the organization and needs a provisioned Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish)) node.
 
 **Steps:**
 
@@ -417,7 +417,7 @@ Enterprise customers require runbooks before they sign. Deliver three runbooks b
      attestation-issuer=a7b2…  buckets=[reports.v1, notes.v1]  first-sync=2.3s
    ```
 
-**Expected duration:** Under 30 minutes from IdP provisioning to first successful sync, dominated by MDM deployment latency rather than Sunfish operations.
+**Expected duration:** Under 30 minutes from IdP (Identity Provider) provisioning to first successful sync, dominated by MDM deployment latency rather than Sunfish operations.
 
 **Failure modes:** If the paste-bundle fails signature verification, the node surfaces `ERR_ATTESTATION_REQUIRED` and does not proceed to first sync. If the administrator's private key is not correctly scoped to issue the role, `IssueJoinerAttestationAsync` returns an authorization error before emitting a bundle. Check the administrator's own attestation scope in the team audit log before retrying.
 
