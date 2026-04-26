@@ -6,15 +6,15 @@
 
 ---
 
-It is two o'clock in the afternoon and Marcus is staring at a browser tab that will not load. He is the project manager on a $4.2 million commercial renovation. His general contractor's bid is due at five. The owner group meets at six. The project management platform his firm runs on has been down since eleven that morning.
+It's two in the afternoon, and Marcus, the project manager on a $4.2 million commercial renovation, is staring at a browser tab that refuses to load. His general contractor's bid is due at five, and the owner group is scheduled to meet at six. The project management platform his firm operates on has been down since eleven that morning.
 
-The data is not gone. It exists, somewhere — on servers in Virginia, or Oregon, or wherever the cloud region happens to be that day. The labor breakdown, the subcontractor bids, the change order history, the payment schedule — all of it sits intact on a hard drive Marcus will never touch, in a building he could not find on a map. It is simply not accessible. The vendor's status page calls it an outage "affecting less than 1% of users." On this bid, that one percent is everyone.
+The data isn't lost; it exists somewhere—on servers in Virginia, Oregon, or any other cloud region that happens to be active that day. The labor breakdown, subcontractor bids, change order history, and payment schedule—all of it remains intact on a hard drive Marcus will never access, in a building he couldn't find on a map. It's simply inaccessible. The vendor's status page claims it's an outage affecting less than 1% of users. On this bid, that 1% is everyone.
 
-His options narrow as the clock runs. Reconstruct what he can from the email trail. Export a stale PDF from before the platform went down. Ask his client to extend the deadline — and explain to a board, two hours from now, why his firm wasn't ready.
+As the clock ticks down, Marcus's options dwindle. He can only reconstruct what he can from an email trail, export a stale PDF from before the platform went down, or ask his client to extend the deadline. But that would require explaining to the board what happened and why the firm wasn't prepared.
 
-This is not a planning failure. He planned correctly. He had his data. His team used the software. Everything was in order. The failure is structural: his data lives on infrastructure he doesn't control, and when that infrastructure goes offline, his capability goes with it.
+This isn't a planning failure. Marcus planned correctly, his team had used the software. Everything was in order. The failure is structural: his data resides on infrastructure he doesn't control, and when that infrastructure goes offline, his capabilities are compromised.
 
-The scenario repeats across industries that run on deadline-sensitive work — the attorney preparing a brief at nine in the evening, the engineer updating safety documentation in the field, the physician reaching for patient records before rounds. The infrastructure fails identically. Only the deadline changes.
+This scenario repeats across various industries that rely on deadline-sensitive work—the attorney preparing a brief at nine in the evening, the engineer updating safety documentation in the field, and the physician accessing patient records before rounds. The infrastructure fails identically, but only the deadlines change.
 
 ---
 
