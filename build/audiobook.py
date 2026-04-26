@@ -12,11 +12,45 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
 
 from openai import OpenAI
+
+# Whispersync alignment capture: emit per-chunk timing for EPUB 3 Media Overlays
+ALIGNMENTS_DIR = Path(__file__).resolve().parent.parent / "chapters" / "_voice-drafts" / "_alignments"
+
+
+_DURATION_RE = re.compile(r"time=(\d+):(\d+):(\d+(?:\.\d+)?)")
+
+
+def _mp3_duration_seconds(mp3_bytes: bytes) -> float:
+    """Measure MP3 duration via ffmpeg's stderr parsing (bundled binary).
+
+    Pipes the MP3 bytes through `ffmpeg -i pipe:0 -f null -`, which reports
+    `time=HH:MM:SS.fff` on stderr at process end. This is more robust than
+    a CBR byte-rate estimate for variable Kokoro chunk lengths.
+
+    Used during render to build the per-chunk alignment table for EPUB 3
+    Media Overlays. Adds ~30-50ms per chunk; total overhead for a 27-chapter
+    rebuild is ~1 minute of extra wall clock.
+    """
+    import imageio_ffmpeg  # local import to avoid breaking environments without it
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    proc = subprocess.run(
+        [ffmpeg_exe, "-hide_banner", "-loglevel", "info", "-i", "pipe:0", "-f", "null", "-"],
+        input=mp3_bytes, capture_output=True, timeout=30,
+    )
+    # ffmpeg writes progress to stderr; the final time= line gives total duration
+    stderr = proc.stderr.decode("utf-8", errors="replace") if proc.stderr else ""
+    matches = _DURATION_RE.findall(stderr)
+    if matches:
+        h, m, s = matches[-1]  # last time= is end of stream
+        return int(h) * 3600 + int(m) * 60 + float(s)
+    # Fallback: estimate from byte size assuming 128 kbps CBR mono (Kokoro default)
+    return len(mp3_bytes) / (16 * 1024)
 
 REPO = Path(__file__).resolve().parent.parent
 CHAPTERS_DIR = REPO / "chapters"
@@ -779,6 +813,9 @@ def render_chapter(
     print(f"  {md_path.name}: {len(chunks)} {mode}s, {total_chars:,} chars")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    chapter_stem = md_path.stem
+    alignment: list[dict] = []
+    cumulative_seconds = 0.0
     t0 = time.time()
     with out_path.open("wb") as f:
         for i, chunk in enumerate(chunks, 1):
@@ -789,23 +826,51 @@ def render_chapter(
                 duration = PAUSE_DURATIONS.get(dots, PAUSE_DURATIONS[6])
                 mp3 = silence_mp3(duration)
                 tag = f"PAUSE {duration:.2f}s"
+                is_pause = True
             else:
                 mp3 = synth_chunk(client, voice, chunk, speed)
                 tag = f"{len(chunk):4d} chars"
+                is_pause = False
             if i > 1:
                 mp3 = strip_id3v2(mp3)
+            chunk_duration = _mp3_duration_seconds(mp3)
+            chunk_id = f"{chapter_stem}-c{i:04d}"
+            alignment.append({
+                "chunk_id": chunk_id,
+                "chunk_index": i,
+                "text": chunk,
+                "is_pause": is_pause,
+                "start_seconds": round(cumulative_seconds, 3),
+                "end_seconds": round(cumulative_seconds + chunk_duration, 3),
+                "duration_seconds": round(chunk_duration, 3),
+            })
+            cumulative_seconds += chunk_duration
             f.write(mp3)
             pct = 100 * i / len(chunks)
             elapsed = time.time() - t0
             print(f"    [{i:3d}/{len(chunks)}] {pct:5.1f}%  {tag:14s}  {elapsed:6.1f}s", flush=True)
+
+    # Emit per-chapter alignment for EPUB 3 Media Overlays generation
+    ALIGNMENTS_DIR.mkdir(parents=True, exist_ok=True)
+    alignment_path = ALIGNMENTS_DIR / f"{chapter_stem}.json"
+    alignment_path.write_text(json.dumps({
+        "chapter_stem": chapter_stem,
+        "source": str(md_path.relative_to(REPO).as_posix()),
+        "audio": str(out_path.relative_to(REPO).as_posix()),
+        "total_seconds": round(cumulative_seconds, 3),
+        "chunks": alignment,
+    }, indent=2, ensure_ascii=False), encoding="utf-8")
+
     return {
         "source": str(md_path.relative_to(REPO).as_posix()),
         "output": str(out_path.relative_to(REPO).as_posix()),
         "script": str(script_path.relative_to(REPO).as_posix()),
+        "alignment": str(alignment_path.relative_to(REPO).as_posix()),
         "chunks": len(chunks),
         "chars": total_chars,
         "bytes": out_path.stat().st_size,
         "seconds": round(time.time() - t0, 1),
+        "audio_seconds": round(cumulative_seconds, 3),
     }
 
 
