@@ -227,6 +227,13 @@ def context_snippet(path: Path, char_idx: int, span: int = 40) -> str:
     return f"...{snippet}..."
 
 
+SKIP_CHAPTERS = {
+    "appendix-e-citation-style.md",      # citation-format examples reference acronyms
+    "appendix-f-regulatory-coverage.md",  # regulatory reference table
+    "foreword-placeholder.md",            # not real content
+}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--counts", action="store_true", help="just per-chapter violation counts")
@@ -236,6 +243,10 @@ def main() -> int:
     all_violations: dict[str, list[tuple[str, int]]] = {}
     for path in sorted(CHAPTERS.glob("**/*.md")):
         if "_voice-drafts" in path.parts:
+            continue
+        if path.name in SKIP_CHAPTERS:
+            continue
+        if path.name.endswith(".manifest.json"):
             continue
         violations = scan_chapter(path)
         if args.term:

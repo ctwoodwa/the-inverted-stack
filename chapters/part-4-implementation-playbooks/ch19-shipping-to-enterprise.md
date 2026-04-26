@@ -304,7 +304,7 @@ Some enterprise customers have endpoints that cannot reach the public internet. 
 Four configuration steps produce strict posture, all in `node-config.json` and the surrounding infrastructure:
 
 1. Set `updateServerUrl` to the internal mirror URL.
-2. Set `relayEndpoint` to the self-hosted Bridge relay.
+2. Set `relayEndpoint` to the self-hosted Bridge (the Zone C hybrid SaaS accelerator) relay.
 3. Omit any outbound telemetry endpoint.
 4. Apply operator-level firewall rules denying egress to the public internet.
 

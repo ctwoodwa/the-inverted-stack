@@ -7,7 +7,7 @@
 
 ---
 
-This chapter is for the team already running a hosted SaaS product — the team that has to migrate to a hybrid local-first deployment, Zone C, the Bridge accelerator, without a flag-day cutover. The architecture is one you take apart piece by piece while production keeps running, one component at a time, with the lights still on. Every phase gate below Phase 4 is reversible. The cost is the engineering *discipline* to apply Ferreira's four-phase reversible model from Chapter 9 instead of the rewrite-everything approach. Rewrite-everything has killed more SaaS-to-local-first attempts than any technical obstacle ever has.
+This chapter is for the team already running a hosted SaaS product — the team that has to migrate to a hybrid local-first deployment, Zone C, the Bridge (the Zone C hybrid SaaS accelerator) accelerator, without a flag-day cutover. The architecture is one you take apart piece by piece while production keeps running, one component at a time, with the lights still on. Every phase gate below Phase 4 is reversible. The cost is the engineering *discipline* to apply Ferreira's four-phase reversible model from Chapter 9 instead of the rewrite-everything approach. Rewrite-everything has killed more SaaS-to-local-first attempts than any technical obstacle ever has.
 
 ### Glossary (for readers entering here)
 

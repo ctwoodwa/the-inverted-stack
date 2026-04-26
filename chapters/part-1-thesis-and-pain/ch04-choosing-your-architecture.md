@@ -204,7 +204,7 @@ If the five filters feel like too much evaluation for a project in early discove
 
 **Does the product need to outlive vendor infrastructure?** The software should keep working regardless of whether the vendor survives, is acquired, changes its pricing, or is directed to stop serving your jurisdiction — as hundreds of thousands of organizations in Russia and CIS (Commonwealth of Independent States) markets learned in 2022 when Western SaaS vendors suspended service under sanctions enforcement. If yes — the product must hold its own authoritative data. Software that depends on a vendor server to function cannot outlive the vendor's continued permission to serve you.
 
-If all three answers are yes: Zone A or Zone C. Start with Anchor for a greenfield. Start with Bridge for a migration or hybrid deployment. Run the full five filters to confirm no blocking constraint applies.
+If all three answers are yes: Zone A or Zone C. Start with Anchor (the Zone A local-first desktop accelerator) for a greenfield. Start with Bridge (the Zone C hybrid SaaS accelerator) for a migration or hybrid deployment. Run the full five filters to confirm no blocking constraint applies.
 
 If any answer is no: identify which filter captures it. A "no" on the first question is Filter 2. A "no" on the second is a Zone C tolerance. A "no" on the third is Filter 4 — a business model that requires data custody. Each has a specific implication, and the relevant filter section above addresses it.
 

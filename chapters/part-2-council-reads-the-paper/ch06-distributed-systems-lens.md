@@ -91,7 +91,7 @@ The tier mapping has direct regulatory implications. Tier 3 (no-GC) is required 
 
 **Reconnection storm handling.** Gossip anti-entropy pairs nodes randomly and exchanges deltas on a periodic tick. When many nodes reconnect simultaneously, the resource governor throttles per-tick bandwidth consumption so that each gossip cycle processes a bounded number of exchanges. The architecture made this explicit rather than assumed.
 
-A practical note on verification. The convergence guarantees specified above are architectural commitments ahead of the CRDT backend integration currently in progress: the reference implementation replaces its present stub with YDotNet (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI) as the production CRDT engine, and delta apply-back in the sync daemon is the adjacent integration that makes two-node convergence demonstrable end-to-end. The specification is complete. The evidence catches up when those integrations land.
+A practical note on verification. The convergence guarantees specified above are architectural commitments ahead of the CRDT backend integration currently in progress: the reference implementation replaces its present stub with YDotNet (the .NET CRDT engine port of Yjs via Rust FFI) (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI (Foreign Function Interface)) as the production CRDT engine, and delta apply-back in the sync daemon is the adjacent integration that makes two-node convergence demonstrable end-to-end. The specification is complete. The evidence catches up when those integrations land.
 
 ---
 

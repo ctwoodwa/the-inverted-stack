@@ -8,7 +8,7 @@
 
 ## Who Is Tomás Ferreira
 
-Tomás Ferreira has shipped code to the Automerge ([github.com/automerge/automerge](https://github.com/automerge/automerge), a JSON-like CRDT library) repository for three years. Before that, he built a production local-first application for a small legal firm — document collaboration, no server required — and watched the users try to restore their data from a broken laptop. The restore took four hours because the backup was a folder on Dropbox that had not synced correctly. He sat in the room while it ran. He built a second application after that, this time with a proper backup strategy, and watched a different user delete their container by accident and learn what "no backup" actually means. That is the kind of discovery that does not leave you.
+Tomás Ferreira has shipped code to the Automerge ([github.com/automerge/automerge](https://github.com/automerge/automerge), a JSON-like CRDT (Conflict-free Replicated Data Type) library) repository for three years. Before that, he built a production local-first application for a small legal firm — document collaboration, no server required — and watched the users try to restore their data from a broken laptop. The restore took four hours because the backup was a folder on Dropbox that had not synced correctly. He sat in the room while it ran. He built a second application after that, this time with a proper backup strategy, and watched a different user delete their container by accident and learn what "no backup" actually means. That is the kind of discovery that does not leave you.
 
 He is not idealistic about local-first software. He is familiar with where it breaks.
 
@@ -88,7 +88,7 @@ The seven local-first ideals, checked against the revised architecture:
 
 **The network is optional.** The architecture is explicitly offline-first. The node operates at full fidelity without network connectivity. Degraded UX modes apply only to CP-class data requiring freshness guarantees. Checked.
 
-**Seamless collaboration with your colleagues.** CRDT merge handles concurrent edits without coordination. The conflict inbox and bulk resolution UX surfaces the edge cases that require human judgment. Checked architecturally — with a practitioner's honesty note: the reference implementation's CRDT backend integration (YDotNet (the .NET CRDT engine port of Yjs via Rust FFI) replacing the current stub) is the open work that will let this check mark move from architectural commitment to field-proven behavior. Ferreira has written enough CRDT code to know that the distinction matters.
+**Seamless collaboration with your colleagues.** CRDT merge handles concurrent edits without coordination. The conflict inbox and bulk resolution UX surfaces the edge cases that require human judgment. Checked architecturally — with a practitioner's honesty note: the reference implementation's CRDT backend integration (YDotNet (the .NET CRDT engine port of Yjs via Rust FFI (Foreign Function Interface)) replacing the current stub) is the open work that will let this check mark move from architectural commitment to field-proven behavior. Ferreira has written enough CRDT code to know that the distinction matters.
 
 **The long now.** The compliance CRDT tier with no garbage collection preserves the complete operation history. Records in this tier cannot be lost to compaction. Long-term archival formats are addressed. Checked.
 

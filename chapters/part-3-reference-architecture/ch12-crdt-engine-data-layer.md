@@ -25,7 +25,7 @@ The CRDT data model separates three concerns. Collapse them together and you pro
 
 **The view layer** projects the current CRDT state into indexes and read models optimized for query. The view layer holds no authority. It holds no state that cannot be rebuilt from the data and semantic layers. Projections registered through `IProjectionBuilder` live here: balance tables, task boards, resource calendars, aging reports. When the CRDT engine compacts a document, the view layer rebuilds its projections from the surviving snapshot plus any events that postdate the compaction boundary. The rebuild must be idempotent. The kernel may trigger it at any time without notice.
 
-Swapping the CRDT engine — moving from YDotNet (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI) to Loro ([github.com/loro-dev/loro](https://github.com/loro-dev/loro), a Rust-core CRDT library) — does not touch the semantic layer or the view layer. Swapping the query technology does not touch the data or semantic layers. Each layer has one reason to change.
+Swapping the CRDT engine — moving from YDotNet (the .NET CRDT engine port of Yjs via Rust FFI) (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI (Foreign Function Interface)) to Loro ([github.com/loro-dev/loro](https://github.com/loro-dev/loro), a Rust-core CRDT library) — does not touch the semantic layer or the view layer. Swapping the query technology does not touch the data or semantic layers. Each layer has one reason to change.
 
 ---
 

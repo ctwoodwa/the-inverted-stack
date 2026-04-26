@@ -125,6 +125,9 @@ PRODUCT_DEFINITIONS: dict[str, str] = {
     "Pandoc": "the universal document converter",
     "Kokoro": "the local TTS engine",
     "MinIO": "self-hosted S3-compatible object storage",
+    "Anchor": "the Zone A local-first desktop accelerator",
+    "Bridge": "the Zone C hybrid SaaS accelerator",
+    "Sigstore": "[sigstore.dev](https://www.sigstore.dev/), the supply-chain signing toolkit",
 }
 
 # Skip these chapters entirely (canonical examples + the appendix-f data table)
