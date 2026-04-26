@@ -1,0 +1,392 @@
+chapter: ch18
+chapter-title: Migrating an Existing SaaS
+source-paper-refs: [v5 §8]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: MIG-01
+    name: Reversible four-phase migration model
+    source: ch18 §"Four Migration Phases"
+    source-paper: v5 §8
+    definition: A SaaS-to-local-first migration runs in four sequential phases where every gate below the final phase is reversible without data loss, replacing rewrite-everything cutover with phase-bounded engineering investment.
+    must-implement:
+      - Migration plan declares four named phases with explicit entry and exit criteria
+      - Phases 1 through 3 are demonstrably reversible by reverting configuration alone, no data migration required
+      - Phase 4 is bounded to one workspace at a time and never run fleet-wide
+      - Each phase delivers user-visible value independently so the team may pause indefinitely between phases
+    verification: Migration runbook exists naming the four phases with per-phase rollback procedure; rollback procedures for Phases 1 through 3 are exercised in a staging environment without invoking a data migration job.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, planning, reversibility]
+
+  - id: MIG-02
+    name: Five migration triggers
+    source: 'ch18 §"When to Migrate: The Triggers"'
+    source-paper: v5 §8
+    definition: A team justifies migrating a hosted SaaS to local-first only when at least one of five named business triggers applies — compliance mandate, data-residency objection in enterprise sales, vendor reliability or termination event, churn driven by data sovereignty, or procurement review blocking adoption.
+    must-implement:
+      - Migration proposal cites at least one of the five named triggers with concrete evidence from customer or regulator interactions
+      - Aesthetic, fashion, or curiosity-driven justifications are explicitly rejected as insufficient
+    verification: Migration kickoff document names the triggering condition with linked customer or regulatory evidence, reviewed by a non-engineering stakeholder before engineering investment begins.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
+    tags: [migration, business-case, triggers]
+
+  - id: MIG-03
+    name: Five-filter eligibility framework applied per record class
+    source: ch18 §"Determine Your Zone Before You Write a Line of Code"
+    source-paper: v5 §8
+    definition: Migration eligibility is determined by running each record class through five filters covering ownership, staleness tolerance, conflict resolvability, offline value, and compliance posture, with the result selecting Zone B, Zone C, or no migration at all.
+    must-implement:
+      - Every record class in the existing schema is classified against all five filters
+      - Filter results are recorded per record class, not aggregated to a product-level verdict
+      - Records failing Filter 1 or Filter 2 are routed to Zone B and excluded from local-first migration scope
+      - Records passing all five filters are eligible for AP-class CRDT treatment
+    verification: A filter-result table exists with one row per record class and five filter columns, archived in the migration plan.
+    kleppmann-properties: [P3, P5, P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, eligibility, decision-framework]
+
+  - id: MIG-04
+    name: AP-class versus CP-class record separation
+    source: ch18 §"Five Architectural Decisions to Make Before You Start"
+    source-paper: v5 §8
+    definition: Records are classified as AP-class — user-owned, eventually consistent, suitable for CRDT replication — or CP-class — server-coordinated, requiring linearizable writes — and the two classes never share a backing table.
+    must-implement:
+      - Each table or aggregate is labeled AP-class or CP-class in the schema documentation
+      - AP-class data resides on CRDT documents on local nodes
+      - CP-class data resides on the server-authoritative store with lease coordination
+      - No table mixes AP-class and CP-class fields, regardless of join convenience
+      - Table names encode the classification (e.g., ProjectBody for AP, ProjectBillingRecord for CP)
+    verification: Schema audit script enumerates tables and asserts each is labeled AP or CP; CI rejects schema changes that introduce mixed-class tables.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [migration, classification, schema]
+
+  - id: MIG-05
+    name: Three-plane Bridge separation
+    source: ch18 §"Bridge Is Your Zone C Reference Implementation"
+    source-paper: v5 §8
+    definition: The Zone C hybrid architecture separates concerns into three logical planes — a shared control plane for signup and billing, a per-tenant data plane holding workspace data, and a shared stateless relay tier transporting encrypted deltas — with no team data permitted in the control or relay tiers.
+    must-implement:
+      - Control plane holds only tenant registry records of shape {tenant_id, plan, billing, support_contacts, team_public_key}
+      - Data plane runs one local-node-host process and one SQLCipher database per tenant at a per-tenant path
+      - Each tenant receives a dedicated subdomain
+      - Relay tier persists no tenant content and operates as a horizontally scaled message bus only
+      - Any content record discovered in the control plane triggers a stop-and-investigate response
+    verification: Bridge audit tooling enumerates control-plane tables and confirms only the registry shape; relay process inspection shows no persistent storage attached for content.
+    kleppmann-properties: [P5, P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [data-residency-objection]
+    tags: [bridge, architecture, separation-of-concerns]
+
+  - id: MIG-06
+    name: Hosted-node peer as ciphertext-only participant
+    source: ch18 §"Bridge Is Your Zone C Reference Implementation"
+    source-paper: v5 §8
+    definition: The server-side hosted-node peer participates in sync as a ciphertext-only peer that holds encrypted deltas for catch-up-on-reconnect but cannot decrypt without a team-issued role attestation.
+    must-implement:
+      - Hosted-node peer holds no decryption keys for tenant data by default
+      - Decryption capability requires explicit team-issued role attestation
+      - Catch-up-on-reconnect proceeds against ciphertext deltas
+      - Bridge audit tooling verifies the ciphertext-only invariant before each release
+    verification: Bridge audit job inspects the hosted-node process key store and confirms absence of plaintext keys for any tenant; integration test attempts decryption without attestation and observes failure.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-outage, key-compromise]
+    tags: [bridge, security, ciphertext-only]
+
+  - id: MIG-07
+    name: Three Bridge tenant trust levels
+    source: ch18 §"Bridge Is Your Zone C Reference Implementation"
+    source-paper: v5 §8
+    definition: Bridge supports three tenant trust levels — relay-only as the default with no operator plaintext access, attested hosted peer as opt-in for backup verification and admin-assisted recovery, and self-hosted nodes that use Bridge only for the control plane.
+    must-implement:
+      - Default tenant configuration is relay-only with no operator plaintext capability
+      - Attested hosted peer mode requires explicit tenant-admin role attestation issuance
+      - Self-hosted-node tenants may consume only the control plane
+      - Trust level is selectable per tenant at provisioning time
+    verification: Tenant provisioning workflow exposes the three trust levels as named options; per-tenant audit query returns the active trust level.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [bridge, trust-model, multi-tenant]
+
+  - id: MIG-08
+    name: Per-tenant data isolation as first decision
+    source: ch18 §"Five Architectural Decisions to Make Before You Start"
+    source-paper: v5 §8
+    definition: Migration begins by separating a shared-schema multi-tenant database into per-tenant data planes, wired through a single tenant-context interface that becomes the migration seam between the prior projection and a CRDT-backed projection.
+    must-implement:
+      - Every database query routes through ITenantContext from Sunfish.Foundation
+      - Per-tenant database paths are isolated, not separated by filter columns alone
+      - The decision is made and executed before any local-first work begins
+      - Backup and index jobs are tenant-scoped
+    verification: Static analysis confirms no query bypasses ITenantContext; schema inspection shows per-tenant database paths rather than a shared schema with tenant-ID columns.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [data-residency-objection]
+    tags: [migration, multi-tenant, decisions]
+
+  - id: MIG-09
+    name: Append-only event tables as migration seam
+    source: ch18 §"Five Architectural Decisions to Make Before You Start"
+    source-paper: v5 §8
+    definition: Domain state is stored as append-only event rows for mutable aggregates rather than last-write-wins field mutations, providing a mechanical replay path from server events to equivalent CRDT operations.
+    must-implement:
+      - Mutable aggregates are stored as append-only event tables not nullable-column tables
+      - Each event row carries enough information to replay as a CRDT operation
+      - New mutable field columns are rejected in code review on the migration path
+    verification: Schema review identifies aggregate tables and confirms append-only event-row structure; replay job transforms event rows into CRDT operations and asserts projection equivalence.
+    kleppmann-properties: [P5]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, event-sourcing, schema]
+
+  - id: MIG-10
+    name: Block-contract UI wiring
+    source: ch18 §"Five Architectural Decisions to Make Before You Start"
+    source-paper: v5 §8
+    definition: UI components consume block contracts whose data shape is identical whether backed by a server-side projection or a CRDT-backed local document, so the storage layer can swap underneath without UI rewrites.
+    must-implement:
+      - UI components depend on Sunfish.Blocks.* contracts not on ORM models or DTOs
+      - Block contract shape is identical across Postgres-backed and CRDT-backed implementations
+      - No migration phase requires a UI rewrite to change the backing store
+    verification: Component-level dependency scan confirms UI imports reference block contracts only; integration test swaps the backing store for a single block and observes no UI code change.
+    kleppmann-properties: [P1]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [migration, ui, blocks]
+
+  - id: MIG-11
+    name: Business logic out of stored procedures
+    source: ch18 §"Five Architectural Decisions to Make Before You Start"
+    source-paper: v5 §8
+    definition: Validation, computation, and workflow logic moves from database stored procedures to application-layer domain services so it can replicate to local nodes that execute in the application process.
+    must-implement:
+      - Stored procedures contain only set-based data operations
+      - Validation, computation, and workflow logic resides in application-layer domain services
+      - The audit and extraction occur during pre-migration decision work, not during Phase 3 provisioning
+    verification: Audit script enumerates stored procedures and classifies each as set-operation-only or violation; violations are zero before Phase 3 begins.
+    kleppmann-properties: [P3]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, domain-services, decisions]
+
+  - id: MIG-12
+    name: Phase 1 shadow mode with feature-flag rollback
+    source: ch18 §"Phase 1 — Shadow Mode (Weeks 1–8)"
+    source-paper: v5 §8
+    definition: A local node is deployed alongside the existing SaaS, mirroring data read-only and serving UI reads while writes still flow through the server API, with a standard feature flag providing instant deployment-free rollback.
+    must-implement:
+      - Local node populates from the existing read model and serves UI reads
+      - All writes continue through the server API unchanged in this phase
+      - A feature flag (convention LocalFirst.ShadowMode) gates the read switch and is consulted by Sunfish.Foundation.LocalFirst at startup
+      - Flag evaluates through the team's existing flag provider (IFeatureManager or equivalent), not a Sunfish-proprietary system
+      - Rollback is achieved by flipping the flag with no deployment required
+    verification: Production toggle of the flag from on to off restores server-API reads within one configuration-refresh interval and without redeploying the application.
+    kleppmann-properties: [P1]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [migration, phase-1, feature-flags]
+
+  - id: MIG-13
+    name: Phase 1 read-latency and consistency success criteria
+    source: ch18 §"Phase 1 — Shadow Mode (Weeks 1–8)"
+    source-paper: v5 §8
+    definition: Phase 1 is judged successful only when P95 read latency drops by at least 20% with no write-consistency regression and the local replica stays within the declared AP staleness window.
+    must-implement:
+      - P95 read latency is measured before and after Phase 1 deployment
+      - Write-consistency tests run unchanged against the server-API write path during Phase 1
+      - Replica staleness is monitored against a declared baseline (30 seconds for typical task-management domains)
+      - Failure on any criterion blocks the Phase 1 to Phase 2 transition
+    verification: Phase 1 exit report includes the three measurements with pre- and post-deployment values; CAB sign-off references the report.
+    kleppmann-properties: [P1]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, phase-1, success-criteria]
+
+  - id: MIG-14
+    name: Phase 2 local writes for AP-class only
+    source: ch18 §"Phase 2 — Local Writes for Non-Conflicting Domains (Weeks 4–16)"
+    source-paper: v5 §8
+    definition: Phase 2 routes AP-class block writes through the CRDT engine for instant local feedback while CP-class records — billing, subscription limits, role membership, audit logs — remain server-authoritative.
+    must-implement:
+      - AP-class writes apply locally without a server round-trip
+      - CRDT merge resolves concurrent edits on AP-class records without data loss
+      - CP-class write paths are unmodified and pass existing integration tests unchanged
+      - Server transitions to a relay role for AP-class deltas, propagating but not owning them
+      - The eligibility test for AP classification is whether two-user concurrent edits with merge yield an acceptable result
+    verification: Convergence test against AP-class aggregates demonstrates byte-identical state after concurrent edits; CP-class regression suite passes unchanged.
+    kleppmann-properties: [P1, P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [migration, phase-2, ap-cp-split]
+
+  - id: MIG-15
+    name: Phase 2 reversibility via CRDT log preservation
+    source: ch18 §"Phase 2 — Local Writes for Non-Conflicting Domains (Weeks 4–16)"
+    source-paper: v5 §8
+    definition: Phase 2 is reversible per domain by disabling CRDT writes, returning authority to the server API while preserving the CRDT event log so local authority can be re-enabled later by replay.
+    must-implement:
+      - CRDT writes can be disabled per domain via configuration
+      - The CRDT event log is preserved on rollback, not deleted
+      - A re-enable path exists that replays the preserved log
+      - Pausing indefinitely at Phase 2 is treated as a respectable terminal state
+    verification: Per-domain rollback procedure is exercised on a staging tenant; re-enable replay produces the expected projection without loss.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, phase-2, reversibility]
+
+  - id: MIG-16
+    name: Phase 3 full local authority for new workspaces
+    source: ch18 §"Phase 3 — Full Local Authority for New Projects (Weeks 12–24)"
+    source-paper: v5 §8
+    definition: Newly provisioned workspaces start with the full local-node stack — gossip sync daemon, per-workspace SQLCipher database, device keypair issuance, role attestations — while existing workspaces remain at Phase 2 until opting into Phase 4.
+    must-implement:
+      - New-workspace provisioning provisions Sunfish.Kernel.Sync and Sunfish.Kernel.Security
+      - Device keypairs are issued at first launch
+      - Role attestations govern hosted-node peer access
+      - Gossip anti-entropy converges within the configured interval (30-second default) under the test topology
+      - New workspaces operate at full fidelity without server connectivity
+      - Phase 3 workspaces and Phase 2 workspaces coexist on the same infrastructure
+    verification: New-workspace integration test runs offline end-to-end and confirms full feature fidelity; topology test measures convergence within the configured gossip interval.
+    kleppmann-properties: [P1, P2, P3, P4, P6]
+    scope: inverted-stack-specific
+    failure-modes: [partition, vendor-outage]
+    tags: [migration, phase-3, local-authority]
+
+  - id: MIG-17
+    name: BYOC backup mandatory at Phase 3 provisioning
+    source: ch18 §"Phase 3 — Full Local Authority for New Projects (Weeks 12–24)"
+    source-paper: v5 §8
+    definition: New workspaces configure Bring-Your-Own-Cloud backup at provisioning time because the hosted-node peer is a relay cache that evicts and does not guarantee retention.
+    must-implement:
+      - Workspace provisioning workflow makes BYOC backup the default the team must override, not an option the team must remember
+      - Provisioning records the configured backup destination
+      - The hosted-node peer is documented as cache-not-backup in tenant onboarding
+    verification: Provisioning UI test confirms BYOC configuration is required by default; tenant audit query returns the backup destination per workspace.
+    kleppmann-properties: [P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-loss]
+    tags: [migration, phase-3, backup, byoc]
+
+  - id: MIG-18
+    name: Phase 4 copy-transform-validate with projection diff
+    source: ch18 §"Phase 4 — Gradual Backfill of Legacy Records (Weeks 20–Ongoing)"
+    source-paper: v5 §8
+    definition: Phase 4 migrates an existing workspace by reading its server-side domain events, transforming each into a CRDT operation, projecting both stores, and asserting projection equivalence under a declared comparison contract before switching the write path.
+    must-implement:
+      - Migration job reads domain events from the existing event store
+      - Each event is transformed into an equivalent CRDT operation by a per-aggregate transformer
+      - Postgres projection and CRDT projection are compared under a declared equivalence contract covering field equality, collection membership, and type coercions
+      - The diff fails fast on first divergence with a logged diff object
+      - The write path switch occurs only after a clean diff
+      - Diff failures hold the workspace at Phase 2 pending transformer correction
+      - The migration job is idempotent and may be rerun until the diff is empty
+    verification: A pilot workspace migration produces a clean projection diff and the diff report is archived; chaos test injects a transformer bug and confirms fail-fast hold at Phase 2.
+    kleppmann-properties: [P5]
+    scope: foundational
+    failure-modes: [schema-skew]
+    tags: [migration, phase-4, validation]
+
+  - id: MIG-19
+    name: Phase 4 per-workspace one-way door with 30-day stabilization
+    source: ch18 §"Phase 4 — Gradual Backfill of Legacy Records (Weeks 20–Ongoing)"
+    source-paper: v5 §8
+    definition: Phase 4 is opt-in per workspace, runs incrementally one workspace at a time, holds each migrated workspace for 30 days on Phase 3 before treating the migration as stable, and is not reversible without re-running the copy-transform in reverse.
+    must-implement:
+      - Phase 4 is never run fleet-wide in a single batch
+      - A pilot workspace runs first and is observed for 30 days before any expansion
+      - The Postgres write path stays disabled for the 30-day stabilization without rollback requests
+      - Re-migration from Phase 4 back to Phase 2 is documented as expensive and error-prone, requiring inverse copy-transform
+      - The CRDT event log becomes the system of record after the 30-day window
+    verification: Migration runbook documents the per-workspace cadence and the 30-day hold; rollout dashboard tracks per-workspace days-since-cutover.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, phase-4, stabilization]
+
+  - id: MIG-20
+    name: Phase transition gates with hard stops
+    source: ch18 §"Phase Transition Gates"
+    source-paper: v5 §8
+    definition: Each phase transition is governed by an explicit gate question with a named hard-stop condition — CP-class write regression blocks Phase 1 to 2, merge data loss blocks Phase 2 to 3, projection-diff failure blocks fleet rollout from Phase 3 to 4.
+    must-implement:
+      - A change-advisory-board decision is required at each transition, not a calendar event
+      - Each transition documents the gate question and the named hard stop
+      - Hard-stop conditions block the transition unconditionally when triggered
+    verification: CAB record exists per transition with the gate question, evidence, and decision; hard-stop simulation in staging confirms the transition is blocked.
+    kleppmann-properties: [P5]
+    scope: foundational
+    failure-modes: []
+    tags: [migration, governance, gates]
+
+  - id: MIG-21
+    name: Failure mode — server-side feature gates re-centralizing the architecture
+    source: ch18 §"Common Failure Modes"
+    source-paper: v5 §8
+    definition: A drift pattern in which feature flag evaluation, analytics, A/B testing, or rate limiting routes AP-class decisions through server calls, gradually re-centralizing the architecture under the appearance of harmless individual additions.
+    must-implement:
+      - Feature flags evaluate locally against node role attestations from Phase 1 onward
+      - No AP-class decision routes through a server call
+      - Sunfish.Foundation.FeatureManagement (or equivalent local evaluator) is wired before any server-evaluated flag patterns are introduced
+      - Code review rejects new server-call patterns on AP-class write paths
+    verification: Static analysis enumerates server-call sites on AP-class write paths and asserts the count is zero; periodic architecture audit confirms feature-flag evaluation remains local.
+    kleppmann-properties: [P3, P7]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [migration, anti-pattern, drift]
+
+  - id: MIG-22
+    name: Failure mode — relay mistaken for backup
+    source: ch18 §"Common Failure Modes"
+    source-paper: v5 §8
+    definition: An operational failure mode in which teams skip BYOC backup configuration on the assumption that the hosted-node peer holds their data durably, then discover during a device-loss incident that the relay is a cache that evicts rather than a guaranteed-retention store.
+    must-implement:
+      - The relay tier is documented as cache-not-backup in operator and tenant materials
+      - BYOC backup configuration is non-optional and default-on at workspace provisioning
+      - Recovery drills exercise the BYOC restore path, not the relay catch-up path
+    verification: Tenant onboarding documents declare the relay-as-cache contract; recovery drill is run and restores from the BYOC destination.
+    kleppmann-properties: [P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-loss, vendor-outage]
+    tags: [migration, anti-pattern, backup]
+
+  - id: MIG-23
+    name: Per-phase Sunfish package availability matrix
+    source: ch18 §"What Sunfish Provides at Each Phase"
+    source-paper: v5 §8
+    definition: Each Sunfish package becomes appropriate at a specific migration phase and reaching for a package before its phase is an architectural anti-pattern, with Sunfish.Foundation.FeatureManagement wired first and kernel packages introduced only as their phase arrives.
+    must-implement:
+      - Sunfish.Foundation, UICore, UIAdapters.Blazor, and Blocks are available from Phase 1
+      - Sunfish.Foundation.LocalFirst progresses from shadow-read-only (Phase 1) to shadow-plus-local-writes (Phase 2) to full (Phases 3 and 4)
+      - Sunfish.Kernel.Crdt is introduced only at Phase 2 and only for AP domains
+      - Sunfish.Kernel.Sync and Sunfish.Kernel.Security are introduced only at Phase 3
+      - Sunfish.Foundation.FeatureManagement is wired in Phase 1 before any flag-evaluation pattern emerges
+    verification: Build inspection per phase confirms package set matches the matrix; CI rule rejects pull requests that introduce kernel packages before their declared phase.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [migration, packages, sequencing]
+
+  - id: MIG-24
+    name: Greenfield Zone C bypasses migration path
+    source: ch18 §"The Greenfield Case"
+    source-paper: v5 §8
+    definition: A greenfield product whose five-filter framework returns Zone C clones the Bridge accelerator directly rather than running the migration phases, because the control plane, relay tier, per-tenant data plane, and ciphertext-only hosted peer ship pre-separated.
+    must-implement:
+      - Greenfield Zone C teams clone accelerators/bridge/ as the starting point
+      - The migration phases are not run when no production data and no existing tenants exist
+      - Greenfield work is scoped as product configuration not architecture construction
+    verification: Greenfield project bootstrap script clones the Bridge accelerator and the resulting plane separation matches the Bridge audit baseline.
+    kleppmann-properties: [P5, P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [bridge, greenfield, accelerator]

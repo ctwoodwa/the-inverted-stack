@@ -1,0 +1,335 @@
+chapter: ch03
+chapter-title: "The Inverted Stack in One Diagram"
+source-paper-refs: [v13 §5, v5 §2, v5 §2.1, v5 §2.2]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: INV-01
+    name: Local node as primary; cloud relay as optional peer
+    source: 'ch03 §"The Inversion in One Sentence"'
+    source-paper: v13 §5
+    definition: The architectural inversion replaces SaaS's cloud-primary / device-cache topology with a topology where the local node holds the authoritative copy and any cloud relay participates only as an optional sync peer.
+    must-implement:
+      - Application reads and writes hit the local store as the primary data path
+      - No code path requires cloud connectivity for core function
+      - Cloud relay participation is optional and removable without changing application behavior
+      - The node has no degraded mode when no peers are reachable
+    verification: Disconnect all network interfaces; the application performs every core operation identically and the relay role can be unplugged without rebuilding the application.
+    kleppmann-properties: [P1, P3, P5, P7]
+    scope: foundational
+    failure-modes: [vendor-outage, partition, data-residency-objection]
+    tags: [thesis, architecture, inversion]
+
+  - id: INV-02
+    name: Five-layer reference model
+    source: 'ch03 §"The Five Layers"'
+    source-paper: v13 §5
+    definition: The inverted stack decomposes into five layers — Presentation, Application Logic, Sync Daemon, Storage, and Relay/Discovery — each with a single owner, a single boundary, and an explicit answer to the network-unavailable question.
+    must-implement:
+      - Each layer has one owner and a documented boundary
+      - Each layer has a defined behavior when no peer is reachable
+      - Layers are addressable independently and replaceable without rewriting adjacent layers
+    verification: Architecture documentation enumerates five layers, each with owner, boundary, and offline-behavior statements; the reference implementation contains a separate component per layer.
+    kleppmann-properties: [P3]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [architecture, reference-model]
+
+  - id: INV-03
+    name: Presentation layer owns no state
+    source: 'ch03 §"Layer 1: Presentation"'
+    source-paper: v5 §2.1
+    definition: The presentation layer renders directly from the local store, owns no independent state, caches nothing on its own, and makes no data decisions.
+    must-implement:
+      - UI components read from the local store and do not maintain a parallel cache
+      - The same component surface renders against a local desktop node and a hosted tenant node without modification
+      - UI behavior is unchanged when no peers are reachable, except for the sync-status indicator
+    verification: UI integration test renders the same component tree against an Anchor instance and a Bridge instance and asserts identical output for the same store state.
+    kleppmann-properties: [P1, P3]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [ui, presentation]
+
+  - id: INV-04
+    name: Four-state node health indicator
+    source: 'ch03 §"Layer 1: Presentation"'
+    source-paper: v5 §2.1
+    definition: The presentation layer surfaces sync state as four named states — sync-healthy, stale, offline, and conflict-pending — each communicated through more than color and announced to assistive technology on transition.
+    must-implement:
+      - Health indicator exposes sync-healthy, stale, offline, and conflict-pending states
+      - Each state has a non-color cue and a programmatic accessibility description
+      - State transitions trigger an assistive-technology live-region announcement
+    verification: Component test confirms accessibility-tree exposure of each state name and live-region announcement on transition; visual test confirms a non-color cue per state.
+    kleppmann-properties: [P1, P3]
+    scope: inverted-stack-specific
+    failure-modes: [partition, peer-discovery-failure]
+    tags: [ui, accessibility, status]
+
+  - id: INV-05
+    name: Application logic writes locally without network awareness
+    source: 'ch03 §"Layer 2: Application Logic"'
+    source-paper: v5 §2.1
+    definition: Domain command handlers translate user intent into CRDT operations against the local store and contain no network-aware code paths, except for explicit consultation of the lease coordinator for CP-class records.
+    must-implement:
+      - Command handlers commit to the local store before acknowledgement
+      - The application logic layer contains no implicit network calls in its validation or invariant code
+      - CP-class writes explicitly call the lease coordinator and surface a clear constraint when quorum is unreachable
+    verification: Static analysis confirms application-logic modules import no network client; unit tests pass with the sync daemon socket disabled for AP-class operations.
+    kleppmann-properties: [P1, P3, P4]
+    scope: foundational
+    failure-modes: [partition, vendor-outage]
+    tags: [application-logic, crdt, lease]
+
+  - id: INV-06
+    name: Per-record-class CAP positioning
+    source: 'ch03 §"Layer 2: Application Logic"'
+    source-paper: v13 §5
+    definition: CAP trade-offs are made per record class rather than per application — documents and notes are AP via CRDT merge, identity facts are AP with deferred merge, reservations and slots are CP via distributed lease, and financial transactions are CP under lease plus ledger ordering.
+    must-implement:
+      - Each record class declares its CAP position in the schema
+      - AP-class records use CRDT merge with deterministic semantics
+      - CP-class records require lease acquisition before commit
+      - Audit-bound records commit through an append-only ledger with strict ordering
+    verification: Schema definition enumerates CAP class per record type; integration test demonstrates AP-class writes succeed under partition while CP-class writes block until quorum returns.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition, clock-skew]
+    tags: [cap, crdt, lease, schema]
+
+  - id: INV-07
+    name: Sync daemon as separate long-running process
+    source: 'ch03 §"Layer 3: Sync Daemon"'
+    source-paper: v13 §5
+    definition: The sync daemon runs as a separate OS-managed long-running process that survives application restarts and communicates with the application shell over a Unix-domain socket.
+    must-implement:
+      - The daemon registers with the OS service manager and starts at login independently of the application window
+      - The daemon continues collecting peer deltas while the application is closed or crashed
+      - Application-to-daemon communication uses a local IPC socket, not in-process calls
+    verification: Process listing confirms the daemon runs independently of the app; restart test confirms deltas received during app downtime are present when the app reconnects.
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [daemon, ipc, sync]
+
+  - id: INV-08
+    name: Three-tier peer discovery hierarchy
+    source: 'ch03 §"Layer 3: Sync Daemon"'
+    source-paper: v13 §5
+    definition: Peer discovery follows a fixed hierarchy — mDNS on the local network, mesh-VPN (WireGuard-based) for NAT traversal across networks, and the managed relay as the final fallback.
+    must-implement:
+      - Daemon attempts mDNS discovery on the local network first
+      - Daemon falls back to mesh-VPN peer discovery across networks
+      - Daemon uses the managed relay only when neither prior tier yields peers
+      - Each tier is independently configurable and removable
+    verification: Daemon trace shows the three-tier order on cold start; LAN-only test confirms two devices on the same Wi-Fi sync with no relay traffic.
+    kleppmann-properties: [P3, P4, P7]
+    scope: inverted-stack-specific
+    failure-modes: [peer-discovery-failure]
+    tags: [discovery, mdns, vpn, relay]
+
+  - id: INV-09
+    name: Gossip anti-entropy with vector clocks
+    source: 'ch03 §"Layer 3: Sync Daemon"'
+    source-paper: v13 §5
+    definition: The daemon converges peer state through periodic gossip — every 30 seconds it selects two random peers, exchanges deltas based on vector-clock divergence, and streams missing CRDT operations using CBOR encoding.
+    must-implement:
+      - Daemon selects gossip partners on a periodic schedule with random peer selection
+      - Vector clocks track per-peer operation visibility
+      - Delta payloads use CBOR wire encoding
+      - Gossip operates correctly with no central coordinator
+    verification: Wire trace confirms CBOR-encoded delta exchange on the configured interval; multi-peer convergence test demonstrates byte-identical state across peers after gossip rounds.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [gossip, anti-entropy, vector-clock, cbor]
+
+  - id: INV-10
+    name: Write buffering with durable local commit before peer delivery
+    source: 'ch03 §"Layer 3: Sync Daemon"'
+    source-paper: v13 §5
+    definition: When no peers are reachable, the daemon accepts writes from the application logic layer and buffers them to the durable local event log before acknowledgement, then drains the buffer when any peer becomes reachable.
+    must-implement:
+      - Buffered writes commit to the local event log before the daemon acknowledges them
+      - A power interruption between buffering and peer delivery does not lose buffered data
+      - The daemon resumes buffer drainage automatically when a peer becomes reachable
+      - The application is not required to track whether a write was buffered or delivered
+    verification: Durability test interrupts power after buffering and before delivery, then asserts the write replays from the event log on restart and reaches peers when reconnected.
+    kleppmann-properties: [P3, P5]
+    scope: foundational
+    failure-modes: [partition, vendor-outage]
+    tags: [durability, buffering, event-log]
+
+  - id: INV-11
+    name: Storage layer with CRDT store, event log, and read-model projections
+    source: 'ch03 §"Layer 4: Storage"'
+    source-paper: v13 §5
+    definition: The storage layer holds three coexisting structures — a typed CRDT document store, an append-only event log as the ground truth, and rebuildable read-model projections — all backed by SQLite encrypted with SQLCipher and a key derived via Argon2id and held in the OS keystore.
+    must-implement:
+      - All AP-class data is stored as typed CRDT documents (map, list, text)
+      - The event log is append-only and never modifies past entries
+      - Read-model projections are rebuildable from the event log
+      - The database is encrypted with SQLCipher using an Argon2id-derived key stored in the OS-native keystore
+    verification: Storage layer exposes the three structures as separate APIs; recovery test rebuilds projections from the event log; key-extraction test confirms physical storage extraction without credentials yields ciphertext only.
+    kleppmann-properties: [P5, P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-loss, key-compromise]
+    tags: [storage, sqlite, sqlcipher, event-sourcing, crdt]
+
+  - id: INV-12
+    name: Engine-agnostic CRDT abstraction
+    source: 'ch03 §"Layer 4: Storage"'
+    source-paper: v5 §2.2
+    definition: The CRDT engine is consumed through an abstraction (`ICrdtEngine`) so that the choice between YDotNet (current) and Loro (aspirational target) is reversible without changes to the application layer.
+    must-implement:
+      - Application code consumes only the engine abstraction, not engine-specific types
+      - Adding a new engine implementation requires no changes to application logic
+      - Merge semantics are commutative, associative, and idempotent across all engines behind the abstraction
+    verification: Test suite runs the same convergence scenarios against multiple engine implementations and asserts byte-identical merged state.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [crdt, abstraction, engine-portability]
+
+  - id: INV-13
+    name: Relay as ciphertext-only optional peer
+    source: 'ch03 §"Layer 5: Relay and Discovery"'
+    source-paper: v13 §5
+    definition: The relay is an optional component that receives, fans out, and rendezvous-routes encrypted CRDT deltas without ever holding decryption keys, decrypted content, or authoritative data.
+    must-implement:
+      - The relay holds no keys for any payload it routes
+      - The relay stores no plaintext from any peer
+      - The relay protocol is open and the relay is self-hostable
+      - Removing the relay leaves LAN and mesh-VPN sync unaffected
+    verification: Relay process inspection confirms no key material is present; protocol fuzz test confirms the relay rejects any request that requires plaintext access; replacing the managed relay with a self-hosted relay requires no node configuration change.
+    kleppmann-properties: [P3, P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-acquisition, data-residency-objection]
+    tags: [relay, e2ee, sovereignty]
+
+  - id: INV-14
+    name: Two relay trust levels — relay-only and attested hosted peer
+    source: 'ch03 §"Layer 5: Relay and Discovery"'
+    source-paper: v13 §5
+    definition: The relay operates at one of two declared trust levels — relay-only ciphertext routing as the default, or attested hosted peer that participates in CP-class quorum via an explicit administrator-issued role attestation.
+    must-implement:
+      - Default relay deployment is relay-only and cannot decrypt payloads
+      - Attested hosted peer mode requires an explicit role attestation issued by an administrator
+      - Trust level is visible to all peers participating in the topology
+    verification: Configuration audit confirms default relay deployment lacks any role attestation; integration test confirms an unattested relay is excluded from quorum decisions.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-acquisition, key-compromise]
+    tags: [relay, trust, quorum, governance]
+
+  - id: INV-15
+    name: Mirror-inversion of Ch01 failure modes
+    source: 'ch03 §"How This Changes Failure Modes"'
+    source-paper: v13 §5
+    definition: The inversion specifically resolves each of Ch01's six named SaaS failure modes — The Outage and The Dependency Chain, The Vendor, The Connectivity, The Data, The Price, and The Third-Party Veto — by removing the vendor's data custody as the load-bearing dependency.
+    must-implement:
+      - Local authoritative state survives any upstream cloud-region outage
+      - Vendor business changes do not interrupt access to user data
+      - Connectivity enables sync but is not a prerequisite for function
+      - User data is exportable in a standard format without vendor participation
+      - Switching costs are bounded by relay replacement, not full data extraction
+      - Disaggregation of data custody from service custody limits third-party veto exposure
+    verification: Failure-mode regression tests for each named mode confirm continued local function and data accessibility; export test produces a standard-format archive without vendor API calls.
+    kleppmann-properties: [P3, P5, P7]
+    scope: foundational
+    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection, partition]
+    tags: [thesis, failure-modes, sovereignty]
+
+  - id: INV-16
+    name: The Security Breach as hidden-exposure reveal
+    source: 'ch03 §"How This Changes Failure Modes"'
+    source-paper: v13 §5
+    definition: SaaS exposes users to a structurally invisible failure mode — vendor-side breach of decryptable copies — that the inverted architecture neutralizes by ensuring the relay only ever holds ciphertext sealed under per-document DEKs wrapped by role KEKs whose keys never leave the originating node.
+    must-implement:
+      - Per-document data encryption keys (DEKs) are generated and held only on originating nodes
+      - DEKs are wrapped by role-scoped key encryption keys (KEKs) at the source node
+      - No relay or hosted infrastructure component receives any DEK or KEK material
+      - A complete breach of relay infrastructure exposes no decryptable content
+    verification: Threat-model audit demonstrates no key material crosses the node boundary; relay breach simulation produces only ciphertext payloads with no path to plaintext.
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise, data-residency-objection]
+    tags: [security, e2ee, breach, dek-kek]
+
+  - id: INV-17
+    name: Honest new failure modes introduced by the architecture
+    source: 'ch03 §"How This Changes Failure Modes"'
+    source-paper: v13 §5
+    definition: The inversion introduces three categorically new operational concerns — endpoint-compromise expansion of the attack surface, schema migration across independently-updating nodes, and CRDT garbage-collection debt across long-lived peers — each of which the architecture addresses but does not eliminate.
+    must-implement:
+      - Endpoint defense uses layered controls (encryption at rest, field-level encryption, sync-layer minimization, circuit-breaker quarantine)
+      - Schema evolution uses additive expand-contract changes, bidirectional lenses, and quorum-coordinated schema epochs for breaking changes
+      - CRDT history is bounded by a tiered GC policy with a stale-peer recovery protocol
+    verification: Threat model documents endpoint compromise scenarios and the four-layer defense mapping; migration test runs five concurrent schema versions to convergence; GC test reintegrates a peer offline for longer than the active retention window.
+    kleppmann-properties: [P5, P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise, schema-skew, partition]
+    tags: [honesty, threat-model, schema, gc]
+
+  - id: ZONE-01
+    name: Anchor as Zone A — offline-by-default local-first deployment shape
+    source: 'ch03 §"The Two Canonical Shapes: Anchor and Bridge"'
+    source-paper: v5 §2.2
+    definition: Anchor is the Zone A canonical shape — a .NET MAUI Blazor Hybrid native application running on Windows and macOS desktops with data in a local SQLCipher SQLite database, an Ed25519 device-identity keypair generated at first run, and opt-in sync.
+    must-implement:
+      - Application runs and is fully functional with sync disabled from first launch
+      - Device identity is a long-lived Ed25519 keypair generated locally and held in the OS keystore
+      - Local SQLite/SQLCipher database is the authoritative store for the device
+      - Enabling sync is an explicit user action, not a precondition for function
+    verification: Fresh install with networking disabled completes setup and supports all core workflows; keystore inspection confirms a per-device Ed25519 keypair was generated locally.
+    kleppmann-properties: [P1, P3, P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-outage, data-residency-objection]
+    tags: [zone-a, anchor, deployment-shape]
+
+  - id: ZONE-02
+    name: Bridge as Zone C — hybrid multi-tenant SaaS deployment shape
+    source: 'ch03 §"The Two Canonical Shapes: Anchor and Bridge"'
+    source-paper: v5 §2.2
+    definition: Bridge is the Zone C canonical shape — a .NET Aspire / Blazor Server hosted application that runs a dedicated local-node host process and dedicated SQLCipher database per tenant, defaulting to ciphertext-only relay participation in the tenant's gossip scope.
+    must-implement:
+      - Each tenant gets a dedicated local-node host process with its own SQLCipher database
+      - Per-tenant data planes are isolated and not shared across tenants
+      - The hosted node defaults to ciphertext-only participation in the tenant gossip scope
+      - Tenant-issued role attestation is required before the hosted node participates in CP-class quorum
+    verification: Multi-tenant deployment audit confirms one host process and one database per tenant; default deployment lacks any role attestation; integration test confirms cross-tenant data is unreachable.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [data-residency-objection, key-compromise]
+    tags: [zone-c, bridge, deployment-shape, multi-tenant]
+
+  - id: ZONE-03
+    name: One architecture, two deployment shapes
+    source: 'ch03 §"The Two Canonical Shapes: Anchor and Bridge"'
+    source-paper: v5 §2.2
+    definition: Anchor and Bridge use the same Sunfish component surface, sync protocol, CAP positioning model, and storage architecture; they differ only in where the authoritative data location lives.
+    must-implement:
+      - Both shapes consume the same `Sunfish.Kernel.Sync` and `Sunfish.Foundation.LocalFirst` packages (pre-1.0)
+      - Sync wire protocol is identical across shapes
+      - Choosing between shapes is a deployment-time decision, not a code-fork decision
+    verification: Reference implementation builds both shapes from the same kernel packages; protocol conformance tests pass identically against an Anchor peer and a Bridge tenant peer.
+    kleppmann-properties: [P3, P4, P7]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [architecture, anchor, bridge, deployment-symmetry]
+
+  - id: INV-18
+    name: Three developer-habit shifts under the inversion
+    source: 'ch03 §"What Changes for the Developer"'
+    source-paper: v13 §5
+    definition: Building under the inversion shifts three habits — writes succeed on local durability rather than remote acknowledgement, business logic owns its correctness independently of the network, and failure modes are explicit rather than papered over.
+    must-implement:
+      - Command handlers acknowledge on local-store commit, not on remote server response
+      - Every state mutation is expressed as a CRDT operation, not a current-state assignment
+      - Validation, invariants, and state machine transitions execute against local data with no implicit network shortcut
+      - Sync conflicts surface to a conflict inbox rather than via silent overwrite
+    verification: Code review confirms no command handler awaits a remote response before acknowledgement; static analysis confirms no validator imports a network client; UI inventory confirms a conflict-inbox surface exists.
+    kleppmann-properties: [P1, P3, P4]
+    scope: foundational
+    failure-modes: [partition, vendor-outage]
+    tags: [developer-experience, discipline, conflict-ux]

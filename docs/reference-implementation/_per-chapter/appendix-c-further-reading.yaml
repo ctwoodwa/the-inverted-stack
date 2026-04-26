@@ -1,0 +1,126 @@
+chapter: appendix-c-further-reading
+chapter-title: Further Reading
+source-paper-refs: []
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: READ-01
+    name: Kleppmann seven local-first ideals
+    source: 'appendix-c-further-reading §"Section 1: Local-First Foundations"'
+    source-paper: null
+    definition: The seven aspirational properties — fast local performance (P1), multi-device access (P2), network-optional operation (P3), seamless collaboration (P4), longevity beyond vendor lifespan (P5), security and privacy by default (P6), and ultimate user ownership (P7) — that together define local-first software per Kleppmann et al. (Onward! 2019).
+    must-implement:
+      - System satisfies all seven Kleppmann properties P1-P7 measurably
+      - Each property has a verification test in the conformance suite
+      - Trade-offs against any property are documented in an ADR
+    verification: Conformance scorecard maps every architectural choice to one or more of P1-P7; no property is left unaddressed.
+    kleppmann-properties: [P1, P2, P3, P4, P5, P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [philosophy, canon, kleppmann]
+    notes: This is the canonical reference the entire book and conformance scorecard are organized around.
+
+  - id: READ-02
+    name: CRDT convergent vs commutative distinction
+    source: 'appendix-c-further-reading §"Section 3: Distributed Systems Foundations"'
+    source-paper: null
+    definition: The Shapiro et al. 2011 distinction between state-based (convergent) CRDTs that ship full state and operation-based (commutative) CRDTs that ship operation logs, which determines what is carried across the sync wire.
+    must-implement:
+      - CRDT engine selection documents whether it is state-based, op-based, or delta-based
+      - Wire protocol matches the engine's replication model
+      - Merge semantics are deterministic and provably convergent
+    verification: ADR exists naming the chosen CRDT type family (CvRDT, CmRDT, or delta-CRDT) with citation to Shapiro 2011.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [crdt, theory, canon]
+
+  - id: READ-03
+    name: Flexible Paxos quorum intersection
+    source: 'appendix-c-further-reading §"Section 3: Distributed Systems Foundations"'
+    source-paper: null
+    definition: The Howard, Malkhi, and Spiegelman 2016 result that read and write quorums in a consensus protocol need only intersect, not be identical, which underpins the relaxed quorum assumptions in distributed lease protocols such as Flease.
+    must-implement:
+      - Any CP-mode quorum protocol documents its read and write quorum sizes
+      - Quorum intersection property is provably maintained under reconfiguration
+    verification: ADR for any consensus or lease protocol cites Flexible Paxos and states quorum sizes.
+    kleppmann-properties: []
+    scope: foundational
+    failure-modes: [partition]
+    tags: [consensus, theory, canon]
+
+  - id: READ-04
+    name: CAP theorem as architectural constraint
+    source: 'appendix-c-further-reading §"Section 3: Distributed Systems Foundations"'
+    source-paper: null
+    definition: The Brewer (2000) conjecture and Gilbert-Lynch (2002) proof that a distributed system cannot simultaneously guarantee consistency, availability, and partition tolerance, which forces every zone in the architecture to be classified as either AP or CP.
+    must-implement:
+      - Every architectural zone is classified as AP or CP in writing
+      - The classification is justified against partition behavior
+      - User-facing degradation under partition matches the stated classification
+    verification: Each zone's ADR states AP or CP and describes observable behavior under network partition.
+    kleppmann-properties: [P3]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [cap, theory, canon]
+
+  - id: READ-05
+    name: Optimistic replication semantics
+    source: 'appendix-c-further-reading §"Section 3: Distributed Systems Foundations"'
+    source-paper: null
+    definition: The Saito and Shapiro 2005 framing of replication that allows tentative local commits, eventual convergence, and application-level conflict resolution — the academic vocabulary for what the book operationally calls local-first.
+    must-implement:
+      - Local writes commit tentatively without coordination
+      - Convergence is eventual across all reachable peers
+      - Conflict resolution is specified per data type
+    verification: Behavioral test confirms a local write commits and is visible to the local reader before any peer acknowledges it.
+    kleppmann-properties: [P1, P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [replication, theory, canon]
+
+  - id: READ-06
+    name: Lamport logical time
+    source: 'appendix-c-further-reading §"Section 3: Distributed Systems Foundations"'
+    source-paper: null
+    definition: Lamport's 1978 construction of logical clocks and the happens-before relation, which is the basis for the vector clocks the Appendix A wire protocol uses to order events across peers without relying on wall-clock time.
+    must-implement:
+      - Sync wire protocol carries logical time (vector clock or equivalent), not wall-clock time
+      - Causal ordering of events is preserved across peers
+      - Clock skew between peers does not affect correctness
+    verification: Wire protocol specification names its logical-time scheme; partition test confirms causal order is preserved after heal.
+    kleppmann-properties: [P4]
+    scope: foundational
+    failure-modes: [clock-skew, partition]
+    tags: [logical-time, wire-protocol, canon]
+
+  - id: READ-07
+    name: Cambria lens-based schema evolution
+    source: 'appendix-c-further-reading §"Section 7: Schema Evolution"'
+    source-paper: null
+    definition: The Ink and Switch Cambria abstraction (2021) of bidirectional lenses that translate documents between schema versions N and N+1 without data loss, which is the conceptual foundation for the Chapter 13 schema migration approach.
+    must-implement:
+      - Schema migrations are expressed as bidirectional lenses, not destructive ALTER operations
+      - Each lens is reversible to preserve backward compatibility across heterogeneous fleets
+      - Old-version peers continue to read new-version documents through lens application
+    verification: Schema migration tests demonstrate round-trip lens application preserves data on a fleet running mixed schema versions.
+    kleppmann-properties: [P2, P5]
+    scope: foundational
+    failure-modes: [schema-skew]
+    tags: [schema, migration, lenses, canon]
+
+  - id: READ-08
+    name: Vendor dependency risk as empirical case
+    source: 'appendix-c-further-reading §"Section 8: Vendor Dependency Risk Case Studies"'
+    source-paper: null
+    definition: The composite 2022 record of Western SaaS providers suspending, restricting, or terminating service across Russia, Belarus, and adjacent CIS markets, treated by the book as the empirical case study justifying the local-first thesis against vendor dependency.
+    must-implement:
+      - Architecture has no single vendor whose unilateral action can revoke customer access to their own data
+      - Core operations continue when any one external vendor terminates service
+      - Data export from any vendor-managed component is possible at any time without vendor cooperation
+    verification: Tabletop exercise confirms that simulated termination of any single vendor does not block customer access to their own data.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: [vendor-outage, vendor-acquisition]
+    tags: [vendor-risk, philosophy, canon, case-study]

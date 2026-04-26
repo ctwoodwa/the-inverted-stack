@@ -1,0 +1,249 @@
+chapter: ch06
+chapter-title: "The Distributed Systems Lens"
+source-paper-refs: [v13 §2, v13 §6, v13 §9, R1, R2]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: LENS-D-01
+    name: Convergence is not correctness
+    source: 'ch06 §"The Principle: Convergence Is Not Correctness"'
+    source-paper: v13 §6
+    definition: CRDT convergence guarantees that all peers reach the same state but does not guarantee that the converged state satisfies application-level correctness or domain invariants.
+    must-implement:
+      - Architecture documents distinguish CRDT convergence guarantees from application correctness guarantees
+      - Domain invariants are validated at a layer above raw CRDT merge
+      - Specification names which guarantees are structural and which require application enforcement
+    verification: Specification document explicitly separates convergence (data-structure property) from correctness (application property) and identifies the validation boundary.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: []
+    tags: [crdt, semantics, philosophy]
+
+  - id: LENS-D-02
+    name: CRDT applicability boundary by record class
+    source: 'ch06 §"The Flease Split-Write Window"'
+    source-paper: v13 §6
+    definition: CRDT merge semantics are appropriate for AP-class records where concurrent writes can be deterministically reconciled but are insufficient for CP-class records where concurrent writes produce double-bookings, oversold inventory, or duplicate sequential IDs.
+    must-implement:
+      - Each record class is classified as AP (CRDT-merge safe) or CP (requires linearizable write coordination)
+      - CP-class records do not rely on CRDT merge for correctness
+      - AP-class records use CRDT merge as the primary reconciliation mechanism
+    verification: Schema definitions tag each record type with its CAP class; classification is enforceable at code-review time and at runtime by the sync daemon.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [crdt, cap, classification]
+
+  - id: LENS-D-03
+    name: Monotonic CRDT growth as structural property
+    source: 'ch06 §"The CRDT GC Problem"'
+    source-paper: v13 §6
+    definition: An operation-based CRDT must retain enough operation history to deterministically merge concurrent changes from peers that have not yet seen each other's operations, causing internal state to grow monotonically with edits regardless of visible content size.
+    must-implement:
+      - CRDT engine retains causal history sufficient for deterministic merge with any peer up to a defined retention horizon
+      - Retention behavior is documented as a structural property, not a bug
+      - Storage growth is bounded by an explicit GC policy rather than treated as an implementation detail
+    verification: CRDT engine documentation states the retention guarantee in operation-history terms; storage growth observable in long-running test deployment matches the stated retention policy.
+    kleppmann-properties: [P3, P5]
+    scope: foundational
+    failure-modes: []
+    tags: [crdt, gc, storage]
+
+  - id: LENS-D-04
+    name: Three-tier GC policy by data class
+    source: 'ch06 §"What Changed Between Rounds"'
+    source-paper: v13 §6
+    definition: Operation-history garbage collection is differentiated by data class — aggressive GC for ephemeral data, a 90-day retention window for business records, and no GC at all for compliance records.
+    must-implement:
+      - Each record type is assigned to one of three GC tiers (ephemeral, business, compliance)
+      - Ephemeral tier uses aggressive library-level GC and assumes no durability requirement
+      - Business tier guarantees at least 90 days of operation history before compaction
+      - Compliance tier retains full operation history indefinitely
+      - When a record could belong to multiple tiers, the higher tier is assigned
+    verification: Schema definitions tag every record type with a GC tier; integration test confirms business-tier records are not compacted before the 90-day horizon and compliance-tier records are never compacted.
+    kleppmann-properties: [P3, P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [crdt, gc, retention, compliance]
+
+  - id: LENS-D-05
+    name: Stale peer recovery via full-state snapshot transfer
+    source: 'ch06 §"What Changed Between Rounds"'
+    source-paper: v13 §6
+    definition: When a reconnecting peer's vector clock predates the current GC horizon, the sync daemon detects the incompatibility at CAPABILITY_NEG, abandons incremental sync, and initiates a full-state snapshot transfer that becomes the peer's new gossip baseline.
+    must-implement:
+      - Sync daemon CAPABILITY_NEG phase compares the reconnecting peer's vector clock against the local GC horizon
+      - When the vector clock predates the horizon, incremental sync is abandoned and snapshot transfer begins
+      - Receiving peer adopts the snapshot as a new baseline and resumes normal gossip anti-entropy from that point
+      - Behavior is deterministic and surfaces an explicit code path rather than a silent merge failure
+    verification: Sync daemon protocol specifies the vector-clock-vs-horizon check at CAPABILITY_NEG; integration test simulates a peer offline past the GC horizon and confirms snapshot transfer rather than silent failure.
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: [partition, schema-skew]
+    tags: [sync, recovery, gc]
+
+  - id: LENS-D-06
+    name: Stale peer recovery gap when no online peer holds required history
+    source: 'ch06 §"GC Safety and the Stale Peer Gap"'
+    source-paper: null
+    definition: When a peer reconnects past the GC horizon and no currently online peer can serve a complete incremental stream from that peer's last vector clock, business-tier records may have an unrecoverable gap while compliance-tier records remain fully recoverable.
+    must-implement:
+      - Specification names exact behavior when no online peer can serve a complete incremental stream from the reconnecting peer's vector clock
+      - Specification states which data classes are affected by the recovery gap and which are not
+      - Compliance-tier no-GC policy guarantees compliance records are always recoverable in this scenario
+    verification: Specification document includes a named edge-case section enumerating affected data classes; behavioral test confirms compliance-tier records survive the scenario while business-tier gaps are surfaced explicitly.
+    kleppmann-properties: [P3, P5]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [sync, recovery, gc, edge-case]
+
+  - id: LENS-D-07
+    name: Flease lease protocol for CP-class records
+    source: 'ch06 §"The Flease Split-Write Window"'
+    source-paper: v13 §6
+    definition: Flease provides leader-free distributed mutual exclusion via message-passing quorum, used to serialize linearizable writes for CP-class records such as sequential IDs, global unique constraints, and financial transaction totals.
+    must-implement:
+      - CP-class write paths acquire a Flease lease before performing the linearizable operation
+      - Lease grant requires acknowledgment from a quorum of reachable peers
+      - No dedicated leader process is required for lease coordination
+    verification: Architecture decision record names Flease as the chosen lease protocol; sync daemon implementation includes a lease-acquisition path gated on quorum acknowledgment for tagged CP-class operations.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition, clock-skew]
+    tags: [flease, lease, cp, consensus]
+
+  - id: LENS-D-08
+    name: Two-node Flease quorum with managed relay as participant
+    source: 'ch06 §"Correctness Under Partition"'
+    source-paper: v13 §9
+    definition: A managed relay serves as a Flease quorum participant for two-person teams, providing CP-class write guarantees without requiring a third physical node and resolving the threshold problem that affects small-team consensus.
+    must-implement:
+      - Managed relay implements the Flease quorum participant role for teams below the natural quorum threshold
+      - Two-node teams achieve CP-class write guarantees using node-plus-relay quorum
+      - Relay participation is architecturally bounded and does not extend to payload visibility
+    verification: Sync daemon protocol specification documents the relay-as-quorum-participant role; integration test demonstrates a two-node team performing CP-class writes through node + relay quorum and failing safely when the relay is partitioned.
+    kleppmann-properties: [P3, P4, P7]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [flease, relay, quorum, threshold-problem]
+
+  - id: LENS-D-09
+    name: Flease split-write fence for unmergeable CP records
+    source: 'ch06 §"What Changed Between Rounds"'
+    source-paper: null
+    definition: For CP-class records where two concurrent writes cannot be merged at all (sequential IDs, unique constraints), a new lease holder must receive acknowledgment from all reachable peers that the previous lease has expired and no in-flight write is pending before accepting the first new write.
+    must-implement:
+      - New lease holder issues a fence message confirming expiry of the previous lease before accepting writes
+      - Fence requires acknowledgment from all reachable peers, not only quorum
+      - Behavior is honest about the crash-failure model and does not claim Byzantine safety
+    verification: Sync daemon protocol specification documents the lease-fence handshake; behavioral test confirms a new lease holder rejects writes until fence acknowledgments from all reachable peers are received.
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [flease, fence, split-write, cp]
+
+  - id: LENS-D-10
+    name: Post-merge invariant validation for AP-backed CP constraints
+    source: 'ch06 §"What Changed Between Rounds"'
+    source-paper: null
+    definition: For records where a CP constraint is a domain invariant layered on top of an AP data structure, CRDT merge resolves concurrent writes into a deterministic state and the domain invariant is enforced as a post-merge validation step rather than via lease coordination.
+    must-implement:
+      - Records of this hybrid class use CRDT merge as the structural reconciliation mechanism
+      - Domain invariants are evaluated against the merged state, not per-write
+      - Validation failures surface through the conflict-inbox path rather than data corruption
+    verification: Schema definition identifies hybrid AP-with-domain-invariant record types; semantic-layer code includes post-merge validation hooks for these types; behavioral test confirms invariant violations after concurrent merges are surfaced rather than silently committed.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [crdt, invariant, semantic-layer]
+
+  - id: LENS-D-11
+    name: Enumerate linearizable operations before development
+    source: 'ch06 §"The Non-Negotiable Distributed Systems Checklist"'
+    source-paper: null
+    definition: Implementers must identify every operation in their domain model that requires CP-class linearizable semantics before committing to an implementation strategy, treating the architecture's named examples as illustrative rather than exhaustive.
+    must-implement:
+      - Project bootstrap process includes a linearizable-operation inventory step before schema design
+      - Each domain operation is explicitly classified as AP-mergeable or CP-linearizable
+      - Inventory captures non-obvious cases (inventory quantities, appointment slots, resource allocations)
+    verification: Project template includes a linearizable-operation inventory artifact; chapter checklists or playbooks reference the inventory step before any record-type implementation begins.
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [methodology, cp, inventory]
+
+  - id: LENS-D-12
+    name: CRDT store as durable outbound buffer
+    source: 'ch06 §"Prolonged Partition Handling"'
+    source-paper: v13 §6
+    definition: The local CRDT store itself serves as the durable outbound operation buffer during partition, so operations are persisted across process restarts and re-read by the sync daemon on reconnection rather than queued in a separate in-memory buffer.
+    must-implement:
+      - Sync daemon does not maintain a separate in-memory-only outbound queue for unsent operations
+      - Outbound operations are persisted to the CRDT store and re-read on reconnect
+      - Buffer capacity is bounded only by local disk capacity, not in-memory queue size
+    verification: Sync daemon implementation reads pending outbound operations from the CRDT store on startup; integration test confirms operations survive process restart during partition and are transmitted on reconnect.
+    kleppmann-properties: [P3, P5]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [sync, durability, buffer]
+
+  - id: LENS-D-13
+    name: Schema-validation gate at CRDT store entry
+    source: 'ch06 §"Byzantine Failure Propagation"'
+    source-paper: null
+    definition: Before an operation is applied locally and queued for gossip, the sync daemon validates it against the current schema definition for the operation's record type, quarantining structurally valid but semantically incorrect operations rather than letting them propagate.
+    must-implement:
+      - Sync daemon validates every incoming operation against the current schema definition before insertion
+      - Operations failing validation are routed to the quarantine queue rather than applied
+      - Validation occurs prior to gossip propagation so corrupt operations do not spread
+    verification: Sync daemon code path shows schema validation between deserialization and CRDT store apply; behavioral test injects a structurally valid but schema-violating operation and confirms it is quarantined rather than applied or propagated.
+    kleppmann-properties: [P3, P4, P6]
+    scope: foundational
+    failure-modes: [schema-skew]
+    tags: [validation, quarantine, security, schema]
+
+  - id: LENS-D-14
+    name: Break-glass recovery for corrupt operation sequences
+    source: 'ch06 §"Byzantine Failure Propagation"'
+    source-paper: null
+    definition: When a buggy client version produces structurally valid but semantically incorrect operations that have already replicated to peers, recovery requires documented tooling and human judgment rather than a clean rollback because CRDT convergence makes the corruption durable.
+    must-implement:
+      - Documented break-glass procedure exists for remediating propagated corrupt operation sequences
+      - Recovery tooling supports compensating operations rather than retroactive deletion
+      - Procedure is documented before it is needed under production pressure
+    verification: Operations runbook includes a break-glass section for corrupt-sequence remediation; tooling for issuing compensating operations exists and is tested independently of any specific incident.
+    kleppmann-properties: [P3, P5]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [operations, runbook, recovery]
+
+  - id: LENS-D-15
+    name: Required test categories for sync protocol correctness
+    source: 'ch06 §"Round 2 Verdict: PROCEED WITH CONDITIONS"'
+    source-paper: null
+    definition: Sync protocol verification requires a defined set of test categories — network partition simulation, clock skew injection, concurrent edit generation, GC boundary conditions, Byzantine operation injection, and long-partition reconnect scenarios.
+    must-implement:
+      - Test suite includes named coverage for each of the six categories
+      - Each category is exercisable as an isolated test fixture, not only as part of an end-to-end run
+      - CI gating treats absence of any category as a coverage failure for the sync protocol
+    verification: Test directory includes labeled fixtures for partition, clock-skew, concurrent-edit, GC-boundary, Byzantine-injection, and long-partition-reconnect scenarios; CI configuration enforces presence of each.
+    kleppmann-properties: [P3, P4]
+    scope: foundational
+    failure-modes: [partition, clock-skew, schema-skew]
+    tags: [testing, verification, sync]
+
+  - id: LENS-D-16
+    name: Reconnection storm bandwidth governance
+    source: 'ch06 §"What Changed Between Rounds"'
+    source-paper: v13 §9
+    definition: When many nodes reconnect simultaneously after a relay outage, a resource governor throttles per-tick bandwidth consumption so each gossip cycle processes a bounded number of exchanges rather than exhausting network or relay capacity.
+    must-implement:
+      - Sync daemon includes a resource governor that bounds per-tick gossip exchanges
+      - Governor parameters are explicit configuration, not implicit constants
+      - Behavior under simultaneous reconnect is documented rather than assumed
+    verification: Sync daemon configuration exposes per-tick exchange limits; load test simulates simultaneous reconnect of many peers and confirms bounded bandwidth consumption per gossip cycle.
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [sync, gossip, throttling]

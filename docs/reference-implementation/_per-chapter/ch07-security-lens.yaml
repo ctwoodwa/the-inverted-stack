@@ -1,0 +1,271 @@
+chapter: ch07
+chapter-title: The Security Lens
+source-paper-refs: [v13 §11, v5 §4, R1 Okonkwo, R2 Okonkwo]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: LENS-S-01
+    name: Send-tier subscription filtering
+    source: 'ch07 §"What Earned a 9/10"'
+    source-paper: v13 §11
+    definition: Subscription filtering is enforced at the sync daemon's send tier so that a node lacking the required role attestation never receives the operations, eliminating any reliance on the application or UI to discard data it should not have.
+    must-implement:
+      - Sync daemon evaluates subscription scope before transmitting any operation
+      - Application layer never receives operations the role is not authorized for
+      - UI components and API handlers contain no visibility-filtering logic for role-scoped data
+    verification: Black-box test in which a node without a role attestation observes zero matching operations on the wire and zero matching rows in local storage
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [sync-daemon, data-minimization, protocol-invariant]
+
+  - id: LENS-S-02
+    name: Distributed attack surface acknowledgment
+    source: 'ch07 §"What Earned a 9/10"'
+    source-paper: v13 §11
+    definition: Distributing data to endpoints does not eliminate the honeypot problem; it relocates the honeypot to the weakest endpoint in a heterogeneous fleet whose security posture sets the effective bound for any data that endpoint holds.
+    must-implement:
+      - Threat model documents endpoint compromise as an expected event
+      - Architecture bounds blast radius by role scope rather than denying endpoint exposure
+    verification: Threat-model document enumerates endpoint compromise as in-scope and states that the weakest endpoint sets the data-at-risk bound for that endpoint's roles
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [threat-model, philosophy]
+
+  - id: LENS-S-03
+    name: DEK/KEK envelope encryption hierarchy
+    source: 'ch07 §"What Changed Between Rounds"'
+    source-paper: v13 §11
+    definition: A four-level hierarchy in which the root organization key wraps role KEKs, role KEKs are wrapped per authorized node with each node's public key, role KEKs wrap per-record DEKs, and DEKs encrypt ciphertext using a symmetric cipher.
+    must-implement:
+      - Each document is encrypted by a per-record DEK
+      - Each role holds a KEK that wraps the DEKs for documents in that role
+      - Role KEKs are wrapped per authorized node using that node's public key
+      - Root organization key wraps role KEKs and is held outside any per-node keystore
+    verification: Key hierarchy diagram and code path demonstrate that decrypting any document requires unwrapping in the documented order from node key to role KEK to DEK to plaintext
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise, key-loss]
+    tags: [encryption, key-hierarchy, envelope-encryption]
+
+  - id: LENS-S-04
+    name: Key compromise response procedure
+    source: 'ch07 §"What Changed Between Rounds"'
+    source-paper: v13 §11
+    definition: A specified sequence triggered by detection of KEK compromise that generates a fresh KEK not derived from the compromised key, re-wraps every DEK owned by the affected role, discards old KEK copies, broadcasts revocation through the relay, and notifies affected users with the data-at-risk window.
+    must-implement:
+      - System exposes detection triggers including physical-loss reports, anomalous access patterns, and explicit administrator reports
+      - Re-keying generates a fresh KEK independent of any compromised key material
+      - All DEKs owned by the affected role are re-wrapped with the new KEK
+      - Old KEK and all node-level wrapped copies are discarded
+      - Revocation is broadcast through the relay
+      - Affected users receive notification stating the data-at-risk window from KEK creation to revocation
+    verification: Compromise drill executes the documented procedure end-to-end and produces revocation broadcast, re-wrapped DEKs, discarded prior key material, and a user-visible notification within a measurable interval
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [incident-response, key-rotation, revocation]
+
+  - id: LENS-S-05
+    name: Historical data-at-risk window
+    source: 'ch07 §"The Blocking Issue"'
+    source-paper: v13 §11
+    definition: A compromised KEK exposes every document that KEK ever protected from the moment of key creation to the moment of revocation, so the data-at-risk window is bounded by KEK age rather than by detection latency.
+    must-implement:
+      - Each KEK records its creation timestamp
+      - Incident response computes data-at-risk window from KEK creation to revocation
+      - User notification states the computed window explicitly
+    verification: Incident drill produces a user notification containing a concrete data-at-risk window derived from KEK metadata
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [incident-response, exposure-window]
+
+  - id: LENS-S-06
+    name: Offline node revocation reconnection
+    source: 'ch07 §"What Changed Between Rounds"'
+    source-paper: v13 §11
+    definition: When an offline node reconnects, the sync daemon presents its current attestation bundle to the relay, which checks the revocation log and rejects the handshake with a specific revocation error code if any key in the bundle has been revoked.
+    must-implement:
+      - Sync handshake transmits the node's current attestation bundle
+      - Relay consults the revocation log before accepting a handshake
+      - Relay returns a distinct revocation error code rather than a generic connection failure
+      - Node initiates re-authentication against the IdP and re-attestation flow before resuming sync
+      - User sees a message stating that access credentials have been updated and re-authentication is required
+    verification: Offline-reconnect test against a node whose key has been revoked produces the documented error code, blocks sync, and surfaces the re-authentication prompt
+    kleppmann-properties: [P6, P3]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [revocation, re-authentication, sync-handshake]
+
+  - id: LENS-S-07
+    name: In-memory key material protection
+    source: 'ch07 §"What Changed Between Rounds"'
+    source-paper: v5 §4
+    definition: Key material in process memory is protected by locked memory pages that prevent OS swap-out and is zeroed on process exit, treated as implementation constraints on the security kernel rather than as recommendations.
+    must-implement:
+      - Memory pages holding key material are locked against OS swap
+      - Application zeros key material on process exit
+      - Constraint is enforced inside the Sunfish.Kernel.Security package
+    verification: Process inspection confirms that pages containing key material are mlock-equivalent and that exit handlers overwrite key buffers
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [memory-protection, kernel-security]
+
+  - id: LENS-S-08
+    name: Re-authentication interval
+    source: 'ch07 §"Physical Access and the Memory Window"'
+    source-paper: v5 §4
+    definition: A configurable interval at which the application re-requests credentials from the OS keychain, narrowing the window in which an attacker with live-system access can extract decryption keys from running process memory.
+    must-implement:
+      - Application supports a configurable re-authentication interval
+      - Default interval for high-security deployments is four hours
+      - Interval expiry forces credential re-prompt before further plaintext access
+    verification: Configuration test confirms that after the interval expires the application requires fresh credentials before any further decryption operation
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [hardening, memory-window, configuration]
+
+  - id: LENS-S-09
+    name: Supply chain signing custody and transparency
+    source: 'ch07 §"Supply Chain: Who Signs the Release"'
+    source-paper: null
+    definition: 'Release artifact integrity rests on three layered controls: documented custody for the release signing key, reproducible builds that allow independent verification of binary against source, and a publicly auditable transparency log such as Sigstore that records every signing event.'
+    must-implement:
+      - Release signing key custody is documented, including storage and compromise procedure
+      - Build process is reproducible such that an independent party can rebuild the published binary from published source
+      - Signing events are recorded in a transparency log
+      - Clients reject any release whose signing event is absent from the transparency log
+    verification: Independent rebuild matches the published artifact byte-for-byte and the signature appears in the public transparency log
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [supply-chain, signing, sigstore, reproducible-builds]
+
+  - id: LENS-S-10
+    name: Ciphertext-only relay
+    source: 'ch07 §"The Compromised Relay"'
+    source-paper: v13 §11
+    definition: The relay is treated as untrusted transport that handles only end-to-end encrypted payloads, so a relay operator who reads everything on the wire obtains operation identifiers and timestamps but no plaintext content.
+    must-implement:
+      - All payloads are encrypted at the originating node before entering the relay
+      - Relay code paths have no access to any DEK or KEK
+      - Relay validates and forwards ciphertext only
+    verification: Inspection of relay process memory and storage finds no key material capable of decrypting any routed payload
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [relay, zero-knowledge, encryption]
+
+  - id: LENS-S-11
+    name: Relay traffic-analysis disclosure
+    source: 'ch07 §"The Compromised Relay"'
+    source-paper: null
+    definition: A ciphertext-only relay still observes the communication graph, timing, and volume between nodes, and the architecture must disclose this metadata exposure rather than leave it for security teams to discover at deployment.
+    must-implement:
+      - Documentation enumerates the metadata fields visible to the relay operator
+      - Self-hosted relay deployment is supported as the mitigation for metadata-sensitive contexts
+    verification: Relay documentation lists each observable metadata channel and identifies the deployment topology that removes each
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [relay, metadata, traffic-analysis, disclosure]
+
+  - id: LENS-S-12
+    name: Compelled-access threat model
+    source: 'ch07 §"Compelled Access as a Distinct Threat Model"'
+    source-paper: null
+    definition: A jurisdictional threat in which infrastructure operators are subject to mandatory government access requirements, addressed structurally because the relay holds only ciphertext and the keys never leave the originating device, so the operator cannot produce decryptable content under compulsion.
+    must-implement:
+      - Keys are generated and held only on the originating device
+      - Relay holds only ciphertext at all times
+      - Threat model document names compelled access as a distinct named threat
+      - Self-hosted relay path is offered when metadata residency is also a compelled-access concern
+    verification: Threat-model worksheet for compelled access lists the relay operator as unable to produce plaintext and references the supporting key custody and ciphertext-only properties
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [compelled-access, jurisdiction, compliance, threat-model]
+
+  - id: LENS-S-13
+    name: Crypto-shredding for right-to-erasure
+    source: 'ch07 §"GDPR Article 17 in a CRDT System"'
+    source-paper: null
+    definition: A pattern that satisfies right-to-erasure obligations against an immutable CRDT log by destroying the DEK that protects the targeted operation's content, leaving the operation entry in the log structurally intact while rendering its ciphertext permanently unreadable.
+    must-implement:
+      - Each erasable operation's content is encrypted under a DEK that can be uniquely identified and destroyed
+      - Erasure procedure destroys the DEK across all replicas and key stores
+      - Operation entry remains in the log with metadata intact and ciphertext as an unrecoverable stub
+      - Documentation names the operation-metadata residue as a known limitation
+    verification: Erasure drill destroys the targeted DEK, confirms ciphertext is no longer decryptable on any replica, and produces a documentation artifact stating the metadata residue
+    kleppmann-properties: [P6, P7, P5]
+    scope: foundational
+    failure-modes: []
+    tags: [erasure, crypto-shredding, gdpr, compliance, immutable-log]
+
+  - id: LENS-S-14
+    name: Credential recovery paths
+    source: 'ch07 §"Credential Recovery and Account Continuity"'
+    source-paper: null
+    definition: A required set of artifact-based recovery options — recovery-key file, administrator-held wrapped KEK escrow, MDM re-enrollment plus relay-assisted re-sync — from which every deployment must select and test at least one before production, with the no-artifact case explicitly disclosed as permanent loss.
+    must-implement:
+      - System supports a recovery-key file generated at account setup
+      - System supports administrator-held wrapped KEK escrow under a defined procedure
+      - System supports MDM re-enrollment combined with relay-assisted re-sync
+      - Onboarding discloses that declining all recovery paths makes permanent loss possible
+      - Deployment checklist requires selection and test of at least one recovery path before production
+    verification: Recovery drill executes each enabled path end-to-end and restores access; onboarding flow surfaces the no-artifact disclosure
+    kleppmann-properties: [P6, P5, P7]
+    scope: foundational
+    failure-modes: [key-loss]
+    tags: [recovery, credentials, escrow, mdm]
+
+  - id: LENS-S-15
+    name: Defense-in-depth four-layer model
+    source: 'ch07 §"The Principle: Defense-in-Depth Is Not Optional"'
+    source-paper: v13 §11
+    definition: A non-optional composition of four enforcement layers — encryption at rest, field-level envelope encryption, stream-level send-tier data minimization, and circuit-breaker quarantine of offline writes — each built from independently audited primitives and specified before use.
+    must-implement:
+      - Local databases are encrypted at rest with a vetted engine and Argon2id-derived keys stored in OS-native keystores
+      - Per-record DEKs and per-role KEKs implement field-level envelope encryption
+      - Subscription filtering at the sync daemon's send tier enforces stream-level data minimization
+      - Offline writes enter a quarantine queue on reconnection and are validated against current policy before merging
+    verification: Architecture conformance test confirms presence and engagement of each of the four layers and that primitives in use are from the approved list
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [defense-in-depth, layering, architecture]
+
+  - id: LENS-S-16
+    name: Quarantine of reconnected offline writes
+    source: 'ch07 §"The Principle: Defense-in-Depth Is Not Optional"'
+    source-paper: null
+    definition: A circuit-breaker mechanism in which writes accumulated by a long-offline node enter a quarantine queue on reconnection and are validated against current team policy before being promoted into the merged state, preventing a compromised offline node from injecting malicious writes at reconnection.
+    must-implement:
+      - Sync daemon detects long-offline reconnection and routes queued writes into quarantine
+      - Quarantine validation evaluates writes against current role attestations and policy state
+      - Promotion into the merged state is blocked until validation succeeds
+    verification: Reconnect test from a node with stale attestations confirms that queued writes remain in quarantine and are rejected if current policy disallows them
+    kleppmann-properties: [P6, P3]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise, replay]
+    tags: [quarantine, circuit-breaker, reconnection, sync-daemon]
+
+  - id: LENS-S-17
+    name: Root key custody via HSM or multi-party ceremony
+    source: 'ch07 §"The Non-Negotiable Security Checklist"'
+    source-paper: null
+    definition: The root organization key is custodied either inside a Hardware Security Module or under a documented multi-party key ceremony, with a domestic equivalent permitted in jurisdictions where Western HSM hardware is not approved.
+    must-implement:
+      - Root organization key never resides in any per-node keystore
+      - Custody uses an HSM or a documented multi-party ceremony
+      - Deployment under import-substitution constraints uses a domestic HSM or documented multi-party ceremony equivalent
+    verification: Custody documentation names the HSM model or the multi-party procedure and the on-call holders, and an audit confirms the root key is not present in any node-level store
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [root-key, hsm, custody, ceremony]

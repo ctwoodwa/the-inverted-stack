@@ -1,0 +1,549 @@
+chapter: appendix-a-sync-daemon-wire-protocol
+chapter-title: Sync Daemon Wire Protocol
+source-paper-refs: [v13 §6.2]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: WIRE-01
+    name: Unix domain socket transport
+    source: appendix-a §"A.1 Overview"
+    source-paper: v13 §6.2
+    definition: The sync daemon exposes its wire protocol over Unix domain sockets on Linux, macOS, and Windows 10 / Server 2019 and later, with a configurable socket path.
+    must-implement:
+      - Daemon listens on a Unix domain socket whose path is configurable
+      - Default socket path is /var/run/sunfish-sync.sock on Linux/macOS and \\.\pipe\sunfish-sync on Windows
+      - Daemon supports Linux, macOS, and Windows 10 / Server 2019 and later
+    verification: Inspect daemon configuration for socket path; confirm a connection can be opened to the configured socket on each supported OS.
+    kleppmann-properties: [P3, P6]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, transport, daemon]
+
+  - id: WIRE-02
+    name: Mandatory Noise_XX tunnel
+    source: appendix-a §"A.1 Overview"
+    source-paper: v13 §6.2
+    definition: Every connection must complete a Noise Protocol Framework Noise_XX handshake using Ed25519 static keys, ChaCha20-Poly1305, and BLAKE2s before any CBOR message defined in this protocol is exchanged.
+    must-implement:
+      - Daemon and relay run a Noise_XX handshake on every new connection
+      - Static keys use Ed25519; AEAD is ChaCha20-Poly1305; hash is BLAKE2s
+      - No CBOR message is sent or accepted before Noise handshake completion
+      - All CBOR framing operates inside the Noise transport layer
+    verification: Packet capture on the socket shows Noise_XX handshake messages preceding any CBOR body; reject test sending a HELLO before Noise completion is closed without response.
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise, replay]
+    tags: [wire-protocol, security, handshake, noise]
+
+  - id: WIRE-03
+    name: CBOR length-prefixed framing
+    source: appendix-a §"A.2 Message Framing"
+    source-paper: null
+    definition: Every wire message is a 4-byte little-endian uint32 length prefix followed by exactly that many bytes of CBOR-encoded message body.
+    must-implement:
+      - Sender writes a 4-byte little-endian uint32 length prefix before each CBOR body
+      - Receiver reads the length prefix and then the full length bytes before decoding
+      - Receiver treats partial body reads as a protocol error
+    verification: Wire-vector test (appendix-a §A.9) round-trips byte-for-byte through the framer.
+    kleppmann-properties: []
+    scope: foundational
+    failure-modes: []
+    tags: [wire-protocol, framing, cbor]
+
+  - id: WIRE-04
+    name: Four-MiB body cap
+    source: appendix-a §"A.2 Message Framing"
+    source-paper: null
+    definition: The maximum allowed CBOR body size is 4,194,304 bytes (4 MiB), enforced as a relay memory-allocation invariant by closing any connection whose length prefix exceeds the cap without sending an error.
+    must-implement:
+      - Receiver rejects any length prefix greater than 4,194,304
+      - Receiver closes the connection on oversize prefix without emitting an error message
+      - Relay pre-allocates receive buffers sized to this bound
+    verification: Send a length prefix of 4 MiB + 1 and confirm the connection closes silently with no error CBOR on the wire.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, dos-protection, framing]
+
+  - id: WIRE-05
+    name: Deterministic CBOR for signed fields
+    source: appendix-a §"A.2 Message Framing"
+    source-paper: null
+    definition: Any CBOR encoding of fields that appear in signed contexts must use Deterministic Encoding per RFC 8949 §4.2 — definite-length arrays and maps, lexicographically sorted map keys, shortest-form integers, and shortest exact floating-point representation.
+    must-implement:
+      - Signed CBOR uses definite-length arrays and maps only
+      - Map keys are sorted by lexicographic byte order
+      - Integers and floats use shortest exact encoding
+    verification: Encode an attestation bundle twice on different implementations and compare byte-for-byte equality of the signed input.
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [wire-protocol, cbor, signatures, determinism]
+
+  - id: WIRE-06
+    name: Unknown-field tolerance
+    source: appendix-a §"A.2 Message Framing"
+    source-paper: null
+    definition: Receivers must ignore unknown fields in any CBOR map so that optional fields can be added in minor protocol revisions without breaking older implementations.
+    must-implement:
+      - Decoder does not error on unrecognised map keys
+      - Unknown fields are dropped silently and do not affect message validity
+    verification: Inject an extra unknown key into a HELLO body; confirm the receiver processes the message normally.
+    kleppmann-properties: []
+    scope: foundational
+    failure-modes: [schema-skew]
+    tags: [wire-protocol, compatibility, cbor]
+
+  - id: WIRE-07
+    name: Connection state machine
+    source: appendix-a §"A.3 Handshake Messages"
+    source-paper: v13 §6.2
+    definition: A connection traverses the states CONNECTING, NOISE_HANDSHAKING, CBOR_HANDSHAKING, STREAMING, ERROR, and CLOSED, with defined transitions between them.
+    must-implement:
+      - Daemon and relay model the connection as the six named states
+      - Transitions follow the diagram in §A.3 (e.g. STREAMING reachable only after HELLO/CAPABILITY_NEG/ACK)
+      - ERROR transitions to CLOSED only after an error message is sent
+    verification: State-machine test exercises each documented transition and rejects invalid transitions.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, state-machine, handshake]
+
+  - id: WIRE-08
+    name: Back-to-back HELLO and CAPABILITY_NEG
+    source: appendix-a §"A.3 Handshake Messages"
+    source-paper: null
+    definition: The connecting node sends HELLO immediately followed by CAPABILITY_NEG without waiting for a response, allowing the relay to construct attestation, lease, and bucket authorisation in one transaction and saving a round trip.
+    must-implement:
+      - Connecting node emits CAPABILITY_NEG without awaiting a response to HELLO
+      - Relay buffers HELLO and processes both messages together
+      - Relay indexes pending-handshake state by node_id from HELLO before CAPABILITY_NEG arrives
+    verification: Trace shows CAPABILITY_NEG sent immediately after HELLO with no intervening server message.
+    kleppmann-properties: [P1]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, handshake, latency]
+
+  - id: WIRE-09
+    name: HELLO message
+    source: appendix-a §"A.3.1 HELLO"
+    source-paper: v13 §6.2
+    definition: HELLO is the first CBOR message of every connection and carries node_id (Ed25519 32-byte public key), schema_version (semver string), supported_versions (semver array), and protocol_version (uint major version).
+    must-implement:
+      - Connecting node sends HELLO as its first CBOR message
+      - HELLO includes node_id, schema_version, supported_versions, and protocol_version
+      - node_id is exactly 32 bytes and equals the node's Ed25519 public key
+    verification: Wire-vector 1 in §A.9 decodes to the documented field set with correct CBOR types.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, handshake, hello]
+
+  - id: WIRE-10
+    name: Stable node_id identity
+    source: appendix-a §"A.3.1 HELLO"
+    source-paper: v13 §6.2
+    definition: The node_id Ed25519 public key is the stable identity of a node across reconnections and must not be rotated without re-onboarding through the attestation flow.
+    must-implement:
+      - Daemon persists node_id across restarts and reconnections
+      - Daemon does not generate a new node_id without re-running onboarding
+      - Relay uses node_id as the lookup key for attestation and lease state
+    verification: Restart the daemon and confirm node_id is unchanged in the next HELLO.
+    kleppmann-properties: [P2, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-loss]
+    tags: [wire-protocol, identity, keys]
+
+  - id: WIRE-11
+    name: CAPABILITY_NEG message
+    source: appendix-a §"A.3.2 CAPABILITY_NEG"
+    source-paper: v13 §6.2
+    definition: CAPABILITY_NEG follows HELLO and requests CRDT stream subscriptions, optional CP-class lease record types, sync bucket subscriptions, and carries the AttestationBundle proving the node's role.
+    must-implement:
+      - CAPABILITY_NEG carries crdt_streams, bucket_subscriptions, and attestation_bundle
+      - cp_leases is omitted when the node has no CP-class record requirements
+      - Stream identifiers are stable across reconnections
+    verification: Decode a CAPABILITY_NEG vector and confirm field presence and types match §A.3.2.
+    kleppmann-properties: [P4]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, handshake, capabilities]
+
+  - id: WIRE-12
+    name: Stream and bucket attestation gating
+    source: appendix-a §"A.3.2 CAPABILITY_NEG"
+    source-paper: v13 §6.2
+    definition: The relay validates each requested CRDT stream identifier and bucket subscription against the role claims in the attestation bundle before granting access.
+    must-implement:
+      - Relay parses attestation_bundle role_claims before granting any stream
+      - Relay refuses streams or buckets not authorised by role_claims
+      - Granted set is a subset of requested set
+    verification: Submit CAPABILITY_NEG with a stream not authorised by the bundle; confirm the stream is absent from granted_streams in ACK.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, authorisation, attestation]
+
+  - id: WIRE-13
+    name: CP-class lease acquisition before ACK
+    source: appendix-a §"A.3.2 CAPABILITY_NEG"
+    source-paper: v13 §6.2
+    definition: For every record type listed in cp_leases the relay acquires and holds a Flease-protocol distributed lease on behalf of the node before returning ACK; types not listed default to AP-class with no lease.
+    must-implement:
+      - Relay acquires Flease leases for each cp_leases entry prior to ACK
+      - Relay treats record types omitted from cp_leases as AP-class
+      - Lease is held for the lifetime of the session
+    verification: "Integration test: connecting with cp_leases set blocks ACK until lease acquisition completes."
+    kleppmann-properties: [P4]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [wire-protocol, leases, cp-class, flease]
+
+  - id: WIRE-14
+    name: ACK message
+    source: appendix-a §"A.3.3 ACK"
+    source-paper: v13 §6.2
+    definition: ACK is the relay's single closing message of the handshake, carrying negotiated_version, granted_streams, granted_buckets, and an optional human-readable denied_reason; receipt of ACK transitions the connection to STREAMING.
+    must-implement:
+      - Relay sends ACK only after validating both HELLO and CAPABILITY_NEG
+      - ACK carries negotiated_version, granted_streams, granted_buckets
+      - denied_reason is included when any requested resource is refused
+    verification: Wire-vector test for ACK decodes the expected fields; STREAMING transition occurs on ACK receipt.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, handshake, ack]
+
+  - id: WIRE-15
+    name: Wire-version negotiation rule
+    source: appendix-a §"A.3.3 ACK"
+    source-paper: null
+    definition: negotiated_version is the highest wire protocol version supported by both peers (intersection of node supported_versions and relay capabilities), and the connecting node must use that version for all subsequent messages.
+    must-implement:
+      - Relay selects the highest mutually supported version present in supported_versions
+      - Connecting node uses negotiated_version for every subsequent message
+      - Node logs a downgrade when negotiated_version differs from its preferred protocol_version
+    verification: Connect with supported_versions = ["1.0.0","1.1.0"] against a relay capped at 1.0.0; confirm negotiated_version = 1 and downgrade is logged.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: [schema-skew]
+    tags: [wire-protocol, versioning, compatibility]
+
+  - id: WIRE-16
+    name: Empty grant is not an error
+    source: appendix-a §"A.3.3 ACK"
+    source-paper: null
+    definition: granted_streams and granted_buckets may be empty arrays when the attestation bundle authorises none of the requested resources; the connection remains valid and the node should surface the empty grant to the operator.
+    must-implement:
+      - Receiver does not treat empty grant arrays as a protocol error
+      - Daemon surfaces empty-grant condition to the operator log
+      - Daemon does not silently continue without alerting
+    verification: Test attestation that authorises no requested streams produces ACK with empty arrays and operator-visible warning.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, observability, ack]
+
+  - id: WIRE-17
+    name: DELTA_STREAM message
+    source: appendix-a §"A.4.1 DELTA_STREAM"
+    source-paper: v13 §6.2
+    definition: DELTA_STREAM carries a single CRDT operation tagged with stream_id, op_type (insert/delete/update), vector_clock, opaque CRDT payload bytes, and an optional epoch_id for CP-class records, fanned out by the relay to every node subscribed to that stream.
+    must-implement:
+      - DELTA_STREAM includes stream_id, op_type, vector_clock, payload
+      - epoch_id is set on every CP-class operation
+      - Relay fans out received DELTA_STREAM to every subscriber of stream_id
+      - stream_id matches an entry in granted_streams
+    verification: "Multi-peer test: a DELTA_STREAM published by one node arrives unchanged at every subscribed peer."
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, streaming, crdt, delta]
+
+  - id: WIRE-18
+    name: Vector-clock node-key encoding
+    source: appendix-a §"A.4.1 DELTA_STREAM"
+    source-paper: null
+    definition: Vector clocks are CBOR maps whose keys are the 64-character lowercase hexadecimal encoding of a node's 32-byte Ed25519 public key (tstr) and whose values are uint sequence numbers.
+    must-implement:
+      - Vector-clock keys use lowercase hex encoding of the Ed25519 public key
+      - Vector-clock values are CBOR uint sequence numbers
+      - Encoder emits exactly 64 hex characters per key
+    verification: Decode a DELTA_STREAM vector and verify keys are 64 lowercase hex characters and values parse as uint.
+    kleppmann-properties: []
+    scope: foundational
+    failure-modes: [clock-skew]
+    tags: [wire-protocol, vector-clock, encoding]
+
+  - id: WIRE-19
+    name: op_type as advisory routing metadata
+    source: appendix-a §"A.4.1 DELTA_STREAM"
+    source-paper: null
+    definition: op_type is advisory metadata used by the receiving application layer to route a delta to the correct merge handler; the CRDT engine applies payload regardless of op_type, so applications routing on op_type must validate against post-apply state.
+    must-implement:
+      - Sender sets op_type to one of "insert", "delete", "update" accurately
+      - Receiver does not reject a message solely on op_type/payload mismatch
+      - Applications routing on op_type validate against engine state if correctness depends on the distinction
+    verification: Code review confirms application routing layer validates engine post-apply state when correctness depends on op_type.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, semantics, routing]
+
+  - id: WIRE-20
+    name: Epoch verification before CP-class apply
+    source: appendix-a §"A.4.1 DELTA_STREAM"
+    source-paper: v13 §6.2
+    definition: For any CP-class operation the receiver must verify that its local epoch matches the message's epoch_id before applying the payload, producing ERR_EPOCH_MISMATCH on disagreement.
+    must-implement:
+      - Receiver checks local epoch against epoch_id for every CP-class operation
+      - Receiver emits ERR_EPOCH_MISMATCH on mismatch and does not apply the payload
+      - Non-CP operations skip the epoch check
+    verification: Inject a DELTA_STREAM with stale epoch_id; receiver returns ERR_EPOCH_MISMATCH and CRDT state is unchanged.
+    kleppmann-properties: [P4]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [wire-protocol, cp-class, epoch, leases]
+
+  - id: WIRE-21
+    name: No relay reordering or buffering
+    source: appendix-a §"A.4.1 DELTA_STREAM"
+    source-paper: null
+    definition: The relay does not reorder or buffer DELTA_STREAM messages; operations are delivered in network order and the CRDT engine guarantees convergent merge regardless of arrival order.
+    must-implement:
+      - Relay forwards DELTA_STREAM in receive order without buffering
+      - CRDT engine produces convergent merge under arbitrary delivery order
+    verification: "Relay test: ordered injected stream emerges in the same order at subscribers; multi-peer convergence test demonstrates byte-identical state under reordered deliveries."
+    kleppmann-properties: [P4]
+    scope: foundational
+    failure-modes: [partition]
+    tags: [wire-protocol, ordering, crdt]
+
+  - id: WIRE-22
+    name: GOSSIP_PING membership protocol
+    source: appendix-a §"A.4.2 GOSSIP_PING"
+    source-paper: v13 §6.2
+    definition: Each node sends a GOSSIP_PING to all connected peers every 30 seconds carrying sender_id, a partial membership_excerpt of known peers, and the sender's vector_clock summary; the relay forwards the message unchanged.
+    must-implement:
+      - Daemon emits GOSSIP_PING on a 30-second interval to every connected peer
+      - GOSSIP_PING carries sender_id, membership_excerpt, sender_vector_clock
+      - Relay forwards GOSSIP_PING without generating its own
+    verification: Trace shows GOSSIP_PING from each node every 30 s with correctly populated membership_excerpt entries.
+    kleppmann-properties: [P3, P4]
+    scope: inverted-stack-specific
+    failure-modes: [partition, peer-discovery-failure]
+    tags: [wire-protocol, gossip, membership]
+
+  - id: WIRE-23
+    name: Membership excerpt entry shape
+    source: appendix-a §"A.4.2 GOSSIP_PING"
+    source-paper: null
+    definition: Each membership_excerpt entry is a CBOR map with node_id (32-byte Ed25519 public key), last_seen (Unix-seconds uint), and vector_clock_summary (map of hex node-key to uint sequence number).
+    must-implement:
+      - Each entry contains node_id, last_seen, vector_clock_summary
+      - last_seen is Unix-seconds uint
+      - vector_clock_summary uses the same hex-key encoding as DELTA_STREAM vector clocks
+    verification: Decode a GOSSIP_PING vector and confirm each entry has the three fields with documented types.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, gossip, membership]
+
+  - id: WIRE-24
+    name: Ninety-second suspected-partition threshold
+    source: appendix-a §"A.4.2 GOSSIP_PING"
+    source-paper: null
+    definition: A receiver that observes a peer's last_seen older than 90 seconds (three times the 30-second ping interval) should mark that peer suspected-partitioned and escalate to the application layer.
+    must-implement:
+      - Receiver tracks last_seen per peer from incoming GOSSIP_PING entries
+      - Receiver flags peers with last_seen age greater than 90 s as suspected-partitioned
+      - Daemon escalates suspected-partition events to the application layer
+    verification: Halt a peer's GOSSIP_PING; after 90 s the receiver raises a suspected-partition signal.
+    kleppmann-properties: [P3]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [wire-protocol, partition-detection, gossip]
+
+  - id: WIRE-25
+    name: Long-absence reconnect treated as new node
+    source: appendix-a §"A.4.2 GOSSIP_PING"
+    source-paper: null
+    definition: A node returning after long absence is treated as a new connection — prior session state is discarded, CAPABILITY_NEG reacquires leases and subscriptions, and catch-up proceeds via DELTA_STREAM replay rather than session resume.
+    must-implement:
+      - Relay discards prior session state on reconnect
+      - Returning node re-runs full handshake including CAPABILITY_NEG
+      - Catch-up uses DELTA_STREAM replay; no session-resume primitive is used
+    verification: Disconnect a node for hours; on reconnect verify a fresh handshake and DELTA_STREAM replay rather than a resume.
+    kleppmann-properties: [P3]
+    scope: inverted-stack-specific
+    failure-modes: [partition, peer-discovery-failure]
+    tags: [wire-protocol, reconnect, sessions]
+
+  - id: WIRE-26
+    name: Error message envelope
+    source: appendix-a §"A.5 Error Codes"
+    source-paper: null
+    definition: All error messages share a CBOR map with type (the error code string) and reason (a human-readable description) and may be sent at any point in the connection lifecycle including during the handshake.
+    must-implement:
+      - Error messages carry the documented type and reason fields
+      - Errors are valid in any state, including handshake
+      - Receiver applies the documented retry semantics for each error code
+    verification: Inject each error code mid-stream and mid-handshake; confirm decoder recognises the envelope and triggers correct retry behaviour.
+    kleppmann-properties: []
+    scope: foundational
+    failure-modes: []
+    tags: [wire-protocol, errors]
+
+  - id: WIRE-27
+    name: Error retry semantics catalogue
+    source: appendix-a §"A.5 Error Codes"
+    source-paper: null
+    definition: Each defined error code carries a normative retry policy — exponential backoff with jitter for ERR_RATE_LIMIT_EXCEEDED and ERR_THROTTLE, no-retry for ERR_VERSION_INCOMPATIBLE and ERR_BUCKET_NOT_AUTHORIZED, IdP re-authentication for ERR_ATTESTATION_REQUIRED and ERR_KEY_REVOKED, and epoch snapshot fetch for ERR_EPOCH_MISMATCH.
+    must-implement:
+      - ERR_RATE_LIMIT_EXCEEDED retries with exponential backoff (initial 1 s, max 60 s) and uniform jitter in [0, interval/2]
+      - ERR_THROTTLE applies the same backoff as ERR_RATE_LIMIT_EXCEEDED
+      - ERR_VERSION_INCOMPATIBLE and ERR_BUCKET_NOT_AUTHORIZED do not auto-retry
+      - ERR_ATTESTATION_REQUIRED triggers fresh IdP attestation acquisition
+      - ERR_KEY_REVOKED requires a new key bundle from the org admin and permanently invalidates the old node_id
+      - ERR_EPOCH_MISMATCH triggers epoch snapshot fetch from a peer before retry
+    verification: Failure-injection harness exercises each error code and confirms the retry handler matches the documented policy.
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise, key-loss, schema-skew, partition]
+    tags: [wire-protocol, errors, retry]
+
+  - id: WIRE-28
+    name: QR onboarding payload layout
+    source: appendix-a §"A.6 QR Onboarding Payload Format"
+    source-paper: v13 §6.2
+    definition: The QR onboarding payload is a flat byte sequence of bundle_length (uint32 LE), attestation_bundle CBOR bytes, snapshot_length (uint32 LE), and raw snapshot bytes, suitable for QR, NFC, or secure paste transfer.
+    must-implement:
+      - Onboarding encoder emits the four-section layout in the documented order
+      - Both length fields are 4-byte little-endian uint32
+      - Decoder reads exactly bundle_length and snapshot_length bytes for the respective sections
+    verification: Round-trip an onboarding payload through QR encoding and confirm byte-identical decode.
+    kleppmann-properties: [P2, P7]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, onboarding, qr]
+
+  - id: WIRE-29
+    name: AttestationBundle structure and signature
+    source: appendix-a §"A.6 QR Onboarding Payload Format"
+    source-paper: v13 §6.2
+    definition: An AttestationBundle is a CBOR map carrying issuer_public_key, subject_public_key, role_claims, an Ed25519 (RFC 8032) signature over the deterministic CBOR concatenation of those fields, and an issued_at Unix-seconds timestamp.
+    must-implement:
+      - Bundle includes issuer_public_key, subject_public_key, role_claims, signature, issued_at
+      - Signature is computed over issuer_public_key ‖ subject_public_key ‖ role_claims_cbor (deterministic CBOR)
+      - Verifier validates the signature with Ed25519 against issuer_public_key
+    verification: Wire-vector 2 in §A.9 produces a verifiable founder self-signed bundle; mutated payloads fail verification.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [wire-protocol, attestation, signatures, ed25519]
+
+  - id: WIRE-30
+    name: Founder vs joiner bundle semantics
+    source: appendix-a §"A.6 QR Onboarding Payload Format"
+    source-paper: v13 §6.2
+    definition: Founder bundles are self-signed (issuer_public_key equals subject_public_key) and carry an implicit grant of every role claim accepted only at initial node creation; joiner bundles are signed by the founder or any admin-role holder and verified by the relay during CAPABILITY_NEG.
+    must-implement:
+      - Relay accepts founder (self-signed) bundles only during initial node creation
+      - Joiner bundles are issued by founder or any admin-role holder
+      - Relay verifies issuer signature against issuer_public_key during CAPABILITY_NEG
+    verification: Re-presenting a founder bundle to an established relay is rejected; a joiner bundle from a non-admin issuer is rejected.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [wire-protocol, attestation, onboarding]
+
+  - id: WIRE-31
+    name: Relay-side attestation revocation
+    source: appendix-a §"A.6 QR Onboarding Payload Format"
+    source-paper: v13 §6.2
+    definition: Attestation bundles have no expiry field; revocation is enforced at the relay by a revocation list keyed on issuer_public_key ‖ subject_public_key, and any revoked bundle produces ERR_KEY_REVOKED regardless of issued_at.
+    must-implement:
+      - Relay maintains a revocation list keyed on issuer_public_key ‖ subject_public_key
+      - Revoked bundle attempts produce ERR_KEY_REVOKED on every reconnect
+      - Bundles have no time-based expiry; only revocation invalidates them
+    verification: Add a bundle to the revocation list; subsequent CAPABILITY_NEG with that bundle returns ERR_KEY_REVOKED.
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [wire-protocol, revocation, attestation]
+
+  - id: WIRE-32
+    name: Snapshot hydration with replay fallback
+    source: appendix-a §"A.6 QR Onboarding Payload Format"
+    source-paper: v13 §6.2
+    definition: The onboarding snapshot is opaque CRDT-engine serialised state passed directly to the engine's hydration API, and on hydration failure the node must discard the snapshot and request full state transfer via DELTA_STREAM replay from a peer.
+    must-implement:
+      - New node passes snapshot bytes verbatim to the engine hydration API
+      - Hydration failure triggers snapshot discard
+      - Recovery proceeds via DELTA_STREAM replay from a peer
+    verification: Corrupt the snapshot section; confirm the daemon discards the bundle and initiates DELTA_STREAM replay.
+    kleppmann-properties: [P3]
+    scope: inverted-stack-specific
+    failure-modes: [partition]
+    tags: [wire-protocol, snapshot, hydration, replay]
+
+  - id: WIRE-33
+    name: Two-version rolling-upgrade overlap
+    source: appendix-a §"A.7 Backward Compatibility Policy"
+    source-paper: null
+    definition: HELLO carries both a uint major protocol_version and a supported_versions semver array; the relay must negotiate down to the highest mutually supported version listed in supported_versions rather than rejecting the connection, enabling two-version overlap during rolling upgrades.
+    must-implement:
+      - HELLO populates supported_versions with all versions the node can speak
+      - Relay attempts down-negotiation before returning ERR_VERSION_INCOMPATIBLE
+      - Negotiated version is the highest version in the intersection of node and relay support
+    verification: "Mixed-version test: nodes with overlapping supported_versions sets connect successfully at the intersection's maximum."
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: [schema-skew]
+    tags: [wire-protocol, versioning, rolling-upgrade]
+
+  - id: WIRE-34
+    name: Minor-version field-stability guarantees
+    source: appendix-a §"A.7 Backward Compatibility Policy"
+    source-paper: null
+    definition: Within the same major protocol_version, message type strings are stable, required fields are not removed, and only optional fields may be added; receivers must apply the unknown-field-ignore rule.
+    must-implement:
+      - Implementations do not rename type strings within a major version
+      - Required fields persist across minor versions
+      - Optional fields can be added; receivers ignore unknown ones
+    verification: Spec test confirms message type strings and required-field sets match the appendix tables for each released minor version.
+    kleppmann-properties: []
+    scope: foundational
+    failure-modes: [schema-skew]
+    tags: [wire-protocol, versioning, compatibility]
+
+  - id: WIRE-35
+    name: Ed25519 algorithm fixed for signatures
+    source: appendix-a §"A.6 QR Onboarding Payload Format"
+    source-paper: null
+    definition: The protocol fixes Ed25519 (RFC 8032) for node identity and attestation signatures with no algorithm agility in the current version; deployments under national algorithm mandates such as GOST R 34.10-2012 must negotiate algorithm selection at a layer above this wire protocol.
+    must-implement:
+      - All node_id keys and attestation signatures use Ed25519
+      - Implementation does not attempt algorithm negotiation in the wire layer
+      - Alternative-algorithm deployments handle selection above the wire protocol
+    verification: Cryptographic test confirms all signatures verify under Ed25519 and no other algorithm appears in conformant traffic.
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, cryptography, ed25519]
+
+  - id: WIRE-36
+    name: Conformance test-vector equivalence
+    source: appendix-a §"A.9 Test Vectors"
+    source-paper: null
+    definition: A conformant implementation must produce byte-for-byte equivalent output to the published reference test vectors covering HELLO, CAPABILITY_NEG, ACK, DELTA_STREAM (insert/update/delete), GOSSIP_PING, attestation-bundle signature inputs, and each error code.
+    must-implement:
+      - Encoder produces byte-identical CBOR to each published vector under deterministic encoding
+      - Decoder accepts and round-trips each vector without modification
+      - Test suite is wired into CI to detect drift
+    verification: Run accelerators/anchor/tests/wire-vectors/ harness; all vectors pass byte-for-byte equivalence.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [wire-protocol, conformance, test-vectors]

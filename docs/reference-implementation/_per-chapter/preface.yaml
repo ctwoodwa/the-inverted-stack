@@ -1,0 +1,134 @@
+# Preface
+#
+# Front-matter chapter. Establishes book scope, the architectural thesis (the
+# inversion of dependency: local node as primary, vendor as optional), the
+# Council adversarial-review framing that structures Part II, the Sunfish
+# reference-implementation policy (package names not class APIs;
+# engine-agnostic via ICrdtEngine), and the AI-collaboration disclosure.
+#
+# Most concepts are book-meta (audience definition, framing) with empty
+# kleppmann-properties. The architectural-thesis concept (the inversion) and
+# the engine-agnostic CRDT pluggability concept do serve Kleppmann properties
+# and are foundational. The 2022 Russia/CIS SaaS-suspension framing is
+# captured because it is referenced as the canonical evidence for the
+# vendor-withdrawal failure mode in Ch01 and elsewhere.
+chapter: preface
+chapter-title: Preface
+source-paper-refs: [v13 preface, v5 §1]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: PREF-01
+    name: The architectural thesis — local node as primary, vendor as optional
+    source: preface §"(opening)"
+    source-paper: v13 preface
+    definition: "The book's central thesis is the inversion of the SaaS dependency relationship: the local node is the primary data plane and the vendor relay is an optional accelerator, so the application survives vendor withdrawal."
+    must-implement:
+      - Application reads and writes hit local storage as the primary data plane
+      - No application function depends on cloud reachability for core operation
+      - Vendor relay services are optional accelerators, not required dependencies
+      - Application continues to function when the vendor service is unreachable, withdrawn, or sanctioned
+    verification: Disconnect the application from all vendor services (network block of vendor domains); application performs all core read, write, and local collaboration operations identically to the connected state.
+    kleppmann-properties: [P3, P5, P7]
+    scope: foundational
+    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
+    tags: [thesis, architecture, philosophy, inversion]
+    notes: This is the book's defining concept; every later concept either implements it or stress-tests it.
+
+  - id: PREF-02
+    name: SaaS tenancy as a withdrawable dependency
+    source: preface §"(opening)"
+    source-paper: v13 preface
+    definition: SaaS tenancy is an external dependency that can be withdrawn unilaterally by the vendor, evidenced by the 2022 Adobe/Autodesk/Microsoft/Figma suspensions across Russia and the CIS that locked organizations out of their own data on infrastructure they had paid for.
+    must-implement: []
+    verification: null
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: [vendor-outage, vendor-acquisition, data-residency-objection]
+    tags: [thesis, motivation, framing, vendor-risk]
+    notes: Canonical real-world evidence cited throughout the book for the vendor-withdrawal failure mode.
+
+  - id: PREF-03
+    name: Offline as daily operating condition, not edge case
+    source: preface §"(opening)"
+    source-paper: v13 preface
+    definition: Intermittent or absent connectivity is the baseline operating condition for enterprise users across Sub-Saharan Africa, rural India, tier-3 Latin American cities, and much of Southeast Asia, so offline-first is a primary requirement rather than a degraded mode.
+    must-implement:
+      - Application has no degraded mode when offline; offline behavior matches online behavior for core operations
+      - Application is usable on intermittent connectivity without user-visible spinners on local actions
+    verification: Run the application on a connection that drops for hours at a time; user can complete every core workflow during the disconnected windows with no behavioral difference from connected operation.
+    kleppmann-properties: [P1, P3]
+    scope: foundational
+    failure-modes: [vendor-outage]
+    tags: [motivation, offline, global-south, framing]
+
+  - id: PREF-04
+    name: Three-audience scope (architects, enterprise evaluators, founders/contributors)
+    source: preface §"Who This Book Is For"
+    source-paper: null
+    definition: "The book is scoped for three audiences — software architects and senior engineers (Parts III/IV technical specification), enterprise IT and decision-makers (Chapters 5, 7, 15, 19 governance and compliance), and open-source contributors, technical founders, and product teams (Chapters 8, 10, 16 commercial viability) — and a reference implementation must serve all three audience needs simultaneously."
+    must-implement: []
+    verification: null
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [audience, scope, book-meta]
+    notes: Book-meta concept; informs which audience constraints downstream chapters address.
+
+  - id: PREF-05
+    name: Council adversarial-review framing (two rounds, five lenses)
+    source: preface §"Why I Wrote This"
+    source-paper: v13 preface
+    definition: The architecture in this book has been stress-tested through two rounds of adversarial review by five domain experts (enterprise IT, distributed systems research, security, product management, local-first practitioner), with Round 1 producing two BLOCK verdicts that forced a partial rewrite and Round 2 clearing all five lenses under fifteen documented conditions named in the epilogue.
+    must-implement:
+      - Reference implementation documents the fifteen conditions under which Round 2 cleared the architecture
+      - Each council lens has at least one corresponding test or design artifact demonstrating the objection has been answered
+    verification: Repository contains a council-conditions document enumerating the fifteen Round 2 conditions, each cross-referenced to the chapter, code, or test that satisfies it.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [framing, council, adversarial-review, methodology]
+    notes: Structures Part II of the book and the conformance contract for any reference implementation.
+
+  - id: PREF-06
+    name: Sunfish reference-implementation policy (packages not class APIs)
+    source: preface §"A Note on the Reference Implementation"
+    source-paper: v5 §1
+    definition: The book references the Sunfish reference implementation by package name (e.g., Sunfish.Kernel.Sync, Sunfish.Foundation.LocalFirst) rather than by class, method, or constructor signature, because package contracts are stable while pre-1.0 method signatures are not.
+    must-implement:
+      - Documentation references Sunfish (or any reference implementation) by package or namespace, not by class API
+      - Package boundaries are stable across pre-1.0 releases even when class internals change
+    verification: Search the manuscript for class-name or method-signature references to Sunfish packages; references must be at package or namespace granularity only.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [sunfish, reference-implementation, documentation-policy]
+
+  - id: PREF-07
+    name: Engine-agnostic CRDT architecture via ICrdtEngine
+    source: preface §"A Note on the Reference Implementation"
+    source-paper: v5 §1
+    definition: "The CRDT engine is pluggable through a single ICrdtEngine adapter, with YDotNet as the current implementation and Loro as the aspirational target, so the engine choice is reversible by design."
+    must-implement:
+      - A single adapter interface (e.g., ICrdtEngine) abstracts the CRDT engine from the rest of the system
+      - At least one engine implementation is wired through the adapter; swapping engines requires no changes outside the adapter implementation
+      - Documentation names both the current engine and at least one alternate target to demonstrate engine-agnosticism is real, not aspirational
+    verification: Replace the YDotNet adapter implementation with a stub or alternate engine; the rest of the system compiles and core CRDT operations route through the adapter without source changes outside the adapter package.
+    kleppmann-properties: [P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-acquisition]
+    tags: [crdt, architecture, engine-agnostic, sunfish]
+
+  - id: PREF-08
+    name: AI-collaboration disclosure (production transparency)
+    source: preface §"A Note on Production"
+    source-paper: null
+    definition: The book discloses that Claude and Claude Code were collaborators in research, drafting, technical review, editing, the Kleppmann Council reviews, the literary-board review cycle, and the audiobook production pipeline, with the author retaining full responsibility for architectural arguments, conclusions, and remaining errors.
+    must-implement: []
+    verification: null
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [disclosure, ai-collaboration, methodology, book-meta]
+    notes: Production-transparency concept; not architectural but cited as a framing precedent for the Council disclosure in Part II.

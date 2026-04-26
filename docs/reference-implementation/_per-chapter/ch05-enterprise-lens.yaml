@@ -1,0 +1,252 @@
+chapter: ch05
+chapter-title: The Enterprise Lens
+source-paper-refs: [v13 §16, R1 Voss, R2 Voss]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: LENS-E-01
+    name: MDM compliance attestation at capability negotiation
+    source: 'ch05 §"What Voss Scored Well"'
+    source-paper: v13 §16
+    definition: Before a node joins the sync mesh and exchanges data, it must present a valid compliance attestation from the organization's Mobile Device Management platform during capability negotiation, with non-compliant nodes rejected at the gate rather than after data exchange.
+    must-implement:
+      - Sync daemon handshake includes an MDM compliance attestation phase before capability exchange completes
+      - A node failing the compliance attestation is rejected before any data frame is transmitted
+      - Compliance is validated continuously at the point of access, not only at installation time
+      - Attestation freshness is enforced; expired attestations cause rejection
+    verification: Sync daemon protocol specification defines a pre-capability MDM compliance phase; behavioral test confirms a node with revoked or expired MDM attestation is rejected at handshake before receiving any record payload.
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [enterprise, mdm, sync, handshake]
+
+  - id: LENS-E-02
+    name: Platform-agnostic MDM integration with regional coverage
+    source: 'ch05 §"What Voss Scored Well"'
+    source-paper: v13 §16
+    definition: The MDM compliance attestation protocol is platform-agnostic at the architecture level and ships with documented integration patterns for at least the dominant Western and non-Western enterprise MDM platforms used in target markets.
+    must-implement:
+      - Compliance attestation protocol defines a platform-neutral interface, not a vendor-specific binding
+      - Documented integration patterns exist for Intune, Jamf, and SCCM
+      - Documented integration patterns exist for SOTI MobiControl, IBM MaaS360, and Ivanti Endpoint Manager
+      - At least six MDM platforms are named with concrete integration guidance
+    verification: Architecture documentation enumerates the supported MDM platforms with per-platform integration guides; protocol specification shows the attestation interface accepts attestations from any conforming MDM source.
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [enterprise, mdm, regional, interoperability]
+
+  - id: LENS-E-03
+    name: Build-time SBOM generation in CycloneDX format
+    source: 'ch05 §"The Security Audit Package"'
+    source-paper: v13 §16
+    definition: A Software Bill of Materials is generated at build time from source by the CI pipeline in CycloneDX format, scanned against vulnerability databases before release, and published with each release artifact.
+    must-implement:
+      - SBOM is produced at build time from the dependency graph, not assembled post-install
+      - SBOM is published in CycloneDX format that satisfies NTIA minimum elements and CISA guidance
+      - CI pipeline scans the SBOM against NVD and OSS vulnerability databases before release
+      - SBOM is published alongside each release artifact
+    verification: CI pipeline configuration shows Syft (or equivalent) producing CycloneDX SBOM at build, Grype (or equivalent) scanning before release; release artifact directory contains the SBOM file for the corresponding binary.
+    kleppmann-properties: [P5, P6]
+    scope: foundational
+    failure-modes: []
+    tags: [supply-chain, sbom, ci, compliance]
+
+  - id: LENS-E-04
+    name: Signed and notarized installer with trusted-publisher compatibility
+    source: 'ch05 §"What Voss Scored Well"'
+    source-paper: v13 §16
+    definition: Installers are code-signed and notarized using each platform's enterprise-grade signing path so that the software can be added to organizational trusted-publisher lists and deployed via MDM without disabling endpoint security policies.
+    must-implement:
+      - macOS installer is signed with an Apple Developer ID and notarized
+      - Windows installer is Authenticode-signed and compatible with App Control for Business (WDAC) trusted-publisher policies
+      - Installer supports silent installation without user elevation in MDM-managed deployments
+      - No installation step requires disabling platform security policies
+    verification: Release artifact passes platform notarization checks; deployment dry run via Intune or equivalent silently installs the software on a managed endpoint with default security policies enabled.
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [signing, deployment, enterprise, supply-chain]
+
+  - id: LENS-E-05
+    name: CVE response service-level commitment
+    source: 'ch05 §"What Changed Between Rounds"'
+    source-paper: null
+    definition: The project commits to a public service-level agreement on vulnerability response, with critical CVEs addressed within fourteen days of disclosure and a public advisory posted within forty-eight hours of patch release.
+    must-implement:
+      - Critical CVEs are addressed by a patch release within fourteen days of disclosure
+      - A public security advisory is posted within forty-eight hours of patch availability
+      - SLA terms are published in the project's security policy
+      - SBOM-driven scanning surfaces affected dependencies in time to meet the SLA
+    verification: Project security policy publishes the CVE response SLA; historical advisories show patch-to-disclosure intervals within the committed window.
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [security, sla, supply-chain]
+
+  - id: LENS-E-06
+    name: Defined incident response runbook
+    source: 'ch05 §"The Blocking Issue: No Incident Response Procedure"'
+    source-paper: null
+    definition: A formal incident response runbook accompanies the architecture, specifying triggering events, artifact collection sequence, chain of custody requirements, escalation path, and jurisdiction-specific regulatory notification windows, distinct from and complementary to the CRDT audit trail.
+    must-implement:
+      - Runbook enumerates the triggering events (suspected unauthorized node access, unauthorized device in sync mesh, key compromise, relay-traffic exfiltration)
+      - Runbook specifies which artifacts are collected from which systems in what order
+      - Runbook defines chain-of-custody procedures for collected artifacts
+      - Runbook defines escalation timing (CISO within one hour, legal within four hours when personal data is implicated)
+      - Runbook enumerates per-jurisdiction regulatory notification windows (GDPR Article 33 72 hours, HIPAA 60 days, DPDP, PIPA, PIPL, NDPR, POPIA, LGPD, 242-FZ) with cross-reference to Appendix F
+    verification: Companion runbook document exists alongside architecture spec; runbook contains each enumerated section; tabletop exercise executes the runbook end-to-end against a simulated incident.
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [incident-response, compliance, runbook, governance]
+
+  - id: LENS-E-07
+    name: CRDT audit trail as forensic asset distinct from procedure
+    source: 'ch05 §"The Blocking Issue: No Incident Response Procedure"'
+    source-paper: v13 §16
+    definition: The tamper-evident append-only CRDT operation log is positioned and documented as a forensic asset that supports incident response, not as a substitute for a defined incident response procedure.
+    must-implement:
+      - Every write operation is recorded in a tamper-evident append-only operation log
+      - Sync daemon can reconstruct full record history from the operation log
+      - Documentation distinguishes the audit trail (forensic asset) from the runbook (procedure)
+      - Audit-trail outputs are referenced as inputs to runbook artifact collection steps
+    verification: Architecture documentation explicitly separates audit-trail capability from incident response procedure; runbook references audit-trail extraction as a defined collection step.
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [audit, forensics, crdt]
+
+  - id: LENS-E-08
+    name: Zero-downtime rolling update with health-gated rollback
+    source: 'ch05 §"What Changed Between Rounds"'
+    source-paper: null
+    definition: Container updates apply via a rolling update that promotes a new image to one replica, runs a defined health-check sequence, and only rotates remaining replicas on success, with automatic rollback to the prior image on health-check failure.
+    must-implement:
+      - Container orchestration applies updates incrementally to one replica before the rest
+      - A defined health-check sequence runs against the updated replica before further rotation
+      - Failed health checks trigger automatic rollback to the previous image
+      - Typical updates complete without a maintenance window
+    verification: Deployment manifests define the rolling-update strategy and health-check sequence; failure-injection test confirms automatic rollback when the health check fails on the updated replica.
+    kleppmann-properties: [P1, P3]
+    scope: foundational
+    failure-modes: []
+    tags: [deployment, updates, operations]
+
+  - id: LENS-E-09
+    name: Enterprise network footprint and proxy compatibility
+    source: 'ch05 §"What Changed Between Rounds"'
+    source-paper: v13 §16
+    definition: The node exposes no inbound ports on external interfaces, routes all relay traffic exclusively over port 443 with TLS 1.3, and respects system proxy configuration including PAC files, authenticating proxies, and TLS-inspecting corporate proxies via documented bypass-list format.
+    must-implement:
+      - No inbound ports are opened on any external interface
+      - All relay traffic uses port 443 with TLS 1.3
+      - Sync daemon honors system proxy configuration including PAC files
+      - Sync daemon authenticates against authenticating corporate proxies
+      - Documentation specifies the bypass-list entry format for environments performing TLS inspection
+    verification: Network audit on a managed endpoint confirms zero inbound listeners and port-443-only outbound; proxy compatibility test passes the daemon through a PAC-configured authenticating proxy and through a TLS-inspecting proxy with a documented bypass entry.
+    kleppmann-properties: [P3, P6]
+    scope: foundational
+    failure-modes: [peer-discovery-failure]
+    tags: [network, proxy, tls, enterprise]
+
+  - id: LENS-E-10
+    name: Documented Podman substrate choice for Windows
+    source: 'ch05 §"MDM Deployment Specifics"'
+    source-paper: null
+    definition: For Windows deployments, the architecture documents the choice between WSL2 and Hyper-V as the Podman substrate with recommended defaults and known compatibility constraints with existing virtualization products.
+    must-implement:
+      - Documentation names WSL2 as the recommended default substrate for most deployments
+      - Documentation names Hyper-V as the recommended substrate for organizations already standardized on it
+      - Documentation flags WSL2 incompatibility with Group Policy environments that disable the Linux subsystem
+      - Documentation flags Hyper-V conflict with VMware Workstation Pro and similar products
+      - Deployment guide directs IT administrators to verify virtualization-product compatibility before rollout
+    verification: Windows deployment guide contains the substrate selection section with both options, recommended defaults, and the named compatibility caveats.
+    kleppmann-properties: []
+    scope: inverted-stack-specific
+    failure-modes: []
+    tags: [windows, deployment, documentation, podman]
+
+  - id: LENS-E-11
+    name: Administrative tooling for capability revocation
+    source: 'ch05 §"The Deprovisioning Gap"'
+    source-paper: null
+    definition: An IT administrator interface — Admin Console, CLI, or REST endpoint — exists for triggering capability revocation, monitoring propagation across the sync mesh, and confirming completion when a user is deprovisioned.
+    must-implement:
+      - A concrete admin interface (console, CLI, or API) triggers capability revocation by user account
+      - The interface surfaces propagation progress across active peers
+      - The interface confirms completion when all active peers acknowledge the rotation
+      - Revocation completes within one capability negotiation cycle for online peers
+      - Admin Console is delivered before first enterprise deployment (pre-GA gating requirement)
+    verification: Admin tooling specification documents the revocation workflow with screens or CLI invocations; integration test confirms revocation propagates and is acknowledged across a multi-peer mesh within one capability cycle.
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [admin-tooling, deprovisioning, enterprise, ux]
+
+  - id: LENS-E-12
+    name: Four-phase reversible migration model
+    source: 'ch05 §"The Migration Path"'
+    source-paper: v13 §16
+    definition: Organizations transition from hosted tools to the local node through a four-phase model — shadow mode, partial offline editing, new-project authority, full historical migration — where each phase is independently reversible and admits indefinite pause.
+    must-implement:
+      - Phase one runs the local node in shadow mode with no authoritative writes
+      - Phase two enables offline editing for non-conflicting data domains while the hosted platform remains active for the rest
+      - Phase three grants the local node full authority for new projects while legacy records remain hosted
+      - Phase four migrates historical records via bulk import that preserves record history
+      - Each phase is independently reversible; rollback to the prior phase is supported
+      - Each phase transition has documented success criteria and rough timing heuristics for change advisory board review
+    verification: Migration playbook documents each phase with entry, exit, and rollback procedures plus rough timing heuristics (e.g., four to eight weeks shadow-mode with sync error rate below 0.1 percent before phase two).
+    kleppmann-properties: [P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-acquisition, vendor-outage]
+    tags: [migration, deployment, governance]
+
+  - id: LENS-E-13
+    name: Dual-license structure with CLA for enterprise customization
+    source: 'ch05 §"The License Question"'
+    source-paper: null
+    definition: The codebase ships under AGPLv3 with a parallel commercial license available for enterprise customers whose legal policy prohibits AGPLv3 in production, supported by a Contributor License Agreement that preserves the right to issue the commercial license.
+    must-implement:
+      - Repository publishes AGPLv3 license at first public commit
+      - Parallel commercial license terms are published or available on request from first public commit
+      - Contributor License Agreement is required from every contributor from first public commit
+      - Commercial license is established before the first enterprise procurement conversation
+    verification: Repository contains LICENSE (AGPLv3), a documented commercial license path, and a CLA process; sales documentation references the commercial license option.
+    kleppmann-properties: [P5, P7]
+    scope: inverted-stack-specific
+    failure-modes: [vendor-acquisition]
+    tags: [licensing, commercial, governance, procurement]
+
+  - id: LENS-E-14
+    name: Power-interruption durability as baseline property
+    source: 'ch05 §"The Non-Negotiable Enterprise Checklist"'
+    source-paper: v13 §16
+    definition: Local writes commit to durable storage before acknowledgment so that abrupt power loss does not corrupt the local data store, and the sync daemon recovers cleanly from cold restart after unexpected shutdown.
+    must-implement:
+      - Local writes are durably committed before the application receives an acknowledgment
+      - The local data store survives abrupt power loss without corruption
+      - The sync daemon survives cold restart after unexpected shutdown
+      - Durability is treated as a baseline property rather than an edge-case mitigation, including for grid-unstable deployment environments
+    verification: Crash-injection test cuts power mid-write across many trials; on restart the data store opens cleanly with no corruption and the sync daemon resumes operation.
+    kleppmann-properties: [P5, P7]
+    scope: foundational
+    failure-modes: [key-loss]
+    tags: [durability, persistence, deployment]
+
+  - id: LENS-E-15
+    name: Structural data residency by jurisdiction
+    source: 'ch05 §"The Non-Negotiable Enterprise Checklist"'
+    source-paper: v13 §16
+    definition: Local-first data custody satisfies data-residency requirements across major regulatory regimes (GDPR/Schrems II, India DPDP, UAE DIFC DPL 2020, Russian import-substitution, and the full Appendix F matrix) as a structural property of the deployment rather than as a configuration option.
+    must-implement:
+      - User data resides on user-controlled infrastructure by default of the architecture
+      - Compliance with named regulatory regimes does not require special configuration toggles
+      - Architecture operates without dependency on Western cloud services so that import-substitution-style regimes are satisfied
+      - Per-jurisdiction coverage is enumerated in Appendix F
+    verification: Compliance documentation maps each named regime to the architectural property that satisfies it; deployment audit confirms no Western cloud dependency exists in the default node configuration.
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [data-residency-objection, vendor-outage]
+    tags: [compliance, jurisdiction, residency, deployment]

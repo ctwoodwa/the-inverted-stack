@@ -1,0 +1,553 @@
+chapter: ch15
+chapter-title: Security Architecture
+source-paper-refs: [v13 §11, v5 §4]
+extraction-date: 2026-04-26
+extracted-by: subagent
+
+concepts:
+  - id: SEC-01
+    name: Distributed honeypot threat model
+    source: ch15 §"Threat Model"
+    source-paper: v13 §11
+    definition: Distributing data to endpoints does not eliminate the honeypot problem but spreads it across many smaller perimeters whose weakest device sets the attacker's minimum viable entry cost.
+    must-implement:
+      - Architecture documents that endpoint compromise is an expected event, not an exception
+      - System bounds blast radius rather than denying endpoint exposure
+    verification: Threat model document explicitly enumerates endpoint compromise as in-scope and states the bounded blast radius as a design property
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [threat-model, security, philosophy]
+
+  - id: SEC-02
+    name: Three blast-radius bounding properties
+    source: ch15 §"Threat Model"
+    source-paper: v13 §11
+    definition: Each node holds only data its role subscriptions permit, per-role keys are absent from non-member nodes, and key compromise does not expose historical data encrypted under previously rotated keys.
+    must-implement:
+      - Node storage contains only data for roles the node holds
+      - Per-role encryption keys are absent from non-member nodes
+      - Rotated keys remain absent from compromised nodes after rotation
+    verification: Compromise simulation test confirms that seizing one node's full disk and memory exposes only data for that node's current role keys
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [threat-model, blast-radius, key-management]
+
+  - id: SEC-03
+    name: Zero-knowledge relay
+    source: ch15 §"Relay Trust Model"
+    source-paper: v13 §11
+    definition: The relay is treated as an untrusted intermediary that routes ciphertext only and never holds decryption keys, so a relay operator cannot read payload plaintext.
+    must-implement:
+      - Encryption is applied at the originating node before payload enters the relay
+      - Relay code paths have no access to decryption keys
+      - Relay receives, validates subscription, and forwards ciphertext only
+    verification: Relay process memory and storage contain no key material capable of decrypting any payload it routes
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [relay, encryption, trust-boundary]
+
+  - id: SEC-04
+    name: Relay metadata visibility
+    source: ch15 §"Relay Trust Model"
+    source-paper: v13 §11
+    definition: The relay observes the communication graph — which node identifiers communicate with which, when, in what volume, and with what burst pattern — even though it cannot read payload content.
+    must-implement:
+      - Documentation enumerates exactly which metadata fields the relay observes
+      - Self-hosted relay deployment path exists for metadata-sensitive deployments
+    verification: Relay observability documentation lists every metadata channel and identifies which deployment topology eliminates each
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [relay, metadata, traffic-analysis]
+
+  - id: SEC-05
+    name: Defense in depth — four independent layers
+    source: ch15 §"Four Defensive Layers"
+    source-paper: v13 §11
+    definition: Security applies four independent layers — encryption at rest, field-level encryption, stream-level data minimization, and circuit breaker quarantine — where defeating one layer yields no advantage on the next.
+    must-implement:
+      - Each layer is implemented in a separately auditable module
+      - No layer's correctness depends on another layer being uncompromised
+    verification: Static analysis confirms no shared trust assumption between the four layer implementations
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [defense-in-depth, architecture]
+
+  - id: SEC-06
+    name: SQLCipher encryption at rest with OS keystore root
+    source: ch15 §"Layer 1 — Encryption at Rest"
+    source-paper: v13 §11
+    definition: Local databases use SQLCipher with the database key derived via HKDF-SHA256 from a 256-bit root seed stored in the OS-native keystore (Keychain, DPAPI, or Linux Secret Service).
+    must-implement:
+      - Local database files are encrypted using SQLCipher
+      - Root seed is 256 bits from a CSRNG and stored only in the OS keystore
+      - Database key is derived via HKDF-SHA256 from the root seed
+      - Database key is loaded on demand and zeroed after the session closes
+      - Database key is never written to disk
+    verification: Disk forensic capture of the database file without OS keystore access yields no plaintext; process memory inspection after database close finds no residual key bytes
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [encryption-at-rest, sqlcipher, key-derivation]
+
+  - id: SEC-07
+    name: Field-level encryption with per-role keys
+    source: ch15 §"Layer 2 — Field-Level Encryption"
+    source-paper: v13 §11
+    definition: Records in high-sensitivity buckets carry per-field encryption under per-role symmetric keys distinct from the database key, so opening the database does not grant access to fields the node lacks the role for.
+    must-implement:
+      - Fields in high-sensitivity buckets are encrypted with per-role keys
+      - The field-level key is distinct from the database key
+      - Decryption fails closed when the role key is absent
+    verification: Test demonstrates a node with database access but without a role key cannot read field-encrypted records for that role
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [field-encryption, role-keys]
+
+  - id: SEC-08
+    name: Send-tier subscription filtering invariant
+    source: ch15 §"Layer 3 — Stream-Level Data Minimization"
+    source-paper: v13 §11
+    definition: The sync daemon enforces subscription filtering before any event leaves the originating node, so non-subscribed nodes never receive events regardless of relay state or administrator misconfiguration.
+    must-implement:
+      - Sync daemon filters events at the originating node before transmission
+      - No code path bypasses send-tier filtering for any event class
+    verification: Wire-protocol test confirms that events outside a peer's declared subscription set are never observed entering the relay from the originating node
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [sync, data-minimization, access-control]
+
+  - id: SEC-09
+    name: Circuit breaker quarantine for offline writes
+    source: ch15 §"Layer 4 — Circuit Breaker and Quarantine"
+    source-paper: v13 §11
+    definition: Writes from a reconnecting node that conflict with current authorization policy are held in quarantine pending administrator review rather than discarded or auto-applied.
+    must-implement:
+      - Reconnecting nodes' writes are validated against current team state
+      - Conflicting writes enter a quarantine queue
+      - Administrator promotes or rejects each quarantined write with logged reason
+      - Audit trail records what was offered, who reviewed, and what decision was made
+    verification: Quarantine review test produces an audit record containing offered write, reviewer identity, decision, and reason
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [authorization, quarantine, audit]
+
+  - id: KEY-01
+    name: Four-tier key hierarchy
+    source: ch15 §"Key Hierarchy"
+    source-paper: v13 §11
+    definition: Keys are organized in four independently rotatable tiers — root organization key, role KEKs, node-level wrapped KEK copies, and per-document DEKs.
+    must-implement:
+      - Each tier has a distinct key type with its own rotation procedure
+      - Rotation of any tier does not require rotating other tiers
+    verification: Rotation procedure for each tier exists and is independently exercisable in isolation tests
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [key-hierarchy, key-management]
+
+  - id: KEY-02
+    name: KEK/DEK envelope encryption
+    source: ch15 §"Key Hierarchy"
+    source-paper: v13 §11
+    definition: Each document is encrypted under a freshly generated 256-bit DEK using AES-256-GCM, and the DEK is itself wrapped under the role's current KEK so KEK rotation re-wraps DEKs without re-encrypting document bodies.
+    must-implement:
+      - DEK is 256 bits from the OS CSRNG, generated fresh per document
+      - Document body encrypted with AES-256-GCM, 96-bit random nonce per encryption, 128-bit tag
+      - DEK wrapped with current role KEK using AES-256-GCM with fresh 96-bit nonce
+      - Wrapped DEK stored alongside ciphertext
+      - KEK never touches document body
+      - DEK does not persist in unwrapped form beyond the active decryption operation
+    verification: Encryption library test confirms nonces are randomly generated per encryption event and never reused under the same key
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [envelope-encryption, aes-gcm, dek, kek]
+
+  - id: KEY-03
+    name: Argon2id parameters for credential-derived keys
+    source: ch15 §"Key Hierarchy"
+    source-paper: v13 §11
+    definition: When user credentials derive an OS keystore password, Argon2id runs with memory cost 64 MiB, iteration count 3, parallelism 4 for standard deployments and 128 MiB / 4 / 4 for the high-security tier.
+    must-implement:
+      - Argon2id is the credential KDF
+      - Standard tier uses memory 64 MiB, iterations 3, parallelism 4
+      - High-security tier uses memory 128 MiB, iterations 4, parallelism 4
+      - Configuration names the chosen tier explicitly
+    verification: Configuration file inspection confirms Argon2id parameters match the standard or high-security tier values exactly
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [kdf, argon2id, configuration]
+
+  - id: KEY-04
+    name: Node-level wrapped KEK custody
+    source: ch15 §"Key Hierarchy"
+    source-paper: v13 §11
+    definition: Each node holds wrapped copies of its role KEKs that are decryptable only with the node's device private key, so revocation by withholding new bundles renders existing wrapped copies useless after rotation.
+    must-implement:
+      - KEK copies on a node are wrapped under that node's device public key
+      - Device private key is the sole unwrap path for that node's KEK copies
+      - Revoked nodes are excluded from new bundle distribution
+    verification: Test confirms a captured wrapped KEK blob cannot be unwrapped without the originating device's private key
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [key-custody, device-keys]
+
+  - id: KEY-05
+    name: Role attestations distinct from role keys
+    source: ch15 §"Role Attestation Flow"
+    source-paper: v13 §11
+    definition: Role attestations prove role membership for subscription decisions while role keys enable decryption, with key possession verified separately before field-encrypted content is delivered.
+    must-implement:
+      - Sync daemon uses signed attestations for subscription decisions
+      - Field-encrypted content delivery requires separate proof of key possession
+      - A node holding neither attestation nor key receives no events
+    verification: Test confirms a node presenting an attestation but lacking the role key cannot decrypt delivered field-encrypted content
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [attestation, authorization]
+
+  - id: KEY-06
+    name: Administrator-signed key bundle distribution
+    source: ch15 §"Role Attestation Flow"
+    source-paper: v13 §11
+    definition: Per-role KEKs are wrapped per-member with the member's device public key and published as administrator-signed administrative events in the CRDT log, with nodes verifying the signature before accepting any bundle.
+    must-implement:
+      - Per-role KEK is generated from a fresh entropy source, not derived from any organizational root
+      - KEK is wrapped per member using the member's device public key
+      - Wrapped bundles are published as administrative events in the CRDT log
+      - Administrative events are signed by the administrator key
+      - Receiving nodes verify the signature before accepting the bundle
+    verification: Test confirms an unsigned or invalidly signed bundle is rejected and never written to the OS keystore
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [key-distribution, signing]
+
+  - id: KEY-07
+    name: KEK rotation without document re-encryption
+    source: ch15 §"Key Hierarchy"
+    source-paper: v13 §11
+    definition: KEK rotation re-wraps DEKs under the new KEK without touching document ciphertext, so rotation work is proportional to document count rather than cumulative document size.
+    must-implement:
+      - Rotation procedure re-wraps DEKs under new KEK
+      - Document bodies are not re-encrypted on KEK rotation
+    verification: Rotation benchmark confirms work scales with document count, not cumulative document byte size
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [key-rotation, performance]
+
+  - id: KEY-08
+    name: Key compromise incident response procedure
+    source: ch15 §"Key Compromise Incident Response"
+    source-paper: v13 §11
+    definition: On compromise, the administrator generates a new KEK from fresh entropy (never derived from the compromised key), re-wraps all affected DEKs, distributes new bundles, then triggers discard of the old KEK and a revocation broadcast.
+    must-implement:
+      - New KEK is generated from fresh entropy, never derived from the compromised key
+      - All DEKs in scope are re-wrapped under the new KEK before old KEK discard
+      - Old KEK discard signal zeros in-memory copies and removes keystore entries on every node
+      - Revocation event is published for the compromised key identifier
+      - Affected users receive a notification specifying the data-at-risk window
+    verification: Incident-response runbook is exercised end-to-end and produces an audit log showing each step in order
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [incident-response, key-rotation]
+
+  - id: KEY-09
+    name: Detection triggers for key compromise
+    source: ch15 §"Key Compromise Incident Response"
+    source-paper: v13 §11
+    definition: Compromise detection arrives from physical loss reports, anomalous access patterns in the audit log, or explicit administrator reports of suspected credential exposure.
+    must-implement:
+      - All key access events are logged to the audit log
+      - Anomaly detection runs over the audit log
+      - User-facing reporting flow exists for physical loss
+      - Administrator-initiated incident-response trigger exists
+    verification: Each of the three trigger types produces an incident-response activation in test
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [detection, audit-log]
+
+  - id: KEY-10
+    name: Handshake-layer revocation enforcement
+    source: ch15 §"Offline Node Revocation and Reconnection"
+    source-paper: v13 §11
+    definition: The relay enforces key revocation at the connection handshake by rejecting any node presenting a revoked key identifier with the specific error code ERR_KEY_REVOKED rather than a generic failure.
+    must-implement:
+      - Relay maintains a revocation log indexed by key identifier
+      - Handshake checks each presented key identifier against the revocation log
+      - Revoked-key handshakes return ERR_KEY_REVOKED
+      - Client distinguishes ERR_KEY_REVOKED from network and certificate errors
+    verification: Reconnection test with a revoked key receives ERR_KEY_REVOKED specifically
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise, key-loss]
+    tags: [revocation, handshake, error-codes]
+
+  - id: KEY-11
+    name: Re-attestation via IdP after revocation
+    source: ch15 §"Offline Node Revocation and Reconnection"
+    source-paper: v13 §11
+    definition: A revocation-rejected node cannot resume sync until the user re-authenticates through the IdP, after which the administrator's device issues new wrapped KEK copies for the user's current roles.
+    must-implement:
+      - Revocation rejection blocks sync until re-authentication
+      - Re-authentication establishes fresh role attestations against current team state
+      - Administrator device detects reconnected node and issues new KEK bundles
+    verification: End-to-end test exercises revocation, IdP re-authentication, KEK redelivery, and sync resumption
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [authentication, idp, recovery]
+
+  - id: KEY-12
+    name: Offline compromise window
+    source: ch15 §"Offline Node Revocation and Reconnection"
+    source-paper: v13 §11
+    definition: A node offline during a KEK discard broadcast continues to use the compromised KEK until reconnection, bounded by configurable rotation schedule (default 90 days) and relay-enforced revocation on reconnect.
+    must-implement:
+      - KEK rotation schedule is configurable per role
+      - Default rotation interval is 90 days or any role-membership change
+      - Documentation explicitly names the residual exposure between discard broadcast and offline node reconnect
+    verification: Configuration documents the rotation schedule and the exposure window is named in security documentation
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise, partition]
+    tags: [key-rotation, exposure-window, honest-limits]
+
+  - id: SEC-10
+    name: Locked memory pages for key material
+    source: ch15 §"In-Memory Key Handling"
+    source-paper: v13 §11
+    definition: Key material is allocated in pages marked non-swappable using mlock on POSIX or VirtualLock on Windows so the OS cannot page key bytes to disk under memory pressure.
+    must-implement:
+      - Key allocations call the platform memory-locking API
+      - Locked-page allocator is the only allocation path for key material
+    verification: Source review confirms every key allocation uses the locked-page allocator
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [memory-protection, mlock]
+
+  - id: SEC-11
+    name: Compiler-resistant zeroing on exit
+    source: ch15 §"In-Memory Key Handling"
+    source-paper: v13 §11
+    definition: Key material is zeroed before process exit using a function the compiler cannot optimize away, including under abnormal exit via registered signal handlers.
+    must-implement:
+      - Zeroing function is dead-store-elimination resistant
+      - Exit handlers zero key material on normal exit
+      - Signal handlers zero key material on abnormal exit
+      - Platform-provided secure zeroing is used where available
+    verification: Process memory inspection after exit (including SIGTERM and SIGABRT) finds no residual key bytes
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [memory-hygiene, secure-zero]
+
+  - id: SEC-12
+    name: Re-authentication interval
+    source: ch15 §"In-Memory Key Handling"
+    source-paper: v13 §11
+    definition: A configurable re-authentication interval (default four hours, sixty minutes for highly regulated deployments) evicts in-memory key material and prompts re-authentication to bound cold-boot and memory-forensics exposure.
+    must-implement:
+      - Re-authentication interval is enforced in the kernel
+      - Default interval is four hours
+      - Interval is configurable per deployment sensitivity tier
+      - Hardware-backed authentication (FIDO2 or smart card) removes the interval-based tradeoff
+    verification: Session test confirms key material is evicted after the configured interval and re-authentication is required to resume key-using operations
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [session, re-authentication]
+
+  - id: SEC-13
+    name: Content-addressed update verification
+    source: ch15 §"Supply Chain Security"
+    source-paper: v13 §11
+    definition: Each update package is identified by a content identifier (CID) computed from package contents and distributed via a signed release manifest separate from the CDN, with the client verifying the computed CID before installation.
+    must-implement:
+      - Each update package has a CID computed from its contents
+      - CID is distributed in a signed release manifest separate from the CDN
+      - Client computes the CID of the downloaded package and compares against the manifest
+      - CID mismatch aborts installation
+    verification: Tampered-binary test produces a CID mismatch and aborts installation
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [supply-chain, content-addressing]
+
+  - id: SEC-14
+    name: Hardware-custodied release signing key
+    source: ch15 §"Supply Chain Security"
+    source-paper: v13 §11
+    definition: The release signing key is held in a hardware security module under multi-party authorization, with signing operations requiring quorum approval and the key never present in CI/CD environments.
+    must-implement:
+      - Release signing key is HSM-resident
+      - Signing requires multi-party quorum
+      - CI/CD environments have no access to the signing key
+    verification: Audit confirms HSM custody, quorum policy, and absence of the key from CI/CD secret stores
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: [key-compromise]
+    tags: [supply-chain, hsm, signing]
+
+  - id: SEC-15
+    name: Sigstore transparency log enforcement
+    source: ch15 §"Supply Chain Security"
+    source-paper: v13 §11
+    definition: All signing events are logged to Rekor, and clients reject any signed package whose signing event is absent from the transparency log beyond a short propagation hold period.
+    must-implement:
+      - All package signing events are submitted to Rekor
+      - Client verifies presence of the signing event in Rekor before accepting the package
+      - A short hold period is permitted for recent signing events
+    verification: Test with a signed-but-unlogged package is rejected by the client
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [supply-chain, sigstore, transparency]
+
+  - id: SEC-16
+    name: Reproducible builds
+    source: ch15 §"Supply Chain Security"
+    source-paper: v13 §11
+    definition: Independent parties can reproduce the published binary from published source and verify the computed CID matches, providing an independent verification path beyond the signing key.
+    must-implement:
+      - Build is bit-for-bit reproducible from published source
+      - Build documentation enables third-party reproduction
+    verification: An independent party reproduces the binary and confirms CID equality with the published manifest
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [supply-chain, reproducible-builds]
+
+  - id: SEC-17
+    name: Crypto-shredding for GDPR Article 17
+    source: ch15 §"GDPR (General Data Protection Regulation) Article 17 and Crypto-Shredding"
+    source-paper: v13 §11
+    definition: Erasure requests destroy the DEK for the targeted record, leaving the operation entry in the immutable log while making its ciphertext permanently unreadable.
+    must-implement:
+      - Erasure operation zeros the targeted DEK from all node keystores
+      - Operation stub remains in the log with a marker indicating destroyed DEK
+      - Erasure event is logged with data subject identifier, targeted operation identifier, and timestamp
+      - No copy of the destroyed DEK is retained anywhere in the system
+    verification: After crypto-shredding, the targeted record's ciphertext is recoverable but no key path exists to decrypt it
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [gdpr, erasure, crypto-shredding, compliance]
+
+  - id: SEC-18
+    name: Residual metadata limitation
+    source: ch15 §"GDPR (General Data Protection Regulation) Article 17 and Crypto-Shredding"
+    source-paper: v13 §11
+    definition: Operation identifier, timestamp, and DAG position are not erasable without breaking log structure and constitute residual metadata whose Article 17 sufficiency is jurisdiction-dependent.
+    must-implement:
+      - Documentation enumerates exactly what metadata residue remains after crypto-shredding
+      - Legal review is required before relying on crypto-shredding for an Article 17 response
+    verification: Compliance documentation explicitly names the residual metadata fields and the legal-review prerequisite
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [gdpr, compliance, honest-limits]
+
+  - id: SEC-19
+    name: Compelled-access structural defense
+    source: ch15 §"Relay Trust Model"
+    source-paper: v13 §11
+    definition: The relay cannot produce decryptable content under legal compulsion because it does not possess decryptable content, providing a structural answer to compelled-access threat models that customer-managed-key cloud patterns cannot match.
+    must-implement:
+      - Relay holds no decryption keys for any payload it routes
+      - Decryption keys never leave originating nodes
+    verification: Legal-process simulation confirms relay can only produce ciphertext and metadata, never plaintext
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [legal-process, compliance, data-residency]
+
+  - id: SEC-20
+    name: Self-hosted relay for metadata-sensitive deployments
+    source: ch15 §"Relay Trust Model"
+    source-paper: v13 §11
+    definition: Deployments where the communication graph itself is sensitive replace the third-party relay with a self-hosted relay running the same codebase under the organization's operational custody.
+    must-implement:
+      - Relay binary is deployable on customer-controlled infrastructure
+      - Self-hosted relay is the same codebase as the managed relay
+      - Connection logs on a self-hosted relay are subject to the operator's retention policy
+    verification: Self-hosted deployment guide exists and the relay binary runs identically against the standard wire protocol
+    kleppmann-properties: [P6, P7]
+    scope: foundational
+    failure-modes: []
+    tags: [relay, self-hosted, metadata]
+
+  - id: SEC-21
+    name: Break-glass corrupt-sequence quarantine
+    source: ch15 §"Relay Trust Model"
+    source-paper: v13 §11
+    definition: When a CRDT sequence arrives in a structurally invalid state (signature mismatch, unknown reference, or unresolved schema-version violation), the sync daemon quarantines the full sequence and requires explicit administrator action to dispose of it.
+    must-implement:
+      - Structurally invalid sequences are fully quarantined, never partially applied
+      - Administrator console exposes a quarantine viewer
+      - Disposition is one of reject, promote-after-correction, or request-resend
+      - Audit log captures sequence, administrator determination, and disposition
+    verification: Test injecting a signature-mismatch sequence produces full quarantine and an audit record on disposition
+    kleppmann-properties: [P6]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [quarantine, integrity, audit]
+
+  - id: SEC-22
+    name: Traffic-analysis limitation
+    source: ch15 §"Relay Trust Model"
+    source-paper: v13 §11
+    definition: The architecture does not implement constant-rate padding between nodes, so deployments with traffic-analysis adversaries must apply application-layer obfuscation or route through a mixnet outside the kernel scope.
+    must-implement:
+      - Documentation explicitly names absence of constant-rate padding
+      - Documentation names mixnet or application-layer obfuscation as the operator-deployment mitigation
+    verification: Security documentation lists traffic-analysis as a named limitation with a documented mitigation path
+    kleppmann-properties: [P6]
+    scope: foundational
+    failure-modes: []
+    tags: [traffic-analysis, honest-limits]
+
+  - id: SEC-23
+    name: Long-lived Ed25519 device keypairs for non-repudiation
+    source: ch15 §"Security Properties Summary"
+    source-paper: v13 §11
+    definition: Every write is signed by a long-lived Ed25519 device keypair stored in a hardware-backed OS keystore where available, so a node cannot deny authorship of an operation it signed.
+    must-implement:
+      - Each device holds a long-lived Ed25519 keypair
+      - Private key is stored in a hardware-backed OS keystore where available
+      - Every write carries a signature attributable to a device key
+    verification: Audit log entry for any write resolves to a device public key whose signature validates the operation bytes
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [signing, ed25519, non-repudiation, device-keys]
+
+  - id: SEC-24
+    name: Administrator device as trust anchor
+    source: ch15 §"Security Properties Summary"
+    source-paper: v13 §11
+    definition: The administrator device is the system's trust anchor whose compromise enables fraudulent key distribution, and its protection is an organizational responsibility outside the scope of the security kernel.
+    must-implement:
+      - Documentation names the administrator device as the trust anchor
+      - Hardware-backed key storage is required for administrator operations in elevated threat models
+      - Administrator operations are restricted to managed devices with HSMs in regulated deployments
+    verification: Security documentation explicitly identifies the administrator device as the trust anchor and names its required hardware posture
+    kleppmann-properties: [P6, P7]
+    scope: inverted-stack-specific
+    failure-modes: [key-compromise]
+    tags: [trust-anchor, administrator, honest-limits]
