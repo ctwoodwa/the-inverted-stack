@@ -1056,6 +1056,166 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-25T17:52:01.065Z"
+    },
+    {
+      "id": "bug-067",
+      "timestamp": "2026-04-25T21:05:14.905Z",
+      "error_message": "Wrong return value",
+      "file": "build/voice-pass.py",
+      "root_cause": "Was returning: f\"\"\"Operate as the voice-{voice} agent (defined in",
+      "fix": "Now returns: f\"\"\"Operate as the voice-{voice} agent (defined in",
+      "tags": [
+        "auto-detected",
+        "return-value",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T21:05:14.905Z"
+    },
+    {
+      "id": "bug-068",
+      "timestamp": "2026-04-25T21:17:31.556Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/voice-pass.py",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 34→62 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T21:17:31.556Z"
+    },
+    {
+      "id": "bug-069",
+      "timestamp": "2026-04-25T21:52:28.441Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had \"less than 1% of users,\"",
+      "fix": "Changed to \"less than 1% of users\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T21:52:28.441Z"
+    },
+    {
+      "id": "bug-070",
+      "timestamp": "2026-04-25T22:00:46.728Z",
+      "error_message": "Incorrect value in code",
+      "file": "build/voice-pass.py",
+      "root_cause": "Had \".claude\"",
+      "fix": "Changed to \"voice-{voice}.md\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T22:00:46.728Z"
+    },
+    {
+      "id": "bug-071",
+      "timestamp": "2026-04-25T22:07:14.485Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/superpowers/specs/2026-04-25-phase2-pilot-grading.md",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 11→28 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T22:07:14.485Z"
+    },
+    {
+      "id": "bug-072",
+      "timestamp": "2026-04-25T22:11:55.767Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 19→25 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T22:11:55.767Z"
+    },
+    {
+      "id": "bug-073",
+      "timestamp": "2026-04-25T23:34:45.369Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 6→9 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-25T23:34:45.369Z"
+    },
+    {
+      "id": "bug-074",
+      "timestamp": "2026-04-26T00:01:02.671Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "13 lines replaced/restructured",
+      "fix": "Rewrote 22→68 lines (13 removed) | Also: def _decide_dollar_word(after_text: str) -> str:; \"\"\"Return 'dollar' or 'dollars' based on what foll",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-26T00:02:32.699Z"
+    },
+    {
+      "id": "bug-075",
+      "timestamp": "2026-04-26T00:02:34.393Z",
+      "error_message": "Wrong return value",
+      "file": "build/audiobook.py",
+      "root_cause": "Was returning: f\"{amount} {_decide_dollar_word(after)}\"",
+      "fix": "Now returns: f\"{amount} {_decide_dollar_word(before, after)}\"",
+      "tags": [
+        "auto-detected",
+        "return-value",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T00:02:34.393Z"
+    },
+    {
+      "id": "bug-076",
+      "timestamp": "2026-04-26T00:23:31.736Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 8→12 lines (4 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T00:23:31.736Z"
     }
   ]
 }

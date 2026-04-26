@@ -2,6 +2,12 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 2026-04-25 | Task 18: per-invocation logging in voice-pass.py — TDD (red→green), log_invocation(), _sha256(), _claude_cli_version(), run_voice_pass updated, 2 call sites in main() get pass_num | build/voice-pass.py, tests/build/test_voice_pass.py | DONE — 4/4 tests pass, --plan-only clean, commit 43f7815; council B3/C9 closed | ~3000 |
+| 2026-04-25 | Task 27: check_stale.py stale-draft detector — TDD (red→green), find_stale_drafts(), main() with exit 0/1 + re-run hints, Make check-stale target | build/check_stale.py, tests/build/test_check_stale.py, build/Makefile | DONE — 4/4 tests pass, smoke exit 0, commit 7ed73c8; council C8 wired | ~1200 |
+| 22:07 | Task 29: Phase 4 promotion script — TDD (red->green 7/7), promote_chapter(), compute_sha256(), latest_log_for(), log_rejection(), HashMismatchError, Makefile targets | build/promote.py, tests/build/test_promote.py, build/Makefile | DONE — 7/7 tests pass, --help clean, --reject smoke test verified+cleaned, commit 843adc5; council C3/C11 closed | ~2500 |
+| 17:08 | Task 15: append source/ prohibition bullet to ## What you do not do in all 6 voice agents (council C10) | .claude/agents/voice-{sinek,brown,gladwell,godin,grant,lencioni}.md | DONE — 6 insertions, grep verification empty, commit 3f94e77 | ~800 |
+| 2026-04-25 | Task 17: guest-agent audit + tunes — 2 universal rules + per-agent tunes to all 5 guest agents | .claude/agents/voice-{gladwell,brown,grant,godin,lencioni}.md | DONE — 5 commits (91727c6, cbe0c3c, 513d550, 5f0922b, dd88119); grep verifications empty; frontmatter intact | ~4500 |
+| 21:10 | Task 14: update voice-pass build_prompt + docstring to reference .claude/agents/ (B1/C2), write test | build/voice-pass.py, tests/build/test_voice_pass.py | DONE — test red→green, --plan-only clean, commit 38b8f22 | ~2500 |
 | 2026-04-25 | Task 7: build/check_audit.py reference-integrity script | build/check_audit.py, build/__init__.py, tests/build/test_check_audit.py, build/Makefile | 2 tests pass; script returns PASS against live repo; check-audit Make target added; committed 5ea1547 | ~2000 |
 | 15:30 | pytest scaffolding (Task 0) — created pytest.ini, tests/__init__.py, tests/build/__init__.py, tests/conftest.py | pytest.ini, tests/ | 0 items collected, no errors; committed db4a0a1 via GitButler on cw-branch-1 | ~1500 |
 | 17:45 | Task 6: created Appendix F — Regulatory Coverage Map | chapters/appendices/appendix-f-regulatory-coverage.md | 2,132 words (target 2,000 ±10%); 7 regions, 40+ frameworks, 20-row per-chapter index; committed ff27ecc | ~6000 |
@@ -756,3 +762,148 @@
 | 16:44 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~18784 tok |
 | 16:49 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 4 reads | ~26424 tok |
 | 16:56 | Created build/update_kleppmann_citation.py | — | ~1568 |
+| 16:57 | Edited docs/style/style-guide.md | modified it() | ~580 |
+| 16:58 | Created build/check_first_use.py | — | ~3242 |
+| 17:00 | Session end: 4 writes across 4 files (ch01-when-saas-fights-reality.md, update_kleppmann_citation.py, style-guide.md, check_first_use.py) | 5 reads | ~35300 tok |
+| 17:04 | Created tests/build/test_voice_pass.py | — | ~254 |
+| 17:04 | Edited tests/build/test_voice_pass.py | modified test_build_prompt_references_in_repo_agent_path() | ~137 |
+| 17:05 | Edited build/voice-pass.py | 1→2 lines | ~33 |
+| 17:05 | Edited build/voice-pass.py | inline fix | ~28 |
+| 17:08 | Edited .claude/agents/voice-sinek.md | 1→2 lines | ~55 |
+| 17:08 | Edited .claude/agents/voice-brown.md | 1→2 lines | ~68 |
+| 17:08 | Edited .claude/agents/voice-gladwell.md | 1→2 lines | ~78 |
+| 17:08 | Edited .claude/agents/voice-godin.md | 1→2 lines | ~79 |
+| 17:08 | Edited .claude/agents/voice-grant.md | 1→2 lines | ~73 |
+| 17:08 | Edited .claude/agents/voice-lencioni.md | 1→2 lines | ~63 |
+| 17:09 | Edited .claude/agents/voice-sinek.md | inline fix | ~98 |
+| 17:09 | Edited .claude/agents/voice-sinek.md | 8→13 lines | ~559 |
+| 17:09 | Edited .claude/agents/voice-sinek.md | modified Source() | ~544 |
+| 17:12 | Edited .claude/agents/voice-gladwell.md | 1→4 lines | ~263 |
+| 17:12 | Edited .claude/agents/voice-brown.md | 1→4 lines | ~254 |
+| 17:12 | Edited .claude/agents/voice-grant.md | 1→5 lines | ~378 |
+| 17:13 | Edited .claude/agents/voice-godin.md | 1→3 lines | ~200 |
+| 17:13 | Edited .claude/agents/voice-lencioni.md | 1→5 lines | ~350 |
+| 17:16 | Edited tests/build/test_voice_pass.py | modified test_build_prompt_references_in_repo_agent_path() | ~586 |
+| 17:17 | Edited build/voice-pass.py | added 3 import(s) | ~57 |
+| 17:17 | Edited build/voice-pass.py | modified _sha256() | ~574 |
+| 17:17 | Edited build/voice-pass.py | modified exists() | ~716 |
+| 17:17 | Edited build/voice-pass.py | modified print() | ~143 |
+| 17:17 | Edited build/voice-pass.py | 3→4 lines | ~57 |
+| 17:19 | Session end: 28 writes across 12 files (ch01-when-saas-fights-reality.md, update_kleppmann_citation.py, style-guide.md, check_first_use.py, test_voice_pass.py) | 14 reads | ~63876 tok |
+
+## Session: 2026-04-25 17:22
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 17:31 | Created .claude/skills/literary-devices/SKILL.md | — | ~3264 |
+| 17:33 | Created .claude/skills/literary-devices/references/devices.md | — | ~5715 |
+| 17:34 | Session end: 2 writes across 2 files (SKILL.md, devices.md) | 2 reads | ~16534 tok |
+| 17:37 | Edited .claude/agents/prose-reviewer.md | 3→4 lines | ~109 |
+| 17:37 | Edited .claude/agents/voice-godin.md | modified asks() | ~176 |
+| 17:38 | Edited .claude/agents/voice-sinek.md | 1→5 lines | ~184 |
+| 17:38 | Edited .claude/agents/voice-grant.md | modified fits() | ~208 |
+| 17:38 | Edited .claude/agents/voice-brown.md | modified to() | ~196 |
+| 17:38 | Edited .claude/agents/voice-gladwell.md | modified matches() | ~192 |
+| 17:38 | Edited .claude/agents/voice-lencioni.md | 1→5 lines | ~179 |
+| 17:38 | Created ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/reference_literary_devices_skill.md | — | ~592 |
+| 17:39 | Edited ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/MEMORY.md | 1→2 lines | ~113 |
+| 17:39 | Session end: 11 writes across 11 files (SKILL.md, devices.md, prose-reviewer.md, voice-godin.md, voice-sinek.md) | 9 reads | ~34578 tok |
+| 17:43 | Session end: 11 writes across 11 files (SKILL.md, devices.md, prose-reviewer.md, voice-godin.md, voice-sinek.md) | 10 reads | ~43279 tok |
+| 17:45 | Session end: 11 writes across 11 files (SKILL.md, devices.md, prose-reviewer.md, voice-godin.md, voice-sinek.md) | 10 reads | ~43279 tok |
+| 17:52 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | "less than 1% of users," → "less than 1% of users" | ~28 |
+| 17:52 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~60 |
+| 17:52 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~18 |
+| 17:52 | Session end: 14 writes across 12 files (SKILL.md, devices.md, prose-reviewer.md, voice-godin.md, voice-sinek.md) | 10 reads | ~43392 tok |
+
+## Session: 2026-04-25 17:53
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-25 17:59
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:00 | Edited build/voice-pass.py | 4→4 lines | ~42 |
+| 18:00 | Edited build/voice-pass.py | ".claude" → "voice-{voice}.md" | ~14 |
+| 18:00 | Edited build/voice-pass.py | modified print() | ~165 |
+| 18:00 | Edited build/voice-pass.py | 3→4 lines | ~70 |
+| 18:02 | Created docs/superpowers/specs/2026-04-25-phase2-pilot-grading.md | — | ~1455 |
+| 18:04 | Edited chapters/voice-plan.yaml | 7→10 lines | ~148 |
+| 18:05 | Created tests/build/test_promote.py | — | ~2077 |
+| 18:05 | Created chapters/_voice-drafts/pass1/ch04-choosing-your-architecture.md | — | ~6161 |
+| 18:05 | Session end: 8 writes across 5 files (voice-pass.py, 2026-04-25-phase2-pilot-grading.md, voice-plan.yaml, test_promote.py, ch04-choosing-your-architecture.md) | 6 reads | ~27972 tok |
+
+## Session: 2026-04-25 18:05
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:05 | Created build/promote.py | — | ~2150 |
+| 18:06 | Edited build/Makefile | expanded (+10 lines) | ~79 |
+| 18:07 | Edited docs/superpowers/specs/2026-04-25-phase2-pilot-grading.md | expanded (+17 lines) | ~466 |
+| 18:07 | Session end: 3 writes across 3 files (promote.py, Makefile, 2026-04-25-phase2-pilot-grading.md) | 2 reads | ~11747 tok |
+| 18:09 | Session end: 3 writes across 3 files (promote.py, Makefile, 2026-04-25-phase2-pilot-grading.md) | 5 reads | ~16324 tok |
+| 18:11 | Created chapters/_voice-drafts/final/ch04-choosing-your-architecture.md | — | ~6155 |
+| 18:11 | Session end: 4 writes across 4 files (promote.py, Makefile, 2026-04-25-phase2-pilot-grading.md, ch04-choosing-your-architecture.md) | 8 reads | ~40464 tok |
+
+## Session: 2026-04-25 18:11
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:11 | Edited docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md | expanded (+6 lines) | ~332 |
+| 18:12 | Edited build/promote.py | modified log_rejection() | ~134 |
+| 18:13 | Session end: 2 writes across 2 files (2026-04-25-voice-pass-orchestration-design.md, promote.py) | 4 reads | ~15023 tok |
+| 18:14 | Created tests/build/test_check_stale.py | — | ~698 |
+| 18:14 | Created build/check_stale.py | — | ~566 |
+| 18:14 | Edited build/Makefile | 2→6 lines | ~38 |
+| 18:16 | Session end: 5 writes across 5 files (2026-04-25-voice-pass-orchestration-design.md, promote.py, test_check_stale.py, check_stale.py, Makefile) | 4 reads | ~16327 tok |
+| 18:19 | Created chapters/_voice-drafts/pass1/ch05-enterprise-lens.md | — | ~6965 |
+| 18:19 | Session end: 6 writes across 6 files (2026-04-25-voice-pass-orchestration-design.md, promote.py, test_check_stale.py, check_stale.py, Makefile) | 4 reads | ~23790 tok |
+
+## Session: 2026-04-25 18:19
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:25 | Created chapters/_voice-drafts/final/ch05-enterprise-lens.md | — | ~6944 |
+| 18:26 | Session end: 1 writes across 1 files (ch05-enterprise-lens.md) | 3 reads | ~17208 tok |
+
+## Session: 2026-04-25 18:26
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:30 | Created chapters/_voice-drafts/final/ch11-node-architecture.md | — | ~9763 |
+| 18:30 | Session end: 1 writes across 1 files (ch11-node-architecture.md) | 3 reads | ~22990 tok |
+
+## Session: 2026-04-25 18:31
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:39 | Created chapters/_voice-drafts/pass1/ch01-when-saas-fights-reality.md | — | ~9424 |
+| 18:39 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 2 reads | ~21865 tok |
+
+## Session: 2026-04-25 18:39
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 18:48 | Created chapters/_voice-drafts/final/ch01-when-saas-fights-reality.md | — | ~9401 |
+| 18:48 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~22146 tok |
+| 18:50 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~22146 tok |
+| 19:15 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~22146 tok |
+| 19:16 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~22146 tok |
+| 19:17 | Session end: 1 writes across 1 files (ch01-when-saas-fights-reality.md) | 3 reads | ~22146 tok |
+| 19:34 | Edited build/audiobook.py | expanded (+10 lines) | ~217 |
+| 19:34 | Edited build/audiobook.py | 6→9 lines | ~172 |
+| 19:36 | Session end: 3 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~32204 tok |
+| 19:50 | Session end: 3 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~32204 tok |
+| 19:51 | Session end: 3 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~32204 tok |
+| 19:58 | Session end: 3 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~32204 tok |
+| 20:01 | Edited build/audiobook.py | modified _decide_dollar_word() | ~911 |
+| 20:02 | Edited build/audiobook.py | modified _decide_dollar_word() | ~628 |
+| 20:02 | Edited build/audiobook.py | modified _currency_plain_sub() | ~71 |
+| 20:04 | Session end: 6 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~33814 tok |
+| 20:22 | Edited build/audiobook.py | expanded (+83 lines) | ~762 |
+| 20:22 | Edited build/audiobook.py | expanded (+13 lines) | ~225 |
+| 20:23 | Edited build/audiobook.py | 8→12 lines | ~209 |
+| 20:23 | Edited build/audiobook.py | 2→5 lines | ~44 |
+| 20:25 | Session end: 10 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~36047 tok |
+| 20:36 | Session end: 10 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~36047 tok |

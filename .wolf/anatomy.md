@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-25T20:56:04.432Z
-> Files: 75 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T00:23:34.076Z
+> Files: 96 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -15,9 +15,10 @@
 ## ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/
 
 - `feedback_voice_sinek_calibration.md` (~457 tok)
-- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~255 tok)
+- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~314 tok)
 - `project_failure_mode_taxonomy.md` (~434 tok)
 - `reference_gitbutler_workflow.md` (~494 tok)
+- `reference_literary_devices_skill.md` — Literary devices skill — location and wiring contract (~569 tok)
 
 ## ../Sunfish/docs/
 
@@ -37,7 +38,13 @@
 ## .claude/agents/
 
 - `literary-board.md` — The Book (~8186 tok)
-- `voice-sinek.md` — Sinek's voice in one sentence (~3058 tok)
+- `prose-reviewer.md` — The Book's Voice (~1274 tok)
+- `voice-brown.md` — Brown's voice in one sentence (~3216 tok)
+- `voice-gladwell.md` — Gladwell's voice in one sentence (~3064 tok)
+- `voice-godin.md` — Godin's voice in one sentence (~3256 tok)
+- `voice-grant.md` — Grant's voice in one sentence (~3553 tok)
+- `voice-lencioni.md` — Lencioni's voice in one sentence (~3758 tok)
+- `voice-sinek.md` — Sinek's voice in one sentence (~3238 tok)
 
 ## .claude/commands/
 
@@ -46,6 +53,14 @@
 ## .claude/rules/
 
 
+## .claude/skills/literary-devices/
+
+- `SKILL.md` — Literary Devices — Reference for Persuasive Technical Prose (~3060 tok)
+
+## .claude/skills/literary-devices/references/
+
+- `devices.md` — Literary & Rhetorical Devices — Full Catalog (~5358 tok)
+
 ## .github/ISSUE_TEMPLATE/
 
 
@@ -53,28 +68,36 @@
 
 - `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~9474 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~11636 tok)
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
+- `check_first_use.py` — First-use rule checker. (~3242 tok)
+- `check_stale.py` — Pre-Phase-4 stale-draft detector. (~566 tok)
 - `copy-to-dropbox.py` — Copy generated audiobook files to a destination folder (typically Dropbox). (~1655 tok)
 - `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
 - `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
-- `Makefile` — The Inverted Stack — Build Targets (~2067 tok)
+- `Makefile` — The Inverted Stack — Build Targets (~2146 tok)
 - `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~1932 tok)
+- `promote.py` — Phase 4 promotion script. (~2233 tok)
 - `update_kleppmann_citation.py` — One-shot updater: standardize all Kleppmann et al. 2019 citations (~1568 tok)
-- `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~4220 tok)
+- `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~5068 tok)
 - `word-count.py` — Word count per chapter vs. target. (~666 tok)
 
 ## chapters/
 
-- `voice-plan.yaml` — Voice-pass plan: chapter -> primary voice agent (pass 1) (~600 tok)
+- `voice-plan.yaml` — Voice-pass plan: chapter -> primary voice agent (pass 1) (~666 tok)
 
 ## chapters/_voice-drafts/final/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9218 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8814 tok)
+- `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5770 tok)
+- `ch05-enterprise-lens.md` — Chapter 5 — The Enterprise Lens (~6510 tok)
+- `ch11-node-architecture.md` — Chapter 11 — Node Architecture (~9152 tok)
 
 ## chapters/_voice-drafts/pass1/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8822 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8835 tok)
+- `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5776 tok)
+- `ch05-enterprise-lens.md` — Chapter 5 — The Enterprise Lens (~6530 tok)
 
 ## chapters/appendices/
 
@@ -95,7 +118,7 @@
 
 ## chapters/part-1-thesis-and-pain/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8701 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8704 tok)
 - `ch02-local-first-serious-stack.md` — Chapter 2 — Local-First: From Sync Toy to Serious Stack (~7791 tok)
 - `ch03-inverted-stack-one-diagram.md` — Chapter 3 — The Inverted Stack in One Diagram (~6573 tok)
 - `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5955 tok)
@@ -130,7 +153,7 @@
 
 ## docs/style/
 
-- `style-guide.md` — Unified Technical Writing Style Guide (~3444 tok)
+- `style-guide.md` — Unified Technical Writing Style Guide (~3818 tok)
 
 ## docs/superpowers/plans/
 
@@ -140,8 +163,9 @@
 
 - `2026-04-25-phase0a-med-review.md` — Phase 0a MED-Tier Review and Decisions (~871 tok)
 - `2026-04-25-phase0a-review.md` — Phase 0a HIGH-Tier Compression Review (~3057 tok)
+- `2026-04-25-phase2-pilot-grading.md` — Phase 2 Pilot Grading (~1690 tok)
 - `2026-04-25-voice-pass-orchestration-design.council-review.md` — SEAT 1 — Dr. Marguerite Voss (Plan-as-infrastructure) (~5492 tok)
-- `2026-04-25-voice-pass-orchestration-design.md` — Voice-pass Orchestration for the Entire Book — Design (~10348 tok)
+- `2026-04-25-voice-pass-orchestration-design.md` — Voice-pass Orchestration for the Entire Book — Design (~10474 tok)
 
 ## prospectus/
 
@@ -167,3 +191,6 @@
 
 - `__init__.py` — tests/build/__init__.py (~8 tok)
 - `test_check_audit.py` — Tests for the reference-integrity audit checker. (~234 tok)
+- `test_check_stale.py` — Tests for the stale-draft check. (~698 tok)
+- `test_promote.py` — Tests for the Phase 4 promotion script. (~2077 tok)
+- `test_voice_pass.py` — Tests for build/voice-pass.py. (~714 tok)
