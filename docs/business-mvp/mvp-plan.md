@@ -168,6 +168,70 @@ The MVP is shippable when:
 - **EspoCRM** ([github.com/espocrm/espocrm](https://github.com/espocrm/espocrm)) — vendor/customer relationship mgmt patterns; lighter-weight than Salesforce-class
 - **Tryton** ([github.com/tryton/tryton](https://github.com/tryton/tryton)) — modular business application platform; module separation patterns
 
+### Local-first project landscape (production references for the architecture, not the features)
+
+The OSS surveyed above (§2 above) shows the FEATURE SURFACE for SMB business apps. This section surveys the LOCAL-FIRST PROJECT LANDSCAPE — what proves the architectural patterns we're building on. Less about "what features do we need" and more about "who has built local-first at production scale and what did they learn."
+
+#### Production local-first apps (validate the user-facing patterns)
+
+| Project | Domain | Sync model | Lesson for MVP |
+|---|---|---|---|
+| **Logseq** ([github.com/logseq/logseq](https://github.com/logseq/logseq), AGPL) | Knowledge graph / note-taking | Syncthing OR Git OR self-hosted | **Sync via existing tools is viable** — users can BYO sync (Syncthing, Git remote, NAS); doesn't have to mean "use our cloud." Outliner-first UX style. Markdown files on disk = perfect P5 long-now |
+| **Obsidian** ([obsidian.md](https://obsidian.md/), proprietary client / open file format) | Knowledge graph / note-taking | Optional paid sync OR free P2P (Syncthing, iCloud Drive, etc.) | **Plugin ecosystem is the moat** — 1000+ community plugins keep users locked-in to Obsidian *because* of community value, not because of vendor lock-in. Plain markdown files mean users can leave anytime. Sunfish should plan for plugins from day one (book Ch11 already does) |
+| **Anytype** ([anytype.io](https://anytype.io/), AGPL) | Knowledge management with structured objects | True P2P + optional self-hosted sync nodes | **P2P-first is feasible at scale** — proves CRDT-based multi-device sync without central server is production-ready. Object-based model (vs. file-based) for richer relations |
+| **Joplin** ([joplinapp.org](https://joplinapp.org/), MIT) | Note-taking with sync | Dropbox / OneDrive / Joplin Cloud / WebDAV / S3 | **Sync via off-the-shelf services** — uses general-purpose cloud storage as transport instead of building bespoke relay. Optional E2EE on top. Useful pattern for users who already pay for Dropbox |
+| **Standard Notes** ([standardnotes.com](https://standardnotes.com/), AGPL) | Encrypted notes | E2EE with sync server (self-hostable) | **Zero-knowledge sync at scale works** — proves the Bridge pattern (relay holds only ciphertext, can never decrypt) is viable for production users. Validates Sunfish's relay model |
+| **Reflect** ([reflect.app](https://reflect.app/), proprietary) | Notes with backlinks | E2EE iCloud Drive sync | **Apple-ecosystem local-first** — uses iCloud as the sync layer; data lives on user devices. Useful pattern for Anchor's macOS/iOS variant |
+| **Heynote** ([heynote.com](https://heynote.com/), MIT) | Scratchpad / quick notes | Local file with optional cloud sync | **Minimal local-first works** — proves you don't need full CRDT machinery for many use cases; sometimes just "save to a local file with smart conflict resolution" is enough |
+| **Actual Budget** (already covered in §2) | Personal finance | Optional self-hosted sync server | Validates the Anchor + Bridge architecture for financial data at production scale |
+
+**Key lesson cluster:** local-first apps that have achieved real adoption (Logseq, Obsidian, Anytype, Joplin) all share three patterns: (1) plain-file or open-format storage so users CAN leave; (2) sync as a feature, not the value proposition (the value is the app, not the cloud); (3) plugin/extension ecosystem to lock users in via community value rather than vendor capture. Sunfish should adopt all three.
+
+#### Local-first sync engines (validate the technical infrastructure)
+
+These are the building blocks Sunfish would compete with OR build on. Important distinction (per Aaron Boodman, Replicache): server-authority engines vs. decentralized engines.
+
+| Engine | License | Architecture pattern | Lesson for MVP |
+|---|---|---|---|
+| **Replicache** ([replicache.dev](https://replicache.dev/), source-available) | Source-available + commercial | Server-authority sync framework; client-side datastore | Mature production-grade sync framework; pattern for client-side mutator + server-side validation. Authority pattern is server-side (vs. CRDT decentralized) |
+| **PowerSync** ([powersync.com](https://www.powersync.com/), Apache 2.0 client / commercial cloud) | Apache 2.0 client / commercial server | Server-authority; SQLite client + Postgres backend; bidirectional sync via persistent upload queue | **Strong fit for "I have a Postgres backend, want to add local-first to my app"** — relevant for SMBs migrating from cloud-only to local-first |
+| **ElectricSQL** ([electric-sql.com](https://electric-sql.com/), Apache 2.0) | Apache 2.0 | "Durable Sync" layer for Postgres; replication streams push to clients; strong schema consistency | Different sync philosophy than Sunfish's CRDT approach — Postgres-anchored. Useful comparison for "why CRDTs over replication-based sync" decision rationale |
+| **InstantDB** ([instantdb.com](https://instantdb.com/), MIT client / commercial cloud) | MIT client / commercial cloud | Server-authority; "spiritual successor to Firebase for relational era"; offline + permissions out of box | Validates relational + real-time + offline triad. Sunfish's Bridge could expose similar query primitives over the local CRDT data |
+| **Triplit** ([triplit.dev](https://triplit.dev/), now community OSS) | OSS (was commercial; folded Jan 2026) | Server-authority; full-stack local-first DB | **Cautionary tale**: commercial local-first sync engine couldn't sustain as company; folded to community OSS in early 2026. **Implication**: Sunfish's open-source-from-day-one position is more durable than commercial-from-day-one. The Bridge's value-as-managed-service rather than value-as-product is a defensible business model |
+| **Jazz** ([jazz.tools](https://jazz.tools/), MIT) | MIT | CRDT-based with collaborative state primitives | Newer entrant; CRDT-decentralized; useful comparison for "what does a modern Yjs alternative look like" |
+| **Automerge** ([automerge.org](https://automerge.org/), MIT) | MIT | Decentralized CRDT engine | One of the canonical CRDT engines; rust-based with JS bindings; competing pattern to Yjs/YDotNet |
+| **Yjs** ([github.com/yjs/yjs](https://github.com/yjs/yjs), MIT) | MIT | Decentralized CRDT engine | Most-deployed CRDT engine in production (powers Notion AI, Linear, etc.); Y-Sweet by Jamsocket adds managed sync. **YDotNet is .NET port — Sunfish's current choice per book Ch12** |
+| **Loro** ([loro.dev](https://loro.dev/), MIT) | MIT | Modern Rust CRDT engine | **Sunfish's stated future target** per book Ch12; faster than Yjs for large documents; pluggable into Sunfish's `ICrdtEngine` adapter |
+
+**Key lesson cluster:** the sync-engine landscape divides cleanly into **server-authority** (Replicache, Zero, PowerSync, ElectricSQL, InstantDB, Convex, Triplit, Firebase) and **decentralized** (Yjs, Automerge, Loro). Sunfish chose decentralized (CRDT-based) per book Ch12 because it cleanly satisfies P3 (network optional) and P7 (ownership) — server-authority engines fundamentally require the server to be reachable for write authorization. Sunfish's Bridge is server-authority FOR ROUTING (relay) but data ownership stays decentralized at the peer level. This is a meaningful architectural choice worth documenting.
+
+**Triplit-as-cautionary-tale** is important: a VC-backed local-first sync company with a strong team folded its commercial business in early 2026 and re-released as community OSS. The local-first space is full of similar attempts. Sunfish's positioning — open-source-from-day-one with Bridge-as-managed-service business model — is structurally more durable than competing as a closed-source local-first sync engine.
+
+#### Local-first research projects (validate emerging patterns)
+
+These are research lab projects, not production apps, but they prove patterns the book directly references:
+
+| Project | Lab | What it proves | Book reference |
+|---|---|---|---|
+| **Patchwork** ([inkandswitch.com/patchwork](https://www.inkandswitch.com/patchwork/notebook/01/)) | Ink & Switch | Universal version control for collaborative documents; malleable substrate for in-the-moment toolmaking | Validates richer-than-Git version control on top of CRDTs; relevant for project documentation in Module 4 |
+| **PushPin** ([github.com/inkandswitch/pushpin](https://github.com/inkandswitch/pushpin)) | Ink & Switch | Mixed-media canvas (Miro/Milanote-style) on Automerge; presence avatars; collab without server | Most fully-realized Automerge-based app; validates rich UI on CRDT substrate |
+| **Cambria** ([inkandswitch.com/cambria](https://www.inkandswitch.com/cambria/)) | Ink & Switch | Schema evolution via bidirectional translation lenses for cross-version collaboration | **Directly referenced in book Ch13 (SCH-12)**. Sunfish's schema migration uses this pattern. Cambria is the canonical implementation |
+| **Hypermerge** | Ink & Switch | Peer-to-peer Automerge document store with hypercore | Validates fully-decentralized CRDT distribution without any server; predecessor to today's Y-Sweet patterns |
+| **Local-First Conf 2026** ([localfirstconf.com](https://localfirstconf.com/)) | Community | Annual gathering of local-first builders | Worth attending or watching talks; community for surfacing new patterns |
+
+#### Local-first-adjacent commercial validators
+
+Not local-first by strict definition, but validate that "feels like local" + "works offline" + "real-time collaborative" is a winning product strategy:
+
+| Product | What they validate |
+|---|---|
+| **Linear** ([linear.app](https://linear.app/)) | "Local-feeling" speed at cloud scale (CRDT under the hood); proves users will pay premium for sub-frame responsiveness |
+| **Notion** | Offline mode for an otherwise-cloud-native tool; users do expect offline when traveling |
+| **Figma** | Real-time multi-user collab on rich documents (CRDT-based; Y-Sweet uses similar tech); proves multi-cursor + presence is table-stakes for collab tools |
+| **Zed** ([zed.dev](https://zed.dev/), GPL) | Collaborative text editor with sub-frame latency; native MCP support; integrates with Linear and Figma via MCP. Validates **MCP-native local-first apps as a category** |
+
+**Key lesson cluster:** even commercial cloud-first products (Linear, Notion, Figma) have moved toward CRDT-backed sync because users expect local-first responsiveness AND multi-user collaboration. The competitive bar Sunfish must clear is "as fast as Linear, as collaborative as Figma, but with user-controlled data." Zed's pattern of "MCP-native + collaborative + fast" is the strongest contemporary archetype.
+
 ### Synthesis: which OSS contributes what to MVP
 
 | Module | Primary references | Specific patterns to adopt |
