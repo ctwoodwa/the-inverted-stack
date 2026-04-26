@@ -49,6 +49,92 @@ ACRONYM_FIXES = {
     r"\bSBOM\b": "S-bom",
     r"\bAP/CP\b": "A-P / C-P",
     r"\bRFC (\d+)\b": r"R-F-C \1",
+
+    # Regulatory initialisms (heavy throughout this book). Plurals listed
+    # separately to keep word boundaries clean.
+    r"\bGDPR\b":   "G-D-P-R",
+    r"\bDPDP\b":   "D-P-D-P",
+    r"\bNDPR\b":   "N-D-P-R",
+    r"\bNDPA\b":   "N-D-P-A",
+    r"\bLGPD\b":   "L-G-P-D",
+    r"\bDIFC\b":   "D-I-F-C",
+    r"\bDPL\b":    "D-P-L",
+    r"\bDPA\b":    "D-P-A",
+    r"\bEDPB\b":   "E-D-P-B",
+    r"\bCNIL\b":   "C-N-I-L",
+    r"\bBSI\b":    "B-S-I",
+    r"\bRBI\b":    "R-B-I",
+    r"\bBFSI\b":   "B-F-S-I",
+    r"\bMLPS\b":   "M-L-P-S",
+    r"\bFERPA\b":  "F-E-R-P-A",
+    r"\bGLBA\b":   "G-L-B-A",
+    r"\bCCPA\b":   "C-C-P-A",
+    r"\bCPRA\b":   "C-P-R-A",
+    r"\bITAR\b":   "I-T-A-R",
+    r"\bCMMC\b":   "C-M-M-C",
+    r"\bADR\b":    "A-D-R",
+    r"\bARCO\b":   "A-R-C-O",
+    r"\bSCCs\b":   "S-C-C-s",  # keep lowercase 's' for plural
+    r"\bSCC\b":    "S-C-C",
+    r"\bBCRs\b":   "B-C-R-s",
+    r"\bBCR\b":    "B-C-R",
+
+    # Cryptography & security
+    r"\bHSM\b":    "H-S-M",
+    r"\bMFA\b":    "M-F-A",
+    r"\bSSO\b":    "S-S-O",
+    r"\bCMK\b":    "C-M-K",
+    r"\bBYOC\b":   "B-Y-O-C",
+    r"\bTPM\b":    "T-P-M",
+    r"\bTLS\b":    "T-L-S",
+    r"\bTCP\b":    "T-C-P",
+    r"\bWAL\b":    "W-A-L",
+    r"\bDAG\b":    "D-A-G",
+    r"\bHKDF\b":   "H-K-D-F",
+    r"\bKDF\b":    "K-D-F",
+    r"\bKMS\b":    "K-M-S",
+    r"\bSDK\b":    "S-D-K",
+    r"\bCLI\b":    "C-L-I",
+    r"\bIDE\b":    "I-D-E",
+    r"\bFFI\b":    "F-F-I",
+
+    # Tech and engineering
+    r"\bAPIs\b":   "A-P-Is",
+    r"\bAPI\b":    "A-P-I",
+    r"\bSLA\b":    "S-L-A",
+    r"\bSLO\b":    "S-L-O",
+    r"\bSLI\b":    "S-L-I",
+    r"\bCISO\b":   "C-I-S-O",
+    r"\bCTO\b":    "C-T-O",
+    r"\bCIO\b":    "C-I-O",
+    r"\bICT\b":    "I-C-T",
+    r"\bIoT\b":    "I-O-T",
+    r"\bIPC\b":    "I-P-C",
+    r"\bISV\b":    "I-S-V",
+    r"\bIETF\b":   "I-E-T-F",
+    r"\bPDF\b":    "P-D-F",
+    r"\bHTML\b":   "H-T-M-L",
+    r"\bCSS\b":    "C-S-S",
+    r"\bSQL\b":    "S-Q-L",
+    r"\bCSV\b":    "C-S-V",
+    r"\bMP3\b":    "M-P-3",
+    r"\bTTS\b":    "T-T-S",
+    r"\bM4B\b":    "M-4-B",
+    r"\bEBU\b":    "E-B-U",
+    r"\bCBOR\b":   "C-B-O-R",
+
+    # Geographic / org
+    r"\bEEA\b":    "E-E-A",
+    r"\bGCC\b":    "G-C-C",
+    r"\bICP\b":    "I-C-P",
+    r"\bICM\b":    "I-C-M",
+
+    # Audit / compliance abbreviations
+    r"\bSOC (\d)\b": r"S-O-C \1",  # SOC 2, SOC 1, etc.
+
+    # Plurals of CRDT, APIs (defined above)
+    r"\bCRDTs\b":  "C-R-D-T-s",
+
     # Roman numerals after "Part" — espeak mispronounces these as
     # "eye", "eye-eye", "triple-eye" etc. Spell them as Arabic digits.
     # Word boundaries prevent shorter forms from matching inside longer
@@ -407,6 +493,23 @@ def narratable_text(md: str) -> str:
 
     # Turn [text](url) into just text
     t = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", t)
+
+    # Strip IEEE-style "[Online]. Available: URL" boilerplate from references.
+    # The audiobook listener can't follow URLs; the print/EPUB version retains them.
+    t = re.sub(r"\[Online\]\.?\s*Available:\s*\S+\.?\s*", "", t, flags=re.IGNORECASE)
+
+    # Strip bare protocol URLs that survived markdown link extraction.
+    # Consume surrounding whitespace to avoid leaving double-spaces in prose.
+    t = re.sub(r"\s*https?://\S+\s*", " ", t)
+
+    # Strip IEEE bracketed citation markers like [1], [2], [1, 2], [1-3].
+    # These point to numbered references at the end of each chapter — useful
+    # in print, gibberish in audio. The lookahead optionally consumes ", "
+    # when another citation follows immediately, so "[2], [4]" becomes ""
+    # not ",". Run twice to handle three-or-more chained citations like "[1], [2], [3]".
+    _CITATION_RE = r"\s*\[\s*\d+(?:\s*[,\-]\s*\d+)*\s*\](\s*,(?=\s*\[))?"
+    t = re.sub(_CITATION_RE, "", t)
+    t = re.sub(_CITATION_RE, "", t)
 
     # Headings: drop the hashes so they read as plain sentences.
     # H1 chapter titles get the longest trailing beat; H2 gets a medium
