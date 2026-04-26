@@ -327,6 +327,50 @@ Each is a deployment combination of apps + a `data-classes:` block + Kleppmann p
     - Public-space behavior accountability (incident data immutable for after-the-fact liability)
 ```
 
+### 4.6 Out of current book scope — controlled ownership transfer
+
+```yaml
+- id: office-of-authority-transition
+  apps: [anchor-embedded × 1 (tamper-evident-rugged-portable), thin-client-write × 2-4 (outgoing+incoming officer creds), thin-client-read × M (witnesses), legacy-bridge × varies (command-authority-chain)]
+  notes: |
+    Nuclear football / presidential authentication / Fed chair transition /
+    central bank governor handover. System bound to OFFICE, not holder.
+    At constitutionally-defined transfer instant, outgoing officer's
+    cryptographic capability revokes; incoming officer's activates.
+    Multi-party attestation (Chief Justice, military aide, Joint Chiefs).
+    Constraints persist: only office-holder can exercise authority.
+  catalog-coverage-estimate: ~15-20%
+  out-of-scope-for-book-volume: civic-governance-systems
+  new-primitives-needed: [#31 whole-system ownership transfer, constitutional constraint enforcement, continuous physical custody during transition]
+
+- id: medical-custody-transfer
+  apps: [anchor-embedded × 1 (instrumented container), thin-client-write × 5-8 (procurement+courier+recipient), bridge × 1 (UNOS), legacy-bridge × 1 (hospital EHR)]
+  notes: |
+    Organ transplant container / blood products / vaccine cold chain /
+    biological samples. Container is a node owning temperature history +
+    custody chain + viability window. Ownership of CONTENTS transfers
+    through multi-stakeholder chain: donor → procurement → courier →
+    recipient hospital → recipient. Each handoff multi-party signed.
+    Constraints persist: cold chain, viability window, UNOS allocation
+    rules. Container refuses release if constraints violated.
+  catalog-coverage-estimate: ~30-40%
+  out-of-scope-for-book-volume: medical-systems
+  new-primitives-needed: [#31 whole-system ownership transfer, viability-window constraint enforcement, tiered custody-vs-ownership distinction]
+
+- id: corporate-asset-acquisition
+  apps: [anchor-embedded × N (acquired systems), thin-client-write × legal+tech-counsel, legacy-bridge × regulatory-filings]
+  notes: |
+    Company A acquires Company B; ALL Company B systems atomically transfer
+    ownership at deal-close. Today: weeks of integration. Node-based
+    cryptographic transfer: instant at deal-close attestation. All systems'
+    credentials reissue atomically; old revokes; new ownership recorded
+    immutably. Constraints persist: regulatory commitments, customer
+    license terms, employment contracts, IP licenses.
+  catalog-coverage-estimate: ~20-30%
+  out-of-scope-for-book-volume: civic-governance-AND-multi-stakeholder
+  new-primitives-needed: [#31 whole-system ownership transfer, atomic multi-system co-transfer, contract-surviving constraints]
+```
+
 ### 4.7 Out of current book scope — extreme environment
 
 ```yaml
@@ -417,6 +461,7 @@ Across all deployment scenarios, ~16 distinct architectural primitives surfaced.
 28. **Ephemeral identity / use-right tokens** (Volume 3 multi-stakeholder economic) — short-lived, narrow-scope grants distinct from long-lived delegated capability. Sources: shared scooters (rental session), valet mode, courier handoff tokens, rental car sessions, time-bounded device access.
 29. **Geofence enforcement as architectural primitive** (Volume 2 cyber-physical) — local-first geo-bounded behavior with verifiable enforcement that works offline. Sources: shared micromobility (slowdown / no-park zones), drone airspace restrictions, robot operating boundaries, asset-tracking with auto-disable on theft.
 30. **Human-in-the-loop override authority** (Volume 2 cyber-physical) — combines autonomous safety-critical control with low-latency manual override; supervisor identity attested per session; handoff timing recorded for liability. Sources: last-mile delivery robots, semi-autonomous vehicles (lane-keeping vs. driver), industrial robots with operator-stop, surgical robots.
+31. **Whole-system ownership transfer with persistent constraints** (Volume 3 multi-stakeholder economic, with civic-governance + medical-systems as cross-cutting application domains) — atomic transfer of entire system+data unit to new owner with cryptographic key reissuance and constraints that bind regardless of owner identity. Distinct from chain-of-custody (#9 — owner unchanged), delegated capability (#18 — owner unchanged + scoped grant), and ephemeral identity (#28 — owner unchanged + short-lived grant). Defining elements: atomic transfer event, old-owner key wipe, new-owner re-keying, multi-party attestation, constraint persistence (laws/contracts/biological-physical-limits bind regardless of owner), immutable transfer log, time-stamped activation, optional reversibility. Sources: nuclear football / presidential transition / Federal Reserve chair handover; organ transplant container / blood products / vaccine cold chain; vehicle title / real estate / land title transfer; digital estate inheritance; domain name / NFT / repository ownership; corporate acquisition / asset transfer; pawnshop / pledge; insurance subrogation; conservatorship; container shipping (TEU) handoffs.
 
 > **Note on regulatory streaming export:** the LADOT-MDS-style "mandated real-time signed export to a regulator with verifiable-completeness" pattern surfaced from the shared-scooter scenario is treated as a variant of chain-of-custody (#9) rather than a separate primitive — the architectural mechanism (signed streaming with append-only verifiable log) is the same.
 
@@ -595,8 +640,9 @@ This brief consolidates decisions from a multi-turn design discussion. Source tu
 - Spacecraft → surfaced DTN + asynchronous command authority (Volume 4 territory)
 - Vending machines → confirmed fits existing kiosk + POS + headless-fleet hybrid
 - Shared scooters + last-mile delivery robots → surfaced ephemeral-identity + geofence-enforcement + human-in-the-loop override (cross-volume additions, primitives #28-30)
+- Office-of-authority transition + medical custody transfer + corporate acquisition → surfaced whole-system ownership transfer with persistent constraints (#31)
 
-The architecture has converged: 30 primitives across 4 volumes; new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
+The architecture has converged: 31 primitives across 4 volumes (with civic-governance + medical-systems as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
 
 ---
 
