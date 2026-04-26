@@ -371,6 +371,44 @@ Each is a deployment combination of apps + a `data-classes:` block + Kleppmann p
   new-primitives-needed: [#31 whole-system ownership transfer, atomic multi-system co-transfer, contract-surviving constraints]
 ```
 
+### 4.6.2 Out of current book scope — legal compliance + compelled access
+
+```yaml
+- id: healthcare-clinic-with-compliance-posture
+  apps: [anchor × 5-10, bridge × 1, legacy-bridge × HIE+billing]
+  notes: |
+    Small medical practice. HIPAA-compliant local-first patient records.
+    Compliance manifest declares HIPAA + HITECH + state retention.
+    Compelled-access boundary: relay holds ciphertext only; access goes
+    to clinic with patient waiver / court order. Whistleblower channel
+    (OIG-protected) via separate legacy-bridge.
+  catalog-coverage-estimate: ~50-60%
+  new-primitives-needed: [#33 compelled-access boundary, #34 compliance posture, #35 legitimate-non-owner access]
+
+- id: journalist-source-protection
+  apps: [anchor × 1 (journalist), thin-client-write × ephemeral (sources), bridge × 1 (publisher)]
+  notes: |
+    Investigative journalism. Source identity cryptographically
+    protected via #25 anonymity-preserving authenticity + #33 compelled-
+    access refusal-by-design. Even if journalist's device is compelled,
+    source identity cannot be revealed because never stored in
+    retrievable form. Architectural commitment: refuse backdoors;
+    refuse to log source identifiers; support legal challenge to
+    overbroad subpoenas.
+  catalog-coverage-estimate: ~40-50%
+
+- id: financial-services-aml-kyc
+  apps: [anchor × N, bridge × 1, legacy-bridge × OFAC+FinCEN+tax]
+  notes: |
+    Wealth management. Local-first records (GLBA + state privacy
+    laws). Sanctions screening (OFAC) at onboarding via legacy-bridge;
+    SAR reporting to FinCEN at trigger. Compelled access via court
+    order through firm's legal counsel (relay has only ciphertext).
+    Regulator examination (#35c) for scoped read of required records.
+    Dodd-Frank whistleblower channel.
+  catalog-coverage-estimate: ~45-55%
+```
+
 ### 4.6.1 Out of current book scope — succession arrangements (extends §4.6 ownership transfer)
 
 ```yaml
@@ -505,6 +543,12 @@ Across all deployment scenarios, ~16 distinct architectural primitives surfaced.
 31. **Whole-system ownership transfer with persistent constraints** (Volume 3 multi-stakeholder economic, with civic-governance + medical-systems as cross-cutting application domains) — atomic transfer of entire system+data unit to new owner with cryptographic key reissuance and constraints that bind regardless of owner identity. Distinct from chain-of-custody (#9 — owner unchanged), delegated capability (#18 — owner unchanged + scoped grant), and ephemeral identity (#28 — owner unchanged + short-lived grant). Defining elements: atomic transfer event, old-owner key wipe, new-owner re-keying, multi-party attestation, constraint persistence (laws/contracts/biological-physical-limits bind regardless of owner), immutable transfer log, time-stamped activation, optional reversibility. Sources: nuclear football / presidential transition / Federal Reserve chair handover; organ transplant container / blood products / vaccine cold chain; vehicle title / real estate / land title transfer; digital estate inheritance; domain name / NFT / repository ownership; corporate acquisition / asset transfer; pawnshop / pledge; insurance subrogation; conservatorship; container shipping (TEU) handoffs.
 
 32. **Succession arrangements with executor delegation** (Volume 3 multi-stakeholder economic, with civic-governance + estate-planning as cross-cutting application domains) — pre-arranged rules for ownership transfer when the owner CANNOT personally attest (death, incapacity, disappearance, force majeure, long-term absence). Builds ON #31 by providing the authorization path when the owner is absent. KEY ARCHITECTURAL INSIGHT: capability OVER the system (use, run, see data) is distinct from capability OVER the system's ownership (decide who gets it). Local-first architecture should explicitly separate these. Sub-patterns: 32a meta-capability delegation (executor/lawyer/trustee gets transfer-authority WITHOUT use authority), 32b event-triggered activation (death certificate / incapacity finding / milestone / time-lock as trigger), 32c threshold-sig social recovery (M-of-N guardians collectively authorize; no single guardian acts alone), 32d programmatic trust conditions (machine-verifiable terms — age, marriage, performance, tax-status), 32e time-locked recovery delay (owner contestation window before succession completes), 32f reversibility-while-living (settlor/testator can amend until trigger event, then irrevocable). Sources: small-business succession (restaurant owner dies, beneficiary inherits); estate planning (wills, trusts, POAs); conservatorship and guardianship; multi-sig social recovery (crypto wallets); corporate succession plans; partnership buyout agreements; franchise transfer rights; sports team / music catalog inheritance; digital estate planning. Edge cases: disputed succession (multiple claimants), intestate cases (no pre-arrangement; civic-default), owner-thought-dead-returns, cross-jurisdictional probate, tax-timing.
+
+33. **Compelled-access boundary (cryptographic vs. legal enforcement)** (Volume 3 multi-stakeholder economic, with civic-governance + legal-compliance + journalist-source-protection + dissident-protection as cross-cutting domains) — architectural commitment about what compelled access can and cannot achieve. Builds on #6 zero-knowledge relay + #15 threat-model worksheets by elevating the legal-vs-cryptographic enforcement boundary to first-class commitment. Sub-patterns: 33a refusal-by-design (architecturally impossible to support backdoors / key-escrow / clipper-chip-style demands — different from "we won't" policy; this is "we can't" architecture), 33b provider limited cooperation (relay produces metadata it has when legally ordered; cannot produce content it never had access to), 33c user-side warrant compliance (architecture relocates legal pressure to user with full due process), 33d endpoint investigation as legal path (when content is provider-inaccessible, lawful access requires compelling user OR investigating endpoint with warrant), 33e compelled-assistance limits (Apple v FBI test — reasonable assistance, not bypass-creation), 33f proof-of-non-knowledge (relay cryptographically proves it cannot decrypt without revealing what it does have). Politically contested primitive — architecture takes a position; some jurisdictions may legally require what this architecture refuses (UK Online Safety Bill, Australia AABill, EU CSAR). Sources: Apple v FBI San Bernardino; Signal subpoena responses (metadata only); Lavabit shutdown precedent; CALEA / Lawful Intercept telecom requirements; UK RIPA decryption orders; FISA 702; Hong Kong NSL cross-border demands.
+
+34. **Compliance posture as architectural artifact** (Volume 3 multi-stakeholder economic, with civic-governance + healthcare-systems + financial-systems as cross-cutting domains) — formal declaration of regulatory commitments at deployment level (currently scattered across App F regulatory coverage and Ch15 security; should be first-class artifact). Sub-patterns: 34a per-deployment compliance manifest (which regs / which jurisdictions / what evidence), 34b audit trail as legally-admissible evidence (FRE 901-902 in US or equivalent international), 34c mandatory reporting hooks (banks, healthcare, money services with positive obligations to report — FinCEN CTRs, FDA MedWatch, OFSI), 34d regulatory sandbox / pilot mode (UK FCA, Singapore MAS, US various), 34e sanctions / KYC screening (OFAC, EU sanctions, FATF AML/KYC at legacy-bridge), 34f cross-jurisdictional conflict resolution (per-tenant per-jurisdiction posture; what happens when one jurisdiction's law requires what another forbids). Sources: GDPR Art 30 records; HIPAA Privacy/Security/Breach Notification suite; SOX 404; PCI-DSS SAQs; FedRAMP ATO; SOC 2 reports; ISO 27001/27018; APRA prudential; MAS TRMG; Schrems II adequacy; UK / EU GDPR divergence.
+
+35. **Legitimate-but-non-owner access** (Volume 3 multi-stakeholder economic, with civic-governance + corporate-governance + estate-planning as cross-cutting domains) — owner-granted OR court-ordered scoped access for legitimate oversight. Distinguished from #33 (compelled access against owner) by either explicit owner consent OR judicial determination that access serves legitimate purpose. Sub-patterns: 35a owner-granted scoped auditor access (uses #18 delegated capability with audit-trail-of-audit-access), 35b court-ordered access via special master (special master / conservator / receiver / bankruptcy trustee — uses #32-like patterns for in-vivo proceedings rather than death/incapacity), 35c regulator examination mode (FDA inspection, bank examiner, IRS audit; owner attests "this is in my compliance scope"), 35d whistleblower-protected disclosure pathway (Dodd-Frank, SEC whistleblower, EU Whistleblower Directive — architecture protects whistleblower identity), 35e attorney-client privilege protection (counsel access carries special privilege; channels distinct from general access), 35f forensic investigation consent-based (post-incident security review, internal investigation, civil litigation — distinct from compelled forensics). Sources: bankruptcy proceedings (trustee gains custodial access); civil litigation discovery (special master, e-discovery preservation); FDA/SEC/banking-regulator examination; corporate audits (Big Four annual); class action discovery; journalist-source vs. shield law; lawyer-client privilege.
 
 > **Note on regulatory streaming export:** the LADOT-MDS-style "mandated real-time signed export to a regulator with verifiable-completeness" pattern surfaced from the shared-scooter scenario is treated as a variant of chain-of-custody (#9) rather than a separate primitive — the architectural mechanism (signed streaming with append-only verifiable log) is the same.
 
@@ -685,8 +729,9 @@ This brief consolidates decisions from a multi-turn design discussion. Source tu
 - Shared scooters + last-mile delivery robots → surfaced ephemeral-identity + geofence-enforcement + human-in-the-loop override (cross-volume additions, primitives #28-30)
 - Office-of-authority transition + medical custody transfer + corporate acquisition → surfaced whole-system ownership transfer with persistent constraints (#31)
 - Restaurant succession + trust-managed assets + multi-sig social recovery → surfaced succession arrangements with executor delegation (#32) + the key insight that capability OVER ownership is architecturally distinct from capability OVER use
+- Healthcare compliance + journalist source protection + financial AML/KYC → surfaced legal compliance dimension as three distinct primitives: compelled-access boundary (#33), compliance posture as architectural artifact (#34), legitimate-but-non-owner access (#35); reinforced the architectural-vs-legal enforcement distinction (the architecture takes a position on backdoors that some jurisdictions may legally contest)
 
-The architecture has converged: 32 primitives across 4 volumes (with civic-governance + medical-systems + estate-planning as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
+The architecture has converged: 35 primitives across 4 volumes (with civic-governance + medical-systems + estate-planning + financial-systems + journalist-source-protection + dissident-protection as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
 
 ---
 
