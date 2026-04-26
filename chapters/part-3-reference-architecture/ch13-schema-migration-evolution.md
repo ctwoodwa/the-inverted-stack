@@ -225,7 +225,7 @@ Not every schema change is migratable through expand-contract and lenses. Three 
 | `Sunfish.Kernel.SchemaRegistry` | Bidirectional lens engine (`ISchemaLens`, `LensGraph`), epoch coordinator, copy-transform migrator, compaction scheduler |
 | `Sunfish.Kernel.Sync` | Per-peer schema version negotiation via HELLO handshake, lens application on delta transmission and receipt, version-gate enforcement at contract phase |
 
-Both packages are pre-1.0. Interface signatures are illustrative; validate against the current Sunfish milestone before implementation.
+Both packages are pre-1.0. Interface signatures are illustrative; validate against the current Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish)) milestone before implementation.
 
 See Chapter 17 for the tutorial path to registering schema versions and lenses, and Chapter 14 for the sync daemon protocol details that govern the HELLO handshake schema version exchange.
 

@@ -1232,6 +1232,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-26T04:09:27.997Z"
+    },
+    {
+      "id": "bug-078",
+      "timestamp": "2026-04-26T07:26:01.569Z",
+      "error_message": "Wrong reference: Conflict should be Libraries",
+      "file": "chapters/appendices/appendix-c-further-reading.md",
+      "root_cause": "Used \"Conflict\" instead of \"Libraries\"",
+      "fix": "Changed Conflict → Libraries",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-26T07:26:01.569Z"
     }
   ]
 }

@@ -1142,3 +1142,16 @@
 | 02:11 | Created build/remediate_first_use.py | — | ~2998 |
 | 02:12 | Edited build/check_first_use.py | modified main() | ~236 |
 | 02:12 | Edited build/remediate_first_use.py | 2→5 lines | ~76 |
+| 02:15 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 02:19 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 02:35 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 02:54 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 03:03 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 03:13 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 03:20 | Session end: 6 writes across 5 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py, remediate_first_use.py, check_first_use.py) | 7 reads | ~18317 tok |
+| 03:25 | Edited build/remediate_first_use.py | modified strip_non_prose_for_search() | ~277 |
+| 03:25 | Edited chapters/part-3-reference-architecture/ch12-crdt-engine-data-layer.md | inline fix | ~11 |
+| 03:25 | Edited chapters/part-4-implementation-playbooks/ch18-migrating-existing-saas.md | inline fix | ~11 |
+| 03:26 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~10 |
+| 03:26 | Edited chapters/appendices/appendix-c-further-reading.md | inline fix | ~8 |
+| 03:26 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~11 |

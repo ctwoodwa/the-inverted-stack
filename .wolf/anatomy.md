@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T06:12:43.477Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T07:26:13.846Z
 > Files: 130 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
@@ -78,7 +78,7 @@
 - `Makefile` — The Inverted Stack — Build Targets (~2146 tok)
 - `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~1932 tok)
 - `promote.py` — Phase 4 promotion script. (~2233 tok)
-- `remediate_first_use.py` — Remediate first-use rule violations across all chapter sources. (~3057 tok)
+- `remediate_first_use.py` — Remediate first-use rule violations across all chapter sources. (~3156 tok)
 - `update_kleppmann_citation.py` — One-shot updater: standardize all Kleppmann et al. 2019 citations (~1568 tok)
 - `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~5068 tok)
 - `word-count.py` — Word count per chapter vs. target. (~666 tok)
@@ -136,7 +136,7 @@
 
 - `appendix-a-sync-daemon-wire-protocol.md` — Appendix A — Sync Daemon Wire Protocol (~6830 tok)
 - `appendix-b-threat-model-worksheets.md` — Introduction (~5200 tok)
-- `appendix-c-further-reading.md` — Appendix C — Further Reading (~5973 tok)
+- `appendix-c-further-reading.md` — Appendix C — Further Reading (~6367 tok)
 - `appendix-d-testing-the-inverted-stack.md` — Appendix D — Testing the Inverted Stack (~5969 tok)
 - `appendix-e-citation-style.md` — Appendix E — Citation Style (~1667 tok)
 - `appendix-f-regulatory-coverage.md` — Appendix F — Regulatory Coverage Map — 7-region matrix of 40+ frameworks with per-chapter reverse index; the canonical compliance reference for the book (~3200 tok)
@@ -151,7 +151,7 @@
 
 ## chapters/part-1-thesis-and-pain/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~8704 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9028 tok)
 - `ch02-local-first-serious-stack.md` — Chapter 2 — Local-First: From Sync Toy to Serious Stack (~7791 tok)
 - `ch03-inverted-stack-one-diagram.md` — Chapter 3 — The Inverted Stack in One Diagram (~6573 tok)
 - `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5955 tok)
@@ -160,7 +160,7 @@
 
 - `ch05-enterprise-lens.md` — Chapter 5 — The Enterprise Lens (~6496 tok)
 - `ch06-distributed-systems-lens.md` — Chapter 6 — The Distributed Systems Lens (~6714 tok)
-- `ch07-security-lens.md` — Chapter 7 — The Security Lens (~7056 tok)
+- `ch07-security-lens.md` — Chapter 7 — The Security Lens (~7325 tok)
 - `ch08-product-economic-lens.md` — Who Is Jordan Kelsey (~6961 tok)
 - `ch09-local-first-practitioner-lens.md` — Chapter 9 — The Local-First Practitioner Lens (~7650 tok)
 - `ch10-synthesis.md` — Chapter 10 — Synthesis: What the Council Finally Agreed On (~5754 tok)
@@ -168,7 +168,7 @@
 ## chapters/part-3-reference-architecture/
 
 - `ch11-node-architecture.md` — Chapter 11 — Node Architecture (~9292 tok)
-- `ch12-crdt-engine-data-layer.md` — Chapter 12 — CRDT Engine and Data Layer (~9885 tok)
+- `ch12-crdt-engine-data-layer.md` — Chapter 12 — CRDT Engine and Data Layer (~10389 tok)
 - `ch13-schema-migration-evolution.md` — Chapter 13 — Schema Migration and Evolution (~6932 tok)
 - `ch14-sync-daemon-protocol.md` — Chapter 14 — Sync Daemon Protocol (~7080 tok)
 - `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~7671 tok)
@@ -177,7 +177,7 @@
 ## chapters/part-4-implementation-playbooks/
 
 - `ch17-building-first-node.md` — Chapter 17 — Building Your First Node (~7551 tok)
-- `ch18-migrating-existing-saas.md` — Chapter 18 — Migrating an Existing SaaS (~6992 tok)
+- `ch18-migrating-existing-saas.md` — Chapter 18 — Migrating an Existing SaaS (~7278 tok)
 - `ch19-shipping-to-enterprise.md` — The Procurement Conversation (~8859 tok)
 - `ch20-ux-sync-conflict.md` — Chapter 20 — UX, Sync, and Conflict (~6549 tok)
 
