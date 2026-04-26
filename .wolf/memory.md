@@ -907,3 +907,238 @@
 | 20:23 | Edited build/audiobook.py | 2→5 lines | ~44 |
 | 20:25 | Session end: 10 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~36047 tok |
 | 20:36 | Session end: 10 writes across 2 files (ch01-when-saas-fights-reality.md, audiobook.py) | 4 reads | ~36047 tok |
+
+## Session: 2026-04-26 20:45
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:46 | Created docs/superpowers/specs/2026-04-25-phase4-promotion-plan.md | — | ~1905 |
+| 20:46 | Session end: 1 writes across 1 files (2026-04-25-phase4-promotion-plan.md) | 2 reads | ~13385 tok |
+| 20:52 | Created chapters/_voice-drafts/pass1/ch02-local-first-serious-stack.md | — | ~8173 |
+| 20:53 | Session end: 2 writes across 2 files (2026-04-25-phase4-promotion-plan.md, ch02-local-first-serious-stack.md) | 2 reads | ~22142 tok |
+
+## Session: 2026-04-26 20:53
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 20:59 | Created chapters/_voice-drafts/pass1/ch06-distributed-systems-lens.md | — | ~7077 |
+| 20:59 | Session end: 1 writes across 1 files (ch06-distributed-systems-lens.md) | 2 reads | ~18054 tok |
+
+## Session: 2026-04-26 20:59
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:07 | Created chapters/_voice-drafts/pass1/ch07-security-lens.md | — | ~7553 |
+| 21:08 | Session end: 1 writes across 1 files (ch07-security-lens.md) | 2 reads | ~18906 tok |
+
+## Session: 2026-04-26 21:08
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:15 | Created chapters/_voice-drafts/pass1/ch08-product-economic-lens.md | — | ~7359 |
+| 21:15 | Session end: 1 writes across 1 files (ch08-product-economic-lens.md) | 2 reads | ~18399 tok |
+
+## Session: 2026-04-26 21:15
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:25 | Created chapters/_voice-drafts/pass1/ch09-local-first-practitioner-lens.md | — | ~8214 |
+| 21:25 | Session end: 1 writes across 1 files (ch09-local-first-practitioner-lens.md) | 2 reads | ~19667 tok |
+
+## Session: 2026-04-26 21:25
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:32 | Created chapters/_voice-drafts/pass1/ch12-crdt-engine-data-layer.md | — | ~10817 |
+| 21:32 | Session end: 1 writes across 1 files (ch12-crdt-engine-data-layer.md) | 2 reads | ~25027 tok |
+
+## Session: 2026-04-26 21:32
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:36 | Created chapters/_voice-drafts/pass1/ch17-building-first-node.md | — | ~7920 |
+| 21:36 | Session end: 1 writes across 1 files (ch17-building-first-node.md) | 2 reads | ~19293 tok |
+
+## Session: 2026-04-26 21:36
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:42 | Created chapters/_voice-drafts/pass1/ch18-migrating-existing-saas.md | — | ~7556 |
+| 21:42 | Session end: 1 writes across 1 files (ch18-migrating-existing-saas.md) | 2 reads | ~18846 tok |
+
+## Session: 2026-04-26 21:42
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:53 | Created chapters/_voice-drafts/pass1/ch20-ux-sync-conflict.md | — | ~6923 |
+| 21:53 | Session end: 1 writes across 1 files (ch20-ux-sync-conflict.md) | 2 reads | ~17182 tok |
+
+## Session: 2026-04-26 21:53
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 21:56 | Created chapters/_voice-drafts/final/preface.md | — | ~2369 |
+| 21:56 | Session end: 1 writes across 1 files (preface.md) | 2 reads | ~8015 tok |
+
+## Session: 2026-04-26 21:56
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:02 | Created chapters/_voice-drafts/final/ch02-local-first-serious-stack.md | — | ~8180 |
+| 22:02 | Session end: 1 writes across 1 files (ch02-local-first-serious-stack.md) | 3 reads | ~19664 tok |
+
+## Session: 2026-04-26 22:02
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:09 | Created chapters/_voice-drafts/final/ch03-inverted-stack-one-diagram.md | — | ~6863 |
+| 22:09 | Session end: 1 writes across 1 files (ch03-inverted-stack-one-diagram.md) | 2 reads | ~17164 tok |
+
+## Session: 2026-04-26 22:09
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:14 | Created chapters/_voice-drafts/final/ch06-distributed-systems-lens.md | — | ~7064 |
+| 22:14 | Session end: 1 writes across 1 files (ch06-distributed-systems-lens.md) | 2 reads | ~17440 tok |
+
+## Session: 2026-04-26 22:14
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:18 | Created chapters/_voice-drafts/final/ch07-security-lens.md | — | ~7544 |
+| 22:18 | Session end: 1 writes across 1 files (ch07-security-lens.md) | 3 reads | ~18402 tok |
+
+## Session: 2026-04-26 22:18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:22 | Created chapters/_voice-drafts/final/ch08-product-economic-lens.md | — | ~7426 |
+| 22:22 | Session end: 1 writes across 1 files (ch08-product-economic-lens.md) | 2 reads | ~18093 tok |
+
+## Session: 2026-04-26 22:22
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:30 | Created chapters/_voice-drafts/final/ch09-local-first-practitioner-lens.md | — | ~8208 |
+| 22:31 | Session end: 1 writes across 1 files (ch09-local-first-practitioner-lens.md) | 2 reads | ~19734 tok |
+
+## Session: 2026-04-26 22:31
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:38 | Created chapters/_voice-drafts/final/ch10-synthesis.md | — | ~6115 |
+| 22:38 | Session end: 1 writes across 1 files (ch10-synthesis.md) | 2 reads | ~15544 tok |
+
+## Session: 2026-04-26 22:38
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:48 | Created chapters/_voice-drafts/final/ch12-crdt-engine-data-layer.md | — | ~10810 |
+| 22:48 | Session end: 1 writes across 1 files (ch12-crdt-engine-data-layer.md) | 3 reads | ~24961 tok |
+
+## Session: 2026-04-26 22:48
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:55 | Created chapters/_voice-drafts/final/ch13-schema-migration-evolution.md | — | ~7305 |
+| 22:55 | Session end: 1 writes across 1 files (ch13-schema-migration-evolution.md) | 2 reads | ~17997 tok |
+
+## Session: 2026-04-26 22:55
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 22:59 | Created chapters/_voice-drafts/final/ch14-sync-daemon-protocol.md | — | ~7463 |
+| 22:59 | Session end: 1 writes across 1 files (ch14-sync-daemon-protocol.md) | 2 reads | ~18314 tok |
+
+## Session: 2026-04-26 22:59
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:06 | Created chapters/_voice-drafts/final/ch15-security-architecture.md | — | ~8039 |
+| 23:06 | Session end: 1 writes across 1 files (ch15-security-architecture.md) | 3 reads | ~19522 tok |
+
+## Session: 2026-04-26 23:06
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:14 | Created chapters/_voice-drafts/final/ch16-persistence-beyond-the-node.md | — | ~8932 |
+| 23:14 | Session end: 1 writes across 1 files (ch16-persistence-beyond-the-node.md) | 2 reads | ~21270 tok |
+
+## Session: 2026-04-26 23:14
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:21 | Created chapters/_voice-drafts/final/ch17-building-first-node.md | — | ~7912 |
+| 23:21 | Session end: 1 writes across 1 files (ch17-building-first-node.md) | 3 reads | ~19140 tok |
+
+## Session: 2026-04-26 23:21
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:29 | Created chapters/_voice-drafts/final/ch18-migrating-existing-saas.md | — | ~7543 |
+| 23:29 | Session end: 1 writes across 1 files (ch18-migrating-existing-saas.md) | 2 reads | ~18404 tok |
+
+## Session: 2026-04-26 23:29
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:35 | Created chapters/_voice-drafts/final/ch19-shipping-to-enterprise.md | — | ~9279 |
+| 23:35 | Session end: 1 writes across 1 files (ch19-shipping-to-enterprise.md) | 2 reads | ~22039 tok |
+
+## Session: 2026-04-26 23:35
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:39 | Created chapters/_voice-drafts/final/ch20-ux-sync-conflict.md | — | ~6946 |
+| 23:39 | Session end: 1 writes across 1 files (ch20-ux-sync-conflict.md) | 2 reads | ~17170 tok |
+
+## Session: 2026-04-26 23:39
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:43 | Created chapters/_voice-drafts/final/epilogue-what-the-stack-owes-you.md | — | ~5168 |
+| 23:43 | Session end: 1 writes across 1 files (epilogue-what-the-stack-owes-you.md) | 3 reads | ~16715 tok |
+
+## Session: 2026-04-26 23:43
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:49 | Created chapters/_voice-drafts/final/appendix-a-sync-daemon-wire-protocol.md | — | ~7192 |
+| 23:49 | Session end: 1 writes across 1 files (appendix-a-sync-daemon-wire-protocol.md) | 2 reads | ~17774 tok |
+
+## Session: 2026-04-26 23:49
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:52 | Created chapters/_voice-drafts/final/appendix-b-threat-model-worksheets.md | — | ~5616 |
+| 23:53 | Session end: 1 writes across 1 files (appendix-b-threat-model-worksheets.md) | 2 reads | ~14455 tok |
+
+## Session: 2026-04-26 23:53
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 23:58 | Created chapters/_voice-drafts/final/appendix-c-further-reading.md | — | ~6406 |
+| 23:58 | Session end: 1 writes across 1 files (appendix-c-further-reading.md) | 2 reads | ~16075 tok |
+
+## Session: 2026-04-26 23:58
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 00:05 | Created chapters/_voice-drafts/final/appendix-d-testing-the-inverted-stack.md | — | ~6360 |
+| 00:05 | Session end: 1 writes across 1 files (appendix-d-testing-the-inverted-stack.md) | 2 reads | ~16021 tok |
+
+## Session: 2026-04-26 00:05
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 00:07 | Created chapters/_voice-drafts/final/appendix-e-citation-style.md | — | ~1802 |
+| 00:08 | Session end: 1 writes across 1 files (appendix-e-citation-style.md) | 3 reads | ~6836 tok |
+| 00:09 | Edited build/check_stale.py | modified _sha256() | ~776 |
+| 00:10 | Edited tests/build/test_check_stale.py | modified test_returns_empty_when_final_dir_missing() | ~743 |
+| 00:11 | Session end: 3 writes across 3 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py) | 5 reads | ~9619 tok |
+| 01:29 | Session end: 3 writes across 3 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py) | 5 reads | ~9619 tok |
+| 01:45 | Session end: 3 writes across 3 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py) | 6 reads | ~11765 tok |
+| 02:01 | Session end: 3 writes across 3 files (appendix-e-citation-style.md, check_stale.py, test_check_stale.py) | 6 reads | ~11765 tok |
+| 02:11 | Created build/remediate_first_use.py | — | ~2998 |
+| 02:12 | Edited build/check_first_use.py | modified main() | ~236 |
+| 02:12 | Edited build/remediate_first_use.py | 2→5 lines | ~76 |
