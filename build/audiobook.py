@@ -498,8 +498,20 @@ def _expand_numbers(t: str) -> str:
     return t
 
 
-def narratable_text(md: str) -> str:
-    """Convert a chapter markdown file to a clean narration script."""
+def narratable_text(md: str, source_only: bool = False) -> str:
+    """Convert a chapter markdown file to a clean narration script.
+
+    When ``source_only`` is True, only structural transforms run (strip
+    code/tables/comments, normalize headings, list-bullet stripping). All
+    TTS-specific token swaps (currency expansion, acronym definitions,
+    proper-noun pronunciation, abbreviation expansion, em-dash → comma,
+    parenthetical-list ordinals) are SKIPPED. The result preserves the
+    original prose words and sentence boundaries, so the per-sentence chunk
+    count matches the TTS chunking exactly. Used by render_chapter() to
+    capture a ``source_text`` field on each alignment chunk for EPUB 3 Media
+    Overlay fragment ID injection — the source text matches what Pandoc
+    emits in the XHTML, while the TTS-rendered text does not.
+    """
     t = md
 
     # Strip HTML comments (ICM stage markers, target word counts, etc.)
@@ -564,8 +576,10 @@ def narratable_text(md: str) -> str:
 
     t = re.sub(r"(?m)^(#{1,6})\s+(.+?)\s*$", _heading_sub, t)
 
-    # Blockquote markers
-    t = re.sub(r"(?m)^\s*>\s?", "", t)
+    # Blockquote markers. Match horizontal whitespace only — `\s*` would
+    # consume the preceding `\n` and collapse the paragraph break, joining
+    # the blockquote into the prior paragraph as a single sentence.
+    t = re.sub(r"(?m)^[ \t]*>[ \t]?", "", t)
 
     # Horizontal rules
     t = re.sub(r"(?m)^\s*---+\s*$", "", t)
@@ -581,8 +595,9 @@ def narratable_text(md: str) -> str:
     # accumulate into noticeable mid-sentence dead air, especially after
     # voice-pass tunes that increase em-dash apposition density. A comma
     # gives espeak a natural prosody pause without injecting silence.
-    t = t.replace(" — ", ", ").replace(" – ", ", ")
-    t = t.replace("—", ", ").replace("–", ", ")
+    if not source_only:
+        t = t.replace(" — ", ", ").replace(" – ", ", ")
+        t = t.replace("—", ", ").replace("–", ", ")
 
     # Smart-quote normalization. Espeak handles curly quotes inconsistently;
     # straight ASCII quotes are reliably ignored (they don't introduce
@@ -602,34 +617,35 @@ def narratable_text(md: str) -> str:
     t = re.sub(r"\[\^[^\]]+\]", "", t)
     t = re.sub(r"\^", "", t)
 
-    # Abbreviation expansion: i.e., e.g., etc., vs., cf., p.m./a.m., v1.0.
-    # Run before the acronym pass so "i.e." in "the i.e. clarifier" expands
-    # cleanly without acronym-style respelling overriding it.
-    for pat, repl in ABBREVIATION_FIXES.items():
-        t = re.sub(pat, repl, t)
+    if not source_only:
+        # Abbreviation expansion: i.e., e.g., etc., vs., cf., p.m./a.m., v1.0.
+        # Run before the acronym pass so "i.e." in "the i.e. clarifier" expands
+        # cleanly without acronym-style respelling overriding it.
+        for pat, repl in ABBREVIATION_FIXES.items():
+            t = re.sub(pat, repl, t)
 
-    # Number-to-word expansion for narrative numbers. Espeak reads "10,000"
-    # acceptably but reads "$10K" / "10K" / "100M" / "20%" inconsistently.
-    # Normalize the most common patterns to plain English.
-    t = _expand_numbers(t)
+        # Number-to-word expansion for narrative numbers. Espeak reads "10,000"
+        # acceptably but reads "$10K" / "10K" / "100M" / "20%" inconsistently.
+        # Normalize the most common patterns to plain English.
+        t = _expand_numbers(t)
 
-    # List-marker spoken cues. Markdown numbered lists ("1. foo / 2. bar")
-    # were already stripped of leading "1." earlier, but inline ordinal
-    # references in prose ("first..., second..., third...") are already
-    # natural. The remaining work is enumerated parenthetical lists like
-    # "(1) ... (2) ... (3)" which espeak reads as "left-paren one right-paren".
-    t = re.sub(r"\((\d+)\)", lambda m: _ordinal_word(int(m.group(1))), t)
+        # List-marker spoken cues. Markdown numbered lists ("1. foo / 2. bar")
+        # were already stripped of leading "1." earlier, but inline ordinal
+        # references in prose ("first..., second..., third...") are already
+        # natural. The remaining work is enumerated parenthetical lists like
+        # "(1) ... (2) ... (3)" which espeak reads as "left-paren one right-paren".
+        t = re.sub(r"\((\d+)\)", lambda m: _ordinal_word(int(m.group(1))), t)
 
-    # Acronym pre-processing for known-mangled terms (applied before
-    # terminal-punctuation guarantee so word boundaries still match).
-    for pat, repl in ACRONYM_FIXES.items():
-        t = re.sub(pat, repl, t)
+        # Acronym pre-processing for known-mangled terms (applied before
+        # terminal-punctuation guarantee so word boundaries still match).
+        for pat, repl in ACRONYM_FIXES.items():
+            t = re.sub(pat, repl, t)
 
-    # Proper-noun pronunciation lexicon. Council member names and other
-    # repeated proper nouns the book cites. Applied after acronym fixes
-    # so neither pass interferes with the other.
-    for pat, repl in PROPER_NOUN_FIXES.items():
-        t = re.sub(pat, repl, t)
+        # Proper-noun pronunciation lexicon. Council member names and other
+        # repeated proper nouns the book cites. Applied after acronym fixes
+        # so neither pass interferes with the other.
+        for pat, repl in PROPER_NOUN_FIXES.items():
+            t = re.sub(pat, repl, t)
 
     # Collapse soft newlines (single newlines inside a paragraph) into
     # spaces before guaranteeing terminal punctuation. Markdown soft-wraps
@@ -690,6 +706,93 @@ def chunk_sentences(text: str) -> list[str]:
             if sent:
                 chunks.append(sent)
     return chunks
+
+
+def chunk_text_paired(tts_text: str, src_text: str,
+                      budget: int = CHUNK_CHAR_BUDGET
+                      ) -> tuple[list[str], list[str]]:
+    """Chunk TTS text by char-budget while slicing source text identically.
+
+    Both scripts share paragraph + sentence boundaries (structural transforms
+    in narratable_text are deterministic; TTS-only token swaps don't shift
+    paragraph splits). This walks both in lockstep, makes packing decisions
+    against the TTS budget, and emits the matching source slice on every
+    chunk boundary. Returns (tts_chunks, src_chunks) of equal length where
+    src_chunks[i] is the source equivalent of tts_chunks[i].
+
+    Used by render_chapter() to capture per-chunk source_text for EPUB Media
+    Overlay XHTML matching, where TTS-rendered text diverges from the
+    Pandoc-emitted source.
+    """
+    tts_paras = re.split(r"\n{2,}", tts_text)
+    src_paras = re.split(r"\n{2,}", src_text)
+    if len(tts_paras) != len(src_paras):
+        raise ValueError(f"paragraph count mismatch: tts={len(tts_paras)} "
+                         f"src={len(src_paras)} — narratable_text paragraph "
+                         f"structure should be identical between TTS and source")
+
+    tts_chunks: list[str] = []
+    src_chunks: list[str] = []
+    tts_buf = ""
+    src_buf = ""
+
+    def flush() -> None:
+        nonlocal tts_buf, src_buf
+        if tts_buf:
+            tts_chunks.append(tts_buf.strip())
+            src_chunks.append(src_buf.strip())
+            tts_buf = ""
+            src_buf = ""
+
+    for tts_para, src_para in zip(tts_paras, src_paras):
+        tts_para = tts_para.strip()
+        src_para = src_para.strip()
+        if not tts_para:
+            continue
+        if _is_pause_only(tts_para):
+            flush()
+            tts_chunks.append(tts_para)
+            src_chunks.append(src_para)
+            continue
+        if len(tts_para) > budget:
+            tts_sents = _SENT_SPLIT.split(tts_para)
+            src_sents = _SENT_SPLIT.split(src_para)
+            if len(tts_sents) != len(src_sents):
+                # Sentence splits diverged — keep the whole paragraph as one
+                # source slice and let multiple TTS sentence-chunks share it.
+                src_sents = [src_para] * len(tts_sents)
+            for tts_sent, src_sent in zip(tts_sents, src_sents):
+                tts_sent = tts_sent.strip()
+                src_sent = src_sent.strip()
+                if not tts_sent:
+                    continue
+                if len(tts_buf) + len(tts_sent) + 1 > budget and tts_buf:
+                    flush()
+                # Pathological-sentence wrapping (TTS-only) collapses many
+                # word-chunks into one source sentence: rare in practice.
+                if len(tts_sent) > budget:
+                    words = tts_sent.split()
+                    cur = ""
+                    for w in words:
+                        if len(cur) + len(w) + 1 > budget and cur:
+                            flush()
+                            tts_chunks.append(cur.strip())
+                            src_chunks.append(src_sent)
+                            cur = ""
+                        cur = (cur + " " + w).strip()
+                    if cur:
+                        tts_buf = (tts_buf + " " + cur).strip()
+                        src_buf = (src_buf + " " + src_sent).strip()
+                else:
+                    tts_buf = (tts_buf + " " + tts_sent).strip()
+                    src_buf = (src_buf + " " + src_sent).strip()
+        else:
+            if len(tts_buf) + len(tts_para) + 2 > budget and tts_buf:
+                flush()
+            tts_buf = (tts_buf + "\n\n" + tts_para).strip()
+            src_buf = (src_buf + "\n\n" + src_para).strip()
+    flush()
+    return tts_chunks, src_chunks
 
 
 def chunk_text(text: str, budget: int = CHUNK_CHAR_BUDGET) -> list[str]:
@@ -795,6 +898,18 @@ def build_script(md_path: Path) -> str:
     return script
 
 
+def build_source_script(md_path: Path) -> str:
+    """Source-text twin of build_script: same structural transforms, but no
+    TTS-specific token swaps. Sentence boundaries match build_script() so the
+    per-chunk source_text aligns 1:1 with the rendered chunks. Used by
+    render_chapter() to capture the source sentence on each alignment entry
+    for EPUB 3 Media Overlay fragment ID injection."""
+    raw = md_path.read_text(encoding="utf-8")
+    script = narratable_text(raw, source_only=True)
+    script = "... \n\n" + script
+    return script
+
+
 def render_chapter(
     client: OpenAI,
     voice: str,
@@ -805,12 +920,25 @@ def render_chapter(
     per_sentence: bool = False,
 ) -> dict:
     script = build_script(md_path)
+    source_script = build_source_script(md_path)
     script_path.parent.mkdir(parents=True, exist_ok=True)
     script_path.write_text(script, encoding="utf-8")
-    chunks = chunk_sentences(script) if per_sentence else chunk_text(script)
+
+    # Chunk TTS + source in lockstep so source_text on each alignment entry
+    # matches the Pandoc XHTML for EPUB Media Overlay fragment ID injection.
+    if per_sentence:
+        chunks = chunk_sentences(script)
+        source_chunks = chunk_sentences(source_script)
+    else:
+        chunks, source_chunks = chunk_text_paired(script, source_script)
     total_chars = sum(len(c) for c in chunks)
     mode = "sentence" if per_sentence else "chunk"
     print(f"  {md_path.name}: {len(chunks)} {mode}s, {total_chars:,} chars")
+    source_aligned = (len(source_chunks) == len(chunks))
+    if not source_aligned:
+        print(f"    note: source/rendered chunk counts diverge "
+              f"({len(source_chunks)} vs {len(chunks)}); source_text=None for this chapter",
+              file=sys.stderr)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     chapter_stem = md_path.stem
@@ -835,10 +963,12 @@ def render_chapter(
                 mp3 = strip_id3v2(mp3)
             chunk_duration = _mp3_duration_seconds(mp3)
             chunk_id = f"{chapter_stem}-c{i:04d}"
+            source_text = source_chunks[i - 1] if source_aligned else None
             alignment.append({
                 "chunk_id": chunk_id,
                 "chunk_index": i,
                 "text": chunk,
+                "source_text": source_text,
                 "is_pause": is_pause,
                 "start_seconds": round(cumulative_seconds, 3),
                 "end_seconds": round(cumulative_seconds + chunk_duration, 3),
