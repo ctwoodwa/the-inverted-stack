@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T07:26:13.846Z
-> Files: 130 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T14:16:00.504Z
+> Files: 134 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -15,8 +15,9 @@
 ## ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/
 
 - `feedback_voice_sinek_calibration.md` (~457 tok)
-- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~314 tok)
+- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~374 tok)
 - `project_failure_mode_taxonomy.md` (~434 tok)
+- `reference_anti_ai_tells_skill.md` (~508 tok)
 - `reference_gitbutler_workflow.md` (~494 tok)
 - `reference_literary_devices_skill.md` — Literary devices skill — location and wiring contract (~569 tok)
 
@@ -38,7 +39,8 @@
 ## .claude/agents/
 
 - `literary-board.md` — The Book (~8186 tok)
-- `prose-reviewer.md` — The Book's Voice (~1274 tok)
+- `prose-reviewer.md` — The Book's Voice (~2075 tok)
+- `style-enforcer.md` — The Book's Voice (~2527 tok)
 - `voice-brown.md` — Brown's voice in one sentence (~3216 tok)
 - `voice-gladwell.md` — Gladwell's voice in one sentence (~3064 tok)
 - `voice-godin.md` — Godin's voice in one sentence (~3256 tok)
@@ -52,6 +54,10 @@
 
 ## .claude/rules/
 
+
+## .claude/skills/anti-ai-tells/
+
+- `SKILL.md` — Anti-AI Tells — Reference for Removing LLM Signatures from Technical Prose (~6509 tok)
 
 ## .claude/skills/literary-devices/
 
@@ -68,7 +74,8 @@
 
 - `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~11636 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~14245 tok)
+- `build_overlays.py` — Whispersync-capable EPUB build (Phases B-E). (~6341 tok)
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `check_first_use.py` — First-use rule checker. (~3348 tok)
 - `check_stale.py` — Pre-Phase-4 stale-draft detector. (~920 tok)
@@ -151,7 +158,7 @@
 
 ## chapters/part-1-thesis-and-pain/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9028 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9970 tok)
 - `ch02-local-first-serious-stack.md` — Chapter 2 — Local-First: From Sync Toy to Serious Stack (~7791 tok)
 - `ch03-inverted-stack-one-diagram.md` — Chapter 3 — The Inverted Stack in One Diagram (~6573 tok)
 - `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5955 tok)
@@ -186,7 +193,7 @@
 
 ## docs/style/
 
-- `style-guide.md` — Unified Technical Writing Style Guide (~3818 tok)
+- `style-guide.md` — Unified Technical Writing Style Guide (~4472 tok)
 
 ## docs/superpowers/plans/
 

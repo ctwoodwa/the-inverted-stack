@@ -80,6 +80,81 @@ Replace hedges that soften a claim that should be definitive:
 ### 7. Restatements — cut the restatement
 If sentence B says what sentence A just said, cut B. The second sentence must add something — a consequence, a constraint, an example — or it goes.
 
+### 8. Copula avoidance — restore is/are/has (anti-ai-tells §8)
+Replace elaborate verb constructions with simple copulas when no information is lost:
+- "The kernel serves as the trust boundary" → "The kernel is the trust boundary"
+- "The relay stands as a coordination point" → "The relay is a coordination point"
+- "Anchor marks a reference implementation" → "Anchor is a reference implementation"
+- "The framework boasts X plugins" → "The framework has X plugins"
+- "The system features four planes" → "The system has four planes"
+- "Bridge represents a hybrid pattern" → "Bridge is a hybrid pattern"
+
+**Do NOT fix** when the verb carries its literal meaning — `serve` meaning to handle ("the relay serves authenticated traffic"), `feature` as a noun ("the new feature ships next week"), `mark` meaning to annotate or denote a specific point ("we mark each commit with the schema version").
+
+### 9. Significance / legacy puffery — cut or rewrite (anti-ai-tells §1)
+Strip ceremonial language that puffs importance without adding information:
+- "marks a pivotal moment in the evolution of" → cut; state the specific change
+- "stands as a testament to" → cut the phrase; restate the underlying claim
+- "the evolving landscape of" → "the [specific area]" or just name the thing
+- "contributing to a broader movement" → cut; name what specifically happened
+- "an indelible mark on" → cut; describe the actual effect
+- "underscores its importance" → cut; let the importance show through the substance
+
+### 10. Persuasive authority tropes — cut the trope, keep the claim (anti-ai-tells §27)
+These signal the writer is about to deliver a deep insight — usually they introduce an ordinary point. Cut the trope; keep the claim:
+- "The real question is whether…" → "The question is whether…" (or just open with the claim)
+- "At its core, X is…" → "X is…"
+- "Fundamentally, the issue is…" → "The issue is…"
+- "What really matters is…" → state what matters directly
+- "The deeper issue is…" → state the issue directly
+- "The heart of the matter is…" → state the matter directly
+
+### 11. Knowledge-cutoff disclaimers — replace with direct uncertainty (anti-ai-tells §21)
+Phrases that hedge facts by gesturing at "available information" read as model-self-disclosure:
+- "While specific details are limited" → cut; state what *is* known
+- "Based on available information" → cut; state the claim or its actual source
+- "As of my last training update" → cut entirely; cite a specific date if needed
+- "While comprehensive data is not available" → cut; name what is unknown and what would resolve it
+
+### 12. Collaborative-chat artifacts — cut entirely (anti-ai-tells §20)
+Should be zero in chapter prose. If you find any, cut without replacement:
+- "I hope this helps", "Let me know if…", "Here is an overview", "Certainly!", "Of course!", "You're absolutely right", "Would you like me to…"
+
+### 13. Signposting / "Let's…" announcements — cut and open with substance (anti-ai-tells §28)
+The book opens sections with the first piece of substance, not with announcements:
+- "Let's dive into how X works." → cut; the next sentence is the dive
+- "Let's break this down." → cut
+- "Let's explore X." → cut; explore it
+- "Here's what you need to know." → cut
+- "Now let's look at X." → cut
+- "Without further ado…" → cut
+
+### 14. Fragmented headers — cut the restatement line (anti-ai-tells §29)
+A heading followed by a one-line paragraph that just restates the heading. Cut the restatement; the next paragraph becomes the opener:
+
+**Before:**
+```
+## Failure modes
+
+Failure modes matter.
+
+When the relay is unreachable, the daemon queues writes locally…
+```
+
+**After:**
+```
+## Failure modes
+
+When the relay is unreachable, the daemon queues writes locally…
+```
+
+### 15. Title case in H2/H3/H4 headings — convert to sentence case (anti-ai-tells §17)
+House style is sentence case for section headings. H1 chapter titles follow `# Chapter N — Title` format separately.
+- `## The Inverted Stack In One Diagram` → `## The inverted stack in one diagram`
+- `### Choosing Your Architecture For Local-First` → `### Choosing your architecture for local-first`
+
+**Do NOT lower-case** proper nouns, acronyms, named products, or named patterns: `## How Sunfish handles CRDT garbage collection` keeps `Sunfish` and `CRDT` capitalized.
+
 ---
 
 ## What You Do NOT Change

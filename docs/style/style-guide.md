@@ -217,3 +217,26 @@ The synthesized voice sits at the intersection of:
 8. **Cut what doesn't earn its place.** Clarity is a structural obligation. Second draft = first draft minus ten percent.
 9. **Trust the reader.** Describe just enough to put the picture in their head; then stop.
 10. **Adverbs are usually a tell that the verb is weak.** Replace the noun-verb pair.
+
+***
+
+## Anti-AI Tells — Patterns to Avoid
+
+Modern LLM-generated prose has a recognizable signature: ceremonial openers, copulas swapped for "serves as," vague attributions to "industry observers," forced groups of three, and trailing `-ing` clauses that puff the appearance of consequence without specifying any. These patterns pass technical review and pass active-voice review and *still* mark a chapter as model-authored to readers who have spent a year skimming AI prose.
+
+Seventeen patterns are catalogued in `.claude/skills/anti-ai-tells/SKILL.md` with calibrated rewrites in this book's register and lexical greps for the prose-reviewer to run. Voice agents and the chapter-drafter should consult the skill *during drafting* (not just review) so the patterns do not appear on the first pass. The highest-yield single rules:
+
+- **Restore copulas.** "X **is** Y" beats "X **serves as** a Y" / "X **stands as** a Y" / "X **represents** a Y" / "X **boasts** Y." Strip the elaborate verb when no information is lost.
+- **Strip significance puffery.** "Marks a pivotal moment in the evolution of," "stands as a testament to," "the evolving landscape of," "contributing to a broader movement" — these add emotional weight without information. Cut.
+- **Strip persuasive authority tropes.** "The real question is," "at its core," "fundamentally," "what really matters" — the book leads with the punchline. These tropes are throat-clearing before the punchline.
+- **Watch the AI vocabulary cluster.** *delve, showcase, tapestry, interplay, intricate, pivotal, vibrant, enduring, additionally* — individual words are fine; clusters are a tell.
+- **Drop trailing `-ing` clauses that add the appearance of consequence.** "…, highlighting X" / "…, underscoring Y" / "…, fostering Z" — usually replaceable with a second sentence that *names* the consequence.
+- **Sentence case for H2/H3/H4.** Title Case in section headings is a tell. Proper nouns and acronyms keep their capitalization.
+
+**Three patterns from the upstream catalog are explicitly NOT applied here** because the book uses them deliberately:
+
+- **Em-dash use is intentional.** Lencioni and Gladwell registers depend on em-dash apposition for rhythm.
+- **Boldface emphasis is allowed sparingly** — for vocabulary installations and key-term first-use anchors. Mechanical bullet-bolding is still flagged.
+- **Hyphenated technical terms are correct** — `local-first`, `local-node`, `two-act`, `end-to-end` are stable terminology, not tells.
+
+See the skill for the full catalog, calibration notes, and the lexical greps the prose-reviewer runs on every chapter.
