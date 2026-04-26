@@ -139,10 +139,15 @@ SKIP_CHAPTERS = {
 
 
 def strip_non_prose_for_search(text: str) -> str:
-    """Mask code/comments/citations so first-occurrence search ignores them.
+    """Mask code/comments/citations/headings so first-occurrence search ignores them.
 
     Returns the text with non-prose regions replaced by spaces of equal length
     so character indices remain valid for the original text.
+
+    Headings are masked because the style guide explicitly exempts them from
+    the first-use rule — spell-outs in titles read awkwardly ("When SaaS
+    (Software as a Service) Fights Reality") and the next prose occurrence
+    is the correct insertion point.
     """
     def mask(match: re.Match) -> str:
         return " " * (match.end() - match.start())
@@ -151,6 +156,7 @@ def strip_non_prose_for_search(text: str) -> str:
     text = re.sub(r"`[^`]+`", mask, text)
     text = re.sub(r"<!--.*?-->", mask, text, flags=re.DOTALL)
     text = re.sub(r"\[\d+(?:[,\-]\d+)*\]", mask, text)  # citation markers
+    text = re.sub(r"(?m)^#+\s.*$", mask, text)  # markdown headings (H1-H6)
     return text
 
 

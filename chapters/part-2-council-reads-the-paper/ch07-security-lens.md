@@ -144,7 +144,7 @@ What the architecture does not support: instant recovery without a recovery arti
 
 Okonkwo scores credential recovery 7 out of 10.
 
-### GDPR (General Data Protection Regulation) Article 17 in a CRDT System
+### GDPR Article 17 in a CRDT System
 
 This is the condition Okonkwo scores lowest in Round 2: compliance framework mapping, 5 out of 10. It surfaces a genuine conflict between the architecture's design and a legal requirement that affects every organization operating in the European Union.
 

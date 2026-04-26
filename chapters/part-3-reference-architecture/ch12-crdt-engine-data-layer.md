@@ -1,4 +1,4 @@
-# Chapter 12 — CRDT (Conflict-free Replicated Data Type) Engine and Data Layer
+# Chapter 12 — CRDT Engine and Data Layer
 
 <!-- icm/prose-review -->
 <!-- Target: ~4,000 words -->

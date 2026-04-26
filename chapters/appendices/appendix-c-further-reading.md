@@ -22,7 +22,7 @@ Ink & Switch publishes detailed post-mortems of real local-first projects — Pu
 
 ---
 
-## Section 2: CRDT (Conflict-free Replicated Data Type) Libraries
+## Section 2: CRDT Libraries
 
 [3] K. Jahns, "Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library): A CRDT for building collaborative applications," GitHub. [Online]. Available: https://github.com/yjs/yjs
 

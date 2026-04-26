@@ -1,4 +1,4 @@
-# Chapter 1 — When SaaS (Software as a Service) Fights Reality
+# Chapter 1 — When SaaS Fights Reality
 
 <!-- icm/prose-review -->
 <!-- Target: ~5,200 words -->
@@ -20,7 +20,7 @@ The scenario repeats across industries that run on deadline-sensitive work — t
 
 ## The Bundle Nobody Agreed To
 
-The SaaS deal goes like this. Give us your data. Keep it on our servers. Pay us every month. In exchange you get real-time collaboration, multi-device access, and zero maintenance. Most users said yes without fully registering the second half. The first half was the product. The second half was the terms.
+The SaaS (Software as a Service) deal goes like this. Give us your data. Keep it on our servers. Pay us every month. In exchange you get real-time collaboration, multi-device access, and zero maintenance. Most users said yes without fully registering the second half. The first half was the product. The second half was the terms.
 
 The three desirable properties are real. Real-time collaboration is transformative — two people editing the same document, watching each other's changes appear, never again emailing attachments back and forth. Multi-device access means your work is on your phone when you need it at the airport. Zero maintenance means IT does not nurse a server in a closet; the vendor handles it. These are genuine improvements over what came before them.
 

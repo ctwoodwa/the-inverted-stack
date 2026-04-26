@@ -1,4 +1,4 @@
-# Chapter 18 — Migrating an Existing SaaS (Software as a Service)
+# Chapter 18 — Migrating an Existing SaaS
 
 <!-- icm/prose-review -->
 
