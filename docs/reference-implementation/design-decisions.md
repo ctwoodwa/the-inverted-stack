@@ -450,6 +450,45 @@ Each is a deployment combination of apps + a `data-classes:` block + Kleppmann p
   new-primitives-needed: [#32 succession, #32c threshold-sig social recovery (M-of-N guardian authorization), #32e time-locked recovery delay (defense against collusion)]
 ```
 
+### 4.6.3 Out of current book scope — redaction (selective disclosure)
+
+```yaml
+- id: government-foia-response
+  apps: [anchor × N (agency systems), thin-client-write × FOIA-officers, thin-client-read × requestors+counsel+court]
+  notes: |
+    Agency receives FOIA request; FOIA officer applies exemption-coded
+    redactions (5 USC 552(b) Exemptions 1-9). Each redaction
+    cryptographically signed with reason code + authority. Requestor
+    gets redacted version with verifiable authenticity. Court can
+    review unredacted in camera via #35b special-master. Time-bounded
+    redactions auto-expire (deliberative process ends post-decision).
+  catalog-coverage-estimate: ~30-40%
+  new-primitives-needed: [#36 redaction primitives, FOIA-exemption taxonomy as #34a manifest entry]
+
+- id: litigation-discovery-with-privilege-log
+  apps: [anchor × N (party systems), thin-client-write × counsel, thin-client-read × opposing-counsel+court]
+  notes: |
+    Counsel marks attorney-client + work-product portions for
+    redaction; each tagged with privilege-claim metadata. Opposing
+    counsel gets redacted docs + privilege log; can challenge in
+    camera via #35b. Trade-secret AEO (attorneys-eyes-only) — redacted
+    even from producing party's commercial principals.
+  catalog-coverage-estimate: ~25-35%
+  new-primitives-needed: [#36, AEO as #36g multi-recipient differential view, privilege log as #34b admissible audit trail]
+
+- id: medical-research-data-sharing
+  apps: [anchor × N (hospital EHRs), bridge × 1 (data-sharing-platform), thin-client-read × researchers, legacy-bridge × IRB-and-DUA]
+  notes: |
+    Two paths under IRB-approved protocol: (1) HIPAA Safe Harbor — 18
+    identifiers removed (#36c pseudonymization), key held by IRB;
+    (2) Expert Determination — statistical de-identification (#36d
+    k-anonymity / differential privacy). Researcher gets verifiable
+    de-identification chain. Re-identification possible only via IRB
+    authority for narrow circumstances (adverse drug reaction follow-up).
+  catalog-coverage-estimate: ~30-40%
+  new-primitives-needed: [#36, IRB-approved use as #34a manifest + #35a auditor pattern]
+```
+
 ### 4.7 Out of current book scope — extreme environment
 
 ```yaml
@@ -549,6 +588,8 @@ Across all deployment scenarios, ~16 distinct architectural primitives surfaced.
 34. **Compliance posture as architectural artifact** (Volume 3 multi-stakeholder economic, with civic-governance + healthcare-systems + financial-systems as cross-cutting domains) — formal declaration of regulatory commitments at deployment level (currently scattered across App F regulatory coverage and Ch15 security; should be first-class artifact). Sub-patterns: 34a per-deployment compliance manifest (which regs / which jurisdictions / what evidence), 34b audit trail as legally-admissible evidence (FRE 901-902 in US or equivalent international), 34c mandatory reporting hooks (banks, healthcare, money services with positive obligations to report — FinCEN CTRs, FDA MedWatch, OFSI), 34d regulatory sandbox / pilot mode (UK FCA, Singapore MAS, US various), 34e sanctions / KYC screening (OFAC, EU sanctions, FATF AML/KYC at legacy-bridge), 34f cross-jurisdictional conflict resolution (per-tenant per-jurisdiction posture; what happens when one jurisdiction's law requires what another forbids). Sources: GDPR Art 30 records; HIPAA Privacy/Security/Breach Notification suite; SOX 404; PCI-DSS SAQs; FedRAMP ATO; SOC 2 reports; ISO 27001/27018; APRA prudential; MAS TRMG; Schrems II adequacy; UK / EU GDPR divergence.
 
 35. **Legitimate-but-non-owner access** (Volume 3 multi-stakeholder economic, with civic-governance + corporate-governance + estate-planning as cross-cutting domains) — owner-granted OR court-ordered scoped access for legitimate oversight. Distinguished from #33 (compelled access against owner) by either explicit owner consent OR judicial determination that access serves legitimate purpose. Sub-patterns: 35a owner-granted scoped auditor access (uses #18 delegated capability with audit-trail-of-audit-access), 35b court-ordered access via special master (special master / conservator / receiver / bankruptcy trustee — uses #32-like patterns for in-vivo proceedings rather than death/incapacity), 35c regulator examination mode (FDA inspection, bank examiner, IRS audit; owner attests "this is in my compliance scope"), 35d whistleblower-protected disclosure pathway (Dodd-Frank, SEC whistleblower, EU Whistleblower Directive — architecture protects whistleblower identity), 35e attorney-client privilege protection (counsel access carries special privilege; channels distinct from general access), 35f forensic investigation consent-based (post-incident security review, internal investigation, civil litigation — distinct from compelled forensics). Sources: bankruptcy proceedings (trustee gains custodial access); civil litigation discovery (special master, e-discovery preservation); FDA/SEC/banking-regulator examination; corporate audits (Big Four annual); class action discovery; journalist-source vs. shield law; lawyer-client privilege.
+
+36. **Redaction primitives** (Volume 3 multi-stakeholder economic, with civic-governance + legal-compliance + healthcare-systems + journalism + research-ethics as cross-cutting domains) — selective disclosure: produce a transformed version of data for a specific audience while preserving the original AND letting the recipient verify the authenticity of what they received. Distinct from confidentiality (#6 — hide from intermediaries), chain-of-custody (#9 — sign handoffs), crypto-shredding (#17 — destroy keys irreversibly), and compelled-access (#33 — legal enforcement). Sub-patterns: 36a field-level redactable signatures (cryptographic signatures preserving validity after authorized removal of designated portions), 36b selective disclosure credentials (BBS+ / W3C VC; reveal subset with authenticity proof), 36c pseudonymization with re-identification key custody (replace identifiers; key held by authorized custodian; release under defined conditions), 36d statistical de-identification (k-anonymity, l-diversity, differential privacy), 36e justification metadata (each redaction tagged with reason code, authority, audit trail), 36f time-bounded redactions (auto-expire — investigation, deliberative process, embargo periods), 36g multi-recipient differential views (same source, different redactions per recipient — counsel sees unredacted, opposing sees redacted+privilege-log, jury sees pseudonymized, public sees court order only), 36h reversibility / redaction-as-view (original retained; redaction is presentation transform, not destruction; court can order in-camera review), 36i CRDT-aware redaction (open research question — how to redact CRDT history while preserving convergence; may require redaction-aware CRDT variants or epoch boundaries), 36j multi-peer redaction agreement (per-peer view determined by peer's authority — different from confidentiality because all peers see SOMETHING; what they see differs). Sources: FOIA exemptions (5 USC 552(b)) and equivalent international (UK FOIA, EU 1049/2001); litigation discovery + privilege logs (FRCP 26(b)(5)); HIPAA Safe Harbor + Expert Determination; SEC Reg S-K Item 601; court record sealing (FRCP 5.2); witness protection programs; Doe v. X pseudonyms; trade-secret AEO designations; academic peer review; medical research IRB protocols; right-to-be-forgotten selective indexing.
 
 > **Note on regulatory streaming export:** the LADOT-MDS-style "mandated real-time signed export to a regulator with verifiable-completeness" pattern surfaced from the shared-scooter scenario is treated as a variant of chain-of-custody (#9) rather than a separate primitive — the architectural mechanism (signed streaming with append-only verifiable log) is the same.
 
@@ -730,8 +771,9 @@ This brief consolidates decisions from a multi-turn design discussion. Source tu
 - Office-of-authority transition + medical custody transfer + corporate acquisition → surfaced whole-system ownership transfer with persistent constraints (#31)
 - Restaurant succession + trust-managed assets + multi-sig social recovery → surfaced succession arrangements with executor delegation (#32) + the key insight that capability OVER ownership is architecturally distinct from capability OVER use
 - Healthcare compliance + journalist source protection + financial AML/KYC → surfaced legal compliance dimension as three distinct primitives: compelled-access boundary (#33), compliance posture as architectural artifact (#34), legitimate-but-non-owner access (#35); reinforced the architectural-vs-legal enforcement distinction (the architecture takes a position on backdoors that some jurisdictions may legally contest)
+- FOIA government response + litigation discovery + medical research data sharing → surfaced redaction primitives (#36) as fundamentally distinct from existing confidentiality / chain-of-custody / crypto-shredding / compelled-access primitives — redaction is selective disclosure with verifiable authenticity, supporting differential views per recipient, justification metadata, time-bounded auto-expiration, and reversibility (original retained)
 
-The architecture has converged: 35 primitives across 4 volumes (with civic-governance + medical-systems + estate-planning + financial-systems + journalist-source-protection + dissident-protection as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
+The architecture has converged: 36 primitives across 4 volumes (with civic-governance + medical-systems + estate-planning + financial-systems + journalist-source-protection + dissident-protection + research-ethics as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
 
 ---
 
