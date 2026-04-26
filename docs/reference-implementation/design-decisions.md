@@ -293,7 +293,41 @@ Each is a deployment combination of apps + a `data-classes:` block + Kleppmann p
   catalog-coverage-estimate: ~45-55%
 ```
 
-### 4.5 Out of current book scope — extreme environment
+### 4.5 Out of current book scope — shared / supervised cyber-physical
+
+```yaml
+- id: shared-micromobility
+  apps: [anchor-embedded × N (1k-50k/city), bridge × K (per-city), thin-client-write × ephemeral-per-rider, thin-client-read × ops, legacy-bridge × city-MDS, legacy-bridge × payment, legacy-bridge × insurance]
+  notes: |
+    Lime / Bird / Spin / Tier class. Scooter is a node — owns location,
+    battery, lock state, ride-session log. Rider rents for minutes-to-hours
+    then identity dissolves. Geofence enforcement local + verifiable.
+    Per-city Bridge tenants handle multi-jurisdictional variation. Mandated
+    real-time MDS export to city with verifiable-completeness contract.
+  catalog-coverage-estimate: ~45-55%
+  new-primitives-needed:
+    - Ephemeral identity / use-right tokens (15-min-to-hour scoped grants; identity dissolves after session)
+    - Geofence enforcement as architectural primitive (local-first geo-bounded behavior, works offline)
+    - Mandated real-time regulatory export (signed streaming compliance data with verifiable-completeness)
+
+- id: last-mile-delivery-robot-supervised
+  apps: [anchor-embedded × N (10s-1000s), bridge × 1, thin-client-write × M (supervisors), thin-client-read × consumer+restaurant, legacy-bridge × restaurant-pos+stripe]
+  notes: |
+    Starship / Kiwibot / Coco (sidewalk); Nuro (street); Wing / Zipline
+    (aerial). 90% autonomous; human supervisor takes over on hard cases.
+    Each supervisor oversees 5-20 robots; handoff requires sub-200ms latency.
+    Multi-handoff cargo chain-of-custody: restaurant → robot → consumer.
+    Public-space operation creates accountability when robot encounters
+    pedestrians, vehicles, or property.
+  catalog-coverage-estimate: ~25-35%
+  new-primitives-needed:
+    - Human-in-the-loop override authority (autonomous control + low-latency manual override; supervisor identity attested per session)
+    - Latency-critical remote supervisor session (sub-200ms video + telemetry + control transfer)
+    - Multi-party cargo chain-of-custody (restaurant → robot → consumer 3-party signed handoff)
+    - Public-space behavior accountability (incident data immutable for after-the-fact liability)
+```
+
+### 4.7 Out of current book scope — extreme environment
 
 ```yaml
 - id: deep-space-probe
@@ -318,7 +352,7 @@ Each is a deployment combination of apps + a `data-classes:` block + Kleppmann p
   catalog-coverage-estimate: ~30-35%
 ```
 
-### 4.6 Other genuinely-new scenarios surfaced (briefly)
+### 4.8 Other genuinely-new scenarios surfaced (briefly)
 
 | Scenario | New primitive |
 |---|---|
@@ -377,6 +411,14 @@ Across all deployment scenarios, ~16 distinct architectural primitives surfaced.
 25. **Anonymity-preserving authenticity** — voting; anonymous reporting; ZK-proof-of-eligibility
 26. **Mission-critical autonomy authority** — when can the device act without operator approval (spacecraft, submarine, robot in extremis)?
 27. **Update-gating with multi-stakeholder approval** — months of testing before deployment; spacecraft, aviation, medical implant
+
+### Cross-volume additions (surfaced from shared / supervised cyber-physical)
+
+28. **Ephemeral identity / use-right tokens** (Volume 3 multi-stakeholder economic) — short-lived, narrow-scope grants distinct from long-lived delegated capability. Sources: shared scooters (rental session), valet mode, courier handoff tokens, rental car sessions, time-bounded device access.
+29. **Geofence enforcement as architectural primitive** (Volume 2 cyber-physical) — local-first geo-bounded behavior with verifiable enforcement that works offline. Sources: shared micromobility (slowdown / no-park zones), drone airspace restrictions, robot operating boundaries, asset-tracking with auto-disable on theft.
+30. **Human-in-the-loop override authority** (Volume 2 cyber-physical) — combines autonomous safety-critical control with low-latency manual override; supervisor identity attested per session; handoff timing recorded for liability. Sources: last-mile delivery robots, semi-autonomous vehicles (lane-keeping vs. driver), industrial robots with operator-stop, surgical robots.
+
+> **Note on regulatory streaming export:** the LADOT-MDS-style "mandated real-time signed export to a regulator with verifiable-completeness" pattern surfaced from the shared-scooter scenario is treated as a variant of chain-of-custody (#9) rather than a separate primitive — the architectural mechanism (signed streaming with append-only verifiable log) is the same.
 
 ---
 
@@ -552,8 +594,9 @@ This brief consolidates decisions from a multi-turn design discussion. Source tu
 - Automotive + robotics → surfaced cyber-physical primitive cluster (Volume 2 territory)
 - Spacecraft → surfaced DTN + asynchronous command authority (Volume 4 territory)
 - Vending machines → confirmed fits existing kiosk + POS + headless-fleet hybrid
+- Shared scooters + last-mile delivery robots → surfaced ephemeral-identity + geofence-enforcement + human-in-the-loop override (cross-volume additions, primitives #28-30)
 
-The architecture has converged: 16 primitives across 4 volumes; new scenarios fit existing archetypes with calibration. Time to execute.
+The architecture has converged: 30 primitives across 4 volumes; new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
 
 ---
 
