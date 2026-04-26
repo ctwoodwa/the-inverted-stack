@@ -1,4 +1,4 @@
-﻿# Chapter 19 — Shipping to Enterprise
+# Chapter 19 — Shipping to Enterprise
 
 <!-- icm/prose-review -->
 
@@ -7,15 +7,15 @@
 
 ---
 
-You have a working local-first node. Now you need to ship it to an organization with managed endpoints, a security team, and a procurement team that has seen vendor lock-in before. Enterprise IT evaluates software through a procurement checklist, a security review, and a legal sign-off — each gate has a specific requirement, and each requirement has a concrete resolution.
+You have a working local-first node. Now you have to ship it to an organization with managed endpoints, a security team, and a procurement team that has been burned by vendor lock-in before. Enterprise IT evaluates software through three gates — a procurement checklist, a security review, and a legal sign-off. Each gate has a specific requirement. Each requirement has a concrete resolution.
 
 ---
 
 ## The Procurement Conversation
 
-The first conversation with enterprise legal will focus on licensing. Open-source core sounds attractive until the legal team runs it against their approved-licenses list and finds AGPLv3. The network-use clause — which requires you to publish modifications when you run the software as a service, even for internal use — triggers a categorical block at many corporate legal shops. This is not negotiable on their side. It is, however, solvable on yours.
+The first conversation with enterprise legal will focus on licensing. Open-source core sounds attractive — until the legal team runs it against their approved-licenses list and finds AGPLv3. The network-use clause requires you to publish modifications when you run the software as a service, even for internal use. That clause triggers a categorical block at many corporate legal shops. This is not negotiable on their side. It is, however, solvable on yours.
 
-AGPLv3 plus a managed relay subscription produces one predictable line item: the relay subscription fee. No per-seat count to audit, no usage-based surprise. The open-source core removes the vendor lock-in objection that killed the last three SaaS proposals the CTO sat through. That story is genuinely compelling.
+AGPLv3 plus a managed relay subscription produces one predictable line item: the relay subscription fee. No per-seat count to audit. No usage-based surprise. The open-source core removes the vendor lock-in objection that killed the last three SaaS proposals the CTO sat through. That story is genuinely compelling.
 
 The resolution to the AGPLv3 block is a dual-license structure. Publish the core under AGPLv3 as the default. Offer a commercial license exception to organizations that cannot accept the network-use clause. The commercial license is a standard negotiated agreement: it permits internal modification without publishing obligation, grants a warranty, and specifies SLA terms for security patches.
 
@@ -33,13 +33,13 @@ Enterprise IT deploys software. It does not unzip archives and run scripts. Your
 
 The reference implementation targets two packaging formats, one per major managed-endpoint platform:
 
-**Windows: MSIX or signed MSI.** The installer provisions the MAUI host application and registers the sync daemon as a Windows Service. The Windows Service registration means the daemon starts before any user logs in, survives user logoff, and can be restarted by the Service Control Manager on failure. Use the `<ServiceInstall>` element in a WiX installer to declare the service, or the MSIX `<uap5:StartupTask>` extension for store-distributed packages. Silent install with no UI:
+**Windows: MSIX or signed MSI.** The installer provisions the MAUI host application and registers the sync daemon as a Windows Service. Service registration means the daemon starts before any user logs in, survives user logoff, and can be restarted by the Service Control Manager on failure. Use the `<ServiceInstall>` element in a WiX installer to declare the service, or the MSIX `<uap5:StartupTask>` extension for store-distributed packages. Silent install with no UI:
 
 ```bash
 msiexec /i Sunfish.msi /qn /norestart INSTALLFOLDER="C:\ProgramData\Sunfish" SERVICESTART=1
 ```
 
-**macOS: signed and notarized .pkg or .dmg.** The package installs a `.app` bundle for the MAUI foreground application and a `launchd` launch agent for the sync daemon. The launch agent plist goes to `/Library/LaunchDaemons/` (system context, no user login required) rather than `~/Library/LaunchAgents/`. This distinction matters for enterprise deployment: system-context daemons run under MDM supervision, which is where the compliance hooks live.
+**macOS: signed and notarized .pkg or .dmg.** The package installs a `.app` bundle for the MAUI foreground application and a `launchd` launch agent for the sync daemon. The launch agent plist goes to `/Library/LaunchDaemons/` (system context, no user login required) rather than `~/Library/LaunchAgents/`. The distinction matters for enterprise deployment: system-context daemons run under MDM supervision, which is where the compliance hooks live.
 
 Both formats integrate with Intune and Jamf for policy-driven deployment. Neither format requires user interaction during install. Neither format modifies PATH or installs global developer tooling.
 
@@ -69,7 +69,7 @@ Unsigned software does not run on managed endpoints. This is not a configuration
 
 ### macOS
 
-Gatekeeper enforces that all software distributed outside the Mac App Store must be signed with a Developer ID certificate and notarized by Apple before it will execute without intervention. Notarization is Apple's automated malware scan; without it, macOS quarantines the binary on download.
+Gatekeeper enforces that all software distributed outside the Mac App Store must be signed with a Developer ID certificate and notarized by Apple before it will execute without intervention. Notarization is Apple's automated malware scan. Without it, macOS quarantines the binary on download.
 
 The distribution pipeline for macOS:
 
@@ -90,7 +90,7 @@ xcrun notarytool submit Sunfish.pkg \
 xcrun stapler staple Sunfish.pkg
 ```
 
-Sign both the foreground MAUI app and the background sync daemon. They ship together but Gatekeeper evaluates each binary independently. An unsigned helper will block the entire package from launching on endpoints that run XProtect Remediator.
+Sign both the foreground MAUI app and the background sync daemon. They ship together, but Gatekeeper evaluates each binary independently. An unsigned helper will block the entire package from launching on endpoints that run XProtect Remediator.
 
 Use the `--options runtime` flag on all `codesign` calls. Hardened runtime is required for notarization; without it, `notarytool` rejects the submission.
 
@@ -98,7 +98,7 @@ Use the `--options runtime` flag on all `codesign` calls. Hardened runtime is re
 
 App Control for Business (formerly WDAC) is the enterprise enforcement layer that replaces the older Software Restriction Policies and AppLocker. App Control lets organizations restrict execution to signed code from approved publishers.
 
-The product requirement: Authenticode-sign every executable and DLL with an organization-owned certificate. Not a self-signed certificate, not a free certificate authority — a certificate that chains to a trusted commercial CA, such as DigiCert or Sectigo.
+The product requirement: Authenticode-sign every executable and DLL with an organization-owned certificate. Not a self-signed certificate. Not a free certificate authority. A certificate that chains to a trusted commercial CA, such as DigiCert or Sectigo.
 
 ```powershell
 # Sign all binaries before packaging
@@ -143,17 +143,17 @@ launchctl list | grep com.sunfish.local-node-host && echo "installed" || exit 1
 
 ### SOTI MobiControl
 
-SOTI MobiControl is the dominant MDM platform in GCC enterprise fleets — UAE/DIFC-licensed financial firms, Saudi Arabian public sector, Qatari telecoms — and a significant presence in Sub-Saharan African enterprise. Create a SOTI Advanced Application Package (AAP) from the `.msi` payload, add the same Windows Service registry detection rule as Intune (SOTI reads it identically), and target by device group. SOTI profiles deploy `node-config.json` to `%ProgramData%\Sunfish\` using the File Sync component; ensure the file is marked as MDM-managed so subsequent node reads pick up the pre-seeded configuration rather than generating a default.
+SOTI MobiControl is the dominant MDM platform in GCC enterprise fleets — UAE/DIFC-licensed financial firms, Saudi Arabian public sector, Qatari telecoms — and a significant presence in Sub-Saharan African enterprise. Create a SOTI Advanced Application Package (AAP) from the `.msi` payload. Add the same Windows Service registry detection rule as Intune (SOTI reads it identically). Target by device group. SOTI profiles deploy `node-config.json` to `%ProgramData%\Sunfish\` using the File Sync component; mark the file as MDM-managed so subsequent node reads pick up the pre-seeded configuration rather than generating a default.
 
 ### IBM MaaS360
 
-IBM MaaS360 covers GCC, Indian BFSI (RBI-regulated entities), APAC enterprise, and African financial services. Upload the `.msi` as a Windows app distribution, configure the same Service detection check, and scope to a Smart Group by device. Pre-seeded configuration deploys through MaaS360's Corporate Doc Content module, which handles the same `node-config.json` file placement with MDM-managed read-only attributes.
+IBM MaaS360 covers GCC, Indian BFSI (RBI-regulated entities), APAC enterprise, and African financial services. Upload the `.msi` as a Windows app distribution. Configure the same Service detection check. Scope to a Smart Group by device. Pre-seeded configuration deploys through MaaS360's Corporate Doc Content module, which handles the same `node-config.json` file placement with MDM-managed read-only attributes.
 
 ### Ivanti Endpoint Manager
 
 Ivanti EPM is common in APAC (Japan excluded) and in African financial services. Package the `.msi` as an Ivanti Application with the standard detection method. Pre-seeded configuration deploys via Ivanti Environment Manager Policy to `%ProgramData%\Sunfish\node-config.json`.
 
-The underlying attestation mechanism is MDM-platform-agnostic. `Sunfish.Kernel.Security` verifies the enterprise attestation issuer public key against the value pre-seeded in `node-config.json` regardless of which platform deployed the config. Adding a new MDM platform is a packaging and detection-rule exercise; it does not require changes to the architecture or the kernel.
+The underlying attestation mechanism is MDM-platform-agnostic. `Sunfish.Kernel.Security` verifies the enterprise attestation issuer public key against the value pre-seeded in `node-config.json` regardless of which platform deployed the config. Adding a new MDM platform is a packaging and detection-rule exercise. It does not require changes to the architecture or the kernel.
 
 ### Pre-Seeded Configuration
 
@@ -182,7 +182,7 @@ The schema is versioned. The current schema is `v1`:
 
 The `enterpriseAttestationIssuerPublicKey` field is the base64-encoded Ed25519 public key your organization uses to issue role attestation tokens. Generate this keypair once, store the private key in your secrets vault, and distribute the public key through this config field. Nodes use it to validate attestation tokens without calling home.
 
-The host refuses to start if the config file fails schema validation. It does not silently ignore invalid configuration or fall back to defaults. It logs the validation error and exits. This is intentional — a misconfigured node that starts anyway and fails at runtime is harder to diagnose than a node that refuses to start with a clear error message.
+The host refuses to start if the config file fails schema validation. It does not silently ignore invalid configuration. It does not fall back to defaults. It logs the validation error and exits. This is intentional. A misconfigured node that starts anyway and fails at runtime is harder to diagnose than a node that refuses to start with a clear error message.
 
 ### Post-Install Health Verification
 
@@ -192,11 +192,11 @@ After the MDM push completes, verify installation health before declaring the de
 
 **Config file not found.** The application reads `node-config.json` at startup and fails fast if it is missing or malformed. Pre-seeded config deployment via Intune is a separate assignment from the application package; if the sequencing is wrong, the app installs before the config arrives. Use an Intune Proactive Remediation script to verify the file exists and contains valid JSON before the app assignment runs. On Jamf, use a policy ordering dependency: the configuration policy must succeed before the app policy triggers.
 
-Both failure modes produce clear error logs. Neither requires a technician visit to diagnose once you know what to look for — a remote log pull via MDM resolves both within minutes.
+Both failure modes produce clear error logs. Neither requires a technician visit to diagnose once you know what to look for. A remote log pull via MDM resolves both within minutes.
 
 ### Compliance Check at Capability Negotiation
 
-MDM compliance is not a one-time installation gate. A node that was compliant at install time can fall out of compliance mid-session: the MDM policy updates, the certificate expires, or the config file is modified outside the MDM channel. The compliance check runs at capability negotiation — the handshake that happens before a node touches any data. A node that fails the compliance check during an active session receives a rejection at the next handshake boundary. It does not retain access until the session ends.
+MDM compliance is not a one-time installation gate. A node that was compliant at install time can fall out of compliance mid-session. The MDM policy updates. The certificate expires. The config file is modified outside the MDM channel. The compliance check runs at capability negotiation — the handshake that happens before a node touches any data. A node that fails the compliance check during an active session receives a rejection at the next handshake boundary. It does not retain access until the session ends.
 
 Revoking MDM compliance propagates to data access within minutes, not at the next reboot.
 
@@ -236,7 +236,7 @@ grype sbom:Sunfish.cdx.json --output table --fail-on high
 
 Run both commands in CI as a required gate before producing a release artifact. The `--fail-on high` flag causes the build to fail if Grype finds a high or critical CVE without a suppression entry. Suppression entries require a documented justification and an expiry date. Do not accumulate suppressions without review.
 
-Publish the SBOM alongside the release artifact. The internal update server serves it at a predictable URL (see Air-Gap Deployment below). Enterprise security teams will fetch it automatically; make that fetch reliable.
+Publish the SBOM alongside the release artifact. The internal update server serves it at a predictable URL (see Air-Gap Deployment below). Enterprise security teams will fetch it automatically. Make that fetch reliable.
 
 **CVE Response SLA.** State this explicitly in your security policy document and reference it in the procurement response. These commitments match the architecture's security policy as specified in Chapter 5:
 
@@ -247,9 +247,9 @@ Publish the SBOM alongside the release artifact. The internal update server serv
 | Medium (CVSS 4.0–6.9) | Included in next scheduled release |
 | Low | Tracked; addressed in maintenance releases |
 
-Enterprise security teams do not negotiate the SLA; they compare it to their internal policy. The 14-day critical patch window with a 48-hour advisory is defensible for a supported open-source core because it is achievable in practice — open-source maintainers who promise 24-hour critical patches either have dedicated security-engineering capacity most projects cannot sustain, or they are setting a bar they will miss. Publish the SLA before anyone asks; meet it reliably; escalate to emergency out-of-band releases when critical CVEs land in widely-used transitive dependencies (these cases justify advisory-plus-workaround within 48 hours and patch-released in under 7 days).
+Enterprise security teams do not negotiate the SLA. They compare it to their internal policy. The 14-day critical patch window with a 48-hour advisory is defensible for a supported open-source core because it is achievable in practice — open-source maintainers who promise 24-hour critical patches either have dedicated security-engineering capacity most projects cannot sustain, or they are setting a bar they will miss. Publish the SLA before anyone asks. Meet it reliably. Escalate to emergency out-of-band releases when critical CVEs land in widely-used transitive dependencies (these cases justify advisory-plus-workaround within 48 hours and patch-released in under 7 days).
 
-When a critical CVE lands between releases, rehearse the patch-release process before you need it. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, and IT operations. If the first time you run it is during a live incident, you will miss the 14-day window. Run a dry-fire drill during your first sprint after GA: create a test release, promote it through the entire pipeline, and measure the elapsed time. Shorten every step that takes longer than it should.
+When a critical CVE lands between releases, rehearse the patch-release process before you need it. The sequence is: fix the affected dependency, rebuild all targets, regenerate the SBOM, run Grype against the new SBOM to confirm the CVE is resolved, sign and notarize the artifacts, mirror to the internal update server, and push via MDM to canary before full rollout. That sequence has at least six steps and touches at least three teams — engineering, security, IT operations. If the first time you run it is during a live incident, you will miss the 14-day window. Run a dry-fire drill during your first sprint after GA. Create a test release. Promote it through the entire pipeline. Measure the elapsed time. Shorten every step that takes longer than it should.
 
 ---
 
@@ -273,7 +273,7 @@ What the command does on execution:
 
 The affected node receives `ERR_KEY_REVOKED` on its next handshake with the relay. The node can no longer decrypt existing data or participate in sync. The local data directory remains on disk — MDM handles the wipe of the `dataDirectory` path specified in `node-config.json`.
 
-On revocation, the relay propagates the new KEK to all remaining nodes on the next sync cycle and permanently rejects the revoked node's attestation token. The relay does not need to reach the revoked node proactively; it simply stops accepting connections from that node's identity.
+On revocation, the relay propagates the new KEK to all remaining nodes on the next sync cycle and permanently rejects the revoked node's attestation token. The relay does not need to reach the revoked node proactively. It simply stops accepting connections from that node's identity.
 
 ```mermaid
 flowchart TD
@@ -337,7 +337,7 @@ The `latest.json` response:
 }
 ```
 
-Nodes verify the SHA-256 of every artifact before installing. They fetch and archive the SBOM alongside the artifact for audit. These are not optional behaviors — nodes that skip verification are a supply chain attack surface.
+Nodes verify the SHA-256 of every artifact before installing. They fetch and archive the SBOM alongside the artifact for audit. These are not optional behaviors. Nodes that skip verification are a supply chain attack surface.
 
 **One network destination you must not block:** OCSP and CRL responders. Blocking certificate revocation checking breaks TLS certificate chain validation across the entire node, not just update checks. Configure an internal OCSP responder and point nodes to it, or use certificate pinning with a sufficiently long-lived cert. Do not leave OCSP blocked with no alternative.
 
@@ -357,7 +357,7 @@ Ch16 specifies the Bridge relay architecture in full; this section covers the op
 
 Jurisdictional deployment matters. For compliance-mandated markets — DIFC-licensed firms under UAE DPL 2022 and DIFC DPL 2020, Indian BFSI under RBI data localization, EU organizations under Schrems II, CIS organizations under Russia Federal Law 242-FZ and import substitution mandates, and the broader compliance matrix in Appendix F — the self-hosted Bridge relay must run on infrastructure within the required jurisdiction (on-premise VM, sovereign cloud, or domestic data center). This is not a preference. It is the compliance configuration that makes the relay-sovereignty guarantee legally defensible. Two-node HA deployment is the minimum for production use; three-node with automatic failover is the recommended profile for enterprise SLAs.
 
-The 2022 SaaS service terminations (Adobe, Autodesk, Microsoft, Figma, and dozens of others suspending service across Russia and CIS markets under sanctions enforcement) are the documented historical demonstration of why self-hosted relay matters: organizations whose relay infrastructure was a vendor-operated SaaS lost access to their own data when the vendor was directed to stop serving them. The self-hosted Bridge relay is the architectural answer — not a theoretical safeguard but the specific infrastructure deployment posture that converts a survivable-by-SLA problem into a non-problem.
+The 2022 SaaS service terminations are the documented historical demonstration of why self-hosted relay matters. Adobe. Autodesk. Microsoft. Figma. Dozens of others suspended service across Russia and CIS markets under sanctions enforcement. Organizations whose relay infrastructure was a vendor-operated SaaS lost access to their own data when the vendor was directed to stop serving them. The self-hosted Bridge relay is the architectural answer — not a theoretical safeguard, but the specific infrastructure deployment posture that converts a survivable-by-SLA problem into a non-problem.
 
 ### Power-Interruption Resilience
 
@@ -369,13 +369,13 @@ On abrupt power loss, the sync daemon's in-flight writes are durable. Layer 2's 
 
 Producing the documentation enterprise regulators require is itself an operational workflow. The architecture provides the raw evidence; the pipeline assembles it into the specific artifacts each compliance regime accepts.
 
-**SOC 2 Type II evidence package.** The node's audit log (Chapter 15 specifies the tamper-evident structure) is the operational evidence source for access-control and data-handling SOC 2 controls. Export the audit log monthly with the `sunfish admin audit-export --from <date> --to <date>` command; the export produces a CSV-and-JSON bundle that maps directly onto the SOC 2 Trust Services Criteria (CC6 for logical access, CC7 for system operations, CC8 for change management). The SBOM + Grype CVE report + MDM compliance attestation report together satisfy CC7.2 vulnerability management.
+**SOC 2 Type II evidence package.** The node's audit log (Chapter 15 specifies the tamper-evident structure) is the operational evidence source for access-control and data-handling SOC 2 controls. Export the audit log monthly with the `sunfish admin audit-export --from <date> --to <date>` command; the export produces a CSV-and-JSON bundle that maps directly onto the SOC 2 Trust Services Criteria (CC6 for logical access, CC7 for system operations, CC8 for change management). The SBOM, the Grype CVE report, and the MDM compliance attestation report together satisfy CC7.2 vulnerability management.
 
-**GDPR Article 30 records of processing activities.** Assemble from the bucket definitions (what categories of personal data the node processes), the node-config.json (where data is stored and for what purpose), the SBOM (what processing tools are used), and the MDM deployment manifest (which endpoints hold which data categories). A quarterly rollup of these into a GDPR Article 30 document satisfies EU controller obligations; add the Bridge relay's data processing agreement (naming the relay operator as an Article 28 processor and stating the supplementary measures under Schrems II) for any cross-border deployment.
+**GDPR Article 30 records of processing activities.** Assemble from the bucket definitions (what categories of personal data the node processes), the node-config.json (where data is stored and for what purpose), the SBOM (what processing tools are used), and the MDM deployment manifest (which endpoints hold which data categories). A quarterly rollup of these into a GDPR Article 30 document satisfies EU controller obligations. Add the Bridge relay's data processing agreement — naming the relay operator as an Article 28 processor and stating the supplementary measures under Schrems II — for any cross-border deployment.
 
 **EU Cyber Resilience Act SBOM obligations.** The CRA entered into force October 2024 with a 36-month transition for product-specific SBOM obligations. Syft-generated CycloneDX SBOMs signed and attested under SLSA Level 3 satisfy the operative CRA requirements for software products sold in EU markets. Publish the signed SBOM at a predictable URL so EU enterprise buyers can verify before procurement completes.
 
-**Major regulatory regimes (Appendix F coverage matrix).** Each regime has its own documentation format but shares a common evidence substrate: what data the architecture handles, where it lives jurisdictionally, who has access, and what happens on incident. The artifacts above (audit log export, SBOM, MDM compliance manifest, Bridge relay jurisdictional configuration) compose into every regime's required documentation with regime-specific formatting. The underlying evidence is the same because the architecture is the same.
+**Major regulatory regimes (Appendix F coverage matrix).** Each regime has its own documentation format but shares a common evidence substrate: what data the architecture handles, where it lives jurisdictionally, who has access, and what happens on incident. The artifacts above — audit log export, SBOM, MDM compliance manifest, Bridge relay jurisdictional configuration — compose into every regime's required documentation with regime-specific formatting. The underlying evidence is the same because the architecture is the same.
 
 ---
 
@@ -408,7 +408,7 @@ Enterprise customers require runbooks before they sign. Deliver three runbooks b
 2. The administrator runs the founder-to-joiner attestation issuance — per the `Sunfish.Kernel.Security` surface, this is `IssueJoinerAttestationAsync(teamId, joinerPublicKey, founderPrivateKey, ct)`. The joiner public key comes from the node's first-run key generation; the administrator receives it through the onboarding QR code or paste-bundle flow specified in Chapter 17.
 3. Pre-seed `node-config.json` on the target device via MDM, with `teamId`, `relayEndpoint` (pointing at the jurisdictional self-hosted Bridge relay), `allowedBuckets` scoped to the role's authorized record types, and `enterpriseAttestationIssuerPublicKey` set to the team's issuer public key.
 4. Deploy the signed installer through Intune, Jamf, SCCM, SOTI, MaaS360, or Ivanti per the MDM section above. The daemon starts automatically on install, reads the pre-seeded config, and presents the onboarding paste-bundle surface on first user login.
-5. The new employee pastes the attestation bundle; the node validates the signature against the `enterpriseAttestationIssuerPublicKey`, stores role keys in the OS-native keystore, and initiates first sync with the relay.
+5. The new employee pastes the attestation bundle. The node validates the signature against the `enterpriseAttestationIssuerPublicKey`, stores role keys in the OS-native keystore, and initiates first sync with the relay.
 6. Verify successful onboarding: the administrator checks the team audit log for a `NodeJoined` event with the correct role attestation and the expected peer node identity. Expected output:
 
    ```
@@ -419,7 +419,7 @@ Enterprise customers require runbooks before they sign. Deliver three runbooks b
 
 **Expected duration:** Under 30 minutes from IdP provisioning to first successful sync, dominated by MDM deployment latency rather than Sunfish operations.
 
-**Failure modes:** If the paste-bundle fails signature verification, the node surfaces `ERR_ATTESTATION_REQUIRED` and does not proceed to first sync. If the administrator's private key is not correctly scoped to issue the role, `IssueJoinerAttestationAsync` returns an authorization error before emitting a bundle; check the administrator's own attestation scope in the team audit log before retrying.
+**Failure modes:** If the paste-bundle fails signature verification, the node surfaces `ERR_ATTESTATION_REQUIRED` and does not proceed to first sync. If the administrator's private key is not correctly scoped to issue the role, `IssueJoinerAttestationAsync` returns an authorization error before emitting a bundle. Check the administrator's own attestation scope in the team audit log before retrying.
 
 ### Runbook 2: Incident Response — Node or Key Compromise
 
@@ -429,7 +429,7 @@ Enterprise customers require runbooks before they sign. Deliver three runbooks b
 
 1. Immediately run `sunfish admin revoke` for the affected user and team. Do not wait for confirmation of the compromise — revoke on suspicion.
 2. Preserve the local data directory on the affected node before issuing the MDM wipe. Use MDM to lock the device while forensic hold is evaluated.
-3. If a forensic hold is required, coordinate with the HR and legal notification path before wiping. The `dataDirectory` is the forensic target; do not wipe it until legal clears the hold.
+3. If a forensic hold is required, coordinate with the HR and legal notification path before wiping. The `dataDirectory` is the forensic target. Do not wipe it until legal clears the hold.
 4. After the hold or no-hold decision, issue the MDM wipe as in Runbook 1.
 5. Rotate the team's `enterpriseAttestationIssuerPublicKey` if key material on the compromised node may have included the private signing key. Push the new public key via MDM config update.
 6. Notify affected users that their local data was involved in a security event, per your incident notification obligations.

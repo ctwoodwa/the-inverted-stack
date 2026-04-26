@@ -1,0 +1,19 @@
+{
+  "chapter": "ch07-security-lens",
+  "pass_num": 2,
+  "input_sha256": "6f6bb2fef9629e245ab3f6f617b732ed60bdc6107edc90f31a602779284b27ef",
+  "output_sha256": "77a82a3985850f74f04d6b4b22fb51e98294b9548f48e4aa903b3f6f35a478d0",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 228.73969721794128,
+  "wall_clock_start_iso": "2026-04-26T02:14:51.120628Z",
+  "wall_clock_end_iso": "2026-04-26T02:18:39.860323Z",
+  "promoted_sha256": "77a82a3985850f74f04d6b4b22fb51e98294b9548f48e4aa903b3f6f35a478d0",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

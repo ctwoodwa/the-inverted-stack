@@ -1,0 +1,19 @@
+{
+  "chapter": "ch18-migrating-existing-saas",
+  "pass_num": 2,
+  "input_sha256": "27bbdff93a175bcceeeb4691e6f1bbd3483323bf0bf24be6c9b31a601c80bbcb",
+  "output_sha256": "d363d354cf9df357987fe11b1cd5a85cc749acfa76ccb30b2ab18f62f7b3e28c",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 474.54231119155884,
+  "wall_clock_start_iso": "2026-04-26T03:21:15.800404Z",
+  "wall_clock_end_iso": "2026-04-26T03:29:10.342713Z",
+  "promoted_sha256": "d363d354cf9df357987fe11b1cd5a85cc749acfa76ccb30b2ab18f62f7b3e28c",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

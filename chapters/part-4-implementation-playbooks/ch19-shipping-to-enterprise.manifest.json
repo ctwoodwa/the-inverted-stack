@@ -1,0 +1,19 @@
+{
+  "chapter": "ch19-shipping-to-enterprise",
+  "pass_num": 2,
+  "input_sha256": "e1863d588baead4f3a80f82b164980e8cb205ba88153e4f5b03468e22b0e1650",
+  "output_sha256": "00c6acd4c74985d605a0f54a57bc5319cfb868683623ef192ca54152fc3a656b",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 396.4523413181305,
+  "wall_clock_start_iso": "2026-04-26T03:29:10.344390Z",
+  "wall_clock_end_iso": "2026-04-26T03:35:46.796729Z",
+  "promoted_sha256": "00c6acd4c74985d605a0f54a57bc5319cfb868683623ef192ca54152fc3a656b",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

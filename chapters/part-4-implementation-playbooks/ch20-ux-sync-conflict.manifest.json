@@ -1,0 +1,19 @@
+{
+  "chapter": "ch20-ux-sync-conflict",
+  "pass_num": 2,
+  "input_sha256": "65229afd69de8a665a8e74a7d6bf167b6a6cb029a0dcb0a8ba2a39ec39c3e0af",
+  "output_sha256": "9a5990d04bf73de0d410752bc0713a38409a00758ccd63c00b67d57ef9b47567",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 220.60813570022583,
+  "wall_clock_start_iso": "2026-04-26T03:35:46.798261Z",
+  "wall_clock_end_iso": "2026-04-26T03:39:27.406393Z",
+  "promoted_sha256": "9a5990d04bf73de0d410752bc0713a38409a00758ccd63c00b67d57ef9b47567",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

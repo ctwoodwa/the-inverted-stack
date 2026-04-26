@@ -1,0 +1,19 @@
+{
+  "chapter": "appendix-e-citation-style",
+  "pass_num": 2,
+  "input_sha256": "fbd73fca6ac89070811c8bcc29ec0a97ab72030300a4ee84beacb1018402155d",
+  "output_sha256": "e9beb90f71bfb673019c7aef2f8c874e7c44098a731cee4c9ce56e4b45e0c459",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 157.32985758781433,
+  "wall_clock_start_iso": "2026-04-26T04:05:29.055296Z",
+  "wall_clock_end_iso": "2026-04-26T04:08:06.385151Z",
+  "promoted_sha256": "e9beb90f71bfb673019c7aef2f8c874e7c44098a731cee4c9ce56e4b45e0c459",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

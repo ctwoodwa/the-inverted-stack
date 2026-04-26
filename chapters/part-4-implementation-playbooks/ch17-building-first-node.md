@@ -9,23 +9,23 @@
 
 ## What This Chapter Gets You
 
-By the end of this chapter, you have a running local-first node on your development machine. It holds a device-bound Ed25519 keypair, completes the three-step onboarding flow, exchanges a CRDT document with a second instance over LAN, and shows live sync status in the UI. Nothing is placeholder by the time you finish section 6. Section 7 points you forward.
+By the end of this chapter, a local-first node is running on your development machine. A device-bound Ed25519 keypair. A three-step onboarding flow completed. A CRDT document exchanged with a second instance over LAN. Live sync status in the UI. Nothing is placeholder by the time you finish section 6. Section 7 points you forward.
 
-This chapter is a playbook, not a specification. When you need to understand *why* a component exists — what the CRDT engine abstraction does, how the sync daemon protocol works, what the role attestation model guarantees — read Part III. Chapter 11 covers node architecture. Chapter 12 covers the CRDT engine and data layer. Chapter 15 covers the security model. Here, you follow the minimal path from zero to running.
+This chapter is a playbook, not a specification. When you need to understand *why* a component exists — what the CRDT engine abstraction does, how the sync daemon protocol works, what the role attestation model guarantees — read Part III. Chapter 11 covers node architecture. Chapter 12 covers the CRDT engine and data layer. Chapter 15 covers the security model. Here, you walk the minimal path from zero to running.
 
 ---
 
 ## 1. Start with Sunfish Anchor
 
-Marcus lost his bid data not because it was destroyed but because someone else controlled the infrastructure it lived on. Everything you wire up in this chapter inverts that arrangement — the data stays on the device that needs it, and the infrastructure answers to you.
+Marcus lost his bid data. Not because it was destroyed. He lost it because someone else controlled the infrastructure it lived on. Everything you wire up in this chapter inverts that arrangement. The data stays on the device that needs it. The infrastructure answers to you.
 
 ### Before You Begin
 
-You should have: .NET SDK 11.0 or later (`dotnet --version` returns `11.0.x`); the MAUI workloads installed (`dotnet workload install maui`); Git; and access to NuGet.org (or your organization's internal package mirror). If your network restricts public package access — common in GCC enterprise, Indian BFSI, CIS import-substitution, and proxied Latin American environments — configure a mirrored `nuget.config` pointing at your internal feed before running any `dotnet` command in this chapter.
+You need: .NET SDK 11.0 or later (`dotnet --version` returns `11.0.x`); the MAUI workloads installed (`dotnet workload install maui`); Git; and access to NuGet.org or your organization's internal package mirror. If your network restricts public package access — common in GCC enterprise, Indian BFSI, CIS import-substitution, and proxied Latin American environments — configure a mirrored `nuget.config` pointing at your internal feed before running any `dotnet` command in this chapter.
 
-A local-first node is a desktop application that holds the authoritative copy of its own data and synchronizes with peers through a CRDT engine. A CRDT (Conflict-free Replicated Data Type) is a data structure that merges concurrent edits deterministically without a central coordinator. Zone A is the deployment profile where every user runs a full local-first node (as distinct from Zone C, where a hosted node participates alongside local nodes — covered in Chapter 18). Chapters 1–4 establish why this matters; Chapter 17 gets you running.
+A local-first node is a desktop application that holds the authoritative copy of its own data and synchronizes with peers through a CRDT engine. A CRDT (Conflict-free Replicated Data Type) is a data structure that merges concurrent edits deterministically without a central coordinator. Zone A is the deployment profile where every user runs a full local-first node — as distinct from Zone C, where a hosted node participates alongside local nodes (Chapter 18). Chapters 1–4 establish why this matters. Chapter 17 gets you running.
 
-Anchor is the canonical Zone-A local-first node. It is a .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell by design: the kernel is wired, the onboarding flow is real, and the security primitives are live. The report catalog, sync toggle, and platform packaging are deferred. The CRDT engine currently ships as `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" — pending the YDotNet integration in an upcoming Sunfish wave. That is not a deficit; it is the point. You get the hard parts — the security and sync scaffolding — without a pre-baked application domain baked on top, and with honest visibility into which subsystems are production-ready today and which are specification-ahead-of-implementation.
+Anchor is the canonical Zone-A local-first node. A .NET MAUI Blazor Hybrid application — Windows, macOS, iOS, and Android from a single codebase. It ships as a placeholder shell *by design*. The kernel is wired. The onboarding flow is real. The security primitives are live. The report catalog, sync toggle, and platform packaging are deferred. The CRDT engine currently ships as `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" — pending the YDotNet integration in an upcoming Sunfish wave. That is not a deficit. That is the point. You inherit the hard parts — the security and sync scaffolding — without a pre-baked application domain on top, and with honest visibility into which subsystems are production-ready today and which are specification-ahead-of-implementation.
 
 Clone the repository and build for Windows:
 
@@ -50,13 +50,13 @@ dotnet build Sunfish.Anchor.csproj -f net11.0-maccatalyst
 dotnet run --project Sunfish.Anchor.csproj -f net11.0-maccatalyst
 ```
 
-Build iOS and Android targets on macOS. Windows is the fastest path for first contact; use it unless you have a specific reason not to.
+Build iOS and Android targets on macOS. Windows is the fastest path for first contact. Use it unless you have a specific reason not to.
 
 ---
 
 ## 2. What Anchor Gives You Today
 
-Before you write a line of domain code, know what the Anchor accelerator provides and what you build yourself. The accelerator delivers the security and sync infrastructure — the parts that are hardest to get right — and leaves the application domain to you.
+Before you write a line of domain code, know what the Anchor accelerator provides and what you build yourself. The accelerator delivers the security and sync infrastructure — the parts that are hardest to get right. The application domain is yours.
 
 **The accelerator provides:**
 
@@ -105,9 +105,9 @@ builder.Services.AddSunfishKernelSecurity();
 
 Each call registers a distinct layer. Their order matters.
 
-`AddSunfishEncryptedStore()` — from `Sunfish.Foundation.LocalFirst` — registers the encrypted store with the DI container; the key derivation and store initialization happen as part of the node startup sequence managed by the Sunfish kernel. This call must come first because both the runtime and the security layer depend on the store.
+`AddSunfishEncryptedStore()` — from `Sunfish.Foundation.LocalFirst` — registers the encrypted store with the DI container. Key derivation and store initialization happen as part of the node startup sequence managed by the Sunfish kernel. This call comes first because both the runtime and the security layer depend on the store.
 
-`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — registers `INodeHost` and `IPluginRegistry` only. It does not wire the sync daemon, mDNS discovery, or the CRDT engine; each of those is registered by its own extension method (`AddSunfishKernelSync()`, `AddSunfishCrdtEngine()`, `AddSunfishKernelSecurity()`, `AddSunfishLocalFirst()`, `AddSunfishKernelSchemaRegistry()`) called in the composition root. This separation lets a test harness swap any subsystem independently — `TryAddSingleton` semantics mean a preceding registration takes precedence. `AddSunfishKernelRuntime()` must come before security registration because the runtime owns the session context that security decorates.
+`AddSunfishKernelRuntime()` — from `Sunfish.Kernel.Runtime` — registers `INodeHost` and `IPluginRegistry` only. It does not wire the sync daemon, mDNS discovery, or the CRDT engine. Each of those is registered by its own extension method (`AddSunfishKernelSync()`, `AddSunfishCrdtEngine()`, `AddSunfishKernelSecurity()`, `AddSunfishLocalFirst()`, `AddSunfishKernelSchemaRegistry()`) called in the composition root. This separation lets a test harness swap any subsystem independently — `TryAddSingleton` semantics mean a preceding registration takes precedence. `AddSunfishKernelRuntime()` must come before security registration because the runtime owns the session context that security decorates.
 
 `AddSunfishKernelSecurity()` — from `Sunfish.Kernel.Security` — registers the cryptographic services: signing, key agreement, attestation issuance and verification, and role key management.
 
@@ -162,9 +162,9 @@ doc.OnUpdate += (sender, update) =>
 };
 ```
 
-The document persists in the encrypted store automatically. Close the app and reopen it — the engine returns the same document with all prior updates intact. You do not call save. The engine is the database.
+The document persists in the encrypted store automatically. Close the app and reopen it — the engine returns the same document with all prior updates intact. You do not call save. The engine *is* the database.
 
-**Running two instances on LAN.** Open a second terminal and run a second instance of the app — either on the same machine with a different profile directory or on a second device on the same network:
+**Running two instances on LAN.** Open a second terminal and run a second instance — either on the same machine with a different profile directory or on a second device on the same network:
 
 ```bash
 # Second instance on the same machine (Windows — different data path)
@@ -173,15 +173,15 @@ dotnet run --project Sunfish.Anchor.csproj -f net11.0-windows10.0.19041.0 \
     --sunfish-data-dir "%LOCALAPPDATA%\SunfishAnchor2"
 ```
 
-The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration, no IP address, no port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Healthy` when the peer handshake completes.
+The mDNS peer discovery service in `Sunfish.Kernel.Sync` broadcasts a service record the moment the runtime starts. The second instance picks it up within a few seconds. No configuration. No IP address. No port number. Watch the `LinkStatus` indicator in the status bar — it transitions from `Offline` to `Healthy` when the peer handshake completes.
 
 Once linked, apply an update in the first instance. The second instance receives it via gossip anti-entropy and the document update handler fires with the remote change. The document converges.
 
-> **Implementation status.** Today's Anchor ships `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" that converges only for sequentially-issued updates on a single writer. True CRDT merge — commutative, associative, idempotent, concurrent-write-safe — arrives with the YDotNet integration specified in Chapter 12 and tracked on the Sunfish roadmap. Until YDotNet lands, concurrent writes in this tutorial will not converge deterministically; you are exercising the wire format and the handler plumbing, not the merge semantics. When the architectural claims in this chapter reach field-proven behavior, the tutorial will be updated; for now, the reader sees exactly what works and what is specified ahead of implementation.
+> **Implementation status.** Today's Anchor ships `StubCrdtEngine` — a total-order-replay fallback marked "DO NOT SHIP TO PRODUCTION" that converges only for sequentially-issued updates on a single writer. True CRDT merge — commutative, associative, idempotent, concurrent-write-safe — arrives with the YDotNet integration specified in Chapter 12 and tracked on the Sunfish roadmap. Until YDotNet lands, concurrent writes in this tutorial will not converge deterministically. You are exercising the wire format and the handler plumbing, not the merge semantics. When the architectural claims in this chapter reach field-proven behavior, the tutorial will be updated. For now, you see exactly what works and what is specified ahead of implementation.
 
 When true CRDT merge is in place, the order of concurrent updates will not matter — the merge is commutative. If both instances write the same field simultaneously, the engine picks a deterministic winner and both nodes arrive at the same value without coordination.
 
-Deterministic does not mean user-intentional — two peers typing into the same text field simultaneously will see their characters interleaved, both contributions preserved but neither peer's original text intact. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
+Deterministic does not mean user-intentional. Two peers typing into the same text field simultaneously will see their characters interleaved — both contributions preserved, neither peer's original text intact. Chapter 12 explains when to use a CRDT and when a CP-class record is the better model.
 
 This is the core primitive. Everything else in the platform — stream subscriptions, projections, schema migration — runs on top of this document sync loop. Chapter 12 defines the full data modeling contract.
 
@@ -243,9 +243,9 @@ The joiner bundle is signed by the founder's Ed25519 private key. `IssuerPublicK
 
 ### Paste-Bundle Fallback
 
-The reference transport is paste: the founder copies the base64 string, sends it via any side channel (email, Slack, a shared document), and the joiner pastes it into the Onboarding screen. Camera-based QR scanning and deep-link activation are architectural options the onboarding flow supports for production deployment.
+The reference transport is paste. The founder copies the base64 string, sends it via any side channel — email, Slack, a shared document — and the joiner pastes it into the Onboarding screen. Camera-based QR scanning and deep-link activation are architectural options the onboarding flow supports for production deployment.
 
-Sending the payload over an unsecured side channel is acceptable. The security of the handshake does not depend on channel confidentiality — it depends on signature verification. An intercepted bundle is useless without the founder's Ed25519 private key, and a tampered bundle fails signature verification before onboarding proceeds. The side channel is a convenience mechanism; the cryptography is the trust mechanism. Chapter 15 covers the key hierarchy in detail.
+Sending the payload over an unsecured side channel is acceptable. The security of the handshake does not depend on channel confidentiality — it depends on signature verification. An intercepted bundle is useless without the founder's Ed25519 private key. A tampered bundle fails signature verification before onboarding proceeds. The side channel is a convenience mechanism. The cryptography is the trust mechanism. Chapter 15 covers the key hierarchy in detail.
 
 The paste field in `Onboarding.razor` calls `DecodePayloadAsync` on submit:
 
@@ -258,7 +258,7 @@ var (attestation, snapshot) = await onboardingService.DecodePayloadAsync(
 );
 ```
 
-`DecodePayloadAsync` reads the 4-byte length prefix, extracts the CBOR bundle, verifies the attestation signature via `IAttestationVerifier`, then reads the snapshot section. If any step fails — malformed length prefix, CBOR parse error, signature mismatch — it throws a typed exception. The UI catches it and surfaces a specific error message. "Invalid bundle" tells the user nothing; the exception types tell your error handler exactly what went wrong.
+`DecodePayloadAsync` reads the 4-byte length prefix, extracts the CBOR bundle, verifies the attestation signature via `IAttestationVerifier`, then reads the snapshot section. If any step fails — malformed length prefix, CBOR parse error, signature mismatch — it throws a typed exception. The UI catches it and surfaces a specific error message. "Invalid bundle" tells the user nothing. The exception types tell your error handler exactly what went wrong.
 
 ### Completing Onboarding
 
@@ -270,7 +270,7 @@ var sessionService = services.GetRequiredService<AnchorSessionService>();
 await sessionService.OnboardAsync(attestation, snapshot, cancellationToken);
 ```
 
-`OnboardAsync` updates the node's onboarding state and coordinates the initial sync; full attestation persistence and CRDT snapshot application complete during the subsequent sync phases. After this call returns, the node transitions to `NodeHealth` `Healthy`. The next mDNS discovery cycle finds other team members on the LAN and begins syncing.
+`OnboardAsync` updates the node's onboarding state and coordinates the initial sync. Full attestation persistence and CRDT snapshot application complete during the subsequent sync phases. After this call returns, the node transitions to `NodeHealth` `Healthy`. The next mDNS discovery cycle finds other team members on the LAN and begins syncing.
 
 The full flow:
 
@@ -293,7 +293,7 @@ flowchart LR
 
 ## 6. Local-First UX Basics
 
-The status bar in Anchor always shows three indicators. They are not optional. They are not hidden behind a settings panel. Every user sees them at all times because the system's behavior changes depending on network and sync state, and the user deserves to know.
+The status bar in Anchor always shows three indicators. They are not optional. They are not hidden behind a settings panel. Every user sees them at all times — because the system's behavior changes depending on network and sync state, and the user deserves to know.
 
 `SunfishNodeHealthBar` from `Sunfish.UIAdapters.Blazor` implements all three:
 
@@ -314,13 +314,13 @@ Add it to your Blazor layout:
 
 ### Reading the States
 
-**Node Health** reflects the kernel runtime. `Healthy` means the database opened, the keypair loaded, and onboarding is complete. `Stale` means the kernel started but the last confirmed sync exchange has aged past the staleness threshold — check the runtime log. `Offline` means the node cannot reach peers; surface an actionable message, not a generic "something went wrong."
+**Node Health** reflects the kernel runtime. `Healthy` means the database opened, the keypair loaded, and onboarding is complete. `Stale` means the kernel started but the last confirmed sync exchange has aged past the staleness threshold — check the runtime log. `Offline` means the node cannot reach peers. Surface an actionable message, not a generic "something went wrong."
 
 **Link Status** reflects peer connectivity. When at least one peer has completed the sync handshake, link health is `Healthy`. When mDNS is broadcasting but no peer has responded, the node shows `Offline` for this indicator. A node with no active peers still accepts local writes and queues them for the next sync cycle.
 
 **Data Freshness** reflects the last confirmed sync exchange. A data-fresh node shows `Healthy` — a peer acknowledged a sync exchange within the staleness threshold (configurable; default five minutes). `Stale` means the threshold elapsed without a confirmed exchange. `ConflictPending` means the node has unresolved conflicts that require attention before the next sync exchange can complete cleanly.
 
-The staleness threshold deserves deliberate configuration. The default of five minutes is conservative — suitable for low-frequency collaborative workflows where document freshness is not time-critical. For applications where peers write to shared records frequently, a sixty-second threshold makes the UI more responsive to connectivity changes. For applications used in intermittent-connectivity environments — field crews, remote sites — a longer threshold (thirty or sixty minutes) prevents the indicator from flashing amber every time a user steps away from the office. The threshold is a product decision, not a system constraint. Set it before your first user-facing deploy; changing it mid-deployment changes what users have learned to expect from the indicator.
+The staleness threshold deserves deliberate configuration. Five minutes is the conservative default — suitable for low-frequency collaborative workflows where document freshness is not time-critical. For applications where peers write to shared records frequently, a sixty-second threshold makes the UI more responsive to connectivity changes. For applications used in intermittent-connectivity environments — field crews, remote sites — a longer threshold (thirty or sixty minutes) prevents the indicator from flashing amber every time a user steps away from the office. The threshold is a product decision, not a system constraint. Set it before your first user-facing deploy. Changing it mid-deployment changes what users have learned to expect from the indicator.
 
 When `Node Health` is `Healthy` but `Data Freshness` is persistently `Stale`, the node is running and the local database is open, but no peer has responded to gossip. The most common cause is a firewall or network policy blocking the mDNS multicast address. Check that UDP port 5353 is open on the local network segment. The second most common cause is two instances running on the same machine sharing the same mDNS service record — the second instance suppresses the first's advertisement. Use separate `--sunfish-data-dir` paths when running multiple instances on a single machine.
 
@@ -348,7 +348,7 @@ else if (localWriteState == LocalWriteState.Failed)
 
 Define `LocalWriteState` as a local component enum (`Pending`, `Confirmed`, `Failed`) — it is UI state, not a framework type, and Sunfish deliberately does not expose one because the taxonomy is application-specific. `Pending` appears immediately when the user submits. The write goes to the CRDT engine and the local store. The UI does not wait for peer acknowledgment. `Confirmed` appears when the local store write completes — not when a peer syncs the change. The change is already durable on the local device. `Failed` appears only when the local write itself fails — typically a storage error, not a network error.
 
-Do not surface sync delays as write errors — users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay signal; the write button carries the local-durability signal. Keep them separate.
+Do not surface sync delays as write errors. Users who have experienced cloud save failures read "save failed" as data loss. Distinguish between "could not write to local storage" (actual failure) and "not yet synced to peers" (normal operation). The `DataFreshness` indicator carries the sync-delay signal. The write button carries the local-durability signal. Keep them separate.
 
 ---
 
@@ -356,9 +356,9 @@ Do not surface sync delays as write errors — users who have experienced cloud 
 
 Anchor's shell is ready. Now you add your domain.
 
-Every domain feature in a local-first node registers as a plugin. The plugin system is the boundary between the platform and your application. Do not bypass it by writing directly against the kernel services — the plugin contract is the stability boundary; the kernel services below it are pre-1.0 and will change.
+Every domain feature in a local-first node registers as a plugin. The plugin system is the boundary between the platform and your application. Do not bypass it by writing directly against the kernel services — the plugin contract is the stability boundary. The kernel services below it are pre-1.0 and will change.
 
-The plugin lifecycle has two phases. In the load phase, the kernel calls `OnLoadAsync` on every registered plugin in dependency order. A plugin that declares dependencies in `Dependencies` does not load until its dependencies have loaded successfully — the registry performs a topological sort and raises `PluginMissingDependencyException` if a declared dependency is not registered. If a plugin's `OnLoadAsync` throws, the exception propagates and the node fails to start; all plugins load or none do. In the unload phase, when the node shuts down cleanly, the kernel calls `OnUnloadAsync` in reverse load order so that downstream plugins tear down before the services they depend on. Unload failures are logged and swallowed — partial unload does not block subsequent restarts. This sequencing is automatic; you do not call it.
+The plugin lifecycle has two phases. In the load phase, the kernel calls `OnLoadAsync` on every registered plugin in dependency order. A plugin that declares dependencies in `Dependencies` does not load until its dependencies have loaded successfully — the registry performs a topological sort and raises `PluginMissingDependencyException` if a declared dependency is not registered. If a plugin's `OnLoadAsync` throws, the exception propagates and the node fails to start. All plugins load or none do. In the unload phase, when the node shuts down cleanly, the kernel calls `OnUnloadAsync` in reverse load order so that downstream plugins tear down before the services they depend on. Unload failures are logged and swallowed — partial unload does not block subsequent restarts. This sequencing is automatic. You do not call it.
 
 The `Id` and `Version` properties on `ILocalNodePlugin` are logged at load time for diagnostics. Use a reverse-DNS style identifier (e.g., `com.yourorg.reports`) — `Id` is the key the dependency system uses to resolve `Dependencies` declarations. Use semantic versioning for `Version` so that log output identifies exactly which plugin build is running when diagnosing a startup failure.
 
@@ -384,11 +384,11 @@ public class ReportsPlugin : ILocalNodePlugin
 }
 ```
 
-Plugin registration in the composition root follows the DI pattern the Sunfish kernel exposes; the exact extension method is specified in Chapter 11 (Node Architecture) alongside the full plugin lifecycle contract. The kernel discovers the plugin at startup, validates its `Dependencies` through the plugin registry's topological sort, and invokes `OnLoadAsync` in dependency order.
+Plugin registration in the composition root follows the DI pattern the Sunfish kernel exposes. The exact extension method is specified in Chapter 11 (Node Architecture) alongside the full plugin lifecycle contract. The kernel discovers the plugin at startup, validates its `Dependencies` through the plugin registry's topological sort, and invokes `OnLoadAsync` in dependency order.
 
 ### The Full Extension-Point Map
 
-Five extension points define the complete plugin surface. This chapter shows `ILocalNodePlugin`; the remaining four are covered where they are specified in full:
+Five extension points define the complete plugin surface. This chapter shows `ILocalNodePlugin`. The remaining four are covered where they are specified in full:
 
 | Extension Point | What it does | When you need it | Specified in |
 |----------------|-------------|-----------------|---|
@@ -406,7 +406,7 @@ Three topics are deferred.
 
 **Bridge integration.** Anchor is a Zone-A node. If your architecture includes a Zone-C cloud relay, see Chapter 18, which covers the sync boundary between the local node and the cloud. Do not add Bridge calls to Anchor until you have read the relay trust model in Chapter 15.
 
-**Multi-team support.** Anchor v1 ships single-team per install. V2 adopts a workspace-switcher model — one installation, multiple teams, per-team HKDF subkeys, per-workspace state isolation. Build for single-team in v1; the v2 migration path is additive, not a rewrite.
+**Multi-team support.** Anchor v1 ships single-team per install. V2 adopts a workspace-switcher model — one installation, multiple teams, per-team HKDF subkeys, per-workspace state isolation. Build for single-team in v1. The v2 migration path is additive, not a rewrite.
 
 **Platform packaging.** Installers, code signing, and auto-update are deferred. During development, `dotnet run` is sufficient. Chapter 19 covers the packaging and enterprise deployment pipeline when you are ready to ship.
 

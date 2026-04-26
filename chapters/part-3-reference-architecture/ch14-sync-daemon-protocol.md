@@ -6,21 +6,21 @@
 
 ---
 
-The sync daemon is the connective tissue of the local-first node. It maintains peer relationships, enforces subscription boundaries, and propagates state changes without coupling its lifecycle to the application that consumes it. Every design decision follows from one constraint: the daemon must keep operating while the application restarts, updates, or crashes.
+The sync daemon is the connective tissue of the local-first node. It maintains peer relationships. It enforces subscription boundaries. It propagates state changes without coupling its lifecycle to the application that consumes it. Every design decision in this chapter follows from one constraint: the daemon must keep operating while the application restarts, updates, or crashes.
 
 ---
 
 ## Process Isolation
 
-The sync daemon runs as a separate OS-level process from the application container. This is not a deployment convenience — it is the mechanism that makes offline resilience meaningful.
+The sync daemon runs as a separate OS-level process from the application container. This is not a deployment convenience. It is the mechanism that makes offline resilience meaningful.
 
-When the application restarts after an update, active peer connections survive. When the application crashes during a write, the daemon continues to accept incoming deltas and queue them for the application's next startup. When the host machine wakes from sleep, the daemon reconnects to peers before the application has finished loading its UI.
+Picture the application restarting after an update. Active peer connections survive. Picture the application crashing mid-write. The daemon continues to accept incoming deltas and queues them for the application's next startup. Picture the host machine waking from sleep. The daemon reconnects to peers before the application has finished loading its UI. The application can fail without the network failing with it.
 
 The application communicates with the daemon over a Unix domain socket on Linux and macOS, and over a named pipe on Windows, using `System.Net.Sockets.UnixDomainSocketEndPoint` as the transport abstraction. This transport is available on Windows 10 and Windows Server 2019 and later. File-permission controls on the socket path ensure that only processes running as the same user — or with explicit ACL grants — can connect to the daemon.
 
 All messages on the IPC channel are authenticated with device keys. A process that cannot present a valid device key cannot open a session with the daemon, regardless of whether it can reach the socket path. This closes the local privilege escalation path where an unauthorized process injects operations into the CRDT document store through the daemon's command channel.
 
-The daemon owns four responsibilities that do not belong to the application layer: maintaining the local CRDT document store, managing peer and relay connections, enforcing per-peer capability and subscription rules, and running background tasks such as compaction and archival. The application layer reads and writes through the daemon; it does not touch the document store directly.
+The daemon owns four responsibilities that do not belong to the application layer: maintaining the local CRDT document store, managing peer and relay connections, enforcing per-peer capability and subscription rules, and running background tasks such as compaction and archival. The application layer reads and writes through the daemon. It does not touch the document store directly.
 
 ---
 
@@ -43,7 +43,7 @@ flowchart TD
 
 **Tier 2 — Mesh VPN.** Peers on different networks connect through a WireGuard-based mesh VPN layer. The mesh handles NAT traversal automatically; no port forwarding is required on either side. The daemon treats mesh VPN peers identically to LAN peers once the VPN tunnel is established — the same handshake sequence, the same subscription model, the same gossip protocol. The mesh VPN layer also provides in-transit encryption independent of the sync protocol's own message authentication. The two layers are complementary: the mesh secures the transport, the protocol authenticates the operations.
 
-**Tier 3 — Managed Relay.** For deployments where direct peer-to-peer connectivity is not viable — restrictive corporate firewalls, mobile devices on carrier NAT, cross-organizational connections, and for the majority of the book's most relevant markets, field operations in rural India (3G baseline outside Tier-1 cities), rural Sub-Saharan Africa (load-shedding with 3G/2G substrate), rural Latin America (2G-3G outside Tier-1 cities), and rural GCC construction sites — the daemon connects to a managed relay. For these deployment contexts, Tier 3 is the primary operational tier, not a fallback. The relay is a lightweight proxy: it forwards delta streams between peers without decrypting them. All relay-forwarded messages carry the same Ed25519 device-key signatures as direct connections; the receiving daemon verifies each signature before applying any operation, so a compromised relay cannot inject messages nor silently modify them in transit. The relay cannot read content and cannot inject operations.
+**Tier 3 — Managed Relay.** For deployments where direct peer-to-peer connectivity is not viable — restrictive corporate firewalls, mobile devices on carrier NAT, cross-organizational connections, and for the majority of the book's most relevant markets, field operations in rural India (3G baseline outside Tier-1 cities), rural Sub-Saharan Africa (load-shedding with 3G/2G substrate), rural Latin America (2G-3G outside Tier-1 cities), and rural GCC construction sites — the daemon connects to a managed relay. For these deployment contexts, Tier 3 is the primary operational tier, not a fallback. The relay is a lightweight proxy: it forwards delta streams between peers without decrypting them. All relay-forwarded messages carry the same Ed25519 device-key signatures as direct connections; the receiving daemon verifies each signature before applying any operation, so a compromised relay cannot inject messages nor silently modify them in transit. The relay cannot read content. The relay cannot inject operations.
 
 The daemon selects the lowest-latency path to each known peer. If a peer is reachable via both mDNS and mesh VPN, the daemon uses the mDNS path and keeps the VPN path as a hot standby. Path selection updates dynamically as network conditions change.
 
@@ -82,7 +82,7 @@ sequenceDiagram
 
 ## Gossip Anti-Entropy
 
-The DELTA_STREAM handles real-time operation propagation. The protocol specifies that receiving nodes apply inbound operations to their local CRDT document store and update their vector clock accordingly; in the current Sunfish reference implementation, delta receipt and vector-clock exchange are wired, but delta apply-back into `ICrdtDocument` is the Wave 2.6 integration work that completes end-to-end convergence. The specification is the target; the integration gap is named here so readers distinguish protocol behavior from present implementation state. Gossip anti-entropy handles convergence — operations missed during a partition propagate on reconnect.
+The DELTA_STREAM handles real-time operation propagation. The protocol specifies that receiving nodes apply inbound operations to their local CRDT document store and update their vector clock accordingly; in the current Sunfish reference implementation, delta receipt and vector-clock exchange are wired, but delta apply-back into `ICrdtDocument` is the Wave 2.6 integration work that completes end-to-end convergence. The specification is the target. The integration gap is named here so readers distinguish protocol behavior from present implementation state. Gossip anti-entropy handles convergence — operations missed during a partition propagate on reconnect.
 
 ### Wire Format — Message Field Reference
 
@@ -158,7 +158,7 @@ The daemon determines subscription eligibility during CAPABILITY_NEG. Each strea
 
 Document schemas define subscription scopes within stream definitions registered with `Sunfish.Kernel.Sync`. Each stream definition specifies the minimum set of fields required for each role. The daemon uses these scope definitions when constructing outbound deltas: it strips operations for out-of-scope fields before transmitting, even within a stream the receiving node is authorized to receive. A field-level exclusion is invisible to the receiver — the delta simply does not contain operations for that field.
 
-This design has a concrete security consequence: compromising an endpoint does not grant access to data that endpoint was never authorized to receive. An attacker who gains full control of a node can read everything on that node. They cannot read fields that were stripped at the source before the delta was transmitted.
+This design has a concrete security consequence. Compromising an endpoint does not grant access to data that endpoint was never authorized to receive. An attacker who gains full control of a node can read everything on that node. They cannot read fields that were stripped at the source before the delta was transmitted.
 
 The invariant holds across reconnection. When a node reconnects after a period offline, the daemon re-runs eligibility checks as part of the handshake before replaying any buffered deltas. If a role attestation has expired during the offline period, the corresponding streams are excluded from the new session's granted subscriptions, and previously buffered deltas for those streams are not replayed.
 
@@ -242,9 +242,9 @@ Stale addresses in the membership list are cleaned up through two mechanisms: ex
 
 The sync daemon's capabilities are exposed to the application layer through `Sunfish.Kernel.Sync`. This package manages the full protocol lifecycle: peer discovery across all three tiers, handshake sequencing, delta computation, gossip scheduling, lease coordination, and reconnection backoff. Stream definitions registered with `Sunfish.Kernel.Sync` declare the field-level access rules the daemon enforces during capability negotiation.
 
-Applications interact with the daemon through the command channel on the Unix domain socket or named pipe. The command channel accepts write intents, subscription updates, and lease requests. It emits change notifications, lease status updates, and membership events. The application layer does not implement any part of the sync protocol — it declares what it needs and reacts to what the daemon delivers.
+Applications interact with the daemon through the command channel on the Unix domain socket or named pipe. The command channel accepts write intents, subscription updates, and lease requests. It emits change notifications, lease status updates, and membership events. The application layer does not implement any part of the sync protocol. It declares what it needs and reacts to what the daemon delivers.
 
-The separation between `Sunfish.Kernel.Sync` and the application layer is not just an API boundary — it is the boundary that makes the daemon's process isolation meaningful.
+The separation between `Sunfish.Kernel.Sync` and the application layer is not just an API boundary. It is the boundary that makes the daemon's process isolation meaningful. The application can fail; the network keeps its promises.
 
 ---
 

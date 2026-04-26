@@ -1,0 +1,19 @@
+{
+  "chapter": "ch02-local-first-serious-stack",
+  "pass_num": 2,
+  "input_sha256": "6e786ffe9e16811daa116f219c8d23d81e4f0954e473a9b9217bd1d81163bf2a",
+  "output_sha256": "20761059358cbab1f0f5830c353cd8497246c2fa994b02f4cd277ba8854967e3",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 345.98473620414734,
+  "wall_clock_start_iso": "2026-04-26T01:56:48.885490Z",
+  "wall_clock_end_iso": "2026-04-26T02:02:34.870223Z",
+  "promoted_sha256": "20761059358cbab1f0f5830c353cd8497246c2fa994b02f4cd277ba8854967e3",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

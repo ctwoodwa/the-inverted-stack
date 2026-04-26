@@ -14,7 +14,9 @@ Every architectural decision in this book follows from one reversal of priority:
 > **Conventional SaaS:** Cloud database is primary — local device caches and renders.  
 > **Local-Node Architecture:** Local node is primary — cloud relay is an optional sync peer.
 
-In the conventional model, the local device is a thin client. It renders what the server says to render and writes what the server accepts. Remove the server and the device has nothing — a shell waiting for instructions that will not arrive. In the local-node model, the device *is* the server. The local encrypted database holds the authoritative copy of the user’s data. When peers are reachable, the node exchanges state with them. When no peers are reachable, the node operates at full fidelity. The node has no degraded mode, because it carries no dependency on any remote service for core function.
+In the conventional model, the local device is a thin client. It renders what the server says to render. It writes what the server accepts. Remove the server and the device has nothing — a shell waiting for instructions that will not arrive.
+
+In the local-node model, the device *is* the server. The local encrypted database holds the authoritative copy of the user's data. When peers are reachable, the node exchanges state with them. When no peers are reachable, the node operates at full fidelity. The node has no degraded mode. It carries no dependency on any remote service for core function.
 
 ```mermaid
 graph LR
@@ -43,7 +45,7 @@ Primary: Node B")]
     end
 ```
 
-The relay is optional. Two nodes on the same LAN sync directly via mDNS peer discovery without a relay at all. The relay exists to help nodes find each other across NAT boundaries, not to hold their data. If the relay goes down, nodes fall back to direct peer-to-peer communication on the local network. If that also fails, they work offline and catch up when connectivity returns.
+The relay is optional. Two nodes on the same LAN sync directly via mDNS peer discovery, with no relay in the path at all. The relay exists to help nodes find each other across NAT boundaries, not to hold their data. If the relay goes down, nodes fall back to direct peer-to-peer communication on the local network. If that also fails, they work offline and catch up when connectivity returns.
 
 This is the inversion. Everything else is implementation.
 
@@ -51,7 +53,7 @@ This is the inversion. Everything else is implementation.
 
 ## The Five Layers
 
-The inversion is one sentence. The five-layer model is why that sentence is implementable — the specific form the architecture takes when each property of the SaaS bundle is delivered without vendor data custody. Each layer has a clear owner, a clear boundary, and a clear answer to the question every distributed system must answer: what happens when the network is unavailable?
+The inversion is one sentence. The five-layer model is why that sentence is implementable — the specific form the architecture takes when each property of the SaaS bundle is delivered without vendor data custody. Each layer has a clear owner. Each layer has a clear boundary. Each layer has an answer to the question every distributed system must answer: what happens when the network is unavailable?
 
 ```mermaid
 graph TB
@@ -80,11 +82,11 @@ Peer Discovery · NAT Traversal"]
 
 ### Layer 1: Presentation
 
-The presentation layer renders what the local store contains. That is its entire job. It owns no state, caches nothing independently, and makes no decisions about data.
+The presentation layer renders what the local store contains. That is its entire job. It owns no state. It caches nothing independently. It makes no decisions about data.
 
-In the Anchor accelerator, this layer is a .NET MAUI Blazor Hybrid shell: a native application window embedding a Blazor WebView that renders Razor components backed by local data. The component surface is identical to the Bridge accelerator’s browser shell — the same `Sunfish.UICore` and `Sunfish.UIAdapters.Blazor` components render regardless of whether the node is a local desktop installation or a hosted tenant instance. This is deliberate. If a UI component only works against a cloud backend, it has not been designed correctly for this architecture.
+In the Anchor accelerator, this layer is a .NET MAUI Blazor Hybrid shell — a native application window embedding a Blazor WebView that renders Razor components backed by local data. The component surface is identical to the Bridge accelerator's browser shell: the same `Sunfish.UICore` and `Sunfish.UIAdapters.Blazor` components render whether the node is a local desktop installation or a hosted tenant instance. This is deliberate. If a UI component only works against a cloud backend, it has not been designed correctly for this architecture.
 
-The presentation layer’s primary local-first responsibility is status indication. Users should always know the state of their data without interrogating it. The `SunfishNodeHealthBar` component (`Sunfish.UIAdapters.Blazor`; pre-1.0) surfaces four states:
+The presentation layer's primary local-first responsibility is status indication. Users should always know the state of their data without interrogating it. The `SunfishNodeHealthBar` component (`Sunfish.UIAdapters.Blazor`; pre-1.0) surfaces four states:
 
 - **Sync-healthy:** The node is connected to at least one peer and has exchanged a recent delta.
 - **Stale:** The node has not synced within its configured freshness threshold; local data may lag behind changes made by others.
@@ -93,15 +95,15 @@ The presentation layer’s primary local-first responsibility is status indicati
 
 Each state must be communicated through more than color. The `SunfishNodeHealthBar` sets `SemanticProperties.Description` to a text equivalent for each state — screen readers announce the current sync status without requiring the user to inspect the color indicator. State transitions trigger a live region announcement, so an AT user receives the same notification a sighted user receives visually. The full accessibility specification appears in Chapter 20.
 
-When the network is unavailable, the presentation layer changes nothing about its behavior. It continues to render from the local store. The status indicator moves from sync-healthy to offline. The user can still create records, navigate, query, and run any domain workflow that does not require distributed lease coordination. They receive no error page, no spinner, no apology. The software works.
+When the network is unavailable, the presentation layer changes nothing about its behavior. It continues to render from the local store. The status indicator moves from sync-healthy to offline. The user can still create records, navigate, query, and run any domain workflow that does not require distributed lease coordination. They receive no error page. No spinner. No apology. The software works.
 
 ### Layer 2: Application Logic
 
-The application logic layer runs domain business rules. Command handlers receive user intent and translate it into CRDT operations and domain events. It determines what constitutes a valid state transition, enforces invariants, and emits events that both the local store and the sync daemon consume.
+The application logic layer runs domain business rules. Command handlers receive user intent and translate it into CRDT operations and domain events. The layer determines what constitutes a valid state transition, enforces invariants, and emits events that both the local store and the sync daemon consume.
 
-This layer holds no network-aware code. It does not know whether the sync daemon is connected to peers. It writes to the local CRDT store unconditionally; the sync daemon propagates those writes when it can, not when consulted before they happen. This is the property that makes full offline operation possible: business logic executes against local state, not against a remote lock or remote validation service.
+This layer holds no network-aware code. It does not know whether the sync daemon is connected to peers. It writes to the local CRDT store unconditionally — the sync daemon propagates those writes when it can, not when consulted before they happen. This is the property that makes full offline operation possible: business logic executes against local state, not against a remote lock or a remote validation service.
 
-The one exception is CP-class records — those whose correctness requires distributed coordination, such as resource reservations, financial postings, and scheduled slots where double-booking is worse than unavailability. For these records, the application logic layer consults the sync daemon lease coordinator before writing. If quorum is unreachable, the write blocks and the UI surfaces a clear indicator. This is an explicit design choice: the user sees a constraint, not a mystery failure.
+The one exception is CP-class records — those whose correctness requires distributed coordination, such as resource reservations, financial postings, and scheduled slots where double-booking is worse than unavailability. For these records, the application logic layer consults the sync daemon lease coordinator before writing. If quorum is unreachable, the write blocks and the UI surfaces a clear indicator. This is an explicit design choice. The user sees a constraint, not a mystery failure.
 
 The CAP positioning is per record class, not per application:
 
@@ -114,7 +116,7 @@ The CAP positioning is per record class, not per application:
 
 ### Layer 3: Sync Daemon
 
-The sync daemon is a separate long-running process. It is not a thread in the application. It is not a hosted service that stops when the application window closes. It registers with the OS service manager and runs continuously from login, communicating with the application shell through a Unix domain socket. When the application restarts after a crash, the sync daemon has already been collecting deltas from peers; the application reconnects to a daemon that has been working the whole time.
+The sync daemon is a separate long-running process. It is not a thread in the application. It is not a hosted service that stops when the application window closes. It registers with the OS service manager and runs continuously from login, communicating with the application shell through a Unix domain socket. When the application restarts after a crash, the sync daemon has already been collecting deltas from peers — the application reconnects to a daemon that has been working the whole time.
 
 The daemon manages five concerns:
 
@@ -124,9 +126,9 @@ The daemon manages five concerns:
 
 **Delta streaming.** After the gossip protocol identifies divergence, the daemon streams the missing CRDT operations to each peer. The protocol wire format is CBOR — compact binary encoding that minimizes bandwidth on the intermittent connections that are the baseline operating condition for hundreds of millions of enterprise workers worldwide, not an edge case.
 
-**Flease lease coordination.** For CP-class records, the daemon participates in distributed lease negotiation. When a node needs to write a resource reservation or financial posting, it broadcasts a lease request. The lease is granted when a quorum of reachable peers acknowledge. Default lease duration is 30 seconds, derived in Chapter 14 from the Flease algorithm's quorum-acknowledgment window under the reference network model; a node that goes offline releases its lease at expiry so the team is never permanently blocked by one disconnected device.
+**Flease lease coordination.** For CP-class records, the daemon participates in distributed lease negotiation. When a node needs to write a resource reservation or financial posting, it broadcasts a lease request. The lease is granted when a quorum of reachable peers acknowledge. Default lease duration is 30 seconds, derived in Chapter 14 from the Flease algorithm's quorum-acknowledgment window under the reference network model. A node that goes offline releases its lease at expiry — the team is never permanently blocked by one disconnected device.
 
-**Write buffering.** When no peers are reachable, the daemon continues accepting writes from the application logic layer and buffering them to durable local storage. Buffered writes commit to the local event log before acknowledgment; a power interruption between buffering and peer delivery does not lose data. The moment a peer becomes reachable — on the LAN, via VPN, or via the managed relay — the daemon begins working through the buffer. The application never needs to know that writes were queued.
+**Write buffering.** When no peers are reachable, the daemon continues accepting writes from the application logic layer and buffering them to durable local storage. Buffered writes commit to the local event log before acknowledgment. A power interruption between buffering and peer delivery does not lose data. The moment a peer becomes reachable — on the LAN, via VPN, or via the managed relay — the daemon begins working through the buffer. The application never needs to know that writes were queued.
 
 ### Layer 4: Storage
 
@@ -140,22 +142,22 @@ Three storage structures coexist:
 
 **The event log** is an append-only sequence of every domain event and CRDT operation the node has ever processed. It never modifies past entries. Current aggregate state derives from replaying this log from the most recent snapshot. This structure provides corruption resistance, point-in-time recovery, and the audit trail that regulated industries require.
 
-**Read-model projections** are materialized views derived from the event log — the tables, indexes, and calculated fields that make queries fast. If a projection becomes corrupted or stale, it is rebuilt from the event log. The event log is the ground truth; projections are a performance optimization.
+**Read-model projections** are materialized views derived from the event log — the tables, indexes, and calculated fields that make queries fast. If a projection becomes corrupted or stale, it is rebuilt from the event log. The event log is the ground truth. Projections are a performance optimization.
 
 ### Layer 5: Relay and Discovery
 
 Layer 5 is the only layer that touches infrastructure outside the local node, and it is optional.
 
-The relay’s job is narrow: receive encrypted CRDT deltas from one peer, fan them out to co-subscribed peers, and provide a rendezvous point for peer discovery in environments where mDNS and mesh VPN do not reach. The relay holds no authoritative data. It stores no decrypted content. It cannot read the payloads it routes — every delta arrives as ciphertext produced by the sender’s DEK/KEK encryption layer, and the relay has no access to any key.
+The relay's job is narrow: receive encrypted CRDT deltas from one peer, fan them out to co-subscribed peers, and provide a rendezvous point for peer discovery in environments where mDNS and mesh VPN do not reach. The relay holds no authoritative data. It stores no decrypted content. It cannot read the payloads it routes — every delta arrives as ciphertext produced by the sender's DEK/KEK encryption layer, and the relay has no access to any key.
 
-The relay’s two default trust levels reflect this:
+The relay's two default trust levels reflect this:
 
 - **Relay-only (default):** The relay receives and routes ciphertext. It cannot decrypt anything. This is the maximum-privacy configuration that satisfies data sovereignty requirements without exception.
 - **Attested hosted peer (opt-in):** An administrator explicitly issues the hosted relay node a role attestation, making it a full peer. This enables the relay to participate in quorum for CP-class lease coordination — useful for teams too small to form quorum from workstations alone.
 
 The relay protocol is open and the relay is self-hostable. Any organization that requires full independence from managed relay infrastructure can operate its own relay with no changes to node configuration.
 
-The relay’s failure is not the application’s failure.
+The relay's failure is not the application's failure.
 
 ---
 
@@ -165,31 +167,31 @@ Chapter 1 named six failure modes. The inversion addresses each of them specific
 
 **What the inversion resolves:**
 
-*The Outage and The Dependency Chain.* The local node holds authoritative state on the device. No upstream failure — your vendor's, or the cloud region beneath your vendor — interrupts it. A relay outage is an inconvenience: nodes on the same LAN continue syncing directly, and cross-network nodes catch up when the relay recovers. A relay outage is not a data event. The construction PM submitting a bid at 4:58 PM does not care whether a cloud region is degraded, because his node does not consult any remote service to function.
+*The Outage and The Dependency Chain.* The local node holds authoritative state on the device. No upstream failure — your vendor's, or the cloud region beneath your vendor — interrupts it. A relay outage is an inconvenience. Nodes on the same LAN continue syncing directly. Cross-network nodes catch up when the relay recovers. A relay outage is not a data event. The construction PM submitting a bid at 4:58 PM does not care whether a cloud region is degraded, because his node does not consult any remote service to function.
 
 *The Vendor.* Data on vendor infrastructure is at the vendor's business decision's mercy. Data on the user's hardware is not. A vendor acquisition, pivot, or shutdown interrupts the sync service. It does not interrupt access to the user's data.
 
-*The Connectivity.* SaaS requires a persistent connection because the cloud database holds the authoritative copy. The local node holds its own authoritative copy. Connectivity enables sync; it is not a prerequisite for function. The operational precedent is African mobile money — M-PESA and MTN MoMo have operated offline-tolerant financial transaction architectures at continental scale for over fifteen years, demonstrating that the pattern works at population scale in the markets that most require it.
+*The Connectivity.* SaaS requires a persistent connection because the cloud database holds the authoritative copy. The local node holds its own authoritative copy. Connectivity enables sync. It is not a prerequisite for function. The operational precedent is African mobile money: M-PESA and MTN MoMo have operated offline-tolerant financial transaction architectures at continental scale for over fifteen years, demonstrating that the pattern works at population scale in the markets that most require it.
 
 *The Data.* Vendor-managed data is portable only on vendor terms — export rate limits, proprietary formats, feature-gated access. Data on the local node is accessible to the user at any time, in a standard format, without vendor participation. Chapter 16 specifies the plain-file export path and the non-technical disaster recovery walkthrough.
 
 *The Price.* Pricing leverage depends on switching costs that compound when data and workflows are entangled with vendor infrastructure. The relay — the one remaining billable dependency — is replaceable. The data custody that makes price changes coercive is removed from the equation.
 
-*The Third-Party Veto.* In 2022, Western SaaS vendors suspended service across Russia and CIS markets under sanctions enforcement; hundreds of thousands of organizations that had built workflows on those platforms found their operations interrupted not because their vendors failed them but because their vendors were directed to stop serving them. A local-node architecture does not eliminate this vector entirely — a relay can be targeted, or the software vendor itself — but it disaggregates exposure: data on user hardware is not reachable by acting on the relay operator, and the relay can be self-hosted or replaced for the highest-sensitivity deployments. Chapter 11 specifies relay governance; Chapter 15 covers the compliance framework for the customer-directed variant of this failure mode.
+*The Third-Party Veto.* In 2022, Western SaaS vendors suspended service across Russia and CIS markets under sanctions enforcement. Hundreds of thousands of organizations that had built workflows on those platforms found their operations interrupted — not because their vendors failed them, but because their vendors were directed to stop serving them. A local-node architecture does not eliminate this vector entirely. A relay can be targeted. The software vendor itself can be targeted. But the architecture disaggregates exposure: data on user hardware is not reachable by acting on the relay operator, and the relay can be self-hosted or replaced for the highest-sensitivity deployments. Chapter 11 specifies relay governance. Chapter 15 covers the compliance framework for the customer-directed variant of this failure mode.
 
 The regulatory landscape this failure mode operates in is worth naming. The dominant European driver is the EU Court of Justice's 2020 Schrems II ruling, which constrained EU organizations from transferring personal data to US cloud providers without adequate supplemental safeguards — the strongest European legal argument for local-first data residency, enforced nationally by Germany's BSI and France's CNIL. India's DPDP Act 2023, China's PIPL (2021), and Russia's Federal Law 242-FZ — which since 2015 has required Russian-citizen personal data to reside on Russian territory — are representative of the parallel pattern across GCC, APAC, African, and Americas markets; the full coverage matrix is in Appendix F. In each jurisdiction, an architecture where data lives on the user's own hardware is the architecture that makes compliance tractable.
 
 **What you may not have noticed you were exposed to:**
 
-*The Security Breach.* Every SaaS vendor holds decryptable copies of everything you have stored with them. A breach anywhere in their infrastructure stack — servers, sub-processors, privileged internal access — is a breach of your data, regardless of any action you took or failed to take. This failure mode is invisible until it has already happened; you cannot evaluate a vendor's internal security posture from outside it. In this architecture, the relay holds only ciphertext: it receives post-encryption deltas sealed under per-document DEKs wrapped by role KEKs, with keys that never leave the originating node. A complete breach of the relay infrastructure exposes nothing — there is no decryptable content to exfiltrate. In jurisdictions where cloud-hosted infrastructure is subject to mandatory government access requirements, end-to-end encryption with keys that never leave the originating device addresses a compliance constraint that cloud storage cannot satisfy architecturally. The attack surface moves to the endpoints, which this architecture addresses explicitly rather than hiding.
+*The Security Breach.* Every SaaS vendor holds decryptable copies of everything you have stored with them. A breach anywhere in their infrastructure stack — servers, sub-processors, privileged internal access — is a breach of your data, regardless of any action you took or failed to take. This failure mode is invisible until it has already happened. You cannot evaluate a vendor's internal security posture from outside it. In this architecture, the relay holds only ciphertext: it receives post-encryption deltas sealed under per-document DEKs wrapped by role KEKs, with keys that never leave the originating node. A complete breach of the relay infrastructure exposes nothing. There is no decryptable content to exfiltrate. In jurisdictions where cloud-hosted infrastructure is subject to mandatory government access requirements, end-to-end encryption with keys that never leave the originating device addresses a compliance constraint that cloud storage cannot satisfy architecturally. The attack surface moves to the endpoints — which this architecture addresses explicitly rather than hiding.
 
 **What the architecture introduces honestly:**
 
 *Endpoint compromise expands the attack surface.* A centralized cloud database is a single high-value target behind enterprise controls. A fleet of workstations is a larger attack surface with heterogeneous security posture. SQLCipher encryption at rest limits the damage from physical device loss — storage extraction without credentials yields ciphertext. But a compromised running node, with the user authenticated, holds live key material in memory. The four-layer defense — encryption at rest, field-level encryption for high-sensitivity records, stream-level data minimization at the sync layer, and circuit breaker quarantine for offline writes — reduces the blast radius per compromised endpoint. It does not eliminate endpoint risk. Chapter 7 addresses the threat model and the key hierarchy.
 
-*Schema migration complexity increases.* In a centralized SaaS deployment, a schema migration runs once against one database. In a local-node architecture, nodes update independently. A twenty-person team may run five schema versions simultaneously. The expand-contract pattern — new fields additive and backward-compatible during a compatibility window, old fields retired once all active nodes have updated — handles incremental change. Bidirectional lenses handle structural transformations. Schema epochs coordinate breaking changes via quorum agreement. The complexity is real and manageable, but it is categorically harder than single-database migration. Chapter 13 specifies every mechanism.
+*Schema migration complexity increases.* In a centralized SaaS deployment, a schema migration runs once against one database. In a local-node architecture, nodes update independently. A twenty-person team may run five schema versions simultaneously. The expand-contract pattern — new fields additive and backward-compatible during a compatibility window, old fields retired once all active nodes have updated — handles incremental change. Bidirectional lenses handle structural transformations. Schema epochs coordinate breaking changes via quorum agreement. The complexity is real and manageable. It is also categorically harder than single-database migration. Chapter 13 specifies every mechanism.
 
-*CRDT GC debt accumulates.* A CRDT document records every operation in its history. Without garbage collection, a high-churn document grows without bound. The three-tier GC policy — aggressive compaction for stable documents, 90-day retention for active collaboration documents (configurable per deployment; Chapter 6 derives the default), indefinite retention for compliance-classified records bounded in practice by jurisdiction-specific schedules (six years for HIPAA, seven for SOX, as configured) — keeps growth bounded. But GC in a peer-to-peer system requires coordination: a peer offline for three months may return with operations that reference a history the active peers have already compacted. The stale peer recovery protocol handles this case. Chapter 6 covers the failure scenarios. CRDT GC is a real operational concern. This architecture addresses it; it does not make it disappear.
+*CRDT GC debt accumulates.* A CRDT document records every operation in its history. Without garbage collection, a high-churn document grows without bound. The three-tier GC policy — aggressive compaction for stable documents, 90-day retention for active collaboration documents (configurable per deployment; Chapter 6 derives the default), indefinite retention for compliance-classified records bounded in practice by jurisdiction-specific schedules (six years for HIPAA, seven for SOX, as configured) — keeps growth bounded. But GC in a peer-to-peer system requires coordination. A peer offline for three months may return with operations that reference a history the active peers have already compacted. The stale peer recovery protocol handles this case. Chapter 6 covers the failure scenarios. CRDT GC is a real operational concern. This architecture addresses it. It does not make it disappear.
 
 Part II is six rounds of adversarial review by people who were looking for exactly these problems.
 
@@ -199,11 +201,11 @@ Part II is six rounds of adversarial review by people who were looking for exact
 
 The five-layer model admits two canonical deployment shapes. Both use the same Sunfish component surface, the same sync protocol, and the same five-layer architecture. They differ in where the authoritative data location lives.
 
-**Anchor** is Zone A: offline-by-default local-first. It targets .NET MAUI Blazor Hybrid — a native application embedding a Blazor WebView, running on Windows and macOS desktops. Data lives in a local SQLite database encrypted with SQLCipher. Device identity is a long-lived Ed25519 keypair generated at first run and stored in the OS keystore. Sync is opt-in; a user who never enables sync has a fully functional local application. A user who enables sync connects to a managed relay or a direct peer via the gossip protocol. Anchor is the right shape for professional service firms, field operations, and any environment where network connectivity is unreliable, regulated, or genuinely unavailable. The Sunfish `accelerators/anchor/` directory is the reference implementation — pre-1.0, in active development.
+**Anchor** is Zone A: offline-by-default local-first. It targets .NET MAUI Blazor Hybrid — a native application embedding a Blazor WebView, running on Windows and macOS desktops. Data lives in a local SQLite database encrypted with SQLCipher. Device identity is a long-lived Ed25519 keypair generated at first run and stored in the OS keystore. Sync is opt-in. A user who never enables sync has a fully functional local application. A user who enables sync connects to a managed relay or a direct peer via the gossip protocol. Anchor is the right shape for professional service firms, field operations, and any environment where network connectivity is unreliable, regulated, or genuinely unavailable. The Sunfish `accelerators/anchor/` directory is the reference implementation — pre-1.0, in active development.
 
-**Bridge** is Zone C: hybrid multi-tenant SaaS. It targets .NET Aspire with a Blazor Server shell and handles multiple commercial tenants with per-tenant data-plane isolation. Each tenant gets a dedicated local-node host process and a dedicated SQLCipher database. The hosted node participates in the tenant’s gossip scope as a ciphertext-only peer by default — it routes encrypted deltas but cannot read them. Tenants who need the hosted node to participate in quorum for CP-class operations can issue it a role attestation explicitly. Bridge is the right shape for organizations that want the deployment simplicity of a hosted service alongside the data sovereignty guarantees of a local-node architecture. The Sunfish `accelerators/bridge/` directory is the reference implementation — pre-1.0, in active development.
+**Bridge** is Zone C: hybrid multi-tenant SaaS. It targets .NET Aspire with a Blazor Server shell and handles multiple commercial tenants with per-tenant data-plane isolation. Each tenant gets a dedicated local-node host process and a dedicated SQLCipher database. The hosted node participates in the tenant's gossip scope as a ciphertext-only peer by default — it routes encrypted deltas but cannot read them. Tenants who need the hosted node to participate in quorum for CP-class operations can issue it a role attestation explicitly. Bridge is the right shape for organizations that want the deployment simplicity of a hosted service alongside the data sovereignty guarantees of a local-node architecture. The Sunfish `accelerators/bridge/` directory is the reference implementation — pre-1.0, in active development.
 
-Both shapes use `Sunfish.Kernel.Sync` and `Sunfish.Foundation.LocalFirst` (pre-1.0). Neither shape changes the sync protocol, the CAP positioning model, or the storage architecture. The difference between Anchor and Bridge is not two different systems — it is one system instantiated at two different authoritative data locations. A developer who understands the five layers understands both shapes. The choice between them is a deployment decision. Chapter 4 provides the framework for making it.
+Both shapes use `Sunfish.Kernel.Sync` and `Sunfish.Foundation.LocalFirst` (pre-1.0). Neither shape changes the sync protocol, the CAP positioning model, or the storage architecture. The difference between Anchor and Bridge is not two different systems. It is one system instantiated at two different authoritative data locations. A developer who understands the five layers understands both shapes. The choice between them is a deployment decision. Chapter 4 provides the framework for making it.
 
 ---
 
@@ -215,7 +217,7 @@ This architecture shifts three fundamental habits.
 
 **Business logic owns its correctness independently of the network.** The application logic layer has no implicit network-call path. Every validation, every invariant, every state machine transition runs against local data. Logic that depends on globally consistent current state belongs in the CP-class record category, coordinated through distributed leases. Logic that treats a network call as a validation shortcut fails when the network is absent — which means it fails in the field.
 
-**Failure modes are explicit.** An AP-class write always succeeds locally. A CP-class write either acquires a lease or surfaces a clear constraint. A sync conflict surfaces in the conflict inbox, not as a silent overwrite. The system’s failure modes are designed to be visible. The developer’s job is to wire those signals to the UI correctly, not to paper over them.
+**Failure modes are explicit.** An AP-class write always succeeds locally. A CP-class write either acquires a lease or surfaces a clear constraint. A sync conflict surfaces in the conflict inbox, not as a silent overwrite. The system's failure modes are designed to be visible. The developer's job is to wire those signals to the UI correctly, not to paper over them.
 
 The five layers in one diagram are the complete picture. Everything that follows is detail.
 
@@ -225,4 +227,4 @@ The five layers in one diagram are the complete picture. Everything that follows
 
 [1] M. Kleppmann, A. Wiggins, P. van Hardenberg, and M. McGranaghan, "Local-first software: You own your data, in spite of the cloud," in *Proc. ACM SIGPLAN Int. Symp. New Ideas, New Paradigms, and Reflections on Programming and Software (Onward! '19)*, Athens, Greece, Oct. 2019, pp. 154–178, doi: 10.1145/3359591.3359737. [Online]. Available: https://www.inkandswitch.com/essay/local-first/
 
-[2] M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O’Reilly Media, 2017.
+[2] M. Kleppmann, *Designing Data-Intensive Applications*, 1st ed. Sebastopol, CA: O'Reilly Media, 2017.

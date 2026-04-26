@@ -1,0 +1,19 @@
+{
+  "chapter": "ch05-enterprise-lens",
+  "pass_num": 2,
+  "input_sha256": "eb8faf528a323747f1deb7c20deac2336c76ef36156b5bfb2508e10a246d6ba8",
+  "output_sha256": "ccd9508e282cd610dc91be271a17878853e050091d5c81e9332b01c9e47eafb4",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 416.73136162757874,
+  "wall_clock_start_iso": "2026-04-25T22:19:11.052521Z",
+  "wall_clock_end_iso": "2026-04-25T22:26:07.783881Z",
+  "promoted_sha256": "ccd9508e282cd610dc91be271a17878853e050091d5c81e9332b01c9e47eafb4",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

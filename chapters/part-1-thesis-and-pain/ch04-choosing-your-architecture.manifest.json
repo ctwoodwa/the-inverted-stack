@@ -1,0 +1,19 @@
+{
+  "chapter": "ch04-choosing-your-architecture",
+  "pass_num": 2,
+  "input_sha256": "bab1e1c1c708bc46c8a43d44700bd3679556510af8873ea88a81b19dce0ddb76",
+  "output_sha256": "24fbf2ffc77a18fbeaee2929d5d0747b1def48cdcf7f05a2a577606e101f0915",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 366.18894815444946,
+  "wall_clock_start_iso": "2026-04-25T22:05:28.429498Z",
+  "wall_clock_end_iso": "2026-04-25T22:11:34.618443Z",
+  "promoted_sha256": "24fbf2ffc77a18fbeaee2929d5d0747b1def48cdcf7f05a2a577606e101f0915",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

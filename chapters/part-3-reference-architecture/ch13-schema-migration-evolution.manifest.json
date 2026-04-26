@@ -1,0 +1,19 @@
+{
+  "chapter": "ch13-schema-migration-evolution",
+  "pass_num": 2,
+  "input_sha256": "4f05303f186a253bf043036e3e996e002285083f1a1725ccb0b0eaab431cbff9",
+  "output_sha256": "1033df34bb6a89e2a56c183616bb2122cc17d203a6ad2665e2b0fc5114ebff7b",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 428.8504464626312,
+  "wall_clock_start_iso": "2026-04-26T02:48:31.072534Z",
+  "wall_clock_end_iso": "2026-04-26T02:55:39.922978Z",
+  "promoted_sha256": "1033df34bb6a89e2a56c183616bb2122cc17d203a6ad2665e2b0fc5114ebff7b",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

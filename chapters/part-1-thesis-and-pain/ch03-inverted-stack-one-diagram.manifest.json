@@ -1,0 +1,19 @@
+{
+  "chapter": "ch03-inverted-stack-one-diagram",
+  "pass_num": 2,
+  "input_sha256": "89c4f4f0b35ec19828e529d1872ad88f3de8cc36906a2ba2d8a3445f3ee426d2",
+  "output_sha256": "71bc03e8ee3a12b06b09eccdff1bcb57ce4a34397b0aa68ddaecc9236ab02c3a",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 442.6212818622589,
+  "wall_clock_start_iso": "2026-04-26T02:02:34.871878Z",
+  "wall_clock_end_iso": "2026-04-26T02:09:57.493158Z",
+  "promoted_sha256": "71bc03e8ee3a12b06b09eccdff1bcb57ce4a34397b0aa68ddaecc9236ab02c3a",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

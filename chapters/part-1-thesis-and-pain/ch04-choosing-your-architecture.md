@@ -11,17 +11,17 @@ Answer this question before reading any further:
 
 > **Does the primary value of your software come from the user's own data — or from aggregating data across many users?**
 
-If the value comes from a single user's records — their projects, their clients, their documents, their field data — the local-node architecture is the right default. If the value comes from pooling behavior across users — rankings, recommendations, market pricing, social graphs — centralized infrastructure is structurally required. No version of this architecture changes that answer.
+If the value lives in a single user's records — their projects, their clients, their documents, their field data — the local-node architecture is the right default. If the value lives in pooled behavior across users — rankings, recommendations, market pricing, social graphs — centralized infrastructure is structurally required. No version of this architecture changes that answer.
 
 ---
 
 ## The One Question That Decides Everything
 
-Software whose core value pre-exists any other user — a project management tool where a solo user's project list is valuable on day one, a CRM where a consultant's client records matter before any colleague joins, a design tool where the file exists before any reviewer opens it — has user-owned data as its primary asset. The local node is the correct home for that asset. The architecture in this book was built for that case.
+Some software's core value pre-exists every other user. A project management tool where a solo user's project list is valuable on day one. A CRM where a consultant's client records matter before any colleague joins. A design tool where the file exists before any reviewer opens it. The user-owned data is the primary asset. The local node is the correct home for that asset. The architecture in this book was built for that case.
 
-Software whose value emerges only when many users are present — a global leaderboard, a price-discovery marketplace, a social platform where content is worthless without an audience — has aggregated state as its primary asset. That asset requires a coordinator. No local-node design changes that.
+Other software earns its value only when many users show up. A global leaderboard. A price-discovery marketplace. A social platform where content is worthless without an audience. The primary asset is aggregated state. That asset needs a coordinator. No local-node design changes that.
 
-Most real products contain both. A project management tool's core value is user-owned. Its org-wide reporting analytics are aggregated. The architecture question is not which category applies to the whole product — it is which category applies to the *primary* records. Secondary aggregated features can sit on a separate service layer without compromising the architecture for the main data plane.
+Most real products contain both. A project management tool's core value is user-owned. Its org-wide reporting analytics are aggregated. The architecture question is not which category fits the whole product. It is which category fits the *primary* records. Secondary aggregated features can sit on a separate service layer without compromising the architecture for the main data plane.
 
 ---
 
@@ -36,11 +36,11 @@ This is the only filter that can disqualify the entire architecture. Answer each
 | Does every user need the exact same truth at the exact same millisecond? | **Stop. Centralized only.** |
 | Can users tolerate eventual consistency, where peers may diverge for minutes or hours? | Local-first viable. Continue. |
 
-No distributed system can be both available during partitions and immediately consistent across all nodes. If your domain requires atomic cross-user transactions — a seat reservation that prevents two users from booking the same seat simultaneously, a payment that must debit one ledger and credit another atomically, a trade execution that requires globally consistent state at the moment of settlement — stop here. The local-node architecture is not the right choice.
+No distributed system can be both available during partitions and immediately consistent across all nodes. If your domain requires atomic cross-user transactions — a seat reservation that prevents two users from booking the same seat at once, a payment that must debit one ledger and credit another atomically, a trade execution that requires globally consistent state at the moment of settlement — stop here. The local-node architecture is not the right choice for that work.
 
-This does not mean local-node architectures cannot handle financial data. The double-entry ledger is a deliberately specified subsystem in this architecture, and it handles CP-class operations correctly: local posting with idempotent replay, CQRS read models for aggregated views, period closing with rollup snapshots. But the ledger treats certain operations — cross-user settlements, real-time inventory — as out of scope for eventual consistency. If your product's *core loop* requires those operations, you are building a payments processor, not a local-first productivity tool.
+This does not mean local-node architectures cannot handle financial data. The double-entry ledger is a deliberately specified subsystem here. It handles CP-class operations correctly: local posting with idempotent replay, CQRS read models for aggregated views, period closing with rollup snapshots. The ledger treats certain operations — cross-user settlements, real-time inventory — as out of scope for eventual consistency. If your product's *core loop* requires those operations, you are building a payments processor. You are not building a local-first productivity tool.
 
-The test is specific: do your *primary* records require atomic cross-user consistency as a moment-to-moment invariant? If a field operations manager's daily work log can show yesterday's site activity from a peer who came back online this morning, that is eventual consistency and it is fine. If a commodities exchange must show every participant the same order book at the same microsecond, that is a different system and this architecture is not for it.
+The test is specific. Do your *primary* records require atomic cross-user consistency as a moment-to-moment invariant? A field operations manager's daily work log shows yesterday's site activity from a peer who came back online this morning. That is eventual consistency. That is fine. A commodities exchange must show every participant the same order book at the same microsecond. That is a different system. This architecture is not for it.
 
 ---
 
@@ -56,11 +56,11 @@ Who is the natural owner of the primary records?
 | User owns their data but wants optional sharing and sync with peers | Local-first + relay |
 | Data has value only when pooled: market prices, rankings, recommendations | Centralized |
 
-The key distinction is not who *stores* the data — it is who *creates* it, who *uses* it, and who loses something meaningful if it becomes inaccessible. A construction PM's project files belong to the PM and their firm. Those records describe their work, their bids, their subcontractor relationships. No other firm's data makes them more or less useful. The natural owner is obvious.
+The distinction is not who *stores* the data. It is who *creates* it, who *uses* it, and who loses something meaningful if it becomes inaccessible. A construction PM's project files belong to the PM and their firm. The records describe their work, their bids, their subcontractor relationships. No other firm's data makes them more or less useful. The natural owner is obvious.
 
-Contrast that with a platform whose core product is behavioral aggregation — an analytics suite that sells insights derived from usage patterns across its entire user base, or a recommendation engine whose value comes from what millions of users clicked last week. The data's value is pooled. No individual user's data is the product; the aggregate is. That architecture requires a central store.
+Contrast that with a platform whose core product is behavioral aggregation. An analytics suite that sells insights derived from usage patterns across its entire user base. A recommendation engine whose value comes from what millions of users clicked last week. The data's value is pooled. No individual user's data is the product. The aggregate is. That architecture requires a central store.
 
-The most common real-world case is mixed ownership, which resolves to Zone C: user-owned records for the day-to-day data plane, with specific aggregated surfaces — org-wide dashboards, cross-team reporting, benchmarking — handled by a separate service. The local-node architecture handles user-owned records and treats the aggregated surfaces as optional read models, not authoritative sources.
+The most common real-world case is mixed ownership. It resolves to Zone C: user-owned records for the day-to-day data plane, with specific aggregated surfaces — org-wide dashboards, cross-team reporting, benchmarking — handled by a separate service. The local-node architecture handles user-owned records. It treats aggregated surfaces as optional read models, not authoritative sources.
 
 If a regulatory custodian — not the user, not the vendor, but a regulator — must hold the authoritative copy, the architecture cannot make that guarantee structurally. Healthcare records under HIPAA, financial records under FINRA, export-controlled data under ITAR: each has regulatory frameworks specifying where authoritative custody must reside. HIPAA accommodates local-first when a Business Associate Agreement covers the storage architecture and audit trails satisfy 45 CFR §164.312's access controls. FINRA Rule 4511 and SEC Rule 17a-4 specify third-party WORM (write-once-read-many) storage for broker-dealer records — requirements that may route specific retention flows to a centralized custodian even when day-to-day operations run local-first. Know which regime applies before reaching this filter.
 
@@ -68,7 +68,7 @@ If a regulatory custodian — not the user, not the vendor, but a regulator — 
 
 ## Filter 3: Connectivity and Operational Environment
 
-What are the real operational conditions? Not the happy path — what happens when the network is gone for hours or days?
+What are the real operational conditions? Not the happy path. What happens when the network is gone for hours or days?
 
 | Environment | Model |
 |---|---|
@@ -83,15 +83,15 @@ Name the actual deployment environment. Not the cloud provider's SLA — the phy
 
 A structural engineer doing site inspections drives between locations where cell coverage is intermittent at best. A legal team doing document review in a hotel conference room during depositions cannot guarantee stable internet. A nurse on a hospital floor whose building WiFi was designed for administrative staff and retrofitted for clinical use cannot stop charting because a cloud API returned a timeout. A field operations crew at a rural extraction site may have satellite uptime measured in hours per day with significant latency.
 
-These scenarios frame intermittent connectivity as exceptional; globally, it is the baseline. Hundreds of millions of enterprise workers across Sub-Saharan Africa, South and Southeast Asia, and rural Latin America operate through load-shedding, 2G/3G coverage gaps, and irregular power — not as edge cases but as daily conditions. For these markets, local-first is not a contingency design. It is the architecture that matches the work.
+These scenarios frame intermittent connectivity as exceptional. Globally, it is the baseline. Hundreds of millions of enterprise workers across Sub-Saharan Africa, South and Southeast Asia, and rural Latin America operate through load-shedding, 2G/3G coverage gaps, and irregular power — not as edge cases but as daily conditions. For these markets, local-first is not a contingency design. It is the architecture that matches the work.
 
 For these users, the question is not "can the software degrade gracefully?" It is "does the software work without network access?" Degradation is a different failure mode from absence. An app that loads stale data and queues writes is degraded — it still works. An app that shows a spinner and refuses to accept input is broken.
 
-The enterprise environment deserves separate attention. IT departments in regulated industries — finance, healthcare, defense contracting, government — often require that data not leave controlled infrastructure. A cloud SaaS where data lives on a vendor's servers in a region selected by the vendor fails this requirement directly. A local-node architecture where data lives on MDM-managed endpoints under IT's control passes it. The data residency properties that the local-node architecture provides as a structural side effect of its design are a primary procurement advantage in enterprise sales — not a secondary nice-to-have.
+The enterprise environment deserves separate attention. IT departments in regulated industries — finance, healthcare, defense contracting, government — often require that data not leave controlled infrastructure. A cloud SaaS where data lives on a vendor's servers in a region the vendor selects fails this requirement directly. A local-node architecture where data lives on MDM-managed endpoints under IT's control passes it. The data residency properties this architecture provides as a structural side effect of its design are a primary procurement advantage in enterprise sales — not a secondary nice-to-have.
 
-The regulatory landscape behind this filter is now global. European pressure comes from the 2020 Schrems II ruling, which constrains EU personal data transfers to US cloud providers without supplemental safeguards — enforced nationally by Germany's BSI and France's CNIL. India's DPDP Act 2023 and the RBI data localization circular, the UAE's DIFC DPL 2020 (which may legally prohibit foreign cloud storage for DIFC-licensed financial entities), and Russia's Federal Law 242-FZ — among the first general-purpose data localization laws globally, predating GDPR by two years — are representative; the full coverage matrix across GCC, APAC, African, and Americas markets is in Appendix F. In each jurisdiction, the architecture where data lives on the user's own hardware is the architecture that makes compliance tractable; in several (DIFC, RBI, 242-FZ, PIPL), it is closer to the architecture the law requires.
+The regulatory landscape behind this filter is now global. European pressure comes from the 2020 Schrems II ruling, which constrains EU personal data transfers to US cloud providers without supplemental safeguards — enforced nationally by Germany's BSI and France's CNIL. India's DPDP Act 2023 and the RBI data localization circular, the UAE's DIFC DPL 2020 (which may legally prohibit foreign cloud storage for DIFC-licensed financial entities), and Russia's Federal Law 242-FZ — among the first general-purpose data localization laws globally, predating GDPR by two years — are representative; the full coverage matrix across GCC, APAC, African, and Americas markets is in Appendix F. In each jurisdiction, the architecture where data lives on the user's own hardware is the architecture that makes compliance tractable. In several (DIFC, RBI, 242-FZ, PIPL), it is closer to the architecture the law requires.
 
-If your users work offline regularly, or in environments where they *should* be able to work offline even if they currently cannot, the connectivity filter points toward local-first.
+If your users work offline regularly — or in environments where they *should* be able to work offline even if they currently cannot — the connectivity filter points toward local-first.
 
 ---
 
@@ -107,21 +107,21 @@ Does the business model depend on controlling data access — or does it thrive 
 | Enterprise sales with security review, vendor risk assessment, data residency audit | Local-first node (structurally easier to pass procurement review) |
 | Open-source sustainability with a managed hosted offering as the revenue path | Local-first strongly preferred |
 
-This filter catches a mismatch that technical teams often miss. A team that builds the right local-node architecture for their domain and then adopts a business model that requires controlling data access has built an internal contradiction. The local-node architecture is structurally incompatible with monetization that depends on data custody.
+This filter catches a mismatch technical teams often miss. A team builds the right local-node architecture for its domain. Then it adopts a business model that requires controlling data access. It has built an internal contradiction. The local-node architecture is structurally incompatible with monetization that depends on data custody.
 
-If revenue requires that users *cannot* access their data without the vendor's platform — per-API-call billing, subscription gating that prevents export, data lock-in as the primary retention mechanism — the local-node architecture actively undermines the business. Users who own their data can leave. If making departure difficult is the retention strategy, this architecture makes it impossible to execute.
+If revenue requires that users *cannot* access their data without the vendor's platform — per-API-call billing, subscription gating that prevents export, data lock-in as the primary retention mechanism — the local-node architecture actively undermines the business. Users who own their data can leave. If making departure difficult is the retention strategy, this architecture makes that strategy impossible to execute.
 
-If revenue comes from service quality, support, the convenience of a managed relay, additional tooling, or enterprise support contracts, the local-node architecture is additive. Users who own their data and can export it freely still choose to pay for a well-run relay, responsive support, and a team that handles the infrastructure complexity they do not want to manage. The managed relay is the correct unit of competitive analysis: users pay for the service, not for access to their own data.
+If revenue comes from service quality, support, the convenience of a managed relay, additional tooling, or enterprise support contracts, the local-node architecture is additive. Users who own their data and can export it freely still pay for a well-run relay, responsive support, and a team that handles the infrastructure complexity they do not want to manage. The managed relay is the correct unit of competitive analysis. Users pay for the service, not for access to their own data.
 
 Dual-licensing — an open-source core with a commercial managed offering — is the strongest alignment pattern for this architecture. The community version provides the open core. The commercial offering provides the managed relay, the enterprise MDM tooling, the security audit documentation, and the SLA. Revenue scales with the quality of the service, not with the difficulty of leaving.
 
-One clarification European procurement officers will ask for: relay failure degrades sync and cross-organization collaboration but does not affect local operation or data access. A team whose relay provider fails continues working on the local plane and replaces the relay without data migration. The relay is replaceable infrastructure, not a data custodian.
+One clarification European procurement officers will ask for. Relay failure degrades sync and cross-organization collaboration. It does not affect local operation or data access. A team whose relay provider fails keeps working on the local plane and replaces the relay without data migration. The relay is replaceable infrastructure, not a data custodian.
 
 ---
 
 ## Filter 5: Team Capability and Timeline
 
-This filter governs *when* and *how*, not *whether*. A team fully committed to Zone A that ships nothing in the first year serves no user. Honest capability assessment prevents that outcome.
+This filter governs *when* and *how*. It does not govern *whether*. A team fully committed to Zone A that ships nothing in the first year serves no user. Honest capability assessment prevents that outcome.
 
 | Constraint | Implication |
 |---|---|
@@ -130,15 +130,15 @@ This filter governs *when* and *how*, not *whether*. A team fully committed to Z
 | Existing hosted product with established user base and historical data | Hybrid: retain cloud as sync relay, add local-node capability incrementally |
 | Greenfield project with a team prepared to invest in the architecture | Local-first node from day one |
 
-Four skills separate local-node development from standard web application development. Teams need to acquire them honestly, not assume they transfer automatically.
+Four skills separate local-node development from standard web application development. Acquire them honestly; do not assume they transfer automatically.
 
-**CRDT debugging.** When two peers diverge and produce unexpected merged state, the developer must understand which CRDT types were involved, which operations arrived in which order, and what the merge semantics guarantee. This is not "find the bug and fix it" — it is reasoning about convergent state under uncertainty. The mental model is different from debugging a request-response API.
+**CRDT debugging.** When two peers diverge and produce unexpected merged state, the developer must understand which CRDT types were involved, which operations arrived in which order, and what the merge semantics guarantee. This is not "find the bug and fix it." This is reasoning about convergent state under uncertainty. The mental model is different from debugging a request-response API.
 
 **Distributed state management.** The local node holds authoritative state that must remain consistent under concurrent local edits, incoming sync deltas, and schema migrations simultaneously. Each of these can conflict with the others. Managing that state correctly — knowing when to apply incoming deltas immediately, when to defer them, when to reject them — requires explicit design, not improvisation.
 
 **Schema migration in a multi-version environment.** Nodes update independently. At any given moment, the user base runs a distribution of software versions. A schema migration must work correctly when a newly updated node exchanges data with a node running two versions behind. The expand-contract pattern — adding new fields before removing old ones, maintaining backward-compatible event formats during a transition window, retiring old formats only after the compatibility window closes — is not optional.
 
-**Key management.** The architecture requires per-document data encryption keys, per-role key encryption keys, and device identity keys. Rotation, revocation, and recovery procedures must be designed and implemented before the first production deployment. A team that has not designed key compromise recovery before shipping has created a data loss risk that cannot be resolved under pressure. Plan one to three months for key hierarchy design and rotation procedure implementation before a production date can be named.
+**Key management.** The architecture requires per-document data encryption keys, per-role key encryption keys, and device identity keys. Rotation, revocation, and recovery procedures must be designed and implemented before the first production deployment. A team that has not designed key compromise recovery before shipping has created a data loss risk that cannot be resolved under pressure. Plan one to three months for key hierarchy design and rotation procedure implementation before naming a production date.
 
 These skills are learnable, not rare. The combined estimate — three to six months for CRDT and sync plus one to three months for key management — reflects real project history, not pessimism. Teams that treat those months as a legitimate investment ship stable systems. Teams that skip them ship systems that fail on reconnection edge cases and schema incompatibilities in the field.
 
@@ -176,7 +176,7 @@ flowchart TD
 
 **Zone A — Local-First Node**
 
-All five filters clear without a hard stop, and the team has the timeline and capability to build the full architecture from the start. Zone A is the pure form: every user runs a complete local node, the relay is optional infrastructure for peer discovery and backup, and the software operates at full fidelity without any server.
+All five filters clear without a hard stop. The team has the timeline and capability to build the full architecture from the start. Zone A is the pure form. Every user runs a complete local node. The relay is optional infrastructure for peer discovery and backup. The software operates at full fidelity without any server.
 
 Zone A applies to: single-tenant or team-scoped productivity and business software; offline or regulated operational environments; software whose core value exists before any other user joins; professional or enterprise users who install software and expect it to stay installed. Representative domains: project management, professional CRM, field operations tools, legal and healthcare records management, engineering and design applications.
 
@@ -200,9 +200,9 @@ If the five filters feel like too much evaluation for a project in early discove
 
 **Does the user own their primary records?** The records describe the user's work, their clients, their projects. The user retains meaningful access even if they stop paying. If yes — the local-node architecture is the right default.
 
-**Does the team need to work offline for extended periods?** Not "it would be nice if offline worked" — users are in environments where reliable connectivity cannot be guaranteed and the software must work regardless. If yes — the architecture needs to treat offline as the primary case, not a fallback.
+**Does the team need to work offline for extended periods?** Not "it would be nice if offline worked." Users are in environments where reliable connectivity cannot be guaranteed and the software must work regardless. If yes — the architecture needs to treat offline as the primary case, not a fallback.
 
-**Does the product need to outlive vendor infrastructure?** The software should continue to work regardless of whether the vendor survives, is acquired, changes its pricing, or is directed to stop serving your jurisdiction — as hundreds of thousands of organizations in Russia and CIS markets learned in 2022 when Western SaaS vendors suspended service under sanctions enforcement. If yes — the product must hold its own authoritative data. Software that requires a vendor server to function cannot outlive the vendor's continued permission to serve you.
+**Does the product need to outlive vendor infrastructure?** The software should keep working regardless of whether the vendor survives, is acquired, changes its pricing, or is directed to stop serving your jurisdiction — as hundreds of thousands of organizations in Russia and CIS markets learned in 2022 when Western SaaS vendors suspended service under sanctions enforcement. If yes — the product must hold its own authoritative data. Software that depends on a vendor server to function cannot outlive the vendor's continued permission to serve you.
 
 If all three answers are yes: Zone A or Zone C. Start with Anchor for a greenfield. Start with Bridge for a migration or hybrid deployment. Run the full five filters to confirm no blocking constraint applies.
 
@@ -214,6 +214,6 @@ The shortcut identifies whether a full evaluation is worth the time. It does not
 
 ## What You Have Earned
 
-A reader who cleared all five filters has earned an architecture that outlives vendor decisions, works through connectivity gaps and power interruptions, and satisfies compliance in every major regulatory jurisdiction. Anchor is the Zone A reference implementation for greenfield local-first projects; Bridge is the Zone C reference for teams migrating an existing SaaS product or offering a hosted option alongside a self-hosted one. Both reference Sunfish packages (pre-1.0 implementations of the architecture this book specifies, not finished products) and both are specified in full in Part IV.
+A reader who cleared all five filters has earned an architecture that outlives vendor decisions, works through connectivity gaps and power interruptions, and satisfies compliance in every major regulatory jurisdiction. Anchor is the Zone A reference implementation for greenfield local-first projects. Bridge is the Zone C reference for teams migrating an existing SaaS product or offering a hosted option alongside a self-hosted one. Both reference Sunfish packages — pre-1.0 implementations of the architecture this book specifies, not finished products — and both are specified in full in Part IV.
 
 Before that implementation, Part II stress-tests the architecture against the hardest objections five domain experts could construct. The council did not begin as believers. They began as skeptics. Every block they raised, every condition they imposed, and every objection they cleared makes the architecture stronger and the failure modes better understood.

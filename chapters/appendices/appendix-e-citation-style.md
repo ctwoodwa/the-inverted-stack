@@ -3,7 +3,7 @@
 <!-- icm/approved -->
 <!-- Target: ~500 words -->
 
-This book uses IEEE numeric citation style, standard in engineering, computer science, and related technical disciplines. All sources are cited using bracketed numbers in the text, with full details in a numbered reference list at the end of the book.
+This book uses IEEE numeric citation style — the standard in engineering, computer science, and related technical disciplines. Sources appear as bracketed numbers in the text. Full details live in a numbered reference list at the end of the book.
 
 ---
 
@@ -11,7 +11,7 @@ This book uses IEEE numeric citation style, standard in engineering, computer sc
 
 Cite sources using square brackets: [1], [2], [3], in the order they first appear in the text.
 
-Reuse the same number every time you refer to the same source — do not assign a new number on each use.
+Reuse the same number every time you refer to the same source. Do not assign a new number on each use.
 
 Place citations before punctuation, with a space before the first bracket:
 
@@ -27,7 +27,7 @@ When quoting or referring to a specific part of a source, include page numbers:
 
 ## Reference List
 
-All cited works are listed in a "References" section, ordered numerically by citation number, not alphabetically.
+All cited works appear in a "References" section, ordered numerically by citation number — not alphabetically.
 
 Each entry begins with its bracketed number: [1], [2], etc.
 
@@ -91,16 +91,16 @@ For EU regulations specifically: `[n] Regulation (EU) NNNN/YYYY of the European 
 
 ## Consistency Rules
 
-- Use IEEE style throughout the book: same in-text format and reference patterns everywhere.
+- Use IEEE style throughout the book — same in-text format, same reference patterns, everywhere.
 - Maintain consistent capitalization of titles and abbreviations, especially journal and conference names.
 - When citing multiple sources at once, list each number separately in its own bracket: [1], [3], [5].
-- Do not merge multiple citations into a single bracket (not [1,3,5] — use [1], [3], [5]).
+- Do not merge multiple citations into a single bracket. Not [1,3,5] — use [1], [3], [5].
 
 ---
 
 ## Examples from This Book
 
-The following in-text citations illustrate the variety of source types cited across the manuscript. The full reference list is assembled at the final-manuscript stage; Appendix C contains the complete annotated bibliography organized by topic.
+The in-text citations below illustrate the range of source types cited across the manuscript. The full reference list is assembled at the final-manuscript stage. Appendix C contains the complete annotated bibliography organized by topic.
 
 | Citation | Format | Source |
 |---|---|---|
@@ -125,6 +125,6 @@ At final-manuscript assembly:
 
 1. Walk the manuscript in reading order and renumber every citation from [1] to [N] in first-appearance order.
 2. Compile the numbered Reference List in the back matter, entries matching the renumbered in-text citations.
-3. Verify every in-text bracket resolves to a Reference List entry and every Reference List entry is cited at least once.
-4. Check legal and regulatory citations against primary sources — a misspelled case name or wrong regulation number in a book making a compliance argument is a credibility defect that security and legal reviewers will catch immediately.
-5. Check URLs are reachable at the time of press; annotate any URL with a retrieval date if the content is expected to shift.
+3. Verify every in-text bracket resolves to a Reference List entry, and every Reference List entry is cited at least once.
+4. Check legal and regulatory citations against primary sources. A misspelled case name or a wrong regulation number, in a book making a compliance argument, is a credibility defect that security and legal reviewers will catch immediately.
+5. Check URLs are reachable at the time of press. Annotate any URL with a retrieval date if the content is expected to shift.

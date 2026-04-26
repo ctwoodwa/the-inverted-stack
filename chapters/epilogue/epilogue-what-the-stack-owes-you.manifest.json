@@ -1,0 +1,19 @@
+{
+  "chapter": "epilogue-what-the-stack-owes-you",
+  "pass_num": 2,
+  "input_sha256": "e772db1f19911afc260314ab3f39915faaa5a528ea460b0325963d5dabeaf9da",
+  "output_sha256": "3894248f3832af21e928e80764bf060e7b6b9ecc584d6c79f2e5cf0466162e0f",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 237.70207118988037,
+  "wall_clock_start_iso": "2026-04-26T03:39:27.408057Z",
+  "wall_clock_end_iso": "2026-04-26T03:43:25.110126Z",
+  "promoted_sha256": "3894248f3832af21e928e80764bf060e7b6b9ecc584d6c79f2e5cf0466162e0f",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

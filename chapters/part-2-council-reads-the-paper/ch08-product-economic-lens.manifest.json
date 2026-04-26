@@ -1,0 +1,19 @@
+{
+  "chapter": "ch08-product-economic-lens",
+  "pass_num": 2,
+  "input_sha256": "0c6567a26dd01ebed6b303702da4cbcb3356c60ca27c85deed61962f414906e7",
+  "output_sha256": "3f4def14efa127ad5ba3dee1f9a237512d11460ef7e41db2734643ac805f5cc8",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 237.14769983291626,
+  "wall_clock_start_iso": "2026-04-26T02:18:39.861605Z",
+  "wall_clock_end_iso": "2026-04-26T02:22:37.009302Z",
+  "promoted_sha256": "3f4def14efa127ad5ba3dee1f9a237512d11460ef7e41db2734643ac805f5cc8",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

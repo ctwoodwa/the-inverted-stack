@@ -1,0 +1,19 @@
+{
+  "chapter": "ch17-building-first-node",
+  "pass_num": 2,
+  "input_sha256": "71628afcb6080981fc2cb0e593fc0e470cbea079aceb3e4c9e6a1ee1cd2b2153",
+  "output_sha256": "f74cce0ab8710b30cd175dc09c31ec4040aa11ed6833a9615f1bc63a85a61358",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 412.33283019065857,
+  "wall_clock_start_iso": "2026-04-26T03:14:23.466090Z",
+  "wall_clock_end_iso": "2026-04-26T03:21:15.798918Z",
+  "promoted_sha256": "f74cce0ab8710b30cd175dc09c31ec4040aa11ed6833a9615f1bc63a85a61358",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

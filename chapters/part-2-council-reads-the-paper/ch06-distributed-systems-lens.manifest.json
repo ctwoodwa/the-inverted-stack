@@ -1,0 +1,19 @@
+{
+  "chapter": "ch06-distributed-systems-lens",
+  "pass_num": 2,
+  "input_sha256": "32eef2c0ecff9f4529cd14c13cb0ccba9c1e89cfe4f061327ebe3ae5cf25745b",
+  "output_sha256": "ae7d05f1b85e17be2f4f55773f5e0234f6d62855591c3a2784d5ab175d9eaad9",
+  "agent_path": ".claude/agents/voice-sinek.md",
+  "agent_sha256": "ca9cd8d080edc0f74d5a27f56d42124bfa3ab8cc1bf800acc934375d411833e5",
+  "claude_cli_version": "2.1.119 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "prompt_mode": "normalize",
+  "exit_code": 0,
+  "duration_s": 293.6243691444397,
+  "wall_clock_start_iso": "2026-04-26T02:09:57.494766Z",
+  "wall_clock_end_iso": "2026-04-26T02:14:51.119133Z",
+  "promoted_sha256": "ae7d05f1b85e17be2f4f55773f5e0234f6d62855591c3a2784d5ab175d9eaad9",
+  "promoted_at_iso": "2026-04-26T05:26:55.970602Z",
+  "promoter": "Chris Wood <ctwoodwa@gmail.com>",
+  "manual_edit": false
+}

@@ -7,9 +7,9 @@
 
 ---
 
-The failure modes local-first architectures ship with are the ones that look unlikely until they happen: silent CRDT divergence, WAL corruption after power loss, lease split-brain after a half-open TCP timeout, ciphertext leakage through an audit-log side channel. This appendix exists to make those failure modes impossible to miss before a customer finds them.
+The failure modes local-first architectures ship with are the ones that look unlikely until they happen. Silent CRDT divergence. WAL corruption after power loss. Lease split-brain after a half-open TCP timeout. Ciphertext leakage through an audit-log side channel. This appendix exists to make those failure modes impossible to miss before a customer finds them.
 
-Five testing levels govern this architecture, each with mandatory pass conditions before first production release. Level 1 and Level 2 run on every pull request. Level 3 runs nightly. Level 4 runs weekly or before release. Level 5 runs in staging before each major release. Each scenario specifies setup conditions, the action to perform, and the expected outcome. If a scenario has no pass condition, it is not a test.
+Five testing levels govern this architecture. Each carries mandatory pass conditions before first production release. Level 1 and Level 2 run on every pull request. Level 3 runs nightly. Level 4 runs weekly or before release. Level 5 runs in staging before each major release. Each scenario specifies setup conditions, the action to perform, and the expected outcome. If a scenario has no pass condition, it is not a test.
 
 ---
 
@@ -24,7 +24,7 @@ CRDT operations have four mathematical properties that example-based tests canno
 - **Commutativity** — concurrent operations reach the same final state regardless of application order. For operation-based CRDTs, commutativity is sufficient for convergence; for state-based CRDTs (which include both Yjs and Loro), convergence is guaranteed instead by the merge function forming a join-semilattice — commutativity of the merge in the traditional sense is implied but stated differently. Shapiro et al. (2011) is the citable reference for the formal distinction; see Appendix C [8].
 - **Monotonicity** — the CRDT state never shrinks; no operation silently removes information.
 
-Property-based frameworks generate thousands of random operation sequences automatically and report the minimal failing case when a property is violated. Use FsCheck (.NET) or fast-check (JavaScript). Configure the framework to generate at least 10,000 random operation sequences per property per test run (this is an authorial recommendation calibrated against production experience; FsCheck's default of 100 is insufficient for CRDT coverage, and 10,000 is where empirical bug-discovery returns flatten for most CRDT engines). Reduce the count only if profiling identifies it as a bottleneck, and verify that the reduction does not eliminate the sequences that catch real failures.
+Property-based frameworks generate thousands of random operation sequences automatically and report the minimal failing case when a property is violated. Use FsCheck (.NET) or fast-check (JavaScript). Configure the framework to generate at least 10,000 random operation sequences per property per test run. This is an authorial recommendation calibrated against production experience. FsCheck's default of 100 is insufficient for CRDT coverage. 10,000 is where empirical bug-discovery returns flatten for most CRDT engines. Reduce the count only if profiling identifies it as a bottleneck, and verify that the reduction does not eliminate the sequences that catch real failures.
 
 Do not skip Level 1. An example-based CRDT test suite that passes is not evidence that the CRDT is correct. It is evidence that the specific sequences you tested are correct.
 
@@ -32,13 +32,13 @@ Do not skip Level 1. An example-based CRDT test suite that passes is not evidenc
 
 The sync handshake, capability negotiation, and delta streaming must run against a real daemon process. Mocking the sync daemon produces tests that pass when the real integration is broken. The mock encodes your assumptions about how the daemon behaves — and those assumptions are exactly what you need to test.
 
-Use Testcontainers (.NET) to spin up a real local-node instance per test suite. Run the full five-step handshake: HELLO → CAPABILITY_NEG → ACK → DELTA_STREAM → GOSSIP_PING. Assert on the CRDT state after delta exchange, not on the wire messages. The state is what matters; the message sequence is how you get there.
+Use Testcontainers (.NET) to spin up a real local-node instance per test suite. Run the full five-step handshake: HELLO → CAPABILITY_NEG → ACK → DELTA_STREAM → GOSSIP_PING. Assert on the CRDT state after delta exchange, not on the wire messages. The state is what matters. The message sequence is how you get there.
 
 Testcontainers requires Docker. Add Docker to your CI environment before adding Level 2 tests.
 
 ### Level 3 — Fault Injection in CI
 
-Network partition, packet loss, and node crash must be exercised in CI, not only in staging. Staging runs fault injection infrequently, and production incidents originate in the gap between a possible fault and a tested one.
+Network partition, packet loss, and node crash must be exercised in CI, not only in staging. Staging runs fault injection infrequently. Production incidents originate in the gap between a possible fault and a tested one.
 
 Use Testcontainers with toxiproxy (or an equivalent network proxy) to inject faults programmatically. Three scenarios are mandatory at this level:
 
@@ -46,11 +46,11 @@ Use Testcontainers with toxiproxy (or an equivalent network proxy) to inject fau
 - Relay becomes unreachable during DELTA_STREAM. Assert that the sender queues deltas locally and retransmits on reconnect (the CRDT operation log provides this durability — see Chapter 14).
 - GOSSIP_PING misses three consecutive intervals due to packet loss. Assert that the node enters a degraded-but-consistent state and recovers without manual intervention.
 
-The pass condition for every fault injection test is not "the system does not crash" — it is "the system recovers to a consistent CRDT state identical to what it would have been without the fault."
+The pass condition for every fault injection test is not "the system does not crash." It is "the system recovers to a consistent CRDT state identical to what it would have been without the fault."
 
 ### Level 4 — Deterministic Simulation
 
-Mixed-version nodes, epoch transitions while a node is offline, and Flease edge cases cannot be tested reliably with real time. Real-time tests are non-deterministic: a lease expiry that takes 30 seconds in production cannot be exercised in CI at real speed without making the test suite unusable. A simulation harness with a controllable clock and deterministic network scheduling makes these scenarios fast, repeatable, and exhaustive.
+Mixed-version nodes, epoch transitions while a node is offline, and Flease edge cases cannot be tested reliably with real time. Real-time tests are non-deterministic. A lease expiry that takes 30 seconds in production cannot be exercised in CI at real speed without making the test suite unusable. A simulation harness with a controllable clock and deterministic network scheduling makes these scenarios fast, repeatable, and exhaustive.
 
 No off-the-shelf simulation harness implements this protocol. Teams implementing this architecture must build one. The minimum viable harness implements:
 
@@ -59,17 +59,17 @@ No off-the-shelf simulation harness implements this protocol. Teams implementing
 3. **In-process node factory.** Boot N node instances inside the test process, each with an isolated SQLCipher store, wired to the deterministic scheduler rather than real sockets.
 4. **Invariant assertions.** Hooks that verify CRDT convergence, ledger balance, lease exclusivity, and epoch monotonicity after any scheduler-driven sequence.
 
-Expect one to three engineer-weeks of effort to build the MVP harness, depending on protocol familiarity. The investment buys failure modes that cannot be caught any other way — production-quality lease-expiry, epoch-transition, and mixed-version coverage. Design the harness against the Appendix A wire protocol specification before implementation; a harness built on an incomplete understanding of the handshake simulates the wrong system.
+Expect one to three engineer-weeks of effort to build the MVP harness, depending on protocol familiarity. The investment buys failure modes that cannot be caught any other way — production-quality lease-expiry, epoch-transition, and mixed-version coverage. Design the harness against the Appendix A wire protocol specification before implementation. A harness built on an incomplete understanding of the handshake simulates the wrong system.
 
 Three scenario families belong at Level 4: mixed-version node sync (one node at schema N, one at schema N-1), epoch transitions while a node is offline, and Flease edge cases such as a lease holder disconnecting mid-write. Each of these requires precise control over timing and message ordering.
 
 ### Level 5 — Chaos Testing in Staging
 
-After Levels 1–4 pass, run chaos testing in a staging environment under production-representative load. Use Pumba (Docker container chaos) or Gremlin (commercial chaos-engineering platform) for process, network, and resource-level chaos; toxiproxy continues to be useful for fine-grained network-fault injection at this layer as well. Randomly kill processes, introduce latency spikes, flip nodes offline, and corrupt network links. The goal is not to verify known properties — it is to discover failure modes that were not anticipated at Level 4.
+After Levels 1–4 pass, run chaos testing in a staging environment under production-representative load. Use Pumba (Docker container chaos) or Gremlin (commercial chaos-engineering platform) for process, network, and resource-level chaos. Toxiproxy continues to be useful for fine-grained network-fault injection at this layer as well. Randomly kill processes. Introduce latency spikes. Flip nodes offline. Corrupt network links. The goal is not to verify known properties. It is to discover failure modes that were not anticipated at Level 4.
 
 Chaos testing requires a multi-node staging environment loaded at a traffic level that reflects median production usage. Chaos under idle conditions finds different failures than chaos under load.
 
-Document every anomaly found during chaos testing, whether or not it causes a visible failure. Anomalies are leading indicators. A node that recovers but takes 47 seconds instead of the expected 3 seconds is not failing — it is about to fail under a slightly different condition.
+Document every anomaly found during chaos testing, whether or not it causes a visible failure. Anomalies are leading indicators. A node that recovers but takes 47 seconds instead of the expected 3 seconds is not failing. It is about to fail under a slightly different condition.
 
 ---
 
@@ -85,7 +85,7 @@ Run each growth test with simulated usage at the median activity level for your 
 - Library-level compaction fires when the configured threshold is reached and reduces document size measurably. If compaction fires but document size does not decrease, the compaction implementation is not working.
 - Application-level document sharding keeps per-shard document size below the shallow snapshot threshold. If any shard exceeds the threshold, verify that shallow snapshot mode activates correctly and that the node does not attempt to load the full document into memory.
 
-Growth tests that fail are not test failures in the normal sense — they are architecture signals. A document that grows without bound is not a test problem; it is a CRDT design problem that requires a change to the data model, the compaction policy, or the sharding strategy.
+Growth tests that fail are not test failures in the normal sense. They are architecture signals. A document that grows without bound is not a test problem; it is a CRDT design problem that requires a change to the data model, the compaction policy, or the sharding strategy.
 
 ---
 
@@ -106,7 +106,7 @@ Scenario tables carry Pass/Fail status and an Evidence column when used as procu
 | Abrupt power interruption during WAL write | Running node with an open transaction writing to the WAL | SIGKILL the process at a random byte offset during an open WAL write, repeated 100+ times across different offsets | WAL recovery completes on relaunch; all operations committed before the kill are present and consistent; no partial operation appears as committed; no corruption of previously committed records. Required scenario for deployments in markets with unreliable grid power (Nigeria, Pakistan, parts of SE Asia, Lagos-style load-shedding contexts) |
 | Air-gapped operation | Node operates with no relay connectivity for 30+ simulated days | All operations routed through peer-to-peer sync only; relay endpoint is unreachable and MUST NOT be contacted | All local operations succeed; peer sync completes correctly on P2P path; on relay reconnect, sync resumes without data loss; evidence: relay-endpoint network log shows zero attempted connections during air-gap period |
 
-The quorum-loss test is the most important scenario in this group. A system that silently drops CP writes under quorum loss will corrupt ledger state in production. The pass condition is not "the write fails" — it is "the user sees a clear, actionable message and the write is preserved for retry when quorum is restored."
+The quorum-loss test is the most important scenario in this group. A system that silently drops CP writes under quorum loss will corrupt ledger state in production. The pass condition is not "the write fails." It is "the user sees a clear, actionable message and the write is preserved for retry when quorum is restored."
 
 The extended-offline baseline and the power-interruption scenarios are not edge cases. For deployments in Sub-Saharan Africa, rural India, tier-3 LatAm cities, and parts of Southeast Asia, extended offline operation and unplanned shutdowns are the routine operating condition — not exceptions being stress-tested. Evidence from these tests is required for any deployment targeting those markets.
 
@@ -118,7 +118,7 @@ The extended-offline baseline and the power-interruption scenarios are not edge 
 | Offline epoch transition | One node offline during an epoch transition | Return the offline node online after the transition completes | Node downloads the epoch snapshot and resumes sync; no manual intervention required; no data loss |
 | Couch device | One node offline for 3+ major schema versions | Attempt to reconnect | Capability negotiation rejects the connection with ERR_VERSION_INCOMPATIBLE; the system directs the user to update before sync resumes; the system does not attempt a partial or lossy migration |
 
-The couch-device scenario requires a clear policy decision before testing: what is the maximum schema gap the system will bridge automatically, and what gap triggers a forced update? Encode that policy in the capability negotiation layer and test the boundary explicitly.
+The couch-device scenario requires a clear policy decision before testing. What is the maximum schema gap the system will bridge automatically, and what gap triggers a forced update? Encode that policy in the capability negotiation layer and test the boundary explicitly.
 
 ### Flease Edge Cases
 
@@ -127,7 +127,7 @@ The couch-device scenario requires a clear policy decision before testing: what 
 | Lease holder offline mid-write | Node A holds the CP lease; a write is in progress | Kill node A mid-write | The lease expires after the configured timeout (default: 30 seconds); node B acquires a new lease; node A's partial write is quarantined and flagged for review, not silently merged into team state |
 | Partition during lease negotiation | Three-node team; all nodes online | Introduce a network partition during CAPABILITY_NEG lease request | Both partitions identify a no-quorum state independently; neither side acquires the lease; writes are blocked on both sides with a clear user message; no split-brain |
 
-The mid-write quarantine behavior is critical. A partial write that is silently merged produces silent data corruption — the hardest class of production defect to detect and repair. The pass condition is not "the partial write is discarded" — it is "the partial write is quarantined and visible, so the operator can decide what to do with it."
+The mid-write quarantine behavior is critical. A partial write that is silently merged produces silent data corruption — the hardest class of production defect to detect and repair. The pass condition is not "the partial write is discarded." It is "the partial write is quarantined and visible, so the operator can decide what to do with it."
 
 ### Security
 
@@ -156,7 +156,7 @@ The sum-to-zero test must verify the invariant across the complete account set, 
 
 ## Section 4: CI Configuration Guidance
 
-Sections 1–3 tell you what to test; this section tells you when to run it and what output to capture. Configure CI in four tiers that reflect the cost and speed of each testing level.
+Sections 1–3 tell you what to test. This section tells you when to run it and what output to capture. Configure CI in four tiers that reflect the cost and speed of each testing level.
 
 | Tier | Levels | Trigger | Time budget | Failure severity | Purpose |
 |---|---|---|---|---|---|
@@ -165,7 +165,7 @@ Sections 1–3 tell you what to test; this section tells you when to run it and 
 | Weekly / release candidate | L4 | Scheduled weekly + RC tag | <1 hour (simulation runs are fast once harness exists) | Blocks RC | Deterministic exhaustive coverage of edge cases |
 | Pre-major-release | L5 | Before major release | 24–48 hours under representative load | Blocks release | Discovery of unanticipated failure modes |
 
-**Tier notes.** Per-PR tests must stay fast enough to gate merges. Nightly runs catch regressions the day after they land — acceptable trade-off; running only in staging is not. Level 4 simulation harness requires setup investment, but once it exists, simulation runs are fast — controllable clocks make 30-day scenarios run in seconds. Level 5 chaos requires a production-representative staging environment maintained permanently, not a temporary one spun up per release — the setup and validation cost of a temporary environment consumes the time the chaos run is supposed to save.
+**Tier notes.** Per-PR tests must stay fast enough to gate merges. Nightly runs catch regressions the day after they land — acceptable trade-off. Running only in staging is not. Level 4 simulation harness requires setup investment, but once it exists, simulation runs are fast — controllable clocks make 30-day scenarios run in seconds. Level 5 chaos requires a production-representative staging environment maintained permanently, not a temporary one spun up per release. The setup and validation cost of a temporary environment consumes the time the chaos run is supposed to save.
 
 **Test artefact capture (required for procurement documentation).** For Level 3, Level 4, and Level 5 runs, the following artefacts must be captured, archived, and linked to the release version:
 
@@ -174,10 +174,10 @@ Sections 1–3 tell you what to test; this section tells you when to run it and 
 3. **Harness configuration** — the full configuration of the test environment (toxiproxy rules, chaos parameters, clock-skew settings) so results are reproducible.
 4. **SBOM alignment** — the software bill of materials for the artefact tested, tied to the same release version; required for EU Cyber Resilience Act compliance (effective 2027) and for FedRAMP evidence.
 
-These artefacts are the evidence a BSI C5 audit, a Japanese SIer acceptance review, a Korean ISMS-P certification, or a DIFC regulatory inspection will request. Capture them once per RC; do not reconstruct them under audit pressure.
+These artefacts are the evidence a BSI C5 audit, a Japanese SIer acceptance review, a Korean ISMS-P certification, or a DIFC regulatory inspection will request. Capture them once per RC. Do not reconstruct them under audit pressure.
 
 **Infrastructure notes.** Testcontainers requires Docker in CI; verify Docker availability before adding Level 2 or Level 3 tests. The simulation harness at Level 4 is custom infrastructure — design against the Appendix A protocol specification before implementation begins. A harness built on an incomplete understanding of the handshake simulates the wrong system. Cryptographic test vectors must include Ed25519 (RFC 8032) compliance at minimum; for CIS deployments subject to GOST R 34.10-2012, verify algorithm compliance is testable above the wire layer (Appendix A §A.6 notes algorithm agility is not supported at the wire-protocol layer in this version).
 
-**Accessibility testing.** Sync-state announcements (sync-healthy, stale, offline, conflict-pending, revocation) must be exposed through the platform accessibility tree (`aria-live` on web, `UIAccessibilityTraits` on iOS, `AccessibilityNodeInfo` on Android). Add a scenario that asserts state-change announcements are fired on transition — a UI that communicates state only through color or icon is not accessible and will fail assistive-technology audit on any jurisdiction that mandates WCAG 2.1 AA (EU EAA 2025, US Section 508, UK Equality Act 2010 guidance).
+**Accessibility testing.** Sync-state announcements (sync-healthy, stale, offline, conflict-pending, revocation) must be exposed through the platform accessibility tree (`aria-live` on web, `UIAccessibilityTraits` on iOS, `AccessibilityNodeInfo` on Android). Add a scenario that asserts state-change announcements are fired on transition. A UI that communicates state only through color or icon is not accessible and will fail assistive-technology audit on any jurisdiction that mandates WCAG 2.1 AA (EU EAA 2025, US Section 508, UK Equality Act 2010 guidance).
 
 The failure modes these tests exercise will occur in production. The question is whether they surface in CI or in a customer's environment.
