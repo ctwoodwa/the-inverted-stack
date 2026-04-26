@@ -371,6 +371,47 @@ Each is a deployment combination of apps + a `data-classes:` block + Kleppmann p
   new-primitives-needed: [#31 whole-system ownership transfer, atomic multi-system co-transfer, contract-surviving constraints]
 ```
 
+### 4.6.1 Out of current book scope — succession arrangements (extends §4.6 ownership transfer)
+
+```yaml
+- id: small-business-succession-named-beneficiary
+  apps: [anchor × 1 (existing business deployment), thin-client-write × varies (owner + beneficiary + executor + civic-attestor), legacy-bridge × 1 (probate court / death cert authority)]
+  notes: |
+    Restaurant owner / sole proprietor pre-arranges succession: designates
+    beneficiary; designates lawyer as executor with TRANSFER-AUTHORITY-ONLY
+    (executor can authorize transfer but cannot use the restaurant). On
+    owner death, multi-party attestation triggers #31 ownership transfer:
+    death certificate (civic legacy-bridge) + executor signature +
+    beneficiary acceptance replaces the impossible outgoing-owner signature.
+    Constraints persist (PCI, supplier contracts, health-dept, employees).
+  catalog-coverage-estimate: ~20-30%
+  new-primitives-needed: [#32 succession arrangements, #32a meta-capability delegation (executor has authority OVER transfer without USE of system), civic-attestor pattern]
+
+- id: trust-managed-asset-succession
+  apps: [anchor × N (trust-administered systems), thin-client-write × varies (settlor + trustee + beneficiaries + co-trustees), legacy-bridge × 1 (trust admin + tax authority)]
+  notes: |
+    Sophisticated estate planning. Owner places systems in trust; trustee
+    (person / bank trust dept / institution) controls disposition per terms.
+    Co-trustees (multi-sig), spendthrift provisions, pour-over from will,
+    incentive provisions. On qualifying events (settlor death, milestone),
+    trust executes ownership transfer per terms.
+  catalog-coverage-estimate: ~25-35%
+  new-primitives-needed: [#32 succession, #32d programmatic trust conditions (machine-verifiable transfer terms), multi-sig trustees with weighted votes]
+
+- id: multi-sig-social-recovery
+  apps: [anchor × 1 (personal/business system), thin-client-write × 5+ (pre-designated guardians)]
+  notes: |
+    Crypto-native pattern (Argent, Safe wallets, Vitalik's social-recovery
+    proposal). Owner pre-designates N guardians and threshold M (e.g., 3
+    of 5). On loss of access OR death, M guardians collectively authorize
+    key reset / ownership transfer. No single guardian acts alone. Time-
+    locks delay recovery for owner contestation. Particularly relevant for
+    digital-native businesses, DePIN nodes, NFT collections, individuals
+    without formal estate plans.
+  catalog-coverage-estimate: ~30-40%
+  new-primitives-needed: [#32 succession, #32c threshold-sig social recovery (M-of-N guardian authorization), #32e time-locked recovery delay (defense against collusion)]
+```
+
 ### 4.7 Out of current book scope — extreme environment
 
 ```yaml
@@ -462,6 +503,8 @@ Across all deployment scenarios, ~16 distinct architectural primitives surfaced.
 29. **Geofence enforcement as architectural primitive** (Volume 2 cyber-physical) — local-first geo-bounded behavior with verifiable enforcement that works offline. Sources: shared micromobility (slowdown / no-park zones), drone airspace restrictions, robot operating boundaries, asset-tracking with auto-disable on theft.
 30. **Human-in-the-loop override authority** (Volume 2 cyber-physical) — combines autonomous safety-critical control with low-latency manual override; supervisor identity attested per session; handoff timing recorded for liability. Sources: last-mile delivery robots, semi-autonomous vehicles (lane-keeping vs. driver), industrial robots with operator-stop, surgical robots.
 31. **Whole-system ownership transfer with persistent constraints** (Volume 3 multi-stakeholder economic, with civic-governance + medical-systems as cross-cutting application domains) — atomic transfer of entire system+data unit to new owner with cryptographic key reissuance and constraints that bind regardless of owner identity. Distinct from chain-of-custody (#9 — owner unchanged), delegated capability (#18 — owner unchanged + scoped grant), and ephemeral identity (#28 — owner unchanged + short-lived grant). Defining elements: atomic transfer event, old-owner key wipe, new-owner re-keying, multi-party attestation, constraint persistence (laws/contracts/biological-physical-limits bind regardless of owner), immutable transfer log, time-stamped activation, optional reversibility. Sources: nuclear football / presidential transition / Federal Reserve chair handover; organ transplant container / blood products / vaccine cold chain; vehicle title / real estate / land title transfer; digital estate inheritance; domain name / NFT / repository ownership; corporate acquisition / asset transfer; pawnshop / pledge; insurance subrogation; conservatorship; container shipping (TEU) handoffs.
+
+32. **Succession arrangements with executor delegation** (Volume 3 multi-stakeholder economic, with civic-governance + estate-planning as cross-cutting application domains) — pre-arranged rules for ownership transfer when the owner CANNOT personally attest (death, incapacity, disappearance, force majeure, long-term absence). Builds ON #31 by providing the authorization path when the owner is absent. KEY ARCHITECTURAL INSIGHT: capability OVER the system (use, run, see data) is distinct from capability OVER the system's ownership (decide who gets it). Local-first architecture should explicitly separate these. Sub-patterns: 32a meta-capability delegation (executor/lawyer/trustee gets transfer-authority WITHOUT use authority), 32b event-triggered activation (death certificate / incapacity finding / milestone / time-lock as trigger), 32c threshold-sig social recovery (M-of-N guardians collectively authorize; no single guardian acts alone), 32d programmatic trust conditions (machine-verifiable terms — age, marriage, performance, tax-status), 32e time-locked recovery delay (owner contestation window before succession completes), 32f reversibility-while-living (settlor/testator can amend until trigger event, then irrevocable). Sources: small-business succession (restaurant owner dies, beneficiary inherits); estate planning (wills, trusts, POAs); conservatorship and guardianship; multi-sig social recovery (crypto wallets); corporate succession plans; partnership buyout agreements; franchise transfer rights; sports team / music catalog inheritance; digital estate planning. Edge cases: disputed succession (multiple claimants), intestate cases (no pre-arrangement; civic-default), owner-thought-dead-returns, cross-jurisdictional probate, tax-timing.
 
 > **Note on regulatory streaming export:** the LADOT-MDS-style "mandated real-time signed export to a regulator with verifiable-completeness" pattern surfaced from the shared-scooter scenario is treated as a variant of chain-of-custody (#9) rather than a separate primitive — the architectural mechanism (signed streaming with append-only verifiable log) is the same.
 
@@ -641,8 +684,9 @@ This brief consolidates decisions from a multi-turn design discussion. Source tu
 - Vending machines → confirmed fits existing kiosk + POS + headless-fleet hybrid
 - Shared scooters + last-mile delivery robots → surfaced ephemeral-identity + geofence-enforcement + human-in-the-loop override (cross-volume additions, primitives #28-30)
 - Office-of-authority transition + medical custody transfer + corporate acquisition → surfaced whole-system ownership transfer with persistent constraints (#31)
+- Restaurant succession + trust-managed assets + multi-sig social recovery → surfaced succession arrangements with executor delegation (#32) + the key insight that capability OVER ownership is architecturally distinct from capability OVER use
 
-The architecture has converged: 31 primitives across 4 volumes (with civic-governance + medical-systems as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
+The architecture has converged: 32 primitives across 4 volumes (with civic-governance + medical-systems + estate-planning as cross-cutting application domains); new scenarios either fit existing archetypes with calibration OR add to the cross-volume primitive list when genuinely novel. Time to execute.
 
 ---
 
