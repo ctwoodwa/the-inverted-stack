@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T14:16:00.504Z
-> Files: 134 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T16:04:57.484Z
+> Files: 171 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -15,9 +15,10 @@
 ## ../../Users/Chris/.claude/projects/C--Projects-the-inverted-stack/memory/
 
 - `feedback_voice_sinek_calibration.md` (~457 tok)
-- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~374 tok)
+- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~445 tok)
 - `project_failure_mode_taxonomy.md` (~434 tok)
 - `reference_anti_ai_tells_skill.md` (~508 tok)
+- `reference_conformance_skills.md` (~678 tok)
 - `reference_gitbutler_workflow.md` (~494 tok)
 - `reference_literary_devices_skill.md` — Literary devices skill — location and wiring contract (~569 tok)
 
@@ -59,6 +60,10 @@
 
 - `SKILL.md` — Anti-AI Tells — Reference for Removing LLM Signatures from Technical Prose (~6509 tok)
 
+## .claude/skills/inverted-stack-conformance/
+
+- `SKILL.md` — Inverted Stack Conformance — Full-Spec Skill (~3968 tok)
+
 ## .claude/skills/literary-devices/
 
 - `SKILL.md` — Literary Devices — Reference for Persuasive Technical Prose (~3060 tok)
@@ -66,6 +71,14 @@
 ## .claude/skills/literary-devices/references/
 
 - `devices.md` — Literary & Rhetorical Devices — Full Catalog (~5358 tok)
+
+## .claude/skills/local-first-properties/
+
+- `SKILL.md` — Local-First Properties — Conformance Skill (~3304 tok)
+
+## .claude/skills/local-first-properties/references/
+
+- `verification-recipes.md` — Verification Recipes for Local-First Property Conformance (~2088 tok)
 
 ## .github/ISSUE_TEMPLATE/
 
@@ -79,8 +92,11 @@
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `check_first_use.py` — First-use rule checker. (~3348 tok)
 - `check_stale.py` — Pre-Phase-4 stale-draft detector. (~920 tok)
+- `consolidate_concept_index.py` — Consolidate per-chapter YAML extractions into the master concept-index.yaml. (~3200 tok)
 - `copy-to-dropbox.py` — Copy generated audiobook files to a destination folder (typically Dropbox). (~1655 tok)
 - `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
+- `generate_chapter_overview.py` — Generate chapter-overview.md for the inverted-stack-conformance skill. (~874 tok)
+- `generate_implementation_spec.py` — Generate the human-readable implementation-specification.md from the (~3052 tok)
 - `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
 - `Makefile` — The Inverted Stack — Build Targets (~2146 tok)
 - `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~1932 tok)
@@ -190,6 +206,42 @@
 
 ## docs/icm/
 
+
+## docs/reference-implementation/
+
+- `README.md` — Project documentation (~779 tok)
+- `SCHEMA.md` — Concept-Index Schema (v1.0) (~2389 tok)
+
+## docs/reference-implementation/_per-chapter/
+
+- `appendix-a-sync-daemon-wire-protocol.yaml` — Declares lease (~9117 tok)
+- `appendix-b-threat-model-worksheets.yaml` (~6504 tok)
+- `appendix-c-further-reading.yaml` — Declares family (~2217 tok)
+- `appendix-d-testing-the-inverted-stack.yaml` — Declares in (~5047 tok)
+- `appendix-e-citation-style.yaml` — Appendix E — Citation Style (~666 tok)
+- `appendix-f-regulatory-coverage.yaml` (~4432 tok)
+- `ch01-when-saas-fights-reality.yaml` — Declares on (~3848 tok)
+- `ch02-local-first-serious-stack.yaml` — Declares as (~4142 tok)
+- `ch03-inverted-stack-one-diagram.yaml` — Declares records (~6507 tok)
+- `ch04-choosing-your-architecture.yaml` — Declares subsystems (~5331 tok)
+- `ch05-enterprise-lens.yaml` — Declares accepts (~5197 tok)
+- `ch06-distributed-systems-lens.yaml` — Declares source (~5045 tok)
+- `ch07-security-lens.yaml` (~5118 tok)
+- `ch08-product-economic-lens.yaml` — Declares with (~5234 tok)
+- `ch09-local-first-practitioner-lens.yaml` — Declares a (~5801 tok)
+- `ch10-synthesis.yaml` (~5086 tok)
+- `ch11-node-architecture.yaml` — Declares defines (~8658 tok)
+- `ch12-crdt-engine-data-layer.yaml` — Declares primitives (~9530 tok)
+- `ch13-schema-migration-evolution.yaml` — Declares write (~6880 tok)
+- `ch14-sync-daemon-protocol.yaml` (~8991 tok)
+- `ch15-security-architecture.yaml` — Declares verification (~8910 tok)
+- `ch16-persistence-beyond-the-node.yaml` — Declares operation (~8158 tok)
+- `ch17-building-first-node.yaml` (~6817 tok)
+- `ch18-migrating-existing-saas.yaml` — Declares source (~7614 tok)
+- `ch19-shipping-to-enterprise.yaml` — Declares execute (~7006 tok)
+- `ch20-ux-sync-conflict.yaml` — Declares is (~7013 tok)
+- `epilogue-what-the-stack-owes-you.yaml` — Declares rather (~4222 tok)
+- `preface.yaml` — Preface (~2619 tok)
 
 ## docs/style/
 
