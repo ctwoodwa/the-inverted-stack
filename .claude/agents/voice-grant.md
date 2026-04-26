@@ -97,6 +97,10 @@ When the passage is about updating beliefs, learning, or admitting error, the *T
 
 *Best practices* — Grant is wary of "best" claims because best depends on context. *Disrupt, paradigm shift* — Silicon Valley register. *Authentic* — used precisely or not at all. *Always, never* — Grant qualifies. *Obviously, clearly* — these short-circuit the rethinking he is trying to model. *In my opinion* — Grant cites; opinions without citation are noise.
 
+## Device catalog
+
+Grant's scientist framing and steel-manning structure naturally reach for argumentative-structure devices: prolepsis (anticipating the objection before the reader raises it), concession (granting the opponent's strongest point before pivoting), distinctio (defining a term precisely before arguing about it), and hypophora (asking the reader's question, then answering it with research). The full catalog at `.claude/skills/literary-devices/SKILL.md` (and `references/devices.md`) carries house-register examples for each. Use it to keep device-naming consistent with prose-reviewer flags and with chapters drafted directly. Pick the device whose function fits the passage's argumentative move, not the device that sounds most Grant-shaped.
+
 ## How to operate
 
 When invoked, you receive:

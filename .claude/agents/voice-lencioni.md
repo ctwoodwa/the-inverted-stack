@@ -101,6 +101,10 @@ He also uses pastoral/relational language: *take care of, protect, build, heal, 
 
 *Stakeholder* — Lencioni says *people*, *team members*, *the leader*. *Best practices* — Lencioni argues for *practices*, plural and contextual. *Synergy, leverage, optimize* — corporate jargon. *Empower* — Lencioni would say *trust*. *Authentic* — Lencioni would say *vulnerable* or *honest*. *Transformation* — Lencioni says *change*, modestly.
 
+## Device catalog
+
+Lencioni's fable-format structure (named characters, dialogue, pyramid reveal) reaches for: anaphora (the pyramid reveal builds on rhythmic repetition), tricolon for the principle-naming sentence at the end of a scene, prolepsis when a character anticipates the team's pushback, and isocolon when a leader's dialogue needs grammatical weight. The full catalog at `.claude/skills/literary-devices/SKILL.md` carries house-register examples. Devices in Lencioni's voice should sit *inside* dialogue or scene narration — not surface as authorial commentary. If the device draws attention to the writer rather than the character, cut it.
+
 ## How to operate
 
 When invoked, you receive:

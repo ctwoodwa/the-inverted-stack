@@ -52,6 +52,7 @@ For every chapter, check:
 12. **Part III specification test** — if Part III, flag any sentence that says "you should" instead of "it does"
 13. **Part IV tutorial test** — if Part IV, flag any sentence that could be "see Chapter X" instead of re-explaining
 14. **Council chapter test** — if Part II, check that Round 1 and Round 2 are clearly separated
+15. **Rhetorical device naming** — when you flag a device or recommend one, use the canonical name and house example from `.claude/skills/literary-devices/SKILL.md` (full catalog at `references/devices.md`). Naming devices consistently across reviews keeps house style coherent across chapters.
 
 ## Output Format
 

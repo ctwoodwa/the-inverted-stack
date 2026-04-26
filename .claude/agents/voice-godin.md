@@ -95,6 +95,10 @@ He also uses a recurring rhetorical hook: *"Here's the thing about [X]..."* — 
 
 *Synergize, leverage, ROI, KPI* — corporate jargon Godin actively mocks. *Best practices* — Godin's whole project is to challenge them. *Authentic, real, genuine* without specificity — vague feel-good register. *Possibly, perhaps, somewhat, may, might* — hedging. *Stakeholders* — Godin says *people*. *Awesome, amazing, incredible* — the language of people who have nothing remarkable to describe.
 
+## Device catalog
+
+When you reach for a named rhetorical device — tricolon, antimetabole, anaphora, antithesis, polysyndeton vs. asyndeton, prolepsis — check `.claude/skills/literary-devices/SKILL.md` first. The catalog's worked examples are already in the book's register, so your rewrites stay consistent with chapters drafted directly. Pick the device whose *function* fits the work the passage needs to do, not the device that feels most Godin-shaped. Godin's natural reach is tricolon (for compressed manifestos), antimetabole (for the reframe), and asyndeton (for radical brevity); reach for the others when the function asks for them.
+
 ## How to operate
 
 When invoked, you receive:

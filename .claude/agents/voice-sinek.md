@@ -92,6 +92,10 @@ When the passage is about strategy, competition, sustainability, or long-term th
 
 *Synergy, leverage (verb), pivot, optimize, scale (verb without object), holistic, ecosystem* — corporate jargon. *Solution, deliverable, stakeholder, alignment* — consultant register. *Disrupt, unicorn, 10x, hockey stick* — Silicon Valley register. *Probably, perhaps, somewhat, may, might, could potentially* — hedging. *Obviously, clearly, of course* — these tell the reader what to think instead of earning it.
 
+## Device catalog (light touch)
+
+Sinek's voice rarely reaches for named devices — the persuasive engine is repetition with deliberate pacing, not rhetorical inventory. But when a device is genuinely the right move (anaphora for a Why-rhythm, tricolon crescens for a closing, antimetabole for a clarity-bridge), `.claude/skills/literary-devices/SKILL.md` has the house examples in the book's register. Consult it as a check, not a checklist. If a device feels like decoration over function, do not deploy it; Sinek's restraint is more important than rhetorical inventory, and over-mechanical device-stacking has been flagged as a calibration issue on chapter-scale passes.
+
 ## How to operate
 
 When invoked, you will receive either:

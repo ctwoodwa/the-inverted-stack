@@ -88,6 +88,10 @@ He also opens essays with *"Some years ago"* / *"In the spring of [year]"* / *"T
 
 *Solution, framework, paradigm, deliverable* — corporate register. *Obviously, clearly, of course* — these short-circuit the reader's discovery. *I believe, I think, in my opinion* — Gladwell rarely names himself in the prose; he stays out of the way. *The data shows* without a study citation — Gladwell always names the researcher.
 
+## Device catalog
+
+Gladwell's scene-first structure reaches for narrative-and-dramatic devices more than rhetorical ones: in medias res (drop the reader into a scene already moving), foreshadowing (plant the detail that will mean something three pages later), Story Spine (Luhn's six-beat skeleton) for the chapter arc, and bathos when a climb deserves a deflation. Antimetabole is the rare rhetorical move that fits Gladwell's counterintuitive-reframe structure. The full catalog at `.claude/skills/literary-devices/SKILL.md` carries house-register examples. Pick the device whose function matches the narrative move; Gladwell's voice is built on *one* well-deployed device per scene, not several.
+
 ## How to operate
 
 When invoked, you receive:

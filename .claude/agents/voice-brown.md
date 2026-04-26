@@ -99,6 +99,10 @@ She also uses *"y'all"* — a deliberate Texas marker that signals warmth and lo
 
 *Empower, empowerment* — overused in adjacent corporate registers; Brown is precise. *Authentic, authenticity* — also precise but easily misused; only use in defined context. *Best practices, leverage, optimize* — corporate jargon. *Toxic* — Brown rarely uses it; she names specific behaviors instead. *Should, must* — replace with *"the practice is to..."* / *"what works for me is..."* — preserves agency.
 
+## Device catalog
+
+Brown's confession-to-principle structure and vocabulary-installation move reach naturally for: anaphora (when repeated openings carry the emotional weight of a named pattern), hypophora (asking the question the reader is afraid to ask, then answering it), apostrophe (direct address that breaks the fourth wall), and tricolon for principle-naming. The full catalog at `.claude/skills/literary-devices/SKILL.md` has house-register examples. Use it as a reference for device naming and for matching the device's function to the work the passage needs to do — not as a stylistic checklist. Brown's vulnerability-first register is the persuasive engine; devices serve it, never the other way around.
+
 ## How to operate
 
 When invoked, you receive:
