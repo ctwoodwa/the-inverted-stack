@@ -130,6 +130,22 @@ The structural property that makes this failure mode distinct: data custody dete
 
 ---
 
+## The Work That Doesn't Stop
+
+The six failure modes above describe what breaks. The work itself continues — that is the part most cloud-dependency arguments miss. When the SaaS (Software as a Service) goes down, organizations do not stop operating. They reach for whatever still works.
+
+In February 2026, HBO Max's medical drama *The Pitt* devoted two consecutive episodes to this scenario. The fictional Pittsburgh Trauma Medical Center pre-emptively takes its electronic health record system offline after two nearby hospitals are hit with ransomware. What follows is recognizable to anyone who has lived through an actual EHR outage: dry-erase boards return to the nurses' station, a fax machine reappears at triage, paper prescription pads come out of the supply closet, and triplicate forms circulate among medical assistants who have never seen them before — felt-tip markers oblivious to the carbon backing, the bottom copies coming out blank. A senior nurse spends much of the episode correcting the younger staff on the conventions of an analog workflow they have only heard about in training. The trauma center keeps operating. The patients still get seen. The work does not stop.
+
+The episode is fiction; the underlying pattern is not. Comparitech recorded 445 ransomware attacks against US hospitals and clinics in 2025. A 2026 analysis of Medicare data published in healthcare research journals found that hospitalized patients faced a roughly 38% higher mortality risk during a ransomware-driven downtime window. Healthcare professionals interviewed about *The Pitt* identified the same artifacts in their own incident logs: paper charts piling up at the nurses' station, prescriptions written by hand, hours of post-restoration overtime to back-fill the EHR with what happened on paper while the system was offline. The on-screen chaos is not exaggerated. It is documentary realism dressed as drama.
+
+Two observations matter for any architecture decision. First: the work continued because human practitioners knew what to do without the digital system. Triage worked. Charting worked. Billing eventually caught up. Domain expertise outlasts the software that depends on it. Second: the digital affordances did not survive. Search disappeared. Cross-shift handoff slowed to verbal report. Pattern detection across patient histories — the analytic work that justified the EHR investment in the first place — became impossible until the system came back. The organization's ability to *do* the work survived. Its ability to do the work *better than paper* did not.
+
+The same pattern repeats outside the hospital. When the SaaS project management platform goes down, the construction office runs on whiteboards and printed change-order forms. When the SaaS legal-research platform is unreachable, the law firm sends an associate to the print library. When the SaaS field-service application fails, the technician carries a paper work order and reconciles in the system the next day. None of these workarounds are the failure of the people. They are the *resilience* of the people. They are also a measurement of how much value the SaaS layer was adding versus how much it was simply mediating.
+
+This is the gap the inverted stack closes. A SaaS outage takes everything digital with it; a local-first node holds the digital affordances on the device the practitioner is already using. The drawer of paper backup forms remains in the supply closet — every hospital should have one, every law firm should have one, every construction office should have one — but the drawer becomes a true backup rather than the only operating mode. When the network returns, the local node syncs. The post-incident overtime drops from days to minutes. The 38% mortality figure becomes a statistic about an architecture that the next generation of systems was designed to replace.
+
+---
+
 ## Who Pays the Most
 
 These six failure modes do not hit every organization equally. The organizations most exposed share a characteristic: they have the least structural leverage to address any of them.
