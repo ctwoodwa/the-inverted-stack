@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-27T00:25:00Z
-last-iteration-id: iter-0005
+last-iteration: 2026-04-27T00:30:00Z
+last-iteration-id: iter-0006
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -19,8 +19,8 @@ priority-order:
 
 extensions:
   48-key-loss-recovery:
-    status: in-progress
-    current-stage: prose-review
+    status: awaiting-voice-check
+    current-stage: voice-check
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Key-Loss Recovery"
@@ -33,7 +33,8 @@ extensions:
       - {stage: draft, completed: 2026-04-26T22:35:00Z, output: "Ch15 §Key-Loss Recovery + Ch20 §Key-Loss Recovery UX inserted; refs [4]–[7] added to Ch15", commit: "f6f9b03"}
       - {stage: code-check, completed: 2026-04-26T23:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/code-check-report.md; HTML annotations added at start of each new section flagging Sunfish.Foundation.Recovery + Sunfish.Kernel.Audit as forward-looking", commit: "490115f"}
       - {stage: technical-review, completed: 2026-04-26T23:55:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md; biometric CLAIM marker resolved (Apple Secure Enclave + Pixel Titan M + Windows Pluton template non-exportability verified); 19 architectural claims traced to v13/design-decisions §5 #48; 4 citations [4]–[7] verified; 0 CLAIM markers remain; PASS verdict on technical-review → prose-review gate", commit: "b247906"}
-      - {stage: prose-review, completed: 2026-04-27T00:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md; @prose-reviewer applied 7 edits (2 Ch15: scaffolding strip + active-voice; 5 Ch20: scaffolding strip + 3 active-voice + precision-improvement); @style-enforcer applied 2 follow-up edits (Ch15 authorial-intrusion fix; Ch20 throat-clearing signpost cut); PASS verdict on prose-review → voice-check gate"}
+      - {stage: prose-review, completed: 2026-04-27T00:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md; @prose-reviewer applied 7 edits (2 Ch15: scaffolding strip + active-voice; 5 Ch20: scaffolding strip + 3 active-voice + precision-improvement); @style-enforcer applied 2 follow-up edits (Ch15 authorial-intrusion fix; Ch20 throat-clearing signpost cut); PASS verdict on prose-review → voice-check gate", commit: "c1fb13b"}
+      - {stage: voice-check, status: awaiting-human, surfaced: 2026-04-27T00:30:00Z, action-required: "HUMAN voice-pass — see outline §F. Add personal anecdote about key loss (forgotten crypto-wallet seed; family death without password handoff; lost hardware token); add connective-tissue sentence in each section that names the policy/UX pairing; calibrated Sinek register lightly per feedback_voice_sinek_calibration.md memory."}
 
   43-performance-contracts:
     status: not-started
@@ -170,5 +171,13 @@ iterations:
     stage-from: technical-review
     stage-to: prose-review
     duration-min: 35
-    commit: null  # filled by commit step
+    commit: c1fb13b
     notes: "Prose-review stage — both subagents per loop-plan §2 stage table. (1) @prose-reviewer applied 7 edits: Ch15 — academic-scaffolding strip + 1 passive-to-active conversion; Ch20 — academic-scaffolding strip + passive-participial cleanup + 3 passive-to-active conversions. (2) @style-enforcer applied 2 follow-up edits: Ch15 — replaced authorial intrusion 'The book cannot substitute for the check' with 'Nothing in the architecture substitutes for that check' (preserves spec-voice register); Ch20 — cut throat-clearing signpost sentence at start of new section. Anti-AI tells calibrated correctly per `.claude/skills/anti-ai-tells/SKILL.md` — em-dashes, boldface (sparingly), and hyphenated technical terms (multi-sig, time-locked, paper-key) preserved as deliberate book voice. No paragraph exceeds 6 sentences. §A.5 honesty preserved (no softening of recovery boundary statements). PASS verdict on prose-review → voice-check gate from both agents. Reports at docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md."
+  - id: iter-0006
+    timestamp: 2026-04-27T00:30:00Z
+    extension: 48-key-loss-recovery
+    stage-from: prose-review
+    stage-to: voice-check
+    duration-min: 1
+    commit: null  # filled by commit step
+    notes: "STATE-ONLY transition. Per loop-plan §2 hard rule, the loop STOPS at voice-check — voice-check is human-only. Set status: awaiting-voice-check. No autonomous work this iteration; loop pauses on extension #48 until human voice-pass completes. Per outline §F, the human author should: (1) add a personal anecdote about key loss (candidates: forgotten crypto-wallet seed, password manager master-password forgotten, family death without password handoff, lost hardware token) — this sets emotional ground before the cryptographic constructions land; (2) add connective-tissue sentence in each section pointing to the other (Ch15 §Key-Loss Recovery → Ch20 §Key-Loss Recovery UX; vice versa); (3) calibrate Sinek register lightly per feedback_voice_sinek_calibration.md memory — do not over-mechanize. After voice-pass complete, the user re-runs /loop and the next iteration advances 48-key-loss-recovery to current-stage: approved."
