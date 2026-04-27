@@ -49,7 +49,8 @@ extensions:
       - "Ch20 §Performance budgets and progressive degradation"
     estimated-words: 2500
     started: 2026-04-27T03:35:00Z
-    history: []
+    history:
+      - {stage: outline, completed: 2026-04-27T04:00:00Z, output: "docs/book-update-plan/working/43-performance-contracts/outline.md (parallel-staged via @research-assistant background agent). Insertion points: Ch11 between §Sunfish Package Map and references; Ch20 between §The First-Run Experience and §Key-Loss Recovery UX. Sub-pattern 43e (per-deployment-class calibration) placed as standalone H3 §A.6. Sunfish.Kernel.Performance flagged as new package not yet in canon — code-check stage validates name."}
 
   45-collaborator-revocation:
     status: not-started
