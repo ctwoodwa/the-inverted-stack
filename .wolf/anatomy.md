@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-26T16:04:57.484Z
-> Files: 171 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T16:59:49.394Z
+> Files: 172 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -158,7 +158,7 @@
 ## chapters/appendices/
 
 - `appendix-a-sync-daemon-wire-protocol.md` — Appendix A — Sync Daemon Wire Protocol (~6830 tok)
-- `appendix-b-threat-model-worksheets.md` — Introduction (~5200 tok)
+- `appendix-b-threat-model-worksheets.md` — Appendix B — Threat Model Worksheets (~6601 tok)
 - `appendix-c-further-reading.md` — Appendix C — Further Reading (~6367 tok)
 - `appendix-d-testing-the-inverted-stack.md` — Appendix D — Testing the Inverted Stack (~5969 tok)
 - `appendix-e-citation-style.md` — Appendix E — Citation Style (~1667 tok)
@@ -194,7 +194,7 @@
 - `ch12-crdt-engine-data-layer.md` — Chapter 12 — CRDT Engine and Data Layer (~10389 tok)
 - `ch13-schema-migration-evolution.md` — Chapter 13 — Schema Migration and Evolution (~6932 tok)
 - `ch14-sync-daemon-protocol.md` — Chapter 14 — Sync Daemon Protocol (~7080 tok)
-- `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~7671 tok)
+- `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~27793 tok)
 - `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~8462 tok)
 
 ## chapters/part-4-implementation-playbooks/
@@ -203,6 +203,10 @@
 - `ch18-migrating-existing-saas.md` — Chapter 18 — Migrating an Existing SaaS (~7278 tok)
 - `ch19-shipping-to-enterprise.md` — The Procurement Conversation (~8859 tok)
 - `ch20-ux-sync-conflict.md` — Chapter 20 — UX, Sync, and Conflict (~6549 tok)
+
+## docs/book-update-plan/
+
+- `state.yaml` — Declares first (~13493 tok)
 
 ## docs/icm/
 

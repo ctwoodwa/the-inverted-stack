@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-27T07:50:00Z
-last-iteration-id: iter-0015
+last-iteration: 2026-04-27T13:00:00Z
+last-iteration-id: iter-0016
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -93,17 +93,18 @@ extensions:
 
   47-endpoint-compromise:
     status: in-progress
-    current-stage: draft             # chapter-drafter complete; draft.md ready, not yet applied to chapters
+    current-stage: draft             # draft applied to Ch15 + App B at iter-0016; code-check is next
     parallel-with: 11-fleet-management
-    pending-apply: "Draft is in working/47-endpoint-compromise/draft.md (Ch15 §Endpoint Compromise + App B THREAT-10 + 9 refs [14]-[22]). Citation numbering needs adjustment: #46's refs already claim [14]-[19], so #47's refs renumber to [20]-[28] before apply."
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Endpoint Compromise: What Stays Protected"
       - "App B §THREAT-10 — Compromised Endpoint"
     estimated-words: 2000
+    actual-words: 2245               # Ch15 ~1,691 + App B THREAT-10 ~554 (+12.3% over target, within ±20% acceptable band)
     started: 2026-04-27T08:30:00Z
     history:
       - {stage: outline, completed: 2026-04-27T09:00:00Z, output: "docs/book-update-plan/working/47-endpoint-compromise/outline.md (parallel-staged via @research-assistant background agent). Total 2,000 words target — exactly on loop-plan §4 target. Insertion points: Ch15 between §In-Memory Key Handling and §Supply Chain Security (deliberate narrative arc — In-Memory closes 'OS is honest' case, Endpoint Compromise opens 'OS is adversarial' case, Supply Chain extends to build pipeline); App B new H3 THREAT-10 appended to §Section 2 — Actor Taxonomy Template after Supply chain attacker row. Sub-pattern coverage: 47a scope declaration table (§A.2), 47b HSM/Secure Enclave with Intel SGX cautionary (§A.3), 47c attested boot + relay handshake validation + runtime compromise gap (§A.4), 47d remote wipe via revocation-broadcast + offline-device limitation + MDM parallel channel (§A.5), 47e containment via per-device keypair isolation + append-only log backdate prevention + role-scoped access (§A.6), 47f honest documentation of Pegasus/Predator/Hermit class threats + the hard sentence on software-only architectures (§A.7). Notable decisions: (1) THREAT-10 numbered format introduced for first time in App B (existing App B uses unnamed table rows); establishes pattern for future extensions (#9 chain-of-custody → THREAT-11). (2) Windows Pluton citation deferred to technical-review confirmation; may already exist as [7] from #48; outline §G flags duplicate-citation risk explicitly. (3) NO new namespace; Sunfish.Kernel.Security only."}
+      - {stage: draft, completed: 2026-04-27T13:00:00Z, output: "Drafted via @chapter-drafter (background dispatch, completed pre-migration); applied to Ch15 + App B at iter-0016 post-migration. Ch15 §Endpoint Compromise: What Stays Protected (~1,691 words) inserted between §In-Memory Key Handling and §Supply Chain Security with HTML code-check annotation flagging Sunfish.Kernel.Security only (no new namespace) and forward-looking attestation-handshake at Ch14. App B §THREAT-10 — Compromised Endpoint (~554 words) inserted into §Section 2 — Actor Taxonomy Template after the capability-level definitions table, establishing THREAT-NN format for subsequent extensions. Citation renumber applied: draft refs [14]–[22] → published refs [20]–[28] (because #46 forward-secrecy already claimed [14]–[19]); inline citations updated in §47b ([20][21][22] for Apple/Titan-M/Pluton, [23][24][25] for SGX cautionary, [26] for ARM TrustZone) and §47f ([27][28] for Pegasus/Hermit-Predator). 9 new IEEE refs added to Ch15 reference list ([20]–[28]). One CLAIM marker preserved at §47c (Ch14 attestation-handshake forward dependency). FAILED conditions block included. Forward-secrecy cross-reference points to §Forward Secrecy and Post-Compromise Security (was '#46' in draft, resolved to live section name). Sub-patterns 47a–47f all covered."}
 
   46-forward-secrecy:
     status: in-progress
@@ -268,3 +269,11 @@ iterations:
     duration-min: 9
     commit: null  # filled by commit step
     notes: "Parallel-staged via @research-assistant background agent. DECISION: new Chapter 21 in new Part V 'Operational Concerns' (chapter, not appendix; reasoning: narrative argument + scenario-driven structure + operational opinion required). Total 6,500 words. Sub-patterns 11a-11d in §A.2-§A.5 plus §A.6 fleet-failure narrative. Sunfish namespace recommendation: Sunfish.Foundation.Fleet (NEW; not Sunfish.Kernel.Fleet). Insertion: chapters/part-5-operational-concerns/ch21-operating-a-fleet.md (NEW directory)."
+  - id: iter-0016
+    timestamp: 2026-04-27T13:00:00Z
+    extension: 47-endpoint-compromise
+    stage-from: draft (staged, not applied)
+    stage-to: draft (applied)
+    duration-min: 35
+    commit: null  # filled by commit step
+    notes: "Post-migration resume. Applied #47 draft (Ch15 §Endpoint Compromise + App B §THREAT-10) with citation renumber [14]–[22] → [20]–[28] because #46 already claimed [14]–[19]. Ch15 insertion: between §In-Memory Key Handling and §Supply Chain Security; HTML code-check annotation flags Sunfish.Kernel.Security only (no new namespace) and the forward-looking Ch14 attestation-handshake CLAIM marker. App B insertion: appended to §Section 2 — Actor Taxonomy Template after the capability-level definitions table, establishing THREAT-NN format for subsequent extensions. 9 new IEEE refs added to Ch15 reference list ([20] Apple Secure Enclave, [21] Pixel Titan M, [22] Pluton, [23] Foreshadow, [24] Plundervolt, [25] SGAxe, [26] ARM TrustZone, [27] Pegasus/Citizen Lab, [28] Hermit/Predator). Forward-secrecy cross-ref resolved from '#46' placeholder to live §Forward Secrecy and Post-Compromise Security section name. Sub-patterns 47a–47f all covered. One CLAIM marker preserved at §47c. Total ~2,245 words (target 2,000; +12.3%, within ±20% band). Code-check is next stage."

@@ -1155,3 +1155,25 @@
 | 03:26 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~10 |
 | 03:26 | Edited chapters/appendices/appendix-c-further-reading.md | inline fix | ~8 |
 | 03:26 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~11 |
+
+## Session: 2026-04-27 12:48
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-27 12:49
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-27 12:52
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 12:57 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | added error handling | ~3283 |
+| 12:58 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | expanded (+18 lines) | ~582 |
+| 12:58 | Edited chapters/appendices/appendix-b-threat-model-worksheets.md | added error handling | ~1211 |
+| 12:58 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~38 |
+| 12:59 | Edited docs/book-update-plan/state.yaml | 13→14 lines | ~986 |
+| 12:59 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~580 |
+| 13:00 | iter-0016: applied #47 endpoint-compromise to Ch15 + App B; renumbered refs [14]-[22] -> [20]-[28] | chapters/part-3-reference-architecture/ch15-security-architecture.md, chapters/appendices/appendix-b-threat-model-worksheets.md, docs/book-update-plan/state.yaml | DONE — Ch15 §Endpoint Compromise inserted between §In-Memory Key Handling and §Supply Chain Security; App B §THREAT-10 appended to §Section 2; 9 new refs; 1 CLAIM marker preserved at §47c (Ch14 attestation forward dep); ~2,245 words total | ~6500 |

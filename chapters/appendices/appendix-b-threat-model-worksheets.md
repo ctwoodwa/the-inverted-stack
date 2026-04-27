@@ -70,6 +70,48 @@ List every actor who interacts with your system, or who could realistically inte
 | High | Sophisticated attacker; zero-day capability; nation-state or well-funded criminal |
 | Limited | Access is structurally constrained (e.g., ciphertext only — no key material) |
 
+### THREAT-10 — Compromised Endpoint
+
+THREAT-10 is the first numbered, structured entry in this taxonomy. Subsequent extensions follow the same THREAT-NN format.
+
+**Actor profile.** A device fully owned by an attacker. The OS is no longer trustworthy: persistent malware, a zero-click exploit, or other privileged code execution defeats application-layer protections. Consumer spyware and nation-state tooling both fall in this category. The capability ceiling differs; the architectural exposure does not.
+
+**Capabilities.**
+
+| Tier | Examples | Practical implication |
+|---|---|---|
+| Medium | Scripted exploit, consumer spyware | Reads OS keychain on non-enclave devices; reads in-memory plaintext during active session; captures session tokens |
+| High | Pegasus, Predator, Hermit (zero-click, nation-state) | All of the above, plus persistence across reboots; covert sync-mesh participation until revocation |
+
+Most real-world compromises are Medium. High capability changes the calculus for hardware enclaves: only enclave-backed key storage retains protection; the OS keychain is read.
+
+**Attack surface.** OS keychain, in-memory key material during active session, application database (decryptable with the locally-held DEKs), session tokens, biometric authentication flow.
+
+**Architecture protects.** Other devices in the user's fleet (per-device keypair isolation). Other users' data on the relay (role-scoped access). Future state after revocation propagates. Transaction-log integrity — backdate attacks blocked by the append-only log and per-device signing.
+
+**Architecture does not protect.** Local cached data that was decryptable before compromise. Current-session plaintext in memory. Keys held in the OS keychain on non-enclave devices.
+
+**Residual risk.** Scoped to the compromised device's cached copy. On enclave-class devices (Secure Enclave, Titan M, Pluton), the KEK is protected even under OS compromise; in-memory plaintext remains exposed. On non-enclave devices, the KEK is exposed and all locally-cached ciphertext is decryptable.
+
+#### Attack tree — primary branch: mobile zero-click compromise
+
+1. **Attacker delivers zero-click exploit.** No user interaction. Targets the OS messaging stack or browser engine. Device is compromised silently.
+2. **Attacker reads OS keychain.** Non-enclave devices: KEK is extracted; locally-cached ciphertext is decryptable. Attack succeeds at the data-access goal.
+3. **Enclave check.** Enclave-class devices: KEK is inaccessible via OS API. Attack contained to in-memory plaintext during active session only.
+4. **Attacker reads in-memory plaintext.** Whatever the application has decrypted for display is accessible. Re-authentication interval (Ch15 §In-Memory Key Handling) limits the window — four hours consumer, sixty minutes regulated.
+5. **Attacker attempts relay impersonation.** Captured session token used to forge writes. Blocked when the token is bound to the device keypair and the relay enforces keypair-session binding. Bearer-only tokens succeed — that is an architectural failure against §47e.
+6. **Operator issues remote-wipe broadcast.** Revocation plus crypto-shred propagates. The device evicts key material on next connection. An attacker who keeps the device offline defers the wipe; MDM (parallel channel) catches that case for enterprise deployments.
+
+#### Mitigation summary
+
+- Mandate enclave-backed key storage for any deployment with regulated or sensitive individual data.
+- Enforce re-authentication intervals: four hours consumer, sixty minutes regulated.
+- Integrate MDM (Intune, Jamf, Google MDM) for enterprise deployments. MDM wipe runs in parallel with crypto-shred.
+- Enforce device attestation at relay handshake for high-security deployments.
+- Communicate honestly: no architecture protects data on a fully-compromised device where the attacker has extracted keys from a non-enclave keychain.
+
+Cross-references: Ch15 §Endpoint Compromise (full specification); Ch15 §In-Memory Key Handling (re-authentication interval); Ch15 §Collaborator Revocation (the broadcast mechanism reused by remote wipe).
+
 ---
 
 ## Section 3 — Worked Example: Construction PM Vertical
