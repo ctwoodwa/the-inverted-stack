@@ -179,13 +179,13 @@ For regulated markets the backup target carries jurisdictional weight. Russian d
 
 <!-- code-check: this section references two forward-looking Sunfish namespaces — `Sunfish.Foundation.Recovery` and `Sunfish.Kernel.Audit` — that are part of the Volume 1 extension roadmap and not yet present in the Sunfish reference implementation. They are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. `Sunfish.Kernel.Security` is in the current Sunfish package canon. -->
 
-Key-loss recovery has a policy layer and a UX layer. Ch15 §Key-Loss Recovery specifies the six mechanisms, the threat model, and the recommended deployment combinations. This section covers what the user sees: the flows that surface the policy at setup time, the experience of initiating recovery after loss, and the UX for the grace period that protects against fraudulent claims.
+Key-loss recovery has a policy layer and a UX layer. Ch15 §Key-Loss Recovery specifies the six mechanisms, the threat model, and the recommended deployment combinations.
 
 Get the UX wrong and users skip setup. A user who skipped recovery setup faces permanent data loss at the first forgotten password. Get it right and users complete setup without distress and know exactly what to do when recovery becomes necessary.
 
 ### First-Run Prompt: Setting Up Recovery
 
-Recovery setup is part of the first-run experience described in §The First-Run Experience. It is not an optional step presented to advanced users. Every new user encounters it. Skipping is allowed, but skipping requires an explicit acknowledgment that permanent data loss is the consequence — not a checkbox buried in settings, but a prominent one-sentence statement the user must actively confirm: "I understand that without recovery setup, I cannot recover my data if I lose access to this device."
+Recovery setup is part of the first-run experience described in §The First-Run Experience. It is not an optional step reserved for advanced users. Every new user encounters it. Skipping is allowed, but skipping requires an explicit acknowledgment that permanent data loss is the consequence — not a checkbox buried in settings, but a prominent one-sentence statement the user must actively confirm: "I understand that without recovery setup, I cannot recover my data if I lose access to this device."
 
 The choice screen presents the three primary mechanisms in plain language, without cryptographic terminology. "Trust three friends" describes multi-sig social recovery. "Trust your bank or lawyer" describes custodian-held backup. "Trust a piece of paper in a safe" describes paper-key fallback. Each option includes a one-sentence tradeoff: social recovery is easy to set up and depends on your relationships staying intact; custodian backup requires an existing institutional relationship but provides the strongest audit trail; paper-key is always available as long as the paper is safe.
 
@@ -201,7 +201,7 @@ The UX surfaces the threshold semantics in plain language before the user names 
 
 Each trustee invitation is a short message — email or SMS, depending on the user's preference — that explains what they are agreeing to: "You've been asked to be a recovery trustee for [user]. If they ever lose access to their data, you'll receive a request to help. You won't be able to access their data on your own."
 
-Trustee acceptance is an event in the user's audit log, maintained by `Sunfish.Kernel.Audit`. The designation screen updates in real time as each trustee completes acceptance: "Trustee 1: confirmed. Trustee 2: confirmed. Trustees 3–5: pending." The user sees the state of their recovery arrangement before they leave the setup flow. An arrangement with fewer than the threshold confirmed is flagged: "You need at least 3 confirmed trustees before this recovery method is active. You can continue setup and return to confirm the remaining trustees later — your data is safe, but recovery is not yet available."
+Trustee acceptance is an event in the user's audit log, maintained by `Sunfish.Kernel.Audit`. The designation screen updates in real time as each trustee completes acceptance: "Trustee 1: confirmed. Trustee 2: confirmed. Trustees 3–5: pending." The user sees the state of their recovery arrangement before they leave the setup flow. The application flags an arrangement with fewer than the threshold confirmed: "You need at least 3 confirmed trustees before this recovery method is active. You can continue setup and return to confirm the remaining trustees later — your data is safe, but recovery is not yet available."
 
 ### Recovery Initiation UX
 
@@ -215,11 +215,11 @@ As trustees sign their shares, the progress display updates: "Trustee 1: confirm
 
 ### Time-Locked Grace Period UX
 
-The original holder's existing devices — every device associated with the account — receive a high-priority notification the moment a recovery claim is submitted: "Someone is requesting recovery of your account. If this is not you, dispute this request now." The notification appears through every channel the user has opted into: in-app banner on any running instance, OS push notification, email, SMS.
+The original holder's existing devices — every device associated with the account — receive a high-priority notification the moment the user submits a recovery claim: "Someone is requesting recovery of your account. If this is not you, dispute this request now." The notification appears through every channel the user has opted into: in-app banner on any running instance, OS push notification, email, SMS.
 
 The dispute action is one tap or one click. Tapping "This is not me" halts the recovery immediately, logs the dispute as a signed event in the audit trail, and alerts the user's trustees. A confirmed dispute triggers the compromise response procedure from Ch15 §Key Compromise Incident Response — because an unauthorized recovery attempt is evidence of credential compromise, not just a false claim.
 
-Multi-channel notification is not optional. A recovery claim sent only through email is defeatable by an adversary who controls the user's email account. `Sunfish.Foundation.Recovery` sends through every configured channel simultaneously and logs each delivery. An undisputed claim in a channel the user does not monitor is the architecture's honest limitation; the application prompts users during setup to configure at least two independent notification channels.
+Multi-channel notification is not optional. Routing recovery claims through a single channel is defeatable by an adversary who controls that channel. `Sunfish.Foundation.Recovery` sends through every configured channel simultaneously and logs each delivery. An undisputed claim in a channel the user does not monitor is the architecture's honest limitation; the application prompts users during setup to configure at least two independent notification channels.
 
 If the original holder has genuinely lost all notification channels — no running devices, no email access, no SMS — the silence is the signal. The grace period elapses, and recovery completes. The architecture cannot distinguish a user who has truly lost everything from a user who is simply not checking. The grace period is the only gate between those two states.
 

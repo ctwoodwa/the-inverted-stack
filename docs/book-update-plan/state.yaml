@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-26T23:55:00Z
-last-iteration-id: iter-0004
+last-iteration: 2026-04-27T00:25:00Z
+last-iteration-id: iter-0005
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -20,7 +20,7 @@ priority-order:
 extensions:
   48-key-loss-recovery:
     status: in-progress
-    current-stage: technical-review
+    current-stage: prose-review
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Key-Loss Recovery"
@@ -32,7 +32,8 @@ extensions:
       - {stage: outline, completed: 2026-04-26T22:00:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/outline.md", commit: "c1684df"}
       - {stage: draft, completed: 2026-04-26T22:35:00Z, output: "Ch15 §Key-Loss Recovery + Ch20 §Key-Loss Recovery UX inserted; refs [4]–[7] added to Ch15", commit: "f6f9b03"}
       - {stage: code-check, completed: 2026-04-26T23:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/code-check-report.md; HTML annotations added at start of each new section flagging Sunfish.Foundation.Recovery + Sunfish.Kernel.Audit as forward-looking", commit: "490115f"}
-      - {stage: technical-review, completed: 2026-04-26T23:55:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md; biometric CLAIM marker resolved (Apple Secure Enclave + Pixel Titan M + Windows Pluton template non-exportability verified); 19 architectural claims traced to v13/design-decisions §5 #48; 4 citations [4]–[7] verified; 0 CLAIM markers remain; PASS verdict on technical-review → prose-review gate"}
+      - {stage: technical-review, completed: 2026-04-26T23:55:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md; biometric CLAIM marker resolved (Apple Secure Enclave + Pixel Titan M + Windows Pluton template non-exportability verified); 19 architectural claims traced to v13/design-decisions §5 #48; 4 citations [4]–[7] verified; 0 CLAIM markers remain; PASS verdict on technical-review → prose-review gate", commit: "b247906"}
+      - {stage: prose-review, completed: 2026-04-27T00:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md; @prose-reviewer applied 7 edits (2 Ch15: scaffolding strip + active-voice; 5 Ch20: scaffolding strip + 3 active-voice + precision-improvement); @style-enforcer applied 2 follow-up edits (Ch15 authorial-intrusion fix; Ch20 throat-clearing signpost cut); PASS verdict on prose-review → voice-check gate"}
 
   43-performance-contracts:
     status: not-started
@@ -117,8 +118,8 @@ quality-gates:
     draft: passed           # word count 3090 vs 3000 target (+3%, well within ±20%); all 11 H3 subsections present (6 mechanisms + threat model + deployment table + boundary section in Ch15; 5 UX flows in Ch20); cross-refs wired; refs [4]–[7] added; one CLAIM marker flagged for technical-review
     code-check: passed      # 3 distinct Sunfish package references — 1 in canon (Sunfish.Kernel.Security), 2 forward-looking (Sunfish.Foundation.Recovery, Sunfish.Kernel.Audit) annotated at section start as illustrative per outline §C; no code blocks present; no TBD markers; one CLAIM marker forwarded to technical-review
     technical-review: passed # @technical-reviewer verdict PASS — 19 architectural claims verified (Shamir threshold mechanics, Argon2id parameters match §Key Hierarchy line 75, biometric template non-exportability across Apple Secure Enclave + Pixel Titan M + Windows Pluton, time-lock attack model framing honest, threat-model bounds explicit, citations [4]–[7] metadata correct); biometric CLAIM marker resolved with verified annotation; 0 open CLAIM markers; report at docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md
-    prose-review: null
-    voice-check: null
+    prose-review: passed    # @prose-reviewer (7 edits) + @style-enforcer (2 edits) — 9 fixes total across the two new sections; categories: academic scaffolding stripped (3 instances), passive→active voice (4 instances), authorial intrusion in Ch15 spec voice (1 instance), throat-clearing signpost in Ch20 (1 instance); anti-AI tells calibrated correctly (em-dashes, boldface, hyphenated technical terms preserved per book voice); no paragraph >6 sentences; §A.5 honesty preserved; PASS verdict on prose-review → voice-check gate; report at docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md
+    voice-check: null       # NEXT STAGE IS HUMAN ONLY — loop will pause here
     approved: false
 
 kill-triggers:
@@ -161,5 +162,13 @@ iterations:
     stage-from: code-check
     stage-to: technical-review
     duration-min: 30
-    commit: null  # filled by commit step
+    commit: b247906
     notes: "Technical-review pass via @technical-reviewer. Verdict PASS. Verified 19 architectural claims against v13 §11 / design-decisions §5 #48 / Shamir 1979 [6] / Apple Platform Security [7]. Resolved biometric CLAIM marker at Ch15 line 167 — replaced with technical-review verified annotation documenting non-exportability evidence for Apple Secure Enclave, Pixel Titan M (Google Titan M architecture), and Windows Pluton (Windows Hello container). Verified Shamir 3-of-5 (n=5, t=3, tolerates 2 unavailable), 2-of-3 threshold mechanics. Verified Argon2id 128 MiB / 4 / 4 paper-key parameters match §Key Hierarchy line 75 exactly. Verified all four new IEEE citations [4]–[7] (Buterin URL, Argent URL, Shamir CACM 1979, Apple Platform Security May 2024). Verified time-lock and threat-model honest-bound framing — no over-claiming. 0 open CLAIM markers. Report at docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md. Ch20 untouched (no edits required)."
+  - id: iter-0005
+    timestamp: 2026-04-27T00:25:00Z
+    extension: 48-key-loss-recovery
+    stage-from: technical-review
+    stage-to: prose-review
+    duration-min: 35
+    commit: null  # filled by commit step
+    notes: "Prose-review stage — both subagents per loop-plan §2 stage table. (1) @prose-reviewer applied 7 edits: Ch15 — academic-scaffolding strip + 1 passive-to-active conversion; Ch20 — academic-scaffolding strip + passive-participial cleanup + 3 passive-to-active conversions. (2) @style-enforcer applied 2 follow-up edits: Ch15 — replaced authorial intrusion 'The book cannot substitute for the check' with 'Nothing in the architecture substitutes for that check' (preserves spec-voice register); Ch20 — cut throat-clearing signpost sentence at start of new section. Anti-AI tells calibrated correctly per `.claude/skills/anti-ai-tells/SKILL.md` — em-dashes, boldface (sparingly), and hyphenated technical terms (multi-sig, time-locked, paper-key) preserved as deliberate book voice. No paragraph exceeds 6 sentences. §A.5 honesty preserved (no softening of recovery boundary statements). PASS verdict on prose-review → voice-check gate from both agents. Reports at docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md."
