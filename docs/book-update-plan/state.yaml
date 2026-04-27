@@ -62,7 +62,7 @@ extensions:
 
   45-collaborator-revocation:
     status: in-progress
-    current-stage: code-check        # advanced draft → code-check
+    current-stage: technical-review  # advanced code-check → technical-review (PASS)
     parallel-with: 43-performance-contracts
     target-chapter: ch15-security-architecture
     target-sections:
