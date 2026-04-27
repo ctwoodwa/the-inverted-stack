@@ -75,8 +75,8 @@ extensions:
       - {stage: draft, completed: 2026-04-27T08:10:00Z, output: "Drafted Ch15 §Collaborator Revocation and Post-Departure Partition (~3,100 words; over baseline 2,000 target due to 45e novelty depth — no prior-art analogue) and Ch20 §Revocation UX (~1,000 words; over baseline 800 target due to dissolution wizard and departure-moment placeholder) via @chapter-drafter (model: opus, background dispatch, inheriting parent xhigh effort). Inserted prose into ch15-security-architecture.md (between §Offline Node Revocation and Reconnection and §In-Memory Key Handling) and ch20-ux-sync-conflict.md (between §Key-Loss Recovery UX and §Accessibility as a Contract; tweaked Ch20:316 closing paragraph to reference both Revocation UX and Accessibility as remaining surfaces, replacing the prior Ch20-closing direct pivot to Accessibility). Added IEEE refs [8]–[11] to Ch15 reference list (RFC 7009 OAuth Token Revocation, RFC 6960 OCSP, RFC 5280 CRL, NIST SP 800-12). Sub-patterns 45a–45f all covered with named subsections in Ch15; Ch20 mirrors with administrator flow + revoked-party experience + partition wizard + departure-moment placeholder (with voice-check HTML comment). FAILED conditions block rendered as bold-labeled bulleted list. ONE <!-- CLAIM: --> marker introduced — CRDT operation-identifier collision question across Yjs/yrs and Loro after partition; queued for technical-review. NO new top-level Sunfish namespace introduced; extends existing canon + #48 forward-looking namespaces. Total section word count overshoots baseline by ~25% but is justified by 45e novelty; prose-review may trim. Commit: this iteration's commit ID."}
 
   11-fleet-management:
-    status: in-progress
-    current-stage: technical-review  # advanced code-check → technical-review (PASS)
+    status: awaiting-voice-check     # prose-review PASS — loop stops at human-only voice-check
+    current-stage: voice-check
     parallel-with: 45-collaborator-revocation
     target-chapter: NEW Ch21 in NEW Part V "Operational Concerns"
     target-sections:
@@ -105,12 +105,16 @@ extensions:
       - {stage: outline, completed: 2026-04-27T09:00:00Z, output: "docs/book-update-plan/working/47-endpoint-compromise/outline.md (parallel-staged via @research-assistant background agent). Total 2,000 words target — exactly on loop-plan §4 target. Insertion points: Ch15 between §In-Memory Key Handling and §Supply Chain Security (deliberate narrative arc — In-Memory closes 'OS is honest' case, Endpoint Compromise opens 'OS is adversarial' case, Supply Chain extends to build pipeline); App B new H3 THREAT-10 appended to §Section 2 — Actor Taxonomy Template after Supply chain attacker row. Sub-pattern coverage: 47a scope declaration table (§A.2), 47b HSM/Secure Enclave with Intel SGX cautionary (§A.3), 47c attested boot + relay handshake validation + runtime compromise gap (§A.4), 47d remote wipe via revocation-broadcast + offline-device limitation + MDM parallel channel (§A.5), 47e containment via per-device keypair isolation + append-only log backdate prevention + role-scoped access (§A.6), 47f honest documentation of Pegasus/Predator/Hermit class threats + the hard sentence on software-only architectures (§A.7). Notable decisions: (1) THREAT-10 numbered format introduced for first time in App B (existing App B uses unnamed table rows); establishes pattern for future extensions (#9 chain-of-custody → THREAT-11). (2) Windows Pluton citation deferred to technical-review confirmation; may already exist as [7] from #48; outline §G flags duplicate-citation risk explicitly. (3) NO new namespace; Sunfish.Kernel.Security only."}
 
   46-forward-secrecy:
-    status: not-started
+    status: in-progress              # parallel-staged outline complete
+    current-stage: outline
+    parallel-with: 11-fleet-management
     target-chapter: ch15-security-architecture
     target-sections:
-      - "Ch15 §Forward secrecy and post-compromise security"
+      - "Ch15 §Forward Secrecy and Post-Compromise Security"
     estimated-words: 1500
-    history: []
+    started: 2026-04-27T08:45:00Z
+    history:
+      - {stage: outline, completed: 2026-04-27T09:15:00Z, output: "docs/book-update-plan/working/46-forward-secrecy/outline.md (background @research-assistant). 1,480 words structure. Insertion: Ch15 between §Collaborator Revocation and Post-Departure Partition (newly added by #45) and §In-Memory Key Handling — groups three 'what happens when keys are exposed' sections (revocation closes access-control-over-time; forward secrecy addresses within/post-session exposure; in-memory handling addresses in-process residence). Sub-pattern coverage: 46a per-message ephemeral key derivation §A.2 (~250w), 46b Double Ratchet sender/receiver ratchet §A.3 (~300w), 46c automatic key rotation compromise + scheduled §A.4 (~200w), 46d sealed sender §A.5 (~200w), 46e protocol-level forward secrecy commitment §A.6 (~150w), FAILED conditions §A.7 (~100w). NO new top-level Sunfish namespace; extends Sunfish.Kernel.Security + Sunfish.Kernel.Sync. 6 IEEE citations [14]–[19] proposed (Double Ratchet spec, X3DH, Noise framework, MLS RFC 9420, WhatsApp whitepaper, OTR Borisov-Goldberg-Brewer 2004)."}
 
   9-chain-of-custody:
     status: not-started
