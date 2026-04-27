@@ -1,7 +1,7 @@
 schema-version: "1.0"
-last-iteration: null
-last-iteration-id: null
-last-commit: null
+last-iteration: 2026-04-26T22:00:00Z
+last-iteration-id: iter-0001
+last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
 # iterations if priorities shift. Higher impact first.
@@ -19,13 +19,16 @@ priority-order:
 
 extensions:
   48-key-loss-recovery:
-    status: not-started
+    status: in-progress
+    current-stage: outline
     target-chapter: ch15-security-architecture
     target-sections:
-      - "Ch15 §Key recovery"
-      - "Ch20 §Recovery UX"
+      - "Ch15 §Key-Loss Recovery"
+      - "Ch20 §Key-Loss Recovery UX"
     estimated-words: 3000
-    history: []
+    started: 2026-04-26T22:00:00Z
+    history:
+      - {stage: outline, completed: 2026-04-26T22:00:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/outline.md"}
 
   43-performance-contracts:
     status: not-started
@@ -104,7 +107,14 @@ extensions:
     estimated-words: 1500
     history: []
 
-quality-gates: {}
+quality-gates:
+  48-key-loss-recovery:
+    outline: passed         # outline has all section headers + bullet points + subagent prompt
+    code-check: null
+    technical-review: null
+    prose-review: null
+    voice-check: null
+    approved: false
 
 kill-triggers:
   user-pause: false
@@ -115,4 +125,12 @@ kill-triggers:
   subagent-failure: false
 
 # Iterations history (last 10; older trimmed automatically)
-iterations: []
+iterations:
+  - id: iter-0001
+    timestamp: 2026-04-26T22:00:00Z
+    extension: 48-key-loss-recovery
+    stage-from: not-started
+    stage-to: outline
+    duration-min: 25
+    commit: null  # filled by commit step
+    notes: "First iteration. Created working/48-key-loss-recovery/outline.md with §A (Ch15 ~2000w outline), §B (Ch20 ~1000w outline), §C–H (code-check/tech-review/prose-review/voice-check focus + citations + cross-refs), §I (chapter-drafter subagent prompt), §J (gate verification). Total target 3000w across both chapters."
