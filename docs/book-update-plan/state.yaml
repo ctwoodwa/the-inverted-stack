@@ -44,8 +44,8 @@ extensions:
       - {stage: approved, completed: 2026-04-27T05:30:00Z, output: "All ICM gates cleared: outline (passed), draft (passed), code-check (passed), technical-review (passed), prose-review (passed), voice-check (passed). Plus three out-of-band review cycles: Council R1 (REVISE 6.56) → R2 (PUBLISH 8.24) → R3 (PUBLISH 8.62), and Literary-board (POLISH 8.17, all 12 critics PROCEED). Section publication-ready. Final state: Ch15 §Key-Loss Recovery ~4,500 words spanning 7 H3 sub-sections (Why this matters, Recommended Deployment Combinations, The six recovery mechanisms, Recovery State-Machine Convergence, Threat Model, Boundaries and Operator Mitigations, Implementation Surfaces); Ch20 §Key-Loss Recovery UX ~1,960 words spanning 5 H3 sub-sections (First-Run Prompt, Trustee Designation Flow, Recovery Initiation UX, Time-Locked Grace Period UX, Recovery Completion Confirmation). Total ~6,460 words from initial 3,090 word target. Status: approved → assembled (mechanical, picked up by next ASSEMBLY.md run)."}
 
   43-performance-contracts:
-    status: in-progress
-    current-stage: prose-review      # advanced from technical-review this iteration
+    status: awaiting-voice-check     # prose-review complete; loop stops at voice-check (human-only)
+    current-stage: voice-check
     target-chapter: ch11-node-architecture
     target-sections:
       - "Ch11 §Performance Contracts and Main-Thread Isolation"
@@ -62,7 +62,7 @@ extensions:
 
   45-collaborator-revocation:
     status: in-progress
-    current-stage: draft             # advanced outline → draft this iteration
+    current-stage: code-check        # advanced draft → code-check
     parallel-with: 43-performance-contracts
     target-chapter: ch15-security-architecture
     target-sections:
