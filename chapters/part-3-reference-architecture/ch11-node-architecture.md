@@ -211,7 +211,7 @@ The local-first promise of immediate response is the most visible property the a
 
 Performance is structural here, not a polish step. The practical adversary is a Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) document that has accumulated 100,000 operations over months of collaborative editing. Merging that document on reconnect can take multiple seconds on commodity hardware [4]. A node without main-thread isolation freezes the UI thread for the duration of that merge. The cursor stops. Keystrokes queue. The OS marks the window unresponsive. A user who has experienced this once does not retry the application a second time.
 
-Linear's engineering team treats 60fps as a hard constraint on every interaction, not a target the application reaches under optimal conditions [5]. The Web Vitals Interaction to Next Paint (INP) metric formalises the same bar for the web platform: an interaction must produce a visual response within 200ms to register as "good" [6]. The architecture declares its budgets in terms practitioners already know, against thresholds the platform itself measures.
+Linear's engineering team treats interaction latency as a first-class product constraint — the engineering pattern most often cited in their talks on the Linear sync engine [5]. <!-- CLAIM: the specific phrase "60fps as a hard constraint on every interaction, not a target" is widely attributed to Linear in industry talks but could not be pinned to a verbatim public Linear blog post or talk transcript as of 2026-04-27. Reviewer to either find the verbatim source or, if none exists, soften this paraphrase further. The cited "Scaling the Linear Sync Engine" talk is the closest publicly indexable engineering content. --> The Web Vitals Interaction to Next Paint (INP) metric formalises the same bar for the web platform: an interaction must produce a visual response within 200ms to register as "good" [6]. The architecture declares its budgets in terms practitioners already know, against thresholds the platform itself measures.
 
 **FAILED conditions** for this primitive are stated directly later in this section. The shape of the bar: any local operation that crosses its budget fails; any UI freeze beyond a single frame fails; any path through a core node function that requires a network roundtrip fails.
 
@@ -284,7 +284,7 @@ Not all applications carry identical performance requirements. A drawing tool at
 | Document editing (default) | <16ms | <50ms | Baseline |
 | Background sync (email, feed) | <50ms | <200ms | Relaxed; writes not on critical path |
 
-The 8ms interactive budget is calibrated against the 8.33ms frame time at 120fps; sub-8ms gives one sub-frame of headroom for the UI thread's other work. The 16ms document-editing baseline is calibrated against the 60fps frame budget specified in Apple's Human Interface Guidelines [8]. The 200ms relaxed read budget aligns to the Web Vitals INP "good" threshold [6].
+The 8ms interactive budget is calibrated against the 8.33ms frame time at 120fps (1000ms / 120fps); sub-8ms keeps the work below the frame deadline with a small margin for the UI thread's other work. The 16ms document-editing baseline is calibrated against the 60fps frame budget that Apple's Human Interface Guidelines treat as the responsiveness target for smooth animation and scrolling [8]. <!-- CLAIM: Apple HIG does not publicly state "16ms" as an explicit budget; the figure is derived from a 60fps target (1000ms / 60fps = 16.67ms). The HIG is JS-rendered and not indexable to a deep-link section as of 2026-04-27; reviewer to pin the specific Motion/Responsiveness page once Apple republishes a static-HTML version, or replace with a citation to a WWDC session that quotes the figure directly. --> The 200ms relaxed read budget aligns to the Web Vitals INP "good" threshold [6].
 
 `PerformanceBudgetValidator` reads the declared deployment class and asserts against the corresponding budget. A deployment that declares "interactive" but ships with document-editing budgets fails the conformance test at build time. Misclassification is detected before release, not after a customer files a regression.
 
@@ -312,12 +312,12 @@ Performance contracts are a primitive surfaced through architectural review, not
 
 [3] B. Kolbeck, M. Högqvist, J. Stender, and F. Hupfeld, "Flease: Scalable Fault-Tolerant Lease Negotiation for Distributed Systems," in *Proc. USENIX Annual Technical Conference (USENIX ATC)*, Boston, MA, 2012.
 
-[4] K. Jahns, "Yjs — Performance Characteristics," *Yjs Documentation*. Accessed: 2026. [Online]. Available: https://docs.yjs.dev/
+[4] K. Jahns, "CRDT benchmarks: B4 — Real-world editing dataset," *dmonad/crdt-benchmarks*, GitHub. Accessed: 2026. [Online]. Available: https://github.com/dmonad/crdt-benchmarks#b4-real-world-editing-dataset
 
-[5] Linear, "How Linear builds product," *Linear Engineering Blog*. Accessed: 2026. [Online]. Available: https://linear.app/blog/
+[5] T. Ruohonen, "Scaling the Linear Sync Engine," *Linear Blog*. Accessed: 2026. [Online]. Available: https://linear.app/blog/scaling-the-linear-sync-engine
 
 [6] Google, "Interaction to Next Paint (INP)," *Web Vitals*. Accessed: 2026. [Online]. Available: https://web.dev/articles/inp
 
-[7] Replicache, "Why Replicache," *Replicache Engineering Documentation*. Accessed: 2026. [Online]. Available: https://doc.replicache.dev/
+[7] Replicache, "How Replicache Works," *Replicache Documentation*. Accessed: 2026. [Online]. Available: https://doc.replicache.dev/concepts/how-it-works
 
 [8] Apple Inc., "Human Interface Guidelines: Responsiveness." Accessed: 2026. [Online]. Available: https://developer.apple.com/design/human-interface-guidelines/
