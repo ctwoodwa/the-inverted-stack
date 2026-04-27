@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-26T23:25:00Z
-last-iteration-id: iter-0003
+last-iteration: 2026-04-26T23:55:00Z
+last-iteration-id: iter-0004
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -20,7 +20,7 @@ priority-order:
 extensions:
   48-key-loss-recovery:
     status: in-progress
-    current-stage: code-check
+    current-stage: technical-review
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Key-Loss Recovery"
@@ -31,7 +31,8 @@ extensions:
     history:
       - {stage: outline, completed: 2026-04-26T22:00:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/outline.md", commit: "c1684df"}
       - {stage: draft, completed: 2026-04-26T22:35:00Z, output: "Ch15 §Key-Loss Recovery + Ch20 §Key-Loss Recovery UX inserted; refs [4]–[7] added to Ch15", commit: "f6f9b03"}
-      - {stage: code-check, completed: 2026-04-26T23:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/code-check-report.md; HTML annotations added at start of each new section flagging Sunfish.Foundation.Recovery + Sunfish.Kernel.Audit as forward-looking"}
+      - {stage: code-check, completed: 2026-04-26T23:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/code-check-report.md; HTML annotations added at start of each new section flagging Sunfish.Foundation.Recovery + Sunfish.Kernel.Audit as forward-looking", commit: "490115f"}
+      - {stage: technical-review, completed: 2026-04-26T23:55:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md; biometric CLAIM marker resolved (Apple Secure Enclave + Pixel Titan M + Windows Pluton template non-exportability verified); 19 architectural claims traced to v13/design-decisions §5 #48; 4 citations [4]–[7] verified; 0 CLAIM markers remain; PASS verdict on technical-review → prose-review gate"}
 
   43-performance-contracts:
     status: not-started
@@ -115,7 +116,7 @@ quality-gates:
     outline: passed         # outline has all section headers + bullet points + subagent prompt
     draft: passed           # word count 3090 vs 3000 target (+3%, well within ±20%); all 11 H3 subsections present (6 mechanisms + threat model + deployment table + boundary section in Ch15; 5 UX flows in Ch20); cross-refs wired; refs [4]–[7] added; one CLAIM marker flagged for technical-review
     code-check: passed      # 3 distinct Sunfish package references — 1 in canon (Sunfish.Kernel.Security), 2 forward-looking (Sunfish.Foundation.Recovery, Sunfish.Kernel.Audit) annotated at section start as illustrative per outline §C; no code blocks present; no TBD markers; one CLAIM marker forwarded to technical-review
-    technical-review: null
+    technical-review: passed # @technical-reviewer verdict PASS — 19 architectural claims verified (Shamir threshold mechanics, Argon2id parameters match §Key Hierarchy line 75, biometric template non-exportability across Apple Secure Enclave + Pixel Titan M + Windows Pluton, time-lock attack model framing honest, threat-model bounds explicit, citations [4]–[7] metadata correct); biometric CLAIM marker resolved with verified annotation; 0 open CLAIM markers; report at docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md
     prose-review: null
     voice-check: null
     approved: false
@@ -152,5 +153,13 @@ iterations:
     stage-from: draft
     stage-to: code-check
     duration-min: 8
-    commit: null  # filled by commit step
+    commit: 490115f
     notes: "Code-check pass on the new Ch15/Ch20 sections. Three Sunfish package references inventoried: Sunfish.Kernel.Security (in canon), Sunfish.Foundation.Recovery (forward-looking, 7 sites), Sunfish.Kernel.Audit (forward-looking, 2 sites). Per outline §C requirement to mark forward-looking namespaces as illustrative, added HTML-comment annotation at the start of each new section disclosing the forward-looking status of the two new namespaces. No code blocks present, no TBD/placeholder markers, no class APIs in prose. One <!-- CLAIM: --> marker queued for technical-review (biometric-template non-exportability across Secure Enclave / Titan M / Pluton). Code-check report at docs/book-update-plan/working/48-key-loss-recovery/code-check-report.md."
+  - id: iter-0004
+    timestamp: 2026-04-26T23:55:00Z
+    extension: 48-key-loss-recovery
+    stage-from: code-check
+    stage-to: technical-review
+    duration-min: 30
+    commit: null  # filled by commit step
+    notes: "Technical-review pass via @technical-reviewer. Verdict PASS. Verified 19 architectural claims against v13 §11 / design-decisions §5 #48 / Shamir 1979 [6] / Apple Platform Security [7]. Resolved biometric CLAIM marker at Ch15 line 167 — replaced with technical-review verified annotation documenting non-exportability evidence for Apple Secure Enclave, Pixel Titan M (Google Titan M architecture), and Windows Pluton (Windows Hello container). Verified Shamir 3-of-5 (n=5, t=3, tolerates 2 unavailable), 2-of-3 threshold mechanics. Verified Argon2id 128 MiB / 4 / 4 paper-key parameters match §Key Hierarchy line 75 exactly. Verified all four new IEEE citations [4]–[7] (Buterin URL, Argent URL, Shamir CACM 1979, Apple Platform Security May 2024). Verified time-lock and threat-model honest-bound framing — no over-claiming. 0 open CLAIM markers. Report at docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md. Ch20 untouched (no edits required)."
