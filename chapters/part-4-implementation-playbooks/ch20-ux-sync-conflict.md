@@ -189,7 +189,11 @@ Recovery setup is part of the first-run experience described in §The First-Run 
 
 The choice screen presents the three primary mechanisms in plain language, without cryptographic terminology. "Trust three friends" describes multi-sig social recovery. "Trust your bank or lawyer" describes custodian-held backup. "Trust a piece of paper in a safe" describes paper-key fallback. Each option includes a one-sentence tradeoff: social recovery is easy to set up and depends on your relationships staying intact; custodian backup requires an existing institutional relationship but provides the strongest audit trail; paper-key is always available as long as the paper is safe.
 
-The user selects one mechanism. The setup flow for that mechanism opens inline — the user does not leave the application. Trustee invitation, custodian enrollment, or mnemonic display all complete within the first-run context. The user sees a completion confirmation before the application opens its workspace: "Recovery is set up. You've chosen 3-of-5 social recovery. Write down the backup code below in case all five trustees become unavailable."
+The user picks a primary mechanism and a secondary fallback. The Ch15 deployment-class table treats recovery as a composition: a primary path matched to the user's everyday trust network, plus a secondary path that works when the primary is unavailable. The first-run UX surfaces this composition explicitly. After the primary selection screen, a follow-up prompt asks: "Pick a secondary fallback in case your primary mechanism is unavailable when you need it. Most users pair social recovery with a paper key in a safe." The application binds both selections into the team's signed configuration manifest before completing setup.
+
+The setup flow for each chosen mechanism opens inline — the user does not leave the application. Trustee invitation, custodian enrollment, or mnemonic display all complete within the first-run context. Paper-key setup specifically requires round-trip transcription verification: the application displays the mnemonic phrase, the user types it back, and the application refuses to accept setup completion until the typed phrase matches the displayed one. The verification is the only opportunity the application has to detect a transcription error before it costs the user their data. Skipping it is not an option.
+
+The user sees a completion confirmation before the application opens its workspace: "Recovery is set up. Primary: 3-of-5 social recovery. Secondary: paper key. Write down the backup code below and store it somewhere safe."
 
 Cross-reference to §The First-Run Experience for the full onboarding flow. Recovery setup occupies the third step in that flow, after team creation and backup configuration.
 
@@ -222,6 +226,8 @@ The dispute action is one tap or one click. Tapping "This is not me" halts the r
 Multi-channel notification is not optional. Routing recovery claims through a single channel is defeatable by an adversary who controls that channel. `Sunfish.Foundation.Recovery` sends through every configured channel simultaneously and logs each delivery. An undisputed claim in a channel the user does not monitor is the architecture's honest limitation; the application prompts users during setup to configure at least two independent notification channels.
 
 If the original holder has genuinely lost all notification channels — no running devices, no email access, no SMS — the silence is the signal. The grace period elapses, and recovery completes. The architecture cannot distinguish a user who has truly lost everything from a user who is simply not checking. The grace period is the only gate between those two states.
+
+This is the architecture's deliberate trade-off. Without the silence-completes rule, a user who genuinely lost everything would have no recovery path at all — the system would refuse to act on their behalf because the system could not confirm their absence was loss rather than choice. The grace period is calibrated to make the silence detectable while there is still time to dispute, and the deployment-class table in Ch15 §Key-Loss Recovery picks that window per audience.
 
 ### Recovery Completion Confirmation
 

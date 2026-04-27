@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-27T00:30:00Z
-last-iteration-id: iter-0006
+last-iteration: 2026-04-27T01:30:00Z
+last-iteration-id: iter-0007
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -35,6 +35,7 @@ extensions:
       - {stage: technical-review, completed: 2026-04-26T23:55:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/technical-review-report.md; biometric CLAIM marker resolved (Apple Secure Enclave + Pixel Titan M + Windows Pluton template non-exportability verified); 19 architectural claims traced to v13/design-decisions §5 #48; 4 citations [4]–[7] verified; 0 CLAIM markers remain; PASS verdict on technical-review → prose-review gate", commit: "b247906"}
       - {stage: prose-review, completed: 2026-04-27T00:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md; @prose-reviewer applied 7 edits (2 Ch15: scaffolding strip + active-voice; 5 Ch20: scaffolding strip + 3 active-voice + precision-improvement); @style-enforcer applied 2 follow-up edits (Ch15 authorial-intrusion fix; Ch20 throat-clearing signpost cut); PASS verdict on prose-review → voice-check gate", commit: "c1fb13b"}
       - {stage: voice-check, status: awaiting-human, surfaced: 2026-04-27T00:30:00Z, action-required: "HUMAN voice-pass — see outline §F. Add personal anecdote about key loss (forgotten crypto-wallet seed; family death without password handoff; lost hardware token); add connective-tissue sentence in each section that names the policy/UX pairing; calibrated Sinek register lightly per feedback_voice_sinek_calibration.md memory."}
+      - {stage: council-review-cycle, completed: 2026-04-27T01:30:00Z, output: "Round 1 + resolution pass + Round 2. R1 verdict REVISE (3 P0 from Pedantic Lawyer BLOCK + 8 P1 + 3 P2; 5.9 lowest score). 11 fixes applied (3 P0, 8 P1, 2 P2). R2 verdict PUBLISH (all five members PROCEED; scores 8.0–8.6). 13 of 14 R1 findings RESOLVED; 1 deferred (P2-3 structural reorder). Reports at docs/book-update-plan/working/48-key-loss-recovery/council-review-round-{1,2}.md"}
 
   43-performance-contracts:
     status: not-started
@@ -179,5 +180,13 @@ iterations:
     stage-from: prose-review
     stage-to: voice-check
     duration-min: 1
-    commit: null  # filled by commit step
+    commit: ae3b41d
     notes: "STATE-ONLY transition. Per loop-plan §2 hard rule, the loop STOPS at voice-check — voice-check is human-only. Set status: awaiting-voice-check. No autonomous work this iteration; loop pauses on extension #48 until human voice-pass completes. Per outline §F, the human author should: (1) add a personal anecdote about key loss (candidates: forgotten crypto-wallet seed, password manager master-password forgotten, family death without password handoff, lost hardware token) — this sets emotional ground before the cryptographic constructions land; (2) add connective-tissue sentence in each section pointing to the other (Ch15 §Key-Loss Recovery → Ch20 §Key-Loss Recovery UX; vice versa); (3) calibrate Sinek register lightly per feedback_voice_sinek_calibration.md memory — do not over-mechanize. After voice-pass complete, the user re-runs /loop and the next iteration advances 48-key-loss-recovery to current-stage: approved."
+  - id: iter-0007
+    timestamp: 2026-04-27T01:30:00Z
+    extension: 48-key-loss-recovery
+    stage-from: voice-check (awaiting-human)
+    stage-to: voice-check (awaiting-human, post-council-review)
+    duration-min: 60
+    commit: null  # filled by commit step
+    notes: "OUT-OF-BAND council-review cycle while awaiting human voice-pass. User-requested adversarial pass to surface issues before voice-check. Cycle: Round 1 → resolution → Round 2. R1 verdict REVISE — 3 P0 (Pedantic Lawyer BLOCK on custodian liability allocation, social-recovery jurisdictional standing, GDPR Art. 17 vs trustee-evidence) + 8 P1 (Shamir-dealer protocol, recovery state-machine convergence, trustee silent-decay, custodian transient-failure, paper-key transcription verification, implementation surfaces, deployment-class config binding, Ch20 primary+secondary mechanism) + 3 P2 (bad-faith trustees, silence-as-signal grounding, structural reorder). 11 fixes applied directly to Ch15 + Ch20 (3 P0, all 8 P1, 2 of 3 P2). R2 verdict PUBLISH — all 5 council members PROCEED, scores 8.0–8.6 (Theorist 6.8→8.4; Production Operator 6.5→8.2; Skeptical Implementer 6.2→8.0; Pedantic Lawyer 5.9 BLOCK→8.6; Outside Observer 7.4→8.0). 13 of 14 R1 findings RESOLVED, 1 deferred (P2-3 structural deployment-class reorder, not council-blocking). Status remains awaiting-voice-check pending the original human voice-pass tasks (anecdote + connective tissue + Sinek calibration). Reports at docs/book-update-plan/working/48-key-loss-recovery/council-review-round-{1,2}.md"
