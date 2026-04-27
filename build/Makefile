@@ -97,6 +97,37 @@ endif
 audiobook-sample:
 	python build/audiobook.py $(sample_args)
 
+# Higgs-engine variants — render against the Windows GPU box's Higgs Audio
+# v2.5 server. HIGGS_URL points at the Windows machine's LAN IP (or the
+# Tailscale magic-DNS hostname if you've set Tailscale up). Override per-
+# render or once per shell session:
+#
+#   HIGGS_URL=http://192.168.1.50:8881/v1 make audiobook-sample-higgs ch=ch01
+#   HIGGS_URL=http://gaming-rig.tail-scale.ts.net:8881/v1 make audiobook-higgs
+#
+# Default is the LAN-mDNS hostname 'higgs.local' — works if the Windows
+# machine advertises mDNS (most Windows 11 setups do not by default; set
+# HIGGS_URL explicitly or install Bonjour Print Services on Windows to
+# enable mDNS responder).
+HIGGS_URL ?= http://higgs.local:8881/v1
+higgs_args = --engine higgs --base-url $(HIGGS_URL)
+
+.PHONY: audiobook-higgs
+audiobook-higgs:
+	python build/audiobook.py $(higgs_args)
+
+.PHONY: audiobook-sample-higgs
+audiobook-sample-higgs:
+	python build/audiobook.py $(sample_args) $(higgs_args)
+
+# audiobook-voices-higgs: query the Higgs server for its voice catalog.
+# Run this after standing up the Windows server but before filling in
+# PRESETS_HIGGS in audiobook.py.
+.PHONY: audiobook-voices-higgs
+audiobook-voices-higgs:
+	@curl -s $(HIGGS_URL)/audio/voices | python3 -m json.tool || \
+		(echo "Could not reach $(HIGGS_URL). Set HIGGS_URL or check the Windows server is up." && exit 1)
+
 .PHONY: m4b
 m4b:
 	python build/m4b.py

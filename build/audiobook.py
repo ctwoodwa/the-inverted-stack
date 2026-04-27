@@ -227,7 +227,12 @@ ABBREVIATION_FIXES = {
 
 # Named voice + speed presets. --preset selects one; --voice/--speed override.
 # Rationale for each is documented in the audiobook research notes.
-PRESETS: dict[str, dict] = {
+#
+# Two engine catalogs share the same preset KEY space — "sinek", "british",
+# "fenrir", etc. — so CHAPTER_PRESET_MAP works across both engines without
+# rewiring. The VOICE values differ because Kokoro and Higgs have different
+# voice catalogs. resolve_preset() picks the right catalog based on --engine.
+PRESETS_KOKORO: dict[str, dict] = {
     # Female — HH-hour trained voices. Bella = professional core, Nicole = breath texture.
     "female":      {"voice": "af_bella+af_nicole", "speed": 0.92},
     "female-solo": {"voice": "af_bella",           "speed": 0.92},
@@ -267,6 +272,54 @@ PRESETS: dict[str, dict] = {
     # tech-savvy." Polished corporate confident register.
     "fenrir":      {"voice": "am_fenrir",            "speed": 0.92},
 }
+
+# Higgs Audio v2.5 preset voices. Voice IDs are placeholders — fill in with
+# the actual catalog after the Windows GPU server boots and you query
+# `GET http://<windows-host>:8881/v1/audio/voices`. The Boson AI release
+# typically ships ~25 preset voices labeled by gender/register; pick voices
+# that match each persona's intent and update the dict in a follow-up commit.
+#
+# NOTE: Higgs v2.5 generally renders in fp16 at speed=1.0 with prosody control
+# implicit. The Kokoro speed values below are kept as a hint for parity, but
+# Higgs may interpret them differently — verify when wiring up.
+PRESETS_HIGGS: dict[str, dict] = {
+    "female":      {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
+    "female-solo": {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
+    "male":        {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
+    "male-solo":   {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
+    "sinek":       {"voice": None, "speed": 0.92},  # TODO: warm low-pitch male
+    "practitioner":{"voice": None, "speed": 1.0},   # TODO: Lusophone-adjacent or generic male
+    "british":     {"voice": None, "speed": 1.0},   # TODO: British female
+    "british-male":{"voice": None, "speed": 1.0},   # TODO: British male
+    "fry":         {"voice": None, "speed": 1.0},   # TODO: British RP narrator male
+    "fry-blend":   {"voice": None, "speed": 1.0},   # TODO: same as 'fry' (no Higgs blend support)
+    "fenrir":      {"voice": None, "speed": 1.0},   # TODO: polished corporate male
+}
+
+# Engine catalog. Add a new entry here to support a new TTS backend; the
+# rest of the script picks up the new engine via --engine.
+ENGINES: dict[str, dict] = {
+    "kokoro": {
+        "presets": PRESETS_KOKORO,
+        "default_base_url": "http://localhost:8880/v1",
+        "model_name": "kokoro",
+        "description": "Kokoro-82M FastAPI on the local Mac (default daily-driver)",
+    },
+    "higgs": {
+        "presets": PRESETS_HIGGS,
+        # Override at the CLI with --base-url; the default below assumes the
+        # Windows GPU box is reachable as 'higgs.local' on the LAN. If using
+        # Tailscale, set this to the Tailscale magic-DNS hostname instead
+        # (e.g. http://gaming-rig.tail-scale.ts.net:8881/v1).
+        "default_base_url": "http://higgs.local:8881/v1",
+        "model_name": "higgs",
+        "description": "Higgs Audio v2.5 on the Windows GPU box (high-quality path)",
+    },
+}
+
+# Backwards-compatibility alias — older callers (tests, external scripts)
+# may import PRESETS directly. Defaults to the Kokoro catalog.
+PRESETS = PRESETS_KOKORO
 
 # Per-chapter preset overrides. Key is matched as a substring against the
 # source path. Part II council chapters each get a voice that gender-matches
@@ -867,14 +920,15 @@ SYNTH_HARD_CAP = 1200  # Kokoro prosody degrades past ~900 chars per call;
                        # 1400 soft target for paragraph grouping.
 
 
-def synth_chunk(client: OpenAI, voice: str, text: str, speed: float, retries: int = 3) -> bytes:
+def synth_chunk(client: OpenAI, voice: str, text: str, speed: float,
+                model_name: str = "kokoro", retries: int = 3) -> bytes:
     text = text[:SYNTH_HARD_CAP]
     last_err = None
     extra_body = {"speed": speed} if speed and abs(speed - 1.0) > 1e-3 else None
     for attempt in range(1, retries + 1):
         try:
             kwargs = dict(
-                model="kokoro",
+                model=model_name,
                 voice=voice,
                 input=text,
                 response_format="mp3",
@@ -888,7 +942,7 @@ def synth_chunk(client: OpenAI, voice: str, text: str, speed: float, retries: in
             wait = 2 ** (attempt - 1)
             print(f"      retry {attempt}/{retries} after error: {e!r} (sleep {wait}s)", file=sys.stderr)
             time.sleep(wait)
-    raise RuntimeError(f"Kokoro synth failed after {retries} retries: {last_err!r}")
+    raise RuntimeError(f"{model_name} synth failed after {retries} retries: {last_err!r}")
 
 
 def build_script(md_path: Path) -> str:
@@ -956,6 +1010,7 @@ def render_chapter(
     script_path: Path,
     per_sentence: bool = False,
     max_paragraphs: int | None = None,
+    model_name: str = "kokoro",
 ) -> dict:
     script = build_script(md_path)
     source_script = build_source_script(md_path)
@@ -990,14 +1045,14 @@ def render_chapter(
         for i, chunk in enumerate(chunks, 1):
             dots = _is_pause_only(chunk)
             if dots >= 2:
-                # Emit explicit silence instead of sending dots to Kokoro.
+                # Emit explicit silence instead of sending dots to the engine.
                 # Default to the 6-dot duration if dot count exceeds the map.
                 duration = PAUSE_DURATIONS.get(dots, PAUSE_DURATIONS[6])
                 mp3 = silence_mp3(duration)
                 tag = f"PAUSE {duration:.2f}s"
                 is_pause = True
             else:
-                mp3 = synth_chunk(client, voice, chunk, speed)
+                mp3 = synth_chunk(client, voice, chunk, speed, model_name=model_name)
                 tag = f"{len(chunk):4d} chars"
                 is_pause = False
             if i > 1:
@@ -1051,26 +1106,40 @@ def out_name_for(src_rel: str) -> str:
 
 
 def main() -> None:
+    # Build the help epilog from whichever engine the user is asking about,
+    # falling back to Kokoro for the no-args case.
+    epilog = "Engines:\n  " + "\n  ".join(
+        f"{name:<8} {cfg['description']}" for name, cfg in ENGINES.items()
+    )
+    epilog += "\n\nKokoro presets:\n  " + "\n  ".join(
+        f"{name:<14} voice={cfg['voice']:<28} speed={cfg['speed']}"
+        for name, cfg in PRESETS_KOKORO.items()
+    )
     ap = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Presets:\n  " + "\n  ".join(
-            f"{name:<14} {cfg['voice']:<28} speed={cfg['speed']}"
-            for name, cfg in PRESETS.items()
-        ),
+        epilog=epilog,
     )
-    ap.add_argument("--preset", choices=list(PRESETS.keys()), default="male",
-                    help="default voice preset. Default: male (am_michael+am_fenrir "
-                         "blend at 0.92 — less stylized than sinek, better for "
-                         "straight technical non-fiction across Parts I/III/IV). "
-                         "Part II chapters and ch10/preface override via "
-                         "CHAPTER_PRESET_MAP unless --no-chapter-map is set.")
+    ap.add_argument("--engine", choices=list(ENGINES.keys()), default="kokoro",
+                    help="TTS backend (default: kokoro). 'higgs' targets Higgs Audio v2.5 "
+                         "on the Windows GPU box; expects the same OpenAI-compatible API. "
+                         "Override the per-engine default base URL with --base-url.")
+    ap.add_argument("--preset", default="male",
+                    help="default voice preset. Default: male (Kokoro: am_michael+am_fenrir "
+                         "blend at 0.92 — less stylized than sinek, better for straight "
+                         "technical non-fiction across Parts I/III/IV). Part II chapters "
+                         "and ch10/preface override via CHAPTER_PRESET_MAP unless "
+                         "--no-chapter-map is set. Preset KEYS are shared across engines; "
+                         "the actual voice ID resolves through the engine's preset catalog.")
     ap.add_argument("--no-chapter-map", action="store_true",
                     help="disable per-chapter preset overrides (use --preset for all)")
     ap.add_argument("--voice", default=None,
-                    help="explicit Kokoro voice (blend with +). Overrides --preset.")
+                    help="explicit voice ID (engine-native; Kokoro supports + blends). Overrides --preset.")
     ap.add_argument("--speed", type=float, default=None,
                     help="TTS speed multiplier (0.5-2.0). Overrides --preset.")
-    ap.add_argument("--base-url", default="http://localhost:8880/v1")
+    ap.add_argument("--base-url", default=None,
+                    help="HTTP base URL for the engine API (default: per-engine default — "
+                         "Kokoro localhost:8880, Higgs higgs.local:8881). Override for "
+                         "remote GPU server, Tailscale hostname, or stage-vs-prod swaps.")
     ap.add_argument("--only", help="render only chapters whose source name contains this string (e.g. 'ch05')")
     ap.add_argument("--force", action="store_true", help="re-render even if an MP3 already exists")
     ap.add_argument("--dry-run", action="store_true", help="print chunk counts only")
@@ -1091,10 +1160,21 @@ def main() -> None:
                          "renders during voice/preset iteration. Default: empty.")
     args = ap.parse_args()
 
+    engine = ENGINES[args.engine]
+    presets = engine["presets"]
+    base_url = args.base_url or engine["default_base_url"]
+    model_name = engine["model_name"]
+
     if args.list_presets:
-        for name, cfg in PRESETS.items():
-            print(f"{name:<14} voice={cfg['voice']:<28} speed={cfg['speed']}")
+        for name, cfg in presets.items():
+            voice_str = cfg["voice"] if cfg["voice"] is not None else "(unset — TODO)"
+            print(f"{name:<14} voice={voice_str:<28} speed={cfg['speed']}")
         sys.exit(0)
+
+    if args.preset not in presets:
+        print(f"--preset {args.preset!r} not in --engine {args.engine!r} catalog. "
+              f"Available: {sorted(presets.keys())}", file=sys.stderr)
+        sys.exit(2)
 
     def resolve_preset(rel_path: str) -> tuple[str, str, float]:
         """Return (preset_name, voice, speed) for a chapter."""
@@ -1104,14 +1184,31 @@ def main() -> None:
                 if key in rel_path:
                     name = preset_name
                     break
-        cfg = PRESETS[name]
+        if name not in presets:
+            raise RuntimeError(
+                f"Chapter map resolved to preset {name!r} but engine "
+                f"{args.engine!r} has no such preset. Add it to "
+                f"PRESETS_{args.engine.upper()} or pass --no-chapter-map."
+            )
+        cfg = presets[name]
         v = args.voice or cfg["voice"]
+        if v is None:
+            raise RuntimeError(
+                f"Engine {args.engine!r} preset {name!r} has voice=None — "
+                f"the catalog entry hasn't been filled in yet. Either set "
+                f"PRESETS_{args.engine.upper()}[{name!r}]['voice'] to a real "
+                f"voice ID (query GET {base_url}/audio/voices to list "
+                f"available voices) or pass --voice <id> explicitly."
+            )
         s = args.speed if args.speed is not None else cfg["speed"]
         return name, v, s
 
+    print(f"Engine: {args.engine} ({engine['description']})")
+    print(f"  base_url: {base_url}")
+    print(f"  model:    {model_name}")
     print(f"Default preset: {args.preset}  chapter-map: {'off' if args.no_chapter_map else 'on'}")
 
-    client = OpenAI(base_url=args.base_url, api_key="not-needed")
+    client = OpenAI(base_url=base_url, api_key="not-needed")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     SCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1172,7 +1269,9 @@ def main() -> None:
         print(f"\n=> {rel}  [preset={preset_name} voice={voice} speed={speed}{mode_tag}]")
         entry = render_chapter(client, voice, speed, md_path, out_path, script_path,
                                per_sentence=args.per_sentence,
-                               max_paragraphs=args.max_paragraphs)
+                               max_paragraphs=args.max_paragraphs,
+                               model_name=model_name)
+        entry["engine"] = args.engine
         entry["preset"] = preset_name
         entry["voice"] = voice
         entry["speed"] = speed

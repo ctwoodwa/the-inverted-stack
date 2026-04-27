@@ -1205,3 +1205,16 @@
 | 13:50 | Edited build/audiobook.py | 5→8 lines | ~153 |
 | 13:51 | Edited build/Makefile | expanded (+41 lines) | ~547 |
 | 13:52 | Created build/verify_loudness.py | — | ~2823 |
+| 13:58 | Created build/docker-compose.audio.yml | — | ~864 |
+| 13:59 | Created build/AUDIO-DOCKER.md | — | ~2767 |
+| 14:00 | Session end: 30 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 14 reads | ~79768 tok |
+| 14:04 | Session end: 30 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 14 reads | ~79768 tok |
+| 14:09 | Edited build/audiobook.py | expanded (+53 lines) | ~1548 |
+| 14:10 | Edited build/audiobook.py | modified synth_chunk() | ~293 |
+| 14:10 | Edited build/audiobook.py | modified render_chapter() | ~72 |
+| 14:10 | Edited build/audiobook.py | 9→9 lines | ~138 |
+| 14:10 | Edited build/audiobook.py | modified main() | ~650 |
+| 14:11 | Edited build/audiobook.py | modified resolve_preset() | ~627 |
+| 14:11 | Edited build/audiobook.py | 3→5 lines | ~88 |
+| 14:13 | Edited build/AUDIO-DOCKER.md | modified VM() | ~2718 |
+| 14:13 | Edited build/Makefile | expanded (+31 lines) | ~381 |

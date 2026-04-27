@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T17:52:02.520Z
-> Files: 177 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T18:13:26.156Z
+> Files: 179 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/
 
@@ -92,18 +92,20 @@
 
 - `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~14962 tok)
+- `AUDIO-DOCKER.md` — Audiobook Generation — Docker Setup (~4120 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~16522 tok)
 - `build_overlays.py` — Whispersync-capable EPUB build (Phases B-E). (~6341 tok)
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `check_first_use.py` — First-use rule checker. (~3348 tok)
 - `check_stale.py` — Pre-Phase-4 stale-draft detector. (~920 tok)
 - `consolidate_concept_index.py` — Consolidate per-chapter YAML extractions into the master concept-index.yaml. (~3200 tok)
 - `copy-to-dropbox.py` — Copy generated audiobook files to a destination folder (typically Dropbox). (~1655 tok)
+- `docker-compose.audio.yml` — Audiobook generation stack — local TTS engines. (~864 tok)
 - `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
 - `generate_chapter_overview.py` — Generate chapter-overview.md for the inverted-stack-conformance skill. (~874 tok)
 - `generate_implementation_spec.py` — Generate the human-readable implementation-specification.md from the (~3052 tok)
 - `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
-- `Makefile` — The Inverted Stack — Build Targets (~2570 tok)
+- `Makefile` — The Inverted Stack — Build Targets (~2928 tok)
 - `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~2557 tok)
 - `promote.py` — Phase 4 promotion script. (~2233 tok)
 - `remediate_first_use.py` — Remediate first-use rule violations across all chapter sources. (~3156 tok)
