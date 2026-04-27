@@ -1410,6 +1410,54 @@
       "related_bugs": [],
       "occurrences": 2,
       "last_seen": "2026-04-27T17:03:26.825Z"
+    },
+    {
+      "id": "bug-089",
+      "timestamp": "2026-04-27T17:49:38.971Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/normalize.py",
+      "root_cause": "23 lines replaced/restructured",
+      "fix": "Rewrote 106→137 lines (23 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T17:49:38.971Z"
+    },
+    {
+      "id": "bug-090",
+      "timestamp": "2026-04-27T17:49:49.314Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "build/normalize.py",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T17:49:49.314Z"
+    },
+    {
+      "id": "bug-091",
+      "timestamp": "2026-04-27T17:51:11.301Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/Makefile",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 21→62 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "unknown"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T17:51:11.301Z"
     }
   ]
 }

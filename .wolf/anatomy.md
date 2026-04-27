@@ -1,7 +1,12 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T17:06:43.315Z
-> Files: 174 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T17:52:02.520Z
+> Files: 177 tracked | Anatomy hits: 0 | Misses: 0
+
+## ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/
+
+- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~836 tok)
+- `reference_migration_memory_path.md` — What happened (~808 tok)
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -87,7 +92,7 @@
 
 - `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~14245 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~14962 tok)
 - `build_overlays.py` — Whispersync-capable EPUB build (Phases B-E). (~6341 tok)
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `check_first_use.py` — First-use rule checker. (~3348 tok)
@@ -98,11 +103,12 @@
 - `generate_chapter_overview.py` — Generate chapter-overview.md for the inverted-stack-conformance skill. (~874 tok)
 - `generate_implementation_spec.py` — Generate the human-readable implementation-specification.md from the (~3052 tok)
 - `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
-- `Makefile` — The Inverted Stack — Build Targets (~2146 tok)
-- `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~1932 tok)
+- `Makefile` — The Inverted Stack — Build Targets (~2570 tok)
+- `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~2557 tok)
 - `promote.py` — Phase 4 promotion script. (~2233 tok)
 - `remediate_first_use.py` — Remediate first-use rule violations across all chapter sources. (~3156 tok)
 - `update_kleppmann_citation.py` — One-shot updater: standardize all Kleppmann et al. 2019 citations (~1568 tok)
+- `verify_loudness.py` — Verify normalized chapter MP3s land within their target loudness spec. (~2823 tok)
 - `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~5068 tok)
 - `word-count.py` — Word count per chapter vs. target. (~666 tok)
 

@@ -309,12 +309,14 @@ CHAPTER_FILES = [
     "part-4-implementation-playbooks/ch18-migrating-existing-saas.md",
     "part-4-implementation-playbooks/ch19-shipping-to-enterprise.md",
     "part-4-implementation-playbooks/ch20-ux-sync-conflict.md",
+    "part-5-operational-concerns/ch21-operating-a-fleet.md",
     "epilogue/epilogue-what-the-stack-owes-you.md",
     "appendices/appendix-a-sync-daemon-wire-protocol.md",
     "appendices/appendix-b-threat-model-worksheets.md",
     "appendices/appendix-c-further-reading.md",
     "appendices/appendix-d-testing-the-inverted-stack.md",
     "appendices/appendix-e-citation-style.md",
+    "appendices/appendix-f-regulatory-coverage.md",
 ]
 
 CHUNK_CHAR_BUDGET = 1400  # target per-request size in characters
@@ -898,6 +900,41 @@ def build_script(md_path: Path) -> str:
     return script
 
 
+def truncate_to_paragraphs(script: str, n: int) -> str:
+    """Truncate a narration script to its first N body paragraphs.
+
+    A "body paragraph" is any non-empty paragraph that is neither a
+    pause-only marker (dot-only chunk) nor the chapter title (which is the
+    first non-pause paragraph after the leading pause). Pause markers and
+    the chapter title are preserved verbatim; this just bounds how much
+    body content gets rendered.
+
+    Used by --max-paragraphs for fast preset/voice iteration: render the
+    first 3 body paragraphs of a chapter to <stem><suffix>.mp3 in ~30
+    seconds to hear what a voice/speed combination sounds like before
+    committing to a full ~30-minute chapter render.
+    """
+    paragraphs = re.split(r"\n{2,}", script)
+    kept: list[str] = []
+    body_count = 0
+    title_seen = False
+    for p in paragraphs:
+        kept.append(p)
+        s = p.strip()
+        if not s:
+            continue
+        if _is_pause_only(s):
+            continue
+        if not title_seen:
+            # First non-pause paragraph is the chapter title.
+            title_seen = True
+            continue
+        body_count += 1
+        if body_count >= n:
+            break
+    return "\n\n".join(kept)
+
+
 def build_source_script(md_path: Path) -> str:
     """Source-text twin of build_script: same structural transforms, but no
     TTS-specific token swaps. Sentence boundaries match build_script() so the
@@ -918,9 +955,13 @@ def render_chapter(
     out_path: Path,
     script_path: Path,
     per_sentence: bool = False,
+    max_paragraphs: int | None = None,
 ) -> dict:
     script = build_script(md_path)
     source_script = build_source_script(md_path)
+    if max_paragraphs is not None:
+        script = truncate_to_paragraphs(script, max_paragraphs)
+        source_script = truncate_to_paragraphs(source_script, max_paragraphs)
     script_path.parent.mkdir(parents=True, exist_ok=True)
     script_path.write_text(script, encoding="utf-8")
 
@@ -1039,6 +1080,15 @@ def main() -> None:
     ap.add_argument("--per-sentence", action="store_true",
                     help="render one sentence per Kokoro call (cleaner prosody, "
                          "~3-5x more API calls and total time). Default: off.")
+    ap.add_argument("--max-paragraphs", type=int, default=None,
+                    help="render only the first N body paragraphs of each chapter "
+                         "(after the chapter title). Used with --output-suffix for "
+                         "fast voice/preset iteration — typically 3-5 paragraphs "
+                         "renders in ~30s and produces ~30-60s of audio.")
+    ap.add_argument("--output-suffix", default="",
+                    help="append this suffix to the output MP3 stem (e.g. '_sample'). "
+                         "Use with --max-paragraphs to avoid overwriting full-chapter "
+                         "renders during voice/preset iteration. Default: empty.")
     args = ap.parse_args()
 
     if args.list_presets:
@@ -1091,9 +1141,11 @@ def main() -> None:
         if not md_path.exists():
             print(f"SKIP missing: {rel}", file=sys.stderr)
             continue
-        out_path = OUT_DIR / out_name_for(rel)
+        suffix = args.output_suffix
+        out_stem = Path(rel).stem + suffix
+        out_path = OUT_DIR / f"{out_stem}.mp3"
 
-        script_path = SCRIPTS_DIR / (Path(rel).stem + ".txt")
+        script_path = SCRIPTS_DIR / (out_stem + ".txt")
 
         if args.dry_run:
             script = build_script(md_path)
@@ -1115,9 +1167,12 @@ def main() -> None:
 
         preset_name, voice, speed = resolve_preset(rel)
         mode_tag = " per-sentence" if args.per_sentence else ""
+        if args.max_paragraphs is not None:
+            mode_tag += f" max-paragraphs={args.max_paragraphs}"
         print(f"\n=> {rel}  [preset={preset_name} voice={voice} speed={speed}{mode_tag}]")
         entry = render_chapter(client, voice, speed, md_path, out_path, script_path,
-                               per_sentence=args.per_sentence)
+                               per_sentence=args.per_sentence,
+                               max_paragraphs=args.max_paragraphs)
         entry["preset"] = preset_name
         entry["voice"] = voice
         entry["speed"] = speed

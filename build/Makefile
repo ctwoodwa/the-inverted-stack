@@ -75,19 +75,60 @@ audiobook:
 audiobook-hd:
 	python build/audiobook.py --per-sentence
 
+# audiobook-sample: render the first N body paragraphs of a single chapter
+# to <stem>_sample.mp3. Fast voice/preset iteration loop — typically ~30s
+# of compute for ~30-60s of audio. Override defaults inline:
+#
+#   make audiobook-sample ch=ch01
+#   make audiobook-sample ch=ch15 paragraphs=5 preset=fenrir
+#   make audiobook-sample ch=ch07 paragraphs=2 preset=british
+#
+# Output lands at build/output/audiobook/<chapter-stem>_sample.mp3 and does
+# not overwrite the full-chapter render. Use --force is implicit on samples.
+ch ?= ch01
+paragraphs ?= 3
+preset ?=
+sample_args = --only $(ch) --max-paragraphs $(paragraphs) --output-suffix _sample --force
+ifneq ($(preset),)
+sample_args += --preset $(preset) --no-chapter-map
+endif
+
+.PHONY: audiobook-sample
+audiobook-sample:
+	python build/audiobook.py $(sample_args)
+
 .PHONY: m4b
 m4b:
 	python build/m4b.py
 
-# normalize: EBU R128 loudness normalization to -16 LUFS / -1.5 dBTP / 11 LRA
-# (Audible / ACX / podcast submission spec). Two-pass mode by default.
+# normalize: EBU R128 loudness normalization. Default target is `podcast`
+# spec (-16 LUFS / -1.5 dBTP / 96 kbps) for Apple Books / Leanpub. Use
+# `make normalize-acx` for ACX submission spec (-19 LUFS / -3 dBTP / 192 kbps).
+# Two-pass mode is the default for both — single-pass not recommended for ACX.
 .PHONY: normalize
 normalize:
 	python build/normalize.py
 
+.PHONY: normalize-acx
+normalize-acx:
+	python build/normalize.py --target acx
+
 .PHONY: normalize-fast
 normalize-fast:
 	python build/normalize.py --single-pass
+
+# verify-loudness: re-measure each normalized MP3 against its target spec
+# and exit non-zero if any chapter is out of spec. Run after `make normalize`
+# (or `make normalize-acx`) to confirm the output actually landed in spec —
+# ACX rejects ~30% of submissions for loudness/peak issues that two-pass
+# loudnorm should have caught but didn't (silent drift on long files).
+.PHONY: verify-loudness
+verify-loudness:
+	python build/verify_loudness.py
+
+.PHONY: verify-loudness-acx
+verify-loudness-acx:
+	python build/verify_loudness.py --target acx
 
 # embed-cover: add ID3v2 APIC frame (cover image) to every chapter MP3
 # so individual chapter files display book art in audiobook players.
