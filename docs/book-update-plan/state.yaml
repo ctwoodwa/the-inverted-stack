@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-26T22:00:00Z
-last-iteration-id: iter-0001
+last-iteration: 2026-04-26T22:35:00Z
+last-iteration-id: iter-0002
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -20,15 +20,17 @@ priority-order:
 extensions:
   48-key-loss-recovery:
     status: in-progress
-    current-stage: outline
+    current-stage: draft
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Key-Loss Recovery"
       - "Ch20 §Key-Loss Recovery UX"
     estimated-words: 3000
+    actual-words: 3090   # ~2050 (Ch15) + ~1040 (Ch20)
     started: 2026-04-26T22:00:00Z
     history:
-      - {stage: outline, completed: 2026-04-26T22:00:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/outline.md"}
+      - {stage: outline, completed: 2026-04-26T22:00:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/outline.md", commit: "c1684df"}
+      - {stage: draft, completed: 2026-04-26T22:35:00Z, output: "Ch15 §Key-Loss Recovery + Ch20 §Key-Loss Recovery UX inserted; refs [4]–[7] added to Ch15"}
 
   43-performance-contracts:
     status: not-started
@@ -110,6 +112,7 @@ extensions:
 quality-gates:
   48-key-loss-recovery:
     outline: passed         # outline has all section headers + bullet points + subagent prompt
+    draft: passed           # word count 3090 vs 3000 target (+3%, well within ±20%); all 11 H3 subsections present (6 mechanisms + threat model + deployment table + boundary section in Ch15; 5 UX flows in Ch20); cross-refs wired; refs [4]–[7] added; one CLAIM marker flagged for technical-review
     code-check: null
     technical-review: null
     prose-review: null
@@ -132,5 +135,13 @@ iterations:
     stage-from: not-started
     stage-to: outline
     duration-min: 25
-    commit: null  # filled by commit step
+    commit: c1684df
     notes: "First iteration. Created working/48-key-loss-recovery/outline.md with §A (Ch15 ~2000w outline), §B (Ch20 ~1000w outline), §C–H (code-check/tech-review/prose-review/voice-check focus + citations + cross-refs), §I (chapter-drafter subagent prompt), §J (gate verification). Total target 3000w across both chapters."
+  - id: iter-0002
+    timestamp: 2026-04-26T22:35:00Z
+    extension: 48-key-loss-recovery
+    stage-from: outline
+    stage-to: draft
+    duration-min: 35
+    commit: null  # filled by commit step
+    notes: "Drafted Ch15 §Key-Loss Recovery (~2050 words) and Ch20 §Key-Loss Recovery UX (~1040 words) via @chapter-drafter. Inserted prose into ch15-security-architecture.md and ch20-ux-sync-conflict.md at outline-specified positions. Added IEEE refs [4]–[7] to Ch15 reference list (Buterin 2021, Argent 2020, Shamir 1979, Apple Platform Security 2024). One CLAIM marker flagged for technical-review pass: biometric-template non-exportability claim across Apple Secure Enclave / Pixel Titan M / Windows Pluton needs verification."

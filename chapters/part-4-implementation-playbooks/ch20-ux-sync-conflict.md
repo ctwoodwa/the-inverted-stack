@@ -175,6 +175,62 @@ The backup prompt for new team founders deserves care. Technical users will unde
 
 For regulated markets the backup target carries jurisdictional weight. Russian deployments under 242-FZ require a backup inside Russian territory. Indian deployments under the DPDP (Digital Personal Data Protection) Act require defensible classification of personal data crossing borders. UAE deployments under DPL (Data Protection Law) 2022 require clarity on whether the chosen location sits inside or outside a free zone. Surface the chosen target's jurisdiction alongside the path — "Backup location: OneDrive (Microsoft, United States)" rather than a raw file URL — and, when the team's declared jurisdiction requires in-country storage, present a labelled list of in-country targets and block selection of out-of-jurisdiction options with a short explanation: "This location stores data outside [jurisdiction]. Your team's policy requires a local target." A silent failure at this step is a compliance incident, not a UX inconvenience.
 
+## Key-Loss Recovery UX
+
+Key-loss recovery has a policy layer and a UX layer. Ch15 §Key-Loss Recovery specifies the six mechanisms, the threat model, and the recommended deployment combinations. This section covers what the user sees: the flows that surface the policy at setup time, the experience of initiating recovery after loss, and the UX for the grace period that protects against fraudulent claims.
+
+Get the UX wrong and users skip setup. A user who skipped recovery setup faces permanent data loss at the first forgotten password. Get it right and users complete setup without distress and know exactly what to do when recovery becomes necessary.
+
+### First-Run Prompt: Setting Up Recovery
+
+Recovery setup is part of the first-run experience described in §The First-Run Experience. It is not an optional step presented to advanced users. Every new user encounters it. Skipping is allowed, but skipping requires an explicit acknowledgment that permanent data loss is the consequence — not a checkbox buried in settings, but a prominent one-sentence statement the user must actively confirm: "I understand that without recovery setup, I cannot recover my data if I lose access to this device."
+
+The choice screen presents the three primary mechanisms in plain language, without cryptographic terminology. "Trust three friends" describes multi-sig social recovery. "Trust your bank or lawyer" describes custodian-held backup. "Trust a piece of paper in a safe" describes paper-key fallback. Each option includes a one-sentence tradeoff: social recovery is easy to set up and depends on your relationships staying intact; custodian backup requires an existing institutional relationship but provides the strongest audit trail; paper-key is always available as long as the paper is safe.
+
+The user selects one mechanism. The setup flow for that mechanism opens inline — the user does not leave the application. Trustee invitation, custodian enrollment, or mnemonic display all complete within the first-run context. The user sees a completion confirmation before the application opens its workspace: "Recovery is set up. You've chosen 3-of-5 social recovery. Write down the backup code below in case all five trustees become unavailable."
+
+Cross-reference to §The First-Run Experience for the full onboarding flow. Recovery setup occupies the third step in that flow, after team creation and backup configuration.
+
+### Trustee Designation Flow
+
+For users who choose multi-sig social recovery, the designation flow walks them through naming five trustees, sending each an out-of-band invitation, and confirming each acceptance before the flow completes.
+
+The UX surfaces the threshold semantics in plain language before the user names anyone: "3 of your 5 trustees must agree before your data can be recovered. Pick 5 people you trust who don't all know each other and who are unlikely to all become unreachable at the same time." The guidance is practical, not cryptographic. The phrase "don't all know each other" operationalizes geographic and social diversity without requiring the user to understand collusion attacks.
+
+Each trustee invitation is a short message — email or SMS, depending on the user's preference — that explains what they are agreeing to: "You've been asked to be a recovery trustee for [user]. If they ever lose access to their data, you'll receive a request to help. You won't be able to access their data on your own."
+
+Trustee acceptance is an event in the user's audit log, maintained by `Sunfish.Kernel.Audit`. The designation screen updates in real time as each trustee completes acceptance: "Trustee 1: confirmed. Trustee 2: confirmed. Trustees 3–5: pending." The user sees the state of their recovery arrangement before they leave the setup flow. An arrangement with fewer than the threshold confirmed is flagged: "You need at least 3 confirmed trustees before this recovery method is active. You can continue setup and return to confirm the remaining trustees later — your data is safe, but recovery is not yet available."
+
+### Recovery Initiation UX
+
+The user is on a fresh device. Their original device is gone — lost, stolen, destroyed, or factory-reset. They open the application for the first time on the new device and select "Recover my account" rather than creating or joining a team.
+
+The recovery flow begins with identity claim. The user enters the email or identifier associated with their account. The application retrieves the recovery arrangement — mechanism type, trustee count, custodian identifier — and displays it without displaying any key material. The user selects their recovery method and initiates the claim.
+
+The grace-period timer appears immediately and stays visible throughout the process: "Your recovery will complete in 14 days unless your existing device or account disputes this request. If this is not you, contact your trustees immediately." The plain-language message serves both the legitimate user — who understands that the wait is protection, not bureaucracy — and anyone who might see the message on a shared screen.
+
+As trustees sign their shares, the progress display updates: "Trustee 1: confirmed. Trustee 2: confirmed. Trustee 3: pending. 2 more needed." The user can check progress without refreshing. They do not need to contact trustees directly to monitor the state.
+
+### Time-Locked Grace Period UX
+
+The original holder's existing devices — every device associated with the account — receive a high-priority notification the moment a recovery claim is submitted: "Someone is requesting recovery of your account. If this is not you, dispute this request now." The notification appears through every channel the user has opted into: in-app banner on any running instance, OS push notification, email, SMS.
+
+The dispute action is one tap or one click. Tapping "This is not me" halts the recovery immediately, logs the dispute as a signed event in the audit trail, and alerts the user's trustees. A confirmed dispute triggers the compromise response procedure from Ch15 §Key Compromise Incident Response — because an unauthorized recovery attempt is evidence of credential compromise, not just a false claim.
+
+Multi-channel notification is not optional. A recovery claim sent only through email is defeatable by an adversary who controls the user's email account. `Sunfish.Foundation.Recovery` sends through every configured channel simultaneously and logs each delivery. An undisputed claim in a channel the user does not monitor is the architecture's honest limitation; the application prompts users during setup to configure at least two independent notification channels.
+
+If the original holder has genuinely lost all notification channels — no running devices, no email access, no SMS — the silence is the signal. The grace period elapses, and recovery completes. The architecture cannot distinguish a user who has truly lost everything from a user who is simply not checking. The grace period is the only gate between those two states.
+
+### Recovery Completion Confirmation
+
+When the grace period elapses without dispute and the recovery threshold is met — trustees have signed, or the custodian has released the wrapped key — recovery completes. The new device receives the wrapped KEKs (Key Encryption Keys) for the user's roles, as defined in Ch15 §Key Hierarchy. `Sunfish.Kernel.Security` unwraps the KEKs using the recovered root seed and stores them in the new device's OS keystore. Sync resumes through the normal attestation flow.
+
+The completion screen is concrete about what happens next: "Recovery complete. Your data is being decrypted on this device. Documents will appear as they decrypt — a large library may take several minutes. Your recovery arrangement is still active. You may want to update your trustees if anything has changed."
+
+That last sentence is the transition to ongoing maintenance. A recovery that succeeds is also a signal that the arrangement worked — and that it may be time to review whether the trustees are still the right people, whether the custodian relationship is current, and whether the paper key is still in the safe.
+
+`Sunfish.Foundation.Recovery` schedules a recovery-readiness audit reminder 12 months after setup or after the last confirmed recovery event. The reminder is a short prompt: "Your recovery arrangement was last verified 12 months ago. Verify that your trustees are still reachable and that your backup key is where you left it." The reminder is calibrated to appear once per year, not once per month. A recovery prompt that appears every 30 days becomes ambient noise. One that appears annually is specific enough to act on. See Ch15 §Key-Loss Recovery — What This Section Does Not Solve for the boundary the periodic audit does and does not protect against.
+
 ## Accessibility as a Contract
 
 Every indicator, badge, and status surface above carries an accessibility contract that the local-first architecture must honour as rigorously as it honours the write path. Every UX surface in this chapter — from the always-visible indicators to the first-run flow — conveys state to users whose primary access channel may be a screen reader, a keyboard, or a high-contrast display. Four contracts apply across every component in the Sunfish (the open-source reference implementation, [github.com/ctwoodwa/Sunfish](https://github.com/ctwoodwa/Sunfish)) UI adapter library and any custom UI a node author ships.
