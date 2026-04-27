@@ -219,7 +219,7 @@ Linear's engineering team treats interaction latency as a first-class product co
 
 A budget that says "the application must be fast" is not testable. The architecture differentiates by operation class and assigns a budget to each.
 
-The three operation classes are local writes, local reads and queries, and sync merges. **Local writes** are user-initiated mutations applied to the CRDT document on the originating node. The budget runs from input confirmation to local document reflection. **Local reads** are queries against projections or the event log. The budget runs from query submission to first rendered result — partial results that arrive incrementally are acceptable, a blank screen is not. **Sync merges** are CRDT delta applications received from peers. The budget runs from delta receipt to local document reflection and UI re-render.
+The three operation classes are local writes, local reads and queries, and sync merges. **Local writes** are user-initiated mutations the originating node applies to the CRDT document; the budget runs from input confirmation to local document reflection. **Local reads** are queries against projections or the event log; the budget runs from query submission to first rendered result — partial results that arrive incrementally are acceptable, a blank screen is not. **Sync merges** apply CRDT deltas received from peers; the budget runs from delta receipt to local document reflection and UI re-render.
 
 | Operation class | Baseline budget | FAILED condition |
 |---|---|---|
@@ -241,7 +241,7 @@ No CPU-bound operation executes on the UI thread. This is an architectural invar
 
 The isolation requirement propagates into the CRDT engine contract. All merge operations on `ICrdtEngine` (Ch11 §Kernel Responsibilities) are async by contract. `Sunfish.Kernel.Crdt` exposes no synchronous merge surface. A backend implementation that offered one would violate the kernel contract at compile time. This constraint is the architectural reason the engine abstraction was async-first from the start, not a property added after a performance regression.
 
-The Yjs case illustrates the boundary the contract draws. A merge on a 100,000-operation document is O(n) in operation count and runs in seconds, not milliseconds [4]. The contract does not promise that this merge completes within 16ms. The contract promises that the merge does not block the UI thread while it runs. A multi-second merge that proceeds on a background thread, with the UI remaining responsive throughout, satisfies the contract. The same merge on the UI thread does not. The progressive-degradation fallback specified in §Sub-pattern 43c is the UX surface that makes the boundary visible to the user.
+The Yjs case illustrates the boundary the contract draws. A merge on a 100,000-operation document is O(n) in operation count and runs in seconds, not milliseconds [4]. The contract does not promise that this merge completes within 16ms; it promises that the merge does not block the UI thread while it runs. A multi-second merge running on a background thread, with the UI remaining responsive throughout, satisfies the contract. The same merge on the UI thread does not. The progressive-degradation fallback in §Sub-pattern 43c surfaces this boundary to the user.
 
 Chapter 12 specifies the CRDT engine architecture and the merge complexity characteristics that make this pattern necessary.
 
@@ -259,7 +259,7 @@ The shape of progressive degradation: the affected record or view renders its la
 
 A performance contract that cannot be tested is not a contract. `Sunfish.Kernel.Performance` ships a `PerformanceBudgetValidator` that closes the loop: budget violations fail the build.
 
-The validator measures actual latency against declared budgets across three representative document sizes. A small document of 1,000 operations exercises the fast path. A medium document of 10,000 operations exercises the typical production case. A large document of 100,000 operations exercises the stress case that triggers progressive degradation. Each size is benchmarked. The large-document test specifically asserts that the progressive-degradation handler fires within the budget window rather than blocking, which is the contract `IProgressiveDegradation` was designed to satisfy.
+The validator measures actual latency against declared budgets across three representative document sizes. A small document of 1,000 operations exercises the fast path. A medium document of 10,000 operations exercises the typical production case. A large document of 100,000 operations exercises the stress case that triggers progressive degradation. The large-document test specifically asserts that the progressive-degradation handler fires within the budget window rather than blocking — the contract `IProgressiveDegradation` defines.
 
 The test must run on CI hardware that is representative of the deployment target. A test that passes on a developer laptop with 32 GiB of RAM and an Apple M3 chip but fails on the embedded ARM device in a field office is not a conformance test; it is a developer-experience test. CI fleets for nodes that ship to intermittent-connectivity field deployments run on hardware in the same performance class as the deployment target — not on whatever the build farm happens to have available. The kill trigger specified in §FAILED conditions and kill trigger references this CI test as the measurement source.
 
@@ -302,7 +302,7 @@ The 8ms interactive budget is calibrated against the 8.33ms frame time at 120fps
 
 The `SyncState` enumeration (Ch11 §The UI Kernel) carries a `PerformanceDegraded` sub-state that the kernel sets when progressive degradation is active on a record or view. UI components in `Sunfish.UIAdapters.Blazor` bind to this state through the existing `SunfishNodeHealthBar` indicator architecture; Chapter 20 §Performance Budgets and Progressive Degradation specifies the user-facing surface.
 
-Performance contracts are a primitive surfaced through architectural review, not derived from the v13 or v5 source papers directly. The contract above commits the architecture to a specification-level guarantee that the source papers framed as a desirable property; the framework-level enforcement, the budget table, and the kill trigger are new architectural commitments specific to this volume.
+Performance contracts are a primitive that architectural review surfaced — not a primitive the v13 or v5 source papers derive directly. The contract above commits the architecture to a specification-level guarantee that the source papers treated as a desirable property; the framework-level enforcement, the budget table, and the kill trigger are new architectural commitments specific to this volume.
 
 ---
 

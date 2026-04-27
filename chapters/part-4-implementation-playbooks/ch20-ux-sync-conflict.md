@@ -183,17 +183,19 @@ The architecture handles the budget. The UX handles what the user sees while the
 
 ### What the user experiences when the contract is met
 
-Picture a user who has been disconnected for a week. They reopen a shared document on Monday morning. The document loads immediately — their own last-known local state. Over the next few seconds, the view updates as the CRDT (Conflict-free Replicated Data Type) merge resolves in the background. Edits made by collaborators during the disconnected week appear progressively, in place, without redrawing the whole document. The user can start typing immediately. There is no spinner. There is no "loading your team's changes" banner. There is no apology for the time the merge takes.
+Picture a user who has been disconnected for a week. They reopen a shared document on Monday morning. The document loads immediately — their own last-known local state. Over the next few seconds, the view updates as the CRDT (Conflict-free Replicated Data Type) merge resolves in the background. Edits collaborators made during the disconnected week appear progressively, in place, without redrawing the whole document. The user starts typing immediately.
 
-This is the experience the architecture is engineered to produce. The user does not need to know that a CRDT merge is running, that the merge takes longer than a single frame, or that a background thread is working on their behalf. They need the document to be open, fast, and correct. The contracts in Ch11 §Performance Contracts are the specification-level guarantee. This section is the user-facing surface.
+No spinner. No "loading your team's changes" banner. No apology for the time the merge takes. This is the experience the architecture targets.
+
+The user does not need to know that a CRDT merge is running, that the merge takes longer than a single frame, or that a background thread is doing work on their behalf. They need the document to be open, fast, and correct. The contracts in Ch11 §Performance Contracts are the specification-level guarantee. This section is the user-facing surface.
 
 ### Progressive-degradation UX patterns
 
 When a sync merge will exceed its budget, the UI transitions through three states without freezing.
 
-**Local state (immediate).** The user sees their own last-known local data the moment they open the view. Edits are accepted. The record is fully interactive. No part of the UI waits for the merge to complete before the user can act on it.
+**Local state (immediate).** The user sees their own last-known local data the moment they open the view. Edits apply immediately. The record is fully interactive. No part of the UI waits for the merge to complete before the user can act on it.
 
-**Merge in progress (ambient indicator).** A subtle progress signal appears on the affected element — not a full-page spinner, not a banner across the top, but a component-level pulse or shimmer the user can ignore while continuing to work. The signal is calibrated to be visible but not insistent. A user who is actively typing does not experience the indicator as an interruption.
+**Merge in progress (ambient indicator).** A subtle progress signal appears on the affected element — not a full-page spinner, not a banner across the top, but a component-level pulse or shimmer the user can ignore while continuing to work. The signal sits visible but not insistent. A user who is actively typing does not experience the indicator as an interruption.
 
 **Merge complete (silent transition).** The view re-renders with the merged state. If the merge produced no conflict with the user's current edits, the transition is invisible — the document simply reflects the new state. If the merge produced a conflict, the conflict inbox receives it through the standard flow described in §The Conflict Inbox and Bulk Resolution.
 
@@ -311,7 +313,41 @@ That last sentence is the transition to ongoing maintenance. A recovery that suc
 
 `Sunfish.Foundation.Recovery` schedules a recovery-readiness audit reminder 12 months after setup or after the last confirmed recovery event. The reminder is a short prompt: "Your recovery arrangement was last verified 12 months ago. Verify that your trustees are still reachable and that your backup key is where you left it." The reminder is calibrated to appear once per year, not once per month. A recovery prompt that appears every 30 days becomes ambient noise. One that appears annually is specific enough to act on. See Ch15 §Key-Loss Recovery — Boundaries and Operator Mitigations for the boundary the periodic audit does and does not protect against.
 
-The recovery flow above completes the ownership story this chapter has been telling: a user who keeps their keys keeps their data, a user who loses them recovers through the arrangement they made before the loss, and a user who never made an arrangement faces the honest consequence that the chapter's first-run prompt warned about. The next section returns to a different surface that the same ownership story depends on — accessibility — because every recovery flow in this section also has to land for a user navigating with a screen reader, a keyboard, or a high-contrast display.
+The recovery flow above completes the ownership story this chapter has been telling: a user who keeps their keys keeps their data, a user who loses them recovers through the arrangement they made before the loss, and a user who never made an arrangement faces the honest consequence that the chapter's first-run prompt warned about. Two surfaces remain in this chapter that the same ownership story depends on — first revocation, the mirror of recovery, where authority is taken back rather than restored; and then accessibility, because every flow in this chapter has to land for a user navigating with a screen reader, a keyboard, or a high-contrast display.
+
+## Revocation UX
+
+<!-- code-check: this section references three Sunfish namespaces. `Sunfish.Kernel.Security` is in the current Sunfish package canon. `Sunfish.Kernel.Audit` is forward-looking — introduced by extension #48 and extended here for revocation and partition records. `Sunfish.Foundation.Recovery` is forward-looking under ADR 0046 and is referenced for the successor-entity KEK separation in the dissolution scenario. The forward-looking namespaces are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. -->
+
+Revocation has a policy layer and a UX layer, paired by design. Ch15 §Collaborator Revocation and Post-Departure Partition specifies what the architecture commits to cryptographically. This section covers what the user sees: the administrator initiating the revocation, the revoked party encountering the access change, and the partition wizard for the dissolution scenario. Each subsection here has a counterpart there.
+
+### Initiating revocation — the administrator's flow
+
+The revocation action lives in the team administration panel, not in any per-user settings screen. This placement is deliberate: revocation is an administrative act, and surfacing it at the user level confuses whose action it is. You select the departing collaborator from the team member list and choose "Remove and revoke access." A confirmation dialog names the scope — which roles will be revoked, that a key rotation will be triggered, the estimated time for re-wrapping to complete across the organization's document set. You do not need to understand the cryptographic mechanism. You need to understand what the action does and how long it takes.
+
+After confirmation, the UX shows a revocation-in-progress state: "Revoking [name]'s access and rotating role keys. This may take a few minutes while documents are re-encrypted." The team continues using the application during re-wrapping; documents remain accessible under the current KEK until re-wrapping completes. Do not surface technical key-rotation terminology — "KEK re-wrapping," "DEK re-encryption," "discard broadcast" — to the administrator. Surface the business outcome: "Access revoked. Documents secured."
+
+`Sunfish.Kernel.Security` manages the underlying key rotation and the revocation event publication. Cross-reference to Ch15 §Collaborator Revocation and Post-Departure Partition sub-pattern 45b for the rotation specification.
+
+### Communicating the action's effects — what the revoked party experiences
+
+When the revoked collaborator's node next attempts to sync, the relay rejects the handshake with `ERR_KEY_REVOKED`. The application surfaces a plain-language message: "Your access to this team has ended. Your local data is still accessible on this device, but you can no longer sync or make changes to the team's shared data." The message is honest about what the revoked party retains. Their local cache of previously-synced data is still readable. The message does not imply their local copy has been deleted — that would be false and legally significant. The architecture does not delete data from the revoked party's device, and the UX does not pretend it does.
+
+If the revoked collaborator was using the application at the moment revocation propagated — an online session — the application transitions to a read-only local state without forcing exit. The node health indicator shifts to red with the same plain-language message. Active edits in progress preserve in the local CRDT log; they cannot submit to shared state. The user is not stranded with an empty screen or a crash. They see their local data. They see the access status. Cross-reference to Ch20 §The Three Always-Visible Indicators for the node health state that carries this signal, and to Ch20 §Designing for Failure Modes for the quarantine queue that holds any post-revocation writes the revoked node accumulates before its next reconnection attempt.
+
+### Partition wizard — the dissolution scenario
+
+The dissolution scenario is rare enough that it does not belong in the standard administration panel and structurally novel enough that it deserves a dedicated flow. The team administration panel exposes a "Partition workspace" entry under a deliberate navigation path — settings → advanced → workspace lifecycle — rather than alongside routine member-management actions. The placement reflects what the operation does: it splits one workspace into two.
+
+The wizard walks you through three steps. First, define the boundary: select the data objects, roles, and time ranges that belong to each successor entity. Second, confirm both parties are present or that you hold the legal authority to act on behalf of the absent party. Third, review the partition summary and initiate. The confirmation screen names the legal effect in plain language: "This creates two separate workspaces. Each party keeps their own data from this point forward. Historical shared data is preserved in both workspaces as a read-only record."
+
+The audit log entry for the partition operation surfaces in the administration panel's "Access log" view alongside routine revocation records. Each entry shows the revoked collaborator's name, the timestamp, the rotation completion status, and the data-at-risk window — the artifact a compliance team or legal counsel can read without extracting raw event data. For partition events, the entry additionally carries the boundary definition and the authorizing parties. Both successor entities receive a copy of the partition event record in their respective audit logs. Cross-reference to Ch15 §Collaborator Revocation and Post-Departure Partition sub-patterns 45e and 45f for the underlying specification.
+
+### The departure moment
+
+Revocation is the rare protocol operation that arrives with emotional weight outside the protocol itself. The administrator processing it knows the person on the other side. The revoked party reads the access-ended message in a context the architecture has no insight into — packing a desk, sitting in a settlement meeting, working through the aftermath of a board vote. The protocol is the same in every case; the human moment is not.
+
+<!-- voice-check: human author adds connective-tissue scene here. Candidate framings from outline §F: the departing employee whose laptop disconnects as they pack their desk; the business partner reading the access-ended message on the day a court-mediated settlement takes effect; the administrator processing access revocation for an employee who had been a colleague for a decade. Choose one; keep it brief and grounded; let the architecture description stay impersonal where the human context is not. -->
 
 ## Accessibility as a Contract
 
