@@ -220,7 +220,7 @@ Budget violations are observable at three levels of detail, calibrated to three 
 
 **Operator-facing.** Enterprise deployments (Chapter 19) feed budget-violation telemetry into the operator observability stack. A node that is systematically slow on a particular operation class appears in the relay telemetry without requiring on-device diagnosis. An operator triaging a customer report can see that a single field office is experiencing budget violations across all nodes — a sign of hardware-class mismatch — versus a single node experiencing them — a sign of local resource constraint.
 
-The three tiers correspond to the three audiences. Do not surface developer-tier telemetry to end-users; the diagnostics panel is not a customer-facing channel. Do not rely solely on user-facing indicators for development validation; the amber state is the last line of communication, not the first. Cross-references: Ch11 §Performance Contracts §Sub-pattern 43d for the conformance test that produces the operator telemetry; Ch19 §Operator Observability for the enterprise telemetry path.
+The three tiers correspond to the three audiences. Do not surface developer-tier telemetry to end-users; the diagnostics panel is not a customer-facing channel. Do not rely solely on user-facing indicators for development validation; the amber state is the last line of communication, not the first. Cross-references: Ch11 §Performance Contracts §Sub-pattern 43d for the conformance test that produces the operator telemetry; Ch19 §The Operational Runbook Minimum for the enterprise telemetry path that consumes it.
 
 ### Quality-of-service indicators and the user's mental model
 
