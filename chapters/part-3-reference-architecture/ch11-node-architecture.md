@@ -201,8 +201,123 @@ All Sunfish packages are pre-1.0. Package names are stable for reference in this
 
 ---
 
+## Performance Contracts and Main-Thread Isolation
+
+<!-- code-check: this section references a forward-looking namespace `Sunfish.Kernel.Performance` that is part of the Volume 1 extension roadmap and not yet present in the Sunfish reference implementation. New component and interface names introduced here — `SunfishMergeProgressIndicator`, `PerformanceBudgetValidator`, `IProgressiveDegradation`, and the `PerformanceDegraded` `SyncState` sub-state — are pre-1.0 additions, marked illustrative in their first appearance. The other references — `Sunfish.Kernel.Crdt`, `Sunfish.UIAdapters.Blazor`, `Sunfish.Foundation` — are in the current Sunfish package canon. -->
+
+The local-first promise of immediate response is the most visible property the architecture commits to and the easiest one to lose. P1 — no spinners, no waiting, the application responds within the user's perceptual window — is indistinguishable from marketing copy unless the kernel enforces a frame-budget contract that fails the build when violated. This section specifies that contract.
+
+### Why performance is a specification concern
+
+Performance is structural here, not a polish step. The practical adversary is a Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) document that has accumulated 100,000 operations over months of collaborative editing. Merging that document on reconnect can take multiple seconds on commodity hardware [4]. A node without main-thread isolation freezes the UI thread for the duration of that merge. The cursor stops. Keystrokes queue. The OS marks the window unresponsive. A user who has experienced this once does not retry the application a second time.
+
+Linear's engineering team treats 60fps as a hard constraint on every interaction, not a target the application reaches under optimal conditions [5]. The Web Vitals Interaction to Next Paint (INP) metric formalises the same bar for the web platform: an interaction must produce a visual response within 200ms to register as "good" [6]. The architecture declares its budgets in terms practitioners already know, against thresholds the platform itself measures.
+
+**FAILED conditions** for this primitive are stated directly later in this section. The shape of the bar: any local operation that crosses its budget fails; any UI freeze beyond a single frame fails; any path through a core node function that requires a network roundtrip fails.
+
+### Sub-pattern 43a — Per-operation latency budget by operation class
+
+A budget that says "the application must be fast" is not testable. The architecture differentiates by operation class and assigns a budget to each.
+
+The three operation classes are local writes, local reads and queries, and sync merges. **Local writes** are user-initiated mutations applied to the CRDT document on the originating node. The budget runs from input confirmation to local document reflection. **Local reads** are queries against projections or the event log. The budget runs from query submission to first rendered result — partial results that arrive incrementally are acceptable, a blank screen is not. **Sync merges** are CRDT delta applications received from peers. The budget runs from delta receipt to local document reflection and UI re-render.
+
+| Operation class | Baseline budget | FAILED condition |
+|---|---|---|
+| Local write | <16ms | ≥16ms blocks UI thread |
+| Local read (indexed) | <50ms | ≥50ms before first result |
+| Projection rebuild | <200ms | ≥200ms before first result |
+| Sync merge (ordinary) | <200ms | ≥200ms before progressive-degradation fires |
+| Sync merge (large doc) | Progressive degradation | No fallback = freeze |
+
+The 16ms write budget corresponds to one frame at 60fps; a write that crosses it drops a frame on every screen the application targets. The 50ms read budget reflects the perceptual threshold below which a result feels instantaneous to a user who has already initiated the query. The 200ms projection rebuild budget aligns to the INP "good" boundary — a projection rebuild is the slowest path a user-initiated read can take, and it must still register as responsive.
+
+The budgets above are the baseline. Per-deployment-class calibration tightens or relaxes them within defined ranges, specified in §Sub-pattern 43e below.
+
+### Sub-pattern 43b — Main-thread isolation guarantee
+
+No CPU-bound operation executes on the UI thread. This is an architectural invariant enforced at the kernel level, not a performance optimisation chosen at the plugin level.
+
+`Sunfish.Kernel.Performance` routes CRDT merges, projection rebuilds, and large-query executions to background threads in a .NET/MAUI host or to web workers in a browser-hosted node. The UI thread handles rendering and user input. Plugin code that attempts a blocking CRDT operation on the UI thread receives a diagnostic assertion in debug builds and a circuit-breaker timeout in production builds. Discipline at the plugin layer is not the enforcement mechanism; the kernel is.
+
+The isolation requirement propagates into the CRDT engine contract. All merge operations on `ICrdtEngine` (Ch11 §Kernel Responsibilities) are async by contract. `Sunfish.Kernel.Crdt` exposes no synchronous merge surface. A backend implementation that offered one would violate the kernel contract at compile time. This constraint is the architectural reason the engine abstraction was async-first from the start, not a property added after a performance regression.
+
+The Yjs case illustrates the boundary the contract draws. A merge on a 100,000-operation document is O(n) in operation count and runs in seconds, not milliseconds [4]. The contract does not promise that this merge completes within 16ms. The contract promises that the merge does not block the UI thread while it runs. A multi-second merge that proceeds on a background thread, with the UI remaining responsive throughout, satisfies the contract. The same merge on the UI thread does not. The progressive-degradation fallback specified in §Sub-pattern 43c is the UX surface that makes the boundary visible to the user.
+
+Chapter 12 specifies the CRDT engine architecture and the merge complexity characteristics that make this pattern necessary.
+
+### Sub-pattern 43c — Progressive-degradation fallback
+
+When a sync merge or projection rebuild needs more time than the budget allows, the architecture does not stall. It shows partial results immediately and completes the work in the background.
+
+The shape of progressive degradation: the affected record or view renders its last-known local state with a freshness indicator. An ambient progress signal — not a spinner that blocks interaction — appears on the affected element. When the merge completes, the view re-renders. No freeze. No blank screen. No wait state imposed on the user.
+
+"Last-known state" is the local-first architecture's core value proposition rendered visible. The data the user needs is on their device; the merge resolving in the background is additive, not blocking. Replicache's documentation frames the same pattern: optimistic local state is always current, and remote reconciliation is always incremental [7].
+
+`Sunfish.Kernel.Performance` exposes an `IProgressiveDegradation` contract. The kernel calls the degradation handler when a merge or rebuild is scheduled to exceed its budget; the handler notifies the UI layer through `Sunfish.Foundation` and provides a cancellation path for the application to interrupt the background work if the user navigates away. Chapter 20 §Performance Budgets and Progressive Degradation specifies the UX surface this contract drives.
+
+### Sub-pattern 43d — Measurable conformance test in CI
+
+A performance contract that cannot be tested is not a contract. `Sunfish.Kernel.Performance` ships a `PerformanceBudgetValidator` that closes the loop: budget violations fail the build.
+
+The validator measures actual latency against declared budgets across three representative document sizes. A small document of 1,000 operations exercises the fast path. A medium document of 10,000 operations exercises the typical production case. A large document of 100,000 operations exercises the stress case that triggers progressive degradation. Each size is benchmarked. The large-document test specifically asserts that the progressive-degradation handler fires within the budget window rather than blocking, which is the contract `IProgressiveDegradation` was designed to satisfy.
+
+The test must run on CI hardware that is representative of the deployment target. A test that passes on a developer laptop with 32 GiB of RAM and an Apple M3 chip but fails on the embedded ARM device in a field office is not a conformance test; it is a developer-experience test. CI fleets for nodes that ship to intermittent-connectivity field deployments run on hardware in the same performance class as the deployment target — not on whatever the build farm happens to have available. The kill trigger specified in §FAILED conditions and kill trigger references this CI test as the measurement source.
+
+```csharp
+// illustrative — not runnable (Sunfish.Kernel.Performance pre-1.0)
+builder.Services.AddSunfishPerformanceContracts(options =>
+{
+    options.DeploymentClass = PerformanceClass.DocumentEditing;
+    options.RunBudgetValidatorInCi = true;
+});
+```
+
+References to `Sunfish.Kernel.Performance` are by package name only; specific method signatures are pre-1.0 and subject to change.
+
+### Sub-pattern 43e — Per-deployment-class budget calibration
+
+Not all applications carry identical performance requirements. A drawing tool at 120fps has tighter write-latency needs than a document editor; an email client has looser ones. Calibration is a deployment-time configuration declared in the application's kernel startup, not a compile-time constant.
+
+| Deployment class | Write budget | Read budget | Notes |
+|---|---|---|---|
+| Interactive (gaming, drawing) | <8ms | <25ms | Tightened; 120fps targets require sub-8ms |
+| Document editing (default) | <16ms | <50ms | Baseline |
+| Background sync (email, feed) | <50ms | <200ms | Relaxed; writes not on critical path |
+
+The 8ms interactive budget is calibrated against the 8.33ms frame time at 120fps; sub-8ms gives one sub-frame of headroom for the UI thread's other work. The 16ms document-editing baseline is calibrated against the 60fps frame budget specified in Apple's Human Interface Guidelines [8]. The 200ms relaxed read budget aligns to the Web Vitals INP "good" threshold [6].
+
+`PerformanceBudgetValidator` reads the declared deployment class and asserts against the corresponding budget. A deployment that declares "interactive" but ships with document-editing budgets fails the conformance test at build time. Misclassification is detected before release, not after a customer files a regression.
+
+### FAILED conditions and kill trigger
+
+**FAILED conditions for this primitive (any one of these means the contract is not met):**
+
+- Any local write operation takes ≥16ms on the UI thread.
+- Any UI freeze of ≥16ms duration is detectable under load profiling.
+- Any path through a core node function requires a network roundtrip to complete.
+- The `PerformanceBudgetValidator` CI test fails for any declared deployment class.
+- Progressive degradation does not fire within budget; a large-document merge blocks rather than delegating to the background.
+
+**Kill trigger.** Conformance — measured as the percentage of test operations completing within their declared budget — falls below 95% for three consecutive CI sprints. A drift below the kill threshold is not a sprint task. It is evidence that the implementation no longer meets the contract and requires architectural attention.
+
+The `SyncState` enumeration (Ch11 §The UI Kernel) carries a `PerformanceDegraded` sub-state that the kernel sets when progressive degradation is active on a record or view. UI components in `Sunfish.UIAdapters.Blazor` bind to this state through the existing `SunfishNodeHealthBar` indicator architecture; Chapter 20 §Performance Budgets and Progressive Degradation specifies the user-facing surface.
+
+Performance contracts are a primitive surfaced through architectural review, not derived from the v13 or v5 source papers directly. The contract above commits the architecture to a specification-level guarantee that the source papers framed as a desirable property; the framework-level enforcement, the budget table, and the kill trigger are new architectural commitments specific to this volume.
+
+---
+
 [1] C. Bormann and P. Hoffman, "Concise Binary Object Representation (CBOR)," RFC 8949, Internet Engineering Task Force, December 2020.
 
 [2] Court of Justice of the European Union, Data Protection Commissioner v. Facebook Ireland Limited and Maximillian Schrems, Case C-311/18, Judgment of 16 July 2020.
 
 [3] B. Kolbeck, M. Högqvist, J. Stender, and F. Hupfeld, "Flease: Scalable Fault-Tolerant Lease Negotiation for Distributed Systems," in *Proc. USENIX Annual Technical Conference (USENIX ATC)*, Boston, MA, 2012.
+
+[4] K. Jahns, "Yjs — Performance Characteristics," *Yjs Documentation*. Accessed: 2026. [Online]. Available: https://docs.yjs.dev/
+
+[5] Linear, "How Linear builds product," *Linear Engineering Blog*. Accessed: 2026. [Online]. Available: https://linear.app/blog/
+
+[6] Google, "Interaction to Next Paint (INP)," *Web Vitals*. Accessed: 2026. [Online]. Available: https://web.dev/articles/inp
+
+[7] Replicache, "Why Replicache," *Replicache Engineering Documentation*. Accessed: 2026. [Online]. Available: https://doc.replicache.dev/
+
+[8] Apple Inc., "Human Interface Guidelines: Responsiveness." Accessed: 2026. [Online]. Available: https://developer.apple.com/design/human-interface-guidelines/

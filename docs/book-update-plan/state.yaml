@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-27T05:30:00Z
-last-iteration-id: iter-0010
+last-iteration: 2026-04-27T06:00:00Z
+last-iteration-id: iter-0011
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -44,17 +44,18 @@ extensions:
       - {stage: approved, completed: 2026-04-27T05:30:00Z, output: "All ICM gates cleared: outline (passed), draft (passed), code-check (passed), technical-review (passed), prose-review (passed), voice-check (passed). Plus three out-of-band review cycles: Council R1 (REVISE 6.56) → R2 (PUBLISH 8.24) → R3 (PUBLISH 8.62), and Literary-board (POLISH 8.17, all 12 critics PROCEED). Section publication-ready. Final state: Ch15 §Key-Loss Recovery ~4,500 words spanning 7 H3 sub-sections (Why this matters, Recommended Deployment Combinations, The six recovery mechanisms, Recovery State-Machine Convergence, Threat Model, Boundaries and Operator Mitigations, Implementation Surfaces); Ch20 §Key-Loss Recovery UX ~1,960 words spanning 5 H3 sub-sections (First-Run Prompt, Trustee Designation Flow, Recovery Initiation UX, Time-Locked Grace Period UX, Recovery Completion Confirmation). Total ~6,460 words from initial 3,090 word target. Status: approved → assembled (mechanical, picked up by next ASSEMBLY.md run)."}
 
   43-performance-contracts:
-    status: in-progress              # parallel-staged while #48 awaits voice-check
-    current-stage: outline
-    parallel-with: 48-key-loss-recovery  # schema extension: two extensions can be in flight when one is awaiting human-only stage
+    status: in-progress
+    current-stage: draft             # advanced from outline this iteration
     target-chapter: ch11-node-architecture
     target-sections:
-      - "Ch11 §Performance contracts and main-thread isolation"
-      - "Ch20 §Performance budgets and progressive degradation"
+      - "Ch11 §Performance Contracts and Main-Thread Isolation"
+      - "Ch20 §Performance Budgets and Progressive Degradation"
     estimated-words: 2500
+    actual-words: 2495               # ~1,490 (Ch11) + ~1,005 (Ch20)
     started: 2026-04-27T03:35:00Z
     history:
-      - {stage: outline, completed: 2026-04-27T04:00:00Z, output: "docs/book-update-plan/working/43-performance-contracts/outline.md (parallel-staged via @research-assistant background agent). Insertion points: Ch11 between §Sunfish Package Map and references; Ch20 between §The First-Run Experience and §Key-Loss Recovery UX. Sub-pattern 43e (per-deployment-class calibration) placed as standalone H3 §A.6. Sunfish.Kernel.Performance flagged as new package not yet in canon — code-check stage validates name."}
+      - {stage: outline, completed: 2026-04-27T04:00:00Z, output: "docs/book-update-plan/working/43-performance-contracts/outline.md (parallel-staged via @research-assistant background agent). Insertion points: Ch11 between §Sunfish Package Map and references; Ch20 between §The First-Run Experience and §Key-Loss Recovery UX. Sub-pattern 43e (per-deployment-class calibration) placed as standalone H3 §A.6. Sunfish.Kernel.Performance flagged as new package not yet in canon — code-check stage validates name.", commit: "fb7af75"}
+      - {stage: draft, completed: 2026-04-27T06:00:00Z, output: "Drafted Ch11 §Performance Contracts and Main-Thread Isolation (~1,490 words) and Ch20 §Performance Budgets and Progressive Degradation (~1,005 words) via @chapter-drafter (model: opus per Tier 1 routing, inheriting parent xhigh effort). Inserted prose into ch11-node-architecture.md (between §Sunfish Package Map and references) and ch20-ux-sync-conflict.md (between §The First-Run Experience and §Key-Loss Recovery UX) at outline-specified positions. Added IEEE refs [4]–[8] to Ch11 reference list (Yjs docs, Linear blog, Web Vitals INP, Replicache, Apple HIG). Sub-patterns 43a–43e all covered with named subsections in Ch11; 43c additionally surfaces in Ch20 as the progressive-degradation UX. FAILED conditions block rendered as bold-labeled bulleted list with kill-trigger sentence following. No CLAIM markers inserted; the Yjs 100k-merge complexity claim and Linear 60fps claim are flagged for technical-reviewer URL pinning during the technical-review stage. HTML code-check annotations added at start of each new section flagging Sunfish.Kernel.Performance and pre-1.0 component names as forward-looking."}
 
   45-collaborator-revocation:
     status: not-started
