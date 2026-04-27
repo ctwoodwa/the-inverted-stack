@@ -1,0 +1,118 @@
+schema-version: "1.0"
+last-iteration: null
+last-iteration-id: null
+last-commit: null
+
+# Priority order — loop processes these in order; can be re-ordered between
+# iterations if priorities shift. Higher impact first.
+priority-order:
+  - 48-key-loss-recovery       # Most common P7 failure mode; highest user value
+  - 43-performance-contracts   # Most common P1 critique; bar to clear
+  - 45-collaborator-revocation # Departing-employee scenario; common
+  - 11-fleet-management        # Required for Sunfish at scale
+  - 47-endpoint-compromise     # Honest threat model for Volume 1
+  - 46-forward-secrecy         # Currently assumed; should be explicit
+  - 9-chain-of-custody         # Multi-party signed transfer
+  - 12-privacy-aggregation     # DP at relay
+  - 10-data-class-escalation   # Event-triggered re-classification
+  - 44-per-data-class-device-distribution  # Smaller scope; can be quick
+
+extensions:
+  48-key-loss-recovery:
+    status: not-started
+    target-chapter: ch15-security-architecture
+    target-sections:
+      - "Ch15 §Key recovery"
+      - "Ch20 §Recovery UX"
+    estimated-words: 3000
+    history: []
+
+  43-performance-contracts:
+    status: not-started
+    target-chapter: ch11-node-architecture
+    target-sections:
+      - "Ch11 §Performance contracts and main-thread isolation"
+      - "Ch20 §Performance budgets and progressive degradation"
+    estimated-words: 2500
+    history: []
+
+  45-collaborator-revocation:
+    status: not-started
+    target-chapter: ch15-security-architecture
+    target-sections:
+      - "Ch15 §Collaborator revocation and post-departure partition"
+      - "Ch20 §Revocation UX"
+    estimated-words: 2800
+    history: []
+
+  11-fleet-management:
+    status: not-started
+    target-chapter: undecided  # decide in first outline iteration: new Ch21 OR new App G
+    target-sections:
+      - "TBD — outline iteration to decide"
+    estimated-words: 6500
+    history: []
+
+  47-endpoint-compromise:
+    status: not-started
+    target-chapter: ch15-security-architecture
+    target-sections:
+      - "Ch15 §Endpoint compromise: what stays protected"
+      - "App B §THREAT-10 Compromised endpoint"
+    estimated-words: 2000
+    history: []
+
+  46-forward-secrecy:
+    status: not-started
+    target-chapter: ch15-security-architecture
+    target-sections:
+      - "Ch15 §Forward secrecy and post-compromise security"
+    estimated-words: 1500
+    history: []
+
+  9-chain-of-custody:
+    status: not-started
+    target-chapter: ch15-security-architecture
+    target-sections:
+      - "Ch15 §Chain-of-custody for multi-party transfers"
+      - "App B §Chain-of-custody worksheet template"
+    estimated-words: 2500
+    history: []
+
+  12-privacy-aggregation:
+    status: not-started
+    target-chapter: ch15-security-architecture
+    target-sections:
+      - "Ch15 §Privacy-preserving aggregation at relay"
+    estimated-words: 1500
+    history: []
+
+  10-data-class-escalation:
+    status: not-started
+    target-chapter: ch20-ux-sync-conflict
+    target-sections:
+      - "Ch20 §Data-class escalation UX"
+      - "Ch15 §Event-triggered re-classification"
+    estimated-words: 2000
+    history: []
+
+  44-per-data-class-device-distribution:
+    status: not-started
+    target-chapter: ch16-persistence-beyond-the-node
+    target-sections:
+      - "Ch16 §Per-data-class device-distribution"
+    estimated-words: 1500
+    history: []
+
+quality-gates: {}
+
+kill-triggers:
+  user-pause: false
+  budget-exceeded: false
+  quality-regression: false
+  stuck-on-stage: null
+  git-conflict: false
+  subagent-failure: false
+
+# Iterations history (last 10; older trimmed automatically)
+iterations: []
