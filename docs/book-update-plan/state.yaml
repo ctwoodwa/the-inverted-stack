@@ -92,9 +92,10 @@ extensions:
       - {stage: outline, completed: 2026-04-27T07:50:00Z, output: "docs/book-update-plan/working/11-fleet-management/outline.md (parallel-staged via @research-assistant background agent). DECISION: new Chapter 21 in new Part V 'Operational Concerns' at chapters/part-5-operational-concerns/ch21-operating-a-fleet.md (NEW directory). Reasoning: fleet management requires narrative argument + scenario-driven structure + operational opinion (chapter voice), not consultation reference (appendix voice). Has sequential dependencies on Ch15 + Ch14 + Ch19 + extensions #43 + #48. Total target 6,500 words (midpoint of 5k-8k range). Sub-pattern coverage: 11a provisioning at flash time (§A.2), 11b fleet-scale key-rotation orchestration (§A.3), 11c OTA update coordination (§A.4), 11d fleet observability (§A.5), plus §A.6 fleet-failure narrative (synthetic cross-cutting section, not standalone sub-pattern). Sunfish namespace: NEW Sunfish.Foundation.Fleet (NOT Sunfish.Kernel.Fleet — coordination role across population of nodes is consistent with Foundation tier; orchestrates per-node kernel primitives but isn't itself a kernel primitive). Code-check stage will add this namespace as first-class entry to docs/reference-implementation/sunfish-package-roadmap.md. Insertion: chapters/part-5-operational-concerns/ch21-operating-a-fleet.md (chapter-drafter creates directory)."}
 
   47-endpoint-compromise:
-    status: in-progress              # parallel-staged outline complete
-    current-stage: outline
+    status: in-progress
+    current-stage: draft             # chapter-drafter complete; draft.md ready, not yet applied to chapters
     parallel-with: 11-fleet-management
+    pending-apply: "Draft is in working/47-endpoint-compromise/draft.md (Ch15 §Endpoint Compromise + App B THREAT-10 + 9 refs [14]-[22]). Citation numbering needs adjustment: #46's refs already claim [14]-[19], so #47's refs renumber to [20]-[28] before apply."
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Endpoint Compromise: What Stays Protected"
@@ -105,8 +106,8 @@ extensions:
       - {stage: outline, completed: 2026-04-27T09:00:00Z, output: "docs/book-update-plan/working/47-endpoint-compromise/outline.md (parallel-staged via @research-assistant background agent). Total 2,000 words target — exactly on loop-plan §4 target. Insertion points: Ch15 between §In-Memory Key Handling and §Supply Chain Security (deliberate narrative arc — In-Memory closes 'OS is honest' case, Endpoint Compromise opens 'OS is adversarial' case, Supply Chain extends to build pipeline); App B new H3 THREAT-10 appended to §Section 2 — Actor Taxonomy Template after Supply chain attacker row. Sub-pattern coverage: 47a scope declaration table (§A.2), 47b HSM/Secure Enclave with Intel SGX cautionary (§A.3), 47c attested boot + relay handshake validation + runtime compromise gap (§A.4), 47d remote wipe via revocation-broadcast + offline-device limitation + MDM parallel channel (§A.5), 47e containment via per-device keypair isolation + append-only log backdate prevention + role-scoped access (§A.6), 47f honest documentation of Pegasus/Predator/Hermit class threats + the hard sentence on software-only architectures (§A.7). Notable decisions: (1) THREAT-10 numbered format introduced for first time in App B (existing App B uses unnamed table rows); establishes pattern for future extensions (#9 chain-of-custody → THREAT-11). (2) Windows Pluton citation deferred to technical-review confirmation; may already exist as [7] from #48; outline §G flags duplicate-citation risk explicitly. (3) NO new namespace; Sunfish.Kernel.Security only."}
 
   46-forward-secrecy:
-    status: in-progress              # parallel-staged outline complete
-    current-stage: outline
+    status: in-progress
+    current-stage: draft             # advanced outline → draft (applied to Ch15)
     parallel-with: 11-fleet-management
     target-chapter: ch15-security-architecture
     target-sections:
@@ -117,13 +118,17 @@ extensions:
       - {stage: outline, completed: 2026-04-27T09:15:00Z, output: "docs/book-update-plan/working/46-forward-secrecy/outline.md (background @research-assistant). 1,480 words structure. Insertion: Ch15 between §Collaborator Revocation and Post-Departure Partition (newly added by #45) and §In-Memory Key Handling — groups three 'what happens when keys are exposed' sections (revocation closes access-control-over-time; forward secrecy addresses within/post-session exposure; in-memory handling addresses in-process residence). Sub-pattern coverage: 46a per-message ephemeral key derivation §A.2 (~250w), 46b Double Ratchet sender/receiver ratchet §A.3 (~300w), 46c automatic key rotation compromise + scheduled §A.4 (~200w), 46d sealed sender §A.5 (~200w), 46e protocol-level forward secrecy commitment §A.6 (~150w), FAILED conditions §A.7 (~100w). NO new top-level Sunfish namespace; extends Sunfish.Kernel.Security + Sunfish.Kernel.Sync. 6 IEEE citations [14]–[19] proposed (Double Ratchet spec, X3DH, Noise framework, MLS RFC 9420, WhatsApp whitepaper, OTR Borisov-Goldberg-Brewer 2004)."}
 
   9-chain-of-custody:
-    status: not-started
+    status: in-progress              # parallel-staged outline complete
+    current-stage: outline
+    parallel-with: 47-endpoint-compromise
     target-chapter: ch15-security-architecture
     target-sections:
-      - "Ch15 §Chain-of-custody for multi-party transfers"
-      - "App B §Chain-of-custody worksheet template"
+      - "Ch15 §Chain-of-Custody for Multi-Party Transfers"
+      - "App B §Section 5 — Chain-of-Custody Worksheet"
     estimated-words: 2500
-    history: []
+    started: 2026-04-27T09:00:00Z
+    history:
+      - {stage: outline, completed: 2026-04-27T09:30:00Z, output: "docs/book-update-plan/working/9-chain-of-custody/outline.md (background @research-assistant). 5,145 words structure across §A-§J. Insertion: Ch15 between §Supply Chain Security and §GDPR Article 17 and Crypto-Shredding; App B new §Section 5 — Chain-of-Custody Worksheet appended after §Section 4 (worksheet template, NOT THREAT-N actor entry — chain-of-custody's threat model is fully specified in Ch15; THREAT-NN series continues with next extension introducing a genuinely new actor). Sub-pattern coverage: 9a multi-party signed transfer receipt with two-signature completion (§A.2); 9b evidence-class temporal attestation via RFC 3161 trusted timestamping (§A.3); 9c regulatory-export streaming with Merkle-chain verifiable completeness (§A.4). NAMESPACE DECISION: NEW Sunfish.Kernel.Custody (NOT extension of Sunfish.Kernel.Audit) — three reasons: (1) bilateral external-party co-authorship of receipts differs structurally from single-node-signed audit records; (2) RFC 3161 TSA integration belongs to a dedicated package; (3) the two packages compose without merging, leaving #48 + #45's Sunfish.Kernel.Audit references unchanged."}
 
   12-privacy-aggregation:
     status: not-started
