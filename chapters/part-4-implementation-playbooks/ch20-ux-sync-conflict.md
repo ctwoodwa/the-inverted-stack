@@ -177,6 +177,8 @@ For regulated markets the backup target carries jurisdictional weight. Russian d
 
 ## Key-Loss Recovery UX
 
+<!-- code-check: this section references two forward-looking Sunfish namespaces — `Sunfish.Foundation.Recovery` and `Sunfish.Kernel.Audit` — that are part of the Volume 1 extension roadmap and not yet present in the Sunfish reference implementation. They are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. `Sunfish.Kernel.Security` is in the current Sunfish package canon. -->
+
 Key-loss recovery has a policy layer and a UX layer. Ch15 §Key-Loss Recovery specifies the six mechanisms, the threat model, and the recommended deployment combinations. This section covers what the user sees: the flows that surface the policy at setup time, the experience of initiating recovery after loss, and the UX for the grace period that protects against fraudulent claims.
 
 Get the UX wrong and users skip setup. A user who skipped recovery setup faces permanent data loss at the first forgotten password. Get it right and users complete setup without distress and know exactly what to do when recovery becomes necessary.

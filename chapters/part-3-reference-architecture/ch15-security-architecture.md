@@ -116,6 +116,8 @@ Scheduled key rotation is a maintenance operation. Key compromise is an incident
 
 ## Key-Loss Recovery
 
+<!-- code-check: package references in this section include two forward-looking namespaces — `Sunfish.Foundation.Recovery` and `Sunfish.Kernel.Audit` — that are part of the Volume 1 extension roadmap and not yet present in the Sunfish reference implementation. They are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative; a future implementation milestone will land them. The other reference, `Sunfish.Kernel.Security`, is in the current Sunfish package canon. -->
+
 Incident response handles the case where an attacker compromises a key. Key-loss recovery handles the case where the legitimate user loses one. The two scenarios look superficially similar — both require generating new keys and distributing them — but they differ in one critical way: in the compromise case, the user is present and the attacker is the unknown party; in the loss case, the user is the unknown party and the system must verify them before granting access.
 
 ### Why this matters
