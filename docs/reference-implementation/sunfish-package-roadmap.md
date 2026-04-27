@@ -117,6 +117,42 @@ It exists for two audiences:
 - Whether `Sunfish.Kernel.Performance` is a kernel package or a foundation package. The book treats it as kernel-tier because it constrains the kernel itself.
 - Whether the `PerformanceBudgetValidator` is in the package or in `tests/` infrastructure that consumes the package. The book leans toward "ships with the package" so the contract and the validator are co-located.
 
+### `Sunfish.Foundation.Fleet`
+
+| Field | Value |
+|---|---|
+| **Source extension** | #11 fleet management |
+| **Status** | `book-committed` — not yet scaffolded; no ADR yet |
+| **Sunfish dir** | `packages/foundation-fleet/` (planned; does not yet exist) |
+| **Sunfish ADR** | None yet. Recommend opening one as part of the next phase scoping. |
+| **Book sections** | Ch21 §all subsections (NEW chapter in NEW Part V "Operational Concerns") |
+
+**Architectural commitment:** Owns the fleet-coordination layer above the kernel. Orchestrates per-node primitives that `Sunfish.Kernel.Security` and `Sunfish.Kernel.Sync` already own, generalising single-node operations to fleet scale. Sits at the same architectural tier as `Sunfish.Foundation.LocalFirst` and `Sunfish.Foundation.Recovery` — coordination-and-abstraction, not low-level protocol.
+
+**Phase 1 scope (per Ch21):** all four sub-patterns ship together — partial implementation does not satisfy the chapter's FAILED-conditions block.
+
+| Sub-pattern | Surface |
+|---|---|
+| 11a | Provisioning at flash time — manufacturing ceremony, fleet registry enrollment, device-key generation outside the field |
+| 11b | Fleet-scale key-rotation orchestration — epoch announcement, propagation tracker, straggler registry, escalation events |
+| 11c | OTA update coordination — signed update bundles, staged rollout, rollback bundle management |
+| 11d | Fleet observability — heartbeat protocol, fleet registry, dashboard aggregation, compliance export |
+
+**Constraint propagated to existing packages:**
+
+- `Sunfish.Kernel.Security` — re-wrapping job must be idempotent (a node receiving the epoch announcement twice must not double-wrap its DEKs). The chapter's technical-review pass confirms the kernel preserves this invariant; the fleet layer relies on it.
+- `Sunfish.Kernel.Audit` (forward-looking from #48) — extended to record fleet rotation events alongside per-node recovery events using the same audit-log substrate.
+
+**Kill trigger:** any of the five FAILED conditions in Ch21 §21.1 — provisioning ceremony missed, rotation epoch not propagated within window, OTA update failure, observability blind spot, fleet-level compliance export missing.
+
+**Next implementation step:** open an ADR scoping Phase 1 of `Sunfish.Foundation.Fleet`. Reference Ch21 as the architectural commitment and the FAILED-conditions block as the testable specification. Decide whether to scaffold all four sub-patterns together or stage them across multiple Phase 1 sub-milestones.
+
+**Open questions:**
+
+- Foundation tier vs. Kernel tier: Ch21 places it in Foundation because it coordinates per-node primitives rather than implementing them. The implementation may revisit this if the fleet layer ends up needing kernel-protected state.
+- Boundary with `Sunfish.Kernel.Security` for fleet rotation: the fleet layer monitors and orchestrates; the kernel layer executes. The exact API boundary between fleet-layer epoch announcements and kernel-layer re-wrapping needs concrete contracts.
+- Boundary with `Sunfish.Kernel.Audit` for fleet event records: same audit substrate, distinct record schemas.
+
 ## Future forward-looking namespaces (priority order from `docs/book-update-plan/loop-plan.md` §1)
 
 These namespaces will be added to this roadmap as their source extensions advance through the ICM pipeline. The list below is anticipatory; it captures expected commitments, not yet-made commitments.
@@ -124,7 +160,7 @@ These namespaces will be added to this roadmap as their source extensions advanc
 | Extension | Likely namespace | Owns |
 |---|---|---|
 | #45 collaborator-revocation | extends `Sunfish.Foundation.Recovery` + `Sunfish.Kernel.Security` | revocation events; post-departure data partition; cached-copy management |
-| #11 fleet-management | NEW `Sunfish.Foundation.Fleet` (or `Sunfish.Kernel.Fleet`) | provisioning, key rotation, OTA, observability for headless-fleet deployments |
+| ~~#11 fleet-management~~ | ~~NEW `Sunfish.Foundation.Fleet`~~ | **PROMOTED** to active forward-looking entry above (book-committed, namespace decision: Foundation tier per Ch21) |
 | #47 endpoint-compromise | extends `Sunfish.Kernel.Security` | HSM/secure-enclave separation; attested boot; remote-wipe; endpoint-compromise containment |
 | #46 forward-secrecy | extends `Sunfish.Kernel.Security` + `Sunfish.Kernel.Sync` | per-message ephemeral keys; double-ratchet; sealed sender |
 | #9 chain-of-custody | NEW `Sunfish.Kernel.Custody` (or extends `Sunfish.Kernel.Audit`) | multi-party signed transfer receipts |

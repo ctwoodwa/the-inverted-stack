@@ -319,7 +319,7 @@ The recovery flow above completes the ownership story this chapter has been tell
 
 <!-- code-check: this section references three Sunfish namespaces. `Sunfish.Kernel.Security` is in the current Sunfish package canon. `Sunfish.Kernel.Audit` is forward-looking — introduced by extension #48 and extended here for revocation and partition records. `Sunfish.Foundation.Recovery` is forward-looking under ADR 0046 and is referenced for the successor-entity KEK separation in the dissolution scenario. The forward-looking namespaces are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. -->
 
-Revocation has a policy layer and a UX layer, paired by design. Ch15 §Collaborator Revocation and Post-Departure Partition specifies what the architecture commits to cryptographically. This section covers what the user sees: the administrator initiating the revocation, the revoked party encountering the access change, and the partition wizard for the dissolution scenario. Each subsection here has a counterpart there.
+Revocation pairs a policy layer with a UX layer by design. Ch15 §Collaborator Revocation and Post-Departure Partition specifies what the architecture commits to cryptographically. This section covers what the user sees: the administrator initiating the revocation, the revoked party encountering the access change, and the partition wizard for the dissolution scenario. Each subsection here has a counterpart there.
 
 ### Initiating revocation — the administrator's flow
 
@@ -333,7 +333,9 @@ After confirmation, the UX shows a revocation-in-progress state: "Revoking [name
 
 When the revoked collaborator's node next attempts to sync, the relay rejects the handshake with `ERR_KEY_REVOKED`. The application surfaces a plain-language message: "Your access to this team has ended. Your local data is still accessible on this device, but you can no longer sync or make changes to the team's shared data." The message is honest about what the revoked party retains. Their local cache of previously-synced data is still readable. The message does not imply their local copy has been deleted — that would be false and legally significant. The architecture does not delete data from the revoked party's device, and the UX does not pretend it does.
 
-If the revoked collaborator was using the application at the moment revocation propagated — an online session — the application transitions to a read-only local state without forcing exit. The node health indicator shifts to red with the same plain-language message. Active edits in progress preserve in the local CRDT log; they cannot submit to shared state. The user is not stranded with an empty screen or a crash. They see their local data. They see the access status. Cross-reference to Ch20 §The Three Always-Visible Indicators for the node health state that carries this signal, and to Ch20 §Designing for Failure Modes for the quarantine queue that holds any post-revocation writes the revoked node accumulates before its next reconnection attempt.
+If the revoked collaborator was using the application at the moment revocation propagated — an online session — the application transitions to a read-only local state without forcing exit. The node health indicator shifts to red with the same plain-language message. The local CRDT log retains active edits in progress; they do not reach shared state. The user is not stranded with an empty screen or a crash. They see their local data. They see the access status.
+
+Cross-reference to Ch20 §The Three Always-Visible Indicators for the node health state that carries this signal, and to Ch20 §Designing for Failure Modes for the quarantine queue that holds any post-revocation writes the revoked node accumulates before its next reconnection attempt.
 
 ### Partition wizard — the dissolution scenario
 

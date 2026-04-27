@@ -61,8 +61,8 @@ extensions:
       - {stage: prose-review, completed: 2026-04-27T07:45:00Z, output: "docs/book-update-plan/working/43-performance-contracts/prose-review-report.md. @prose-reviewer verdict PASS, 8 edits across the two new sections. Categories: 3 paragraph-length-cap fixes (collapsed multi-sentence patterns to ≤6 sentences via semicolon joins), 4 active-voice fixes (Sync merges apply CRDT deltas / The originating node applies / Edits apply immediately / The signal sits visible-but-not-insistent), 1 there-is elimination (Ch20 §B.1 'There is no spinner. There is no banner. There is no apology' softened to fragment-style declarations). Anti-AI tells calibrated correctly per .claude/skills/anti-ai-tells/SKILL.md (em-dashes, boldface, hyphenated technical terms preserved). No copula avoidance, no AI vocabulary, no significance puffery. Synonym cycling check: budget stays budget. Voice register held: Ch11 spec voice (no second-person, no hedging on numerical claims), Ch20 tutorial register (direct second-person on wiring, target-experience-first, explicit do-not instructions). 2 open CLAIM markers preserved (Linear 60fps + Apple HIG 16ms — out of scope for prose review per loop-plan, queued for next tech-review pass). Quality gate prose-review → voice-check PASSES."}
 
   45-collaborator-revocation:
-    status: in-progress
-    current-stage: technical-review  # advanced code-check → technical-review (PASS)
+    status: awaiting-voice-check     # prose-review PASS — loop stops at human-only voice-check
+    current-stage: voice-check
     parallel-with: 43-performance-contracts
     target-chapter: ch15-security-architecture
     target-sections:
@@ -75,14 +75,19 @@ extensions:
       - {stage: draft, completed: 2026-04-27T08:10:00Z, output: "Drafted Ch15 §Collaborator Revocation and Post-Departure Partition (~3,100 words; over baseline 2,000 target due to 45e novelty depth — no prior-art analogue) and Ch20 §Revocation UX (~1,000 words; over baseline 800 target due to dissolution wizard and departure-moment placeholder) via @chapter-drafter (model: opus, background dispatch, inheriting parent xhigh effort). Inserted prose into ch15-security-architecture.md (between §Offline Node Revocation and Reconnection and §In-Memory Key Handling) and ch20-ux-sync-conflict.md (between §Key-Loss Recovery UX and §Accessibility as a Contract; tweaked Ch20:316 closing paragraph to reference both Revocation UX and Accessibility as remaining surfaces, replacing the prior Ch20-closing direct pivot to Accessibility). Added IEEE refs [8]–[11] to Ch15 reference list (RFC 7009 OAuth Token Revocation, RFC 6960 OCSP, RFC 5280 CRL, NIST SP 800-12). Sub-patterns 45a–45f all covered with named subsections in Ch15; Ch20 mirrors with administrator flow + revoked-party experience + partition wizard + departure-moment placeholder (with voice-check HTML comment). FAILED conditions block rendered as bold-labeled bulleted list. ONE <!-- CLAIM: --> marker introduced — CRDT operation-identifier collision question across Yjs/yrs and Loro after partition; queued for technical-review. NO new top-level Sunfish namespace introduced; extends existing canon + #48 forward-looking namespaces. Total section word count overshoots baseline by ~25% but is justified by 45e novelty; prose-review may trim. Commit: this iteration's commit ID."}
 
   11-fleet-management:
-    status: in-progress              # parallel-staged outline complete
-    current-stage: outline
-    parallel-with: 43-performance-contracts
-    target-chapter: NEW Ch21 in NEW Part V "Operational Concerns"  # decision made in outline iteration
+    status: in-progress
+    current-stage: code-check        # advanced outline → draft → code-check
+    parallel-with: 45-collaborator-revocation
+    target-chapter: NEW Ch21 in NEW Part V "Operational Concerns"
     target-sections:
-      - "Ch21 §all subsections (NEW chapter, single-chapter Part V coda after Part IV)"
+      - "Ch21 §all subsections (NEW chapter at chapters/part-5-operational-concerns/ch21-operating-a-fleet.md)"
     estimated-words: 6500
+    actual-words: 6579
     started: 2026-04-27T07:00:00Z
+    pending-structural-tasks:
+      - "Add Part V entry to book-structure.md"
+      - "ASSEMBLY.md update (deferred until icm/approved)"
+      - "Optional README.md in chapters/part-5-operational-concerns/"
     history:
       - {stage: outline, completed: 2026-04-27T07:50:00Z, output: "docs/book-update-plan/working/11-fleet-management/outline.md (parallel-staged via @research-assistant background agent). DECISION: new Chapter 21 in new Part V 'Operational Concerns' at chapters/part-5-operational-concerns/ch21-operating-a-fleet.md (NEW directory). Reasoning: fleet management requires narrative argument + scenario-driven structure + operational opinion (chapter voice), not consultation reference (appendix voice). Has sequential dependencies on Ch15 + Ch14 + Ch19 + extensions #43 + #48. Total target 6,500 words (midpoint of 5k-8k range). Sub-pattern coverage: 11a provisioning at flash time (§A.2), 11b fleet-scale key-rotation orchestration (§A.3), 11c OTA update coordination (§A.4), 11d fleet observability (§A.5), plus §A.6 fleet-failure narrative (synthetic cross-cutting section, not standalone sub-pattern). Sunfish namespace: NEW Sunfish.Foundation.Fleet (NOT Sunfish.Kernel.Fleet — coordination role across population of nodes is consistent with Foundation tier; orchestrates per-node kernel primitives but isn't itself a kernel primitive). Code-check stage will add this namespace as first-class entry to docs/reference-implementation/sunfish-package-roadmap.md. Insertion: chapters/part-5-operational-concerns/ch21-operating-a-fleet.md (chapter-drafter creates directory)."}
 
