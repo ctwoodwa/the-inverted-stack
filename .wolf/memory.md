@@ -1177,3 +1177,13 @@
 | 12:59 | Edited docs/book-update-plan/state.yaml | 13→14 lines | ~986 |
 | 12:59 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~580 |
 | 13:00 | iter-0016: applied #47 endpoint-compromise to Ch15 + App B; renumbered refs [14]-[22] -> [20]-[28] | chapters/part-3-reference-architecture/ch15-security-architecture.md, chapters/appendices/appendix-b-threat-model-worksheets.md, docs/book-update-plan/state.yaml | DONE — Ch15 §Endpoint Compromise inserted between §In-Memory Key Handling and §Supply Chain Security; App B §THREAT-10 appended to §Section 2; 9 new refs; 1 CLAIM marker preserved at §47c (Ch14 attestation forward dep); ~2,245 words total | ~6500 |
+| 13:02 | Created docs/book-update-plan/working/46-forward-secrecy/code-check-report.md | — | ~1681 |
+| 13:02 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~38 |
+| 13:03 | Edited docs/book-update-plan/state.yaml | 11→14 lines | ~913 |
+| 13:03 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~685 |
+| 13:15 | iter-0017 SUMMARY: #46 code-check PASS — direct script-driven check (no subagent) | working/46-forward-secrecy/code-check-report.md, state.yaml | DONE — 2 Sunfish ns (canon); 0 code/class/placeholder/CLAIM; 8 xrefs+6 citations resolve; 9 items queued for tech-review | ~4000 |
+| 13:05 | Created docs/book-update-plan/working/47-endpoint-compromise/code-check-report.md | — | ~2358 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~38 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~38 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~712 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~795 |

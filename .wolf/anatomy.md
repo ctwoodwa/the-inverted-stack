@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T16:59:49.394Z
-> Files: 172 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T17:06:43.315Z
+> Files: 174 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -206,7 +206,15 @@
 
 ## docs/book-update-plan/
 
-- `state.yaml` — Declares first (~13493 tok)
+- `state.yaml` — Declares first (~15102 tok)
+
+## docs/book-update-plan/working/46-forward-secrecy/
+
+- `code-check-report.md` — Code-check report — #46 Forward Secrecy and Post-Compromise Security (~1576 tok)
+
+## docs/book-update-plan/working/47-endpoint-compromise/
+
+- `code-check-report.md` — Code-check report — #47 Endpoint Compromise (~2211 tok)
 
 ## docs/icm/
 

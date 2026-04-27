@@ -1394,6 +1394,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-27T16:59:32.297Z"
+    },
+    {
+      "id": "bug-088",
+      "timestamp": "2026-04-27T17:03:07.745Z",
+      "error_message": "Function not marked async",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "Function uses await but wasn't declared async",
+      "fix": "Added async modifier",
+      "tags": [
+        "auto-detected",
+        "async-fix",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-27T17:03:26.825Z"
     }
   ]
 }

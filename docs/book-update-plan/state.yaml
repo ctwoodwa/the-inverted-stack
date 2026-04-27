@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-27T13:00:00Z
-last-iteration-id: iter-0016
+last-iteration: 2026-04-27T13:30:00Z
+last-iteration-id: iter-0018
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -93,7 +93,7 @@ extensions:
 
   47-endpoint-compromise:
     status: in-progress
-    current-stage: draft             # draft applied to Ch15 + App B at iter-0016; code-check is next
+    current-stage: code-check         # advanced draft → code-check at iter-0018
     parallel-with: 11-fleet-management
     target-chapter: ch15-security-architecture
     target-sections:
@@ -105,18 +105,22 @@ extensions:
     history:
       - {stage: outline, completed: 2026-04-27T09:00:00Z, output: "docs/book-update-plan/working/47-endpoint-compromise/outline.md (parallel-staged via @research-assistant background agent). Total 2,000 words target — exactly on loop-plan §4 target. Insertion points: Ch15 between §In-Memory Key Handling and §Supply Chain Security (deliberate narrative arc — In-Memory closes 'OS is honest' case, Endpoint Compromise opens 'OS is adversarial' case, Supply Chain extends to build pipeline); App B new H3 THREAT-10 appended to §Section 2 — Actor Taxonomy Template after Supply chain attacker row. Sub-pattern coverage: 47a scope declaration table (§A.2), 47b HSM/Secure Enclave with Intel SGX cautionary (§A.3), 47c attested boot + relay handshake validation + runtime compromise gap (§A.4), 47d remote wipe via revocation-broadcast + offline-device limitation + MDM parallel channel (§A.5), 47e containment via per-device keypair isolation + append-only log backdate prevention + role-scoped access (§A.6), 47f honest documentation of Pegasus/Predator/Hermit class threats + the hard sentence on software-only architectures (§A.7). Notable decisions: (1) THREAT-10 numbered format introduced for first time in App B (existing App B uses unnamed table rows); establishes pattern for future extensions (#9 chain-of-custody → THREAT-11). (2) Windows Pluton citation deferred to technical-review confirmation; may already exist as [7] from #48; outline §G flags duplicate-citation risk explicitly. (3) NO new namespace; Sunfish.Kernel.Security only."}
       - {stage: draft, completed: 2026-04-27T13:00:00Z, output: "Drafted via @chapter-drafter (background dispatch, completed pre-migration); applied to Ch15 + App B at iter-0016 post-migration. Ch15 §Endpoint Compromise: What Stays Protected (~1,691 words) inserted between §In-Memory Key Handling and §Supply Chain Security with HTML code-check annotation flagging Sunfish.Kernel.Security only (no new namespace) and forward-looking attestation-handshake at Ch14. App B §THREAT-10 — Compromised Endpoint (~554 words) inserted into §Section 2 — Actor Taxonomy Template after the capability-level definitions table, establishing THREAT-NN format for subsequent extensions. Citation renumber applied: draft refs [14]–[22] → published refs [20]–[28] (because #46 forward-secrecy already claimed [14]–[19]); inline citations updated in §47b ([20][21][22] for Apple/Titan-M/Pluton, [23][24][25] for SGX cautionary, [26] for ARM TrustZone) and §47f ([27][28] for Pegasus/Hermit-Predator). 9 new IEEE refs added to Ch15 reference list ([20]–[28]). One CLAIM marker preserved at §47c (Ch14 attestation-handshake forward dependency). FAILED conditions block included. Forward-secrecy cross-reference points to §Forward Secrecy and Post-Compromise Security (was '#46' in draft, resolved to live section name). Sub-patterns 47a–47f all covered."}
+      - {stage: code-check, completed: 2026-04-27T13:30:00Z, output: "docs/book-update-plan/working/47-endpoint-compromise/code-check-report.md. PASS. 1 Sunfish namespace inventoried (Sunfish.Kernel.Security, in canon, 4 sites); no new namespace; no roadmap update. 0 code blocks, 0 class APIs, 0 placeholders. 1 CLAIM marker preserved at §47c (Ch14 attestation-handshake forward dependency — accepted shape). 8 cross-references resolve cleanly + 1 partial (the Ch14 reference held under the CLAIM marker). 9 in-text citations [20]–[28] resolve to reference list entries. App B THREAT-10 establishes THREAT-NN taxonomy format. 10 items queued for technical-review (Apple/Titan-M/Pluton non-extractability with potential [20]→[7] collapse, SGX side-channel chronology, TrustZone framing, Pegasus/Predator/Hermit characterization, TPM 2.0 attestation framing, Ch14 forward-dep resolution, §47e containment mechanisms vs design-decisions §5 #47, relay keypair-session binding, MDM provider accuracy, §47f hard sentence preservation flag for prose-review). Quality gate code-check → technical-review PASSES with 1 documented CLAIM marker per loop-plan §5."}
 
   46-forward-secrecy:
     status: in-progress
-    current-stage: draft             # advanced outline → draft (applied to Ch15)
+    current-stage: code-check         # advanced draft → code-check at iter-0017
     parallel-with: 11-fleet-management
     target-chapter: ch15-security-architecture
     target-sections:
       - "Ch15 §Forward Secrecy and Post-Compromise Security"
     estimated-words: 1500
+    actual-words: 1480
     started: 2026-04-27T08:45:00Z
     history:
       - {stage: outline, completed: 2026-04-27T09:15:00Z, output: "docs/book-update-plan/working/46-forward-secrecy/outline.md (background @research-assistant). 1,480 words structure. Insertion: Ch15 between §Collaborator Revocation and Post-Departure Partition (newly added by #45) and §In-Memory Key Handling — groups three 'what happens when keys are exposed' sections (revocation closes access-control-over-time; forward secrecy addresses within/post-session exposure; in-memory handling addresses in-process residence). Sub-pattern coverage: 46a per-message ephemeral key derivation §A.2 (~250w), 46b Double Ratchet sender/receiver ratchet §A.3 (~300w), 46c automatic key rotation compromise + scheduled §A.4 (~200w), 46d sealed sender §A.5 (~200w), 46e protocol-level forward secrecy commitment §A.6 (~150w), FAILED conditions §A.7 (~100w). NO new top-level Sunfish namespace; extends Sunfish.Kernel.Security + Sunfish.Kernel.Sync. 6 IEEE citations [14]–[19] proposed (Double Ratchet spec, X3DH, Noise framework, MLS RFC 9420, WhatsApp whitepaper, OTR Borisov-Goldberg-Brewer 2004)."}
+      - {stage: draft, completed: 2026-04-27T10:00:00Z, output: "Drafted and applied pre-migration. Ch15 §Forward Secrecy and Post-Compromise Security (~1,480 words) inserted between §Collaborator Revocation and Post-Departure Partition and §In-Memory Key Handling. Sub-patterns 46a–46e covered (per-message ephemeral derivation, Double Ratchet, automatic rotation, sealed sender, protocol-level commitment). FAILED conditions block + kill trigger included. 6 IEEE refs [14]–[19] added to Ch15 reference list. HTML code-check annotation declares Sunfish.Kernel.Security + Sunfish.Kernel.Sync as in-canon — no new namespace introduced."}
+      - {stage: code-check, completed: 2026-04-27T13:15:00Z, output: "docs/book-update-plan/working/46-forward-secrecy/code-check-report.md. PASS. Two Sunfish namespace references inventoried — Sunfish.Kernel.Security (3 sites) + Sunfish.Kernel.Sync (4 sites) — both in canon, no new namespace. 0 code blocks, 0 class APIs, 0 method signatures, 0 TBD/placeholder markers, 0 CLAIM markers. 8 cross-references resolve cleanly (§Threat Model, §Key Compromise Incident Response, §Relay Trust Model, §Endpoint Compromise [post-iter-0016], §Collaborator Revocation, §Key Hierarchy, §Key-Loss Recovery, Ch14 §Sync Daemon Protocol). 6 in-text citations [14]–[19] resolve to reference list entries. 9 items queued for technical-review (Curve25519/X25519 framing, HKDF-SHA256 chain, Double Ratchet faithfulness against Marlinspike-Perrin 2016, X3DH async prekey framing, Noise KK pattern fit, MLS/TreeKEM extension claim, OTR provenance Borisov-Goldberg-Brewer WPES 2004, WhatsApp billion-user-scale claim, conformance-test framing). Quality gate code-check → technical-review PASSES."}
 
   9-chain-of-custody:
     status: in-progress              # parallel-staged outline complete
@@ -275,5 +279,21 @@ iterations:
     stage-from: draft (staged, not applied)
     stage-to: draft (applied)
     duration-min: 35
-    commit: null  # filled by commit step
+    commit: a9accc8
     notes: "Post-migration resume. Applied #47 draft (Ch15 §Endpoint Compromise + App B §THREAT-10) with citation renumber [14]–[22] → [20]–[28] because #46 already claimed [14]–[19]. Ch15 insertion: between §In-Memory Key Handling and §Supply Chain Security; HTML code-check annotation flags Sunfish.Kernel.Security only (no new namespace) and the forward-looking Ch14 attestation-handshake CLAIM marker. App B insertion: appended to §Section 2 — Actor Taxonomy Template after the capability-level definitions table, establishing THREAT-NN format for subsequent extensions. 9 new IEEE refs added to Ch15 reference list ([20] Apple Secure Enclave, [21] Pixel Titan M, [22] Pluton, [23] Foreshadow, [24] Plundervolt, [25] SGAxe, [26] ARM TrustZone, [27] Pegasus/Citizen Lab, [28] Hermit/Predator). Forward-secrecy cross-ref resolved from '#46' placeholder to live §Forward Secrecy and Post-Compromise Security section name. Sub-patterns 47a–47f all covered. One CLAIM marker preserved at §47c. Total ~2,245 words (target 2,000; +12.3%, within ±20% band). Code-check is next stage."
+  - id: iter-0017
+    timestamp: 2026-04-27T13:15:00Z
+    extension: 46-forward-secrecy
+    stage-from: draft
+    stage-to: code-check
+    duration-min: 15
+    commit: null  # filled by commit step
+    notes: "Code-check pass on Ch15 §Forward Secrecy and Post-Compromise Security. PASS verdict. Inventoried 2 Sunfish namespace references (both in canon: Sunfish.Kernel.Security 3 sites + Sunfish.Kernel.Sync 4 sites). 0 new namespace required; no roadmap update. 0 code blocks, 0 class APIs, 0 placeholders, 0 CLAIM markers introduced. 8 cross-references resolve cleanly. 6 in-text citations [14]–[19] resolve to reference list entries. 9 items queued for technical-review covering Curve25519/X25519 framing, HKDF chain construction, Double Ratchet faithfulness against Marlinspike-Perrin 2016, X3DH async prekey framing, Noise KK pattern fit, MLS/TreeKEM extension claim, OTR provenance, WhatsApp scale claim, and conformance-test cryptographic-property framing. Code-check report at docs/book-update-plan/working/46-forward-secrecy/code-check-report.md. Quality gate code-check → technical-review PASSES."
+  - id: iter-0018
+    timestamp: 2026-04-27T13:30:00Z
+    extension: 47-endpoint-compromise
+    stage-from: draft (applied)
+    stage-to: code-check
+    duration-min: 15
+    commit: null  # filled by commit step
+    notes: "Code-check pass on Ch15 §Endpoint Compromise + App B §THREAT-10. PASS verdict with 1 documented CLAIM marker preserved (§47c Ch14 attestation-handshake forward dependency). Inventoried 1 Sunfish namespace reference (Sunfish.Kernel.Security, in canon, 4 sites); no new namespace; no roadmap update. 0 code blocks, 0 class APIs, 0 placeholders. 8 cross-references resolve cleanly + 1 partial (Ch14 — flagged via the CLAIM marker; chapter exists, the specific attestation-validation step is the forward dependency). 9 in-text citations [20]–[28] resolve to reference list entries. App B THREAT-10 confirmed as first structured taxonomy entry establishing THREAT-NN format (subsequent: #9 → THREAT-11). 10 items queued for technical-review covering Apple/Titan-M/Pluton non-extractability claims (with potential [20]→[7] collapse to existing Apple Platform Security citation from #48), SGX side-channel chronology (Foreshadow/Plundervolt/SGAxe), TrustZone framing, Pegasus/Predator/Hermit characterization, TPM 2.0 attestation framing, Ch14 forward-dep resolution, §47e containment mechanisms vs design-decisions §5 #47, relay keypair-session binding, MDM provider accuracy, and a flag-forward to prose-review for the §47f hard sentence preservation (\"No software-only architecture can claim otherwise\"). Code-check report at docs/book-update-plan/working/47-endpoint-compromise/code-check-report.md. Quality gate code-check → technical-review PASSES."
