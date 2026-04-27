@@ -40,12 +40,15 @@ extensions:
       - {stage: r3-recheck-plus-voice-candidates, completed: 2026-04-27T03:30:00Z, output: "Round 3 council recheck (verifies R2-polish + literary-board fixes did not regress) + parallel voice-agent anecdote drafting. R3 verdict PUBLISH, average 8.62/10 (was 8.24 R2). Per-member: Theorist 8.7 (was 8.4), Production Operator 8.4 (was 8.2), Skeptical Implementer 8.5 (was 8.0), Pedantic Lawyer 9.0 (was 8.6), Outside Observer 8.5 (was 8.0). Every score improved; none regressed. 0 new P0/P1; 2 P2 acknowledgment-only (in-person trustee 2G clarification, structural-reorder lay-reader trade-off — both signposted/honestly-handled). Three voice-agent anecdote candidates produced for human voice-pass: voice-lencioni (3 scenes — Elena/master-password, Daniel/encrypted drives, Marcus/missing YubiKey) and voice-brown (3 confessions — Seed Phrase, Family Death, Migration). Six total anecdote drafts available; human picks one (or writes their own using these as creative prompts). Reports at docs/book-update-plan/working/48-key-loss-recovery/council-review-round-3.md, voice-pass-anecdote-candidates.md, voice-pass-anecdote-candidates-brown.md."}
 
   43-performance-contracts:
-    status: not-started
+    status: in-progress              # parallel-staged while #48 awaits voice-check
+    current-stage: outline
+    parallel-with: 48-key-loss-recovery  # schema extension: two extensions can be in flight when one is awaiting human-only stage
     target-chapter: ch11-node-architecture
     target-sections:
       - "Ch11 §Performance contracts and main-thread isolation"
       - "Ch20 §Performance budgets and progressive degradation"
     estimated-words: 2500
+    started: 2026-04-27T03:35:00Z
     history: []
 
   45-collaborator-revocation:
