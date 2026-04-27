@@ -1,6 +1,6 @@
 schema-version: "1.0"
-last-iteration: 2026-04-27T01:30:00Z
-last-iteration-id: iter-0007
+last-iteration: 2026-04-27T03:00:00Z
+last-iteration-id: iter-0008
 last-commit: null  # filled by commit step
 
 # Priority order — loop processes these in order; can be re-ordered between
@@ -25,8 +25,8 @@ extensions:
     target-sections:
       - "Ch15 §Key-Loss Recovery"
       - "Ch20 §Key-Loss Recovery UX"
-    estimated-words: 3000
-    actual-words: 3090   # ~2050 (Ch15) + ~1040 (Ch20)
+    estimated-words: 3000          # original planning target before adversarial review
+    actual-words: 6460             # ~4500 (Ch15) + ~1960 (Ch20) — grew via council R1/R2 + literary-board P1 fixes (genuinely surfaced gaps, not bloat)
     started: 2026-04-26T22:00:00Z
     history:
       - {stage: outline, completed: 2026-04-26T22:00:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/outline.md", commit: "c1684df"}
@@ -36,6 +36,7 @@ extensions:
       - {stage: prose-review, completed: 2026-04-27T00:25:00Z, output: "docs/book-update-plan/working/48-key-loss-recovery/prose-review-report.md; @prose-reviewer applied 7 edits (2 Ch15: scaffolding strip + active-voice; 5 Ch20: scaffolding strip + 3 active-voice + precision-improvement); @style-enforcer applied 2 follow-up edits (Ch15 authorial-intrusion fix; Ch20 throat-clearing signpost cut); PASS verdict on prose-review → voice-check gate", commit: "c1fb13b"}
       - {stage: voice-check, status: awaiting-human, surfaced: 2026-04-27T00:30:00Z, action-required: "HUMAN voice-pass — see outline §F. Add personal anecdote about key loss (forgotten crypto-wallet seed; family death without password handoff; lost hardware token); add connective-tissue sentence in each section that names the policy/UX pairing; calibrated Sinek register lightly per feedback_voice_sinek_calibration.md memory."}
       - {stage: council-review-cycle, completed: 2026-04-27T01:30:00Z, output: "Round 1 + resolution pass + Round 2. R1 verdict REVISE (3 P0 from Pedantic Lawyer BLOCK + 8 P1 + 3 P2; 5.9 lowest score). 11 fixes applied (3 P0, 8 P1, 2 P2). R2 verdict PUBLISH (all five members PROCEED; scores 8.0–8.6). 13 of 14 R1 findings RESOLVED; 1 deferred (P2-3 structural reorder). Reports at docs/book-update-plan/working/48-key-loss-recovery/council-review-round-{1,2}.md"}
+      - {stage: r2-polish-and-literary-board, completed: 2026-04-27T03:00:00Z, output: "Out-of-band R2 polish + literary-board review + literary-board resolution. (1) Applied 4 R2 polish items: custodian-release convergence binding, trustee-side heartbeat burden, GracePeriodObserver tick cadence, structural reorder (deployment table moved before mechanisms — P2-3 from R1, deferred there, applied here). (2) Literary-board (12 critics) verdict POLISH 8.17/10, 0 P0, 5 P1, 22 P2. (3) Resolution pass on 5 P1 + 13 P2: P1-1 fresh-device retrieval path, P1-2 KEK delivery channel, P1-3+P1-4 convergence rule global-vs-local rewrite, P1-5 GDPR Chapter V; P2-1 §Boundaries-and-Operator-Mitigations rename, P2-2 Volume-2 cross-ref softened, P2-3 Ch20 closing sentence, P2-4 deployment-table bridging sentence, P2-7 multi-sig clause density split, P2-9 GracePeriodObserver push events, P2-11 'as documented at time of writing' biometric qualifier, P2-12 Shamir CSRNG uniformity tech-review note, P2-13 ADGM, P2-15 cloud custodian + institutional intermediaries, P2-17 ARIA live region, P2-18 in-person trustee channel, P2-19 POPIA Section 72, P2-20 high-outage grace floor, P2-21 242-FZ explicit, P2-22 mandatory key-escrow paragraph. Section grew from ~3,090 to ~6,460 words (substantial; review-driven, not bloat). Report at docs/book-update-plan/working/48-key-loss-recovery/literary-board-review.md."}
 
   43-performance-contracts:
     status: not-started
@@ -188,5 +189,13 @@ iterations:
     stage-from: voice-check (awaiting-human)
     stage-to: voice-check (awaiting-human, post-council-review)
     duration-min: 60
-    commit: null  # filled by commit step
+    commit: 57d4d14
     notes: "OUT-OF-BAND council-review cycle while awaiting human voice-pass. User-requested adversarial pass to surface issues before voice-check. Cycle: Round 1 → resolution → Round 2. R1 verdict REVISE — 3 P0 (Pedantic Lawyer BLOCK on custodian liability allocation, social-recovery jurisdictional standing, GDPR Art. 17 vs trustee-evidence) + 8 P1 (Shamir-dealer protocol, recovery state-machine convergence, trustee silent-decay, custodian transient-failure, paper-key transcription verification, implementation surfaces, deployment-class config binding, Ch20 primary+secondary mechanism) + 3 P2 (bad-faith trustees, silence-as-signal grounding, structural reorder). 11 fixes applied directly to Ch15 + Ch20 (3 P0, all 8 P1, 2 of 3 P2). R2 verdict PUBLISH — all 5 council members PROCEED, scores 8.0–8.6 (Theorist 6.8→8.4; Production Operator 6.5→8.2; Skeptical Implementer 6.2→8.0; Pedantic Lawyer 5.9 BLOCK→8.6; Outside Observer 7.4→8.0). 13 of 14 R1 findings RESOLVED, 1 deferred (P2-3 structural deployment-class reorder, not council-blocking). Status remains awaiting-voice-check pending the original human voice-pass tasks (anecdote + connective tissue + Sinek calibration). Reports at docs/book-update-plan/working/48-key-loss-recovery/council-review-round-{1,2}.md"
+  - id: iter-0008
+    timestamp: 2026-04-27T03:00:00Z
+    extension: 48-key-loss-recovery
+    stage-from: voice-check (post-council, awaiting-human)
+    stage-to: voice-check (post-literary-board, awaiting-human)
+    duration-min: 90
+    commit: null  # filled by commit step
+    notes: "OUT-OF-BAND R2 polish pass + literary-board pre-publication review + resolution. (1) Applied 4 R2 P2 items including the deferred structural reorder — deployment table now leads §Key-Loss Recovery (decision-before-reasoning per CLAUDE.md voice principle). (2) Ran @literary-board (12 critics: acquisitions, target practitioner, prose, argument, academic, Dubai/India, narrative rhetoric, accessibility/LATAM, East Asia/APAC, European, African, CIS/Eastern Europe). Verdict POLISH 8.17/10. 0 REVISE/REWORK votes. 0 P0, 5 P1, 22 P2. (3) Resolution pass on 5 P1 + 13 selected P2 items: implementer-facing gaps closed (Ch20 fresh-device retrieval path; Ch20 KEK delivery channel via encrypted log + recovered root seed); convergence rule rewritten with global-vs-local layers framing; regional/jurisdictional coverage extended (ADGM, GDPR Chapter V, POPIA §72, 242-FZ explicit, mandatory key-escrow boundary, RBI cross-ref, custodian role expansion to cloud + institutional intermediaries); accessibility (ARIA live region for trustee designation; in-person trustee channel for low-connectivity environments); §Boundaries and Operator Mitigations renamed from §What This Section Does Not Solve (resolves dual-register concern). Section grew to ~6,460 words total (Ch15 4,500 + Ch20 1,960). Report at docs/book-update-plan/working/48-key-loss-recovery/literary-board-review.md."
