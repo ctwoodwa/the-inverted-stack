@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -273,47 +274,62 @@ PRESETS_KOKORO: dict[str, dict] = {
     "fenrir":      {"voice": "am_fenrir",            "speed": 0.92},
 }
 
-# Higgs Audio v2.5 preset voices. Voice IDs are placeholders — fill in with
-# the actual catalog after the Windows GPU server boots and you query
-# `GET http://<windows-host>:8881/v1/audio/voices`. The Boson AI release
-# typically ships ~25 preset voices labeled by gender/register; pick voices
-# that match each persona's intent and update the dict in a follow-up commit.
+# Chatterbox preset voices. Chatterbox is voice-cloning native — non-stock
+# voice IDs are reference-clip uploads, queried via `GET /v1/audio/voices`
+# (auth required). Stock voices that ship with the model are used as
+# fallbacks for `male`/`female`; persona-specific slots stay None until
+# reference clips are uploaded via build/voice_upload.py.
 #
-# NOTE: Higgs v2.5 generally renders in fp16 at speed=1.0 with prosody control
-# implicit. The Kokoro speed values below are kept as a hint for parity, but
-# Higgs may interpret them differently — verify when wiring up.
-PRESETS_HIGGS: dict[str, dict] = {
-    "female":      {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
-    "female-solo": {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
-    "male":        {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
-    "male-solo":   {"voice": None, "speed": 1.0},   # TODO: Higgs voice ID
-    "sinek":       {"voice": None, "speed": 0.92},  # TODO: warm low-pitch male
-    "practitioner":{"voice": None, "speed": 1.0},   # TODO: Lusophone-adjacent or generic male
-    "british":     {"voice": None, "speed": 1.0},   # TODO: British female
-    "british-male":{"voice": None, "speed": 1.0},   # TODO: British male
-    "fry":         {"voice": None, "speed": 1.0},   # TODO: British RP narrator male
-    "fry-blend":   {"voice": None, "speed": 1.0},   # TODO: same as 'fry' (no Higgs blend support)
-    "fenrir":      {"voice": None, "speed": 1.0},   # TODO: polished corporate male
+# Stock catalog (verified 2026-04-28 against the Windows server):
+#   en_man, en_woman, broom_salesman (Ollivander/British male older),
+#   mabel (warm British-leaning female). The other ~12 stock voices are
+#   sitcom characters, child voices, or non-English — not narrator-fit.
+#
+# NOTE: Chatterbox renders at 24 kHz mono. Speed values below are kept
+# as hints; the server clamps to a sane range. Verify when wiring up
+# new persona voices via build/audiobook_voices_init.py (planned).
+PRESETS_CHATTERBOX: dict[str, dict] = {
+    "female":      {"voice": "en_woman",       "speed": 1.0},   # stock fallback
+    "female-solo": {"voice": "en_woman",       "speed": 1.0},   # stock fallback
+    "male":        {"voice": "en_man",         "speed": 1.0},   # stock fallback
+    "male-solo":   {"voice": "en_man",         "speed": 1.0},   # stock fallback
+    "sinek":       {"voice": "en_man",         "speed": 0.92},  # stock fallback; TODO upload warm low-pitch male
+    "practitioner":{"voice": "en_man",         "speed": 1.0},   # stock fallback; TODO upload Lusophone-adjacent male (Ferreira)
+    "british":     {"voice": "mabel",          "speed": 1.0},   # stock British-leaning female (warm)
+    "british-male":{"voice": "broom_salesman", "speed": 1.0},   # stock older British male
+    "fry":         {"voice": "broom_salesman", "speed": 1.0},   # closest stock RP register
+    "fry-blend":   {"voice": "broom_salesman", "speed": 1.0},   # alias (no blend support in Chatterbox)
+    "fenrir":      {"voice": "en_man",         "speed": 1.0},   # stock fallback; TODO upload polished corporate male
 }
+
+# Backwards-compat alias — old code paths may import PRESETS_HIGGS.
+# Removable once the rest of the tree is swept; harmless until then.
+PRESETS_HIGGS = PRESETS_CHATTERBOX
 
 # Engine catalog. Add a new entry here to support a new TTS backend; the
 # rest of the script picks up the new engine via --engine.
+#
+# `requires_auth: True` engines pull a Bearer token from the TTS_API_KEY env
+# var (or --api-key CLI flag). Kokoro runs locally without auth; Chatterbox
+# on the Windows box requires it.
 ENGINES: dict[str, dict] = {
     "kokoro": {
         "presets": PRESETS_KOKORO,
         "default_base_url": "http://localhost:8880/v1",
         "model_name": "kokoro",
+        "requires_auth": False,
         "description": "Kokoro-82M FastAPI on the local Mac (default daily-driver)",
     },
-    "higgs": {
-        "presets": PRESETS_HIGGS,
-        # Override at the CLI with --base-url; the default below assumes the
-        # Windows GPU box is reachable as 'higgs.local' on the LAN. If using
-        # Tailscale, set this to the Tailscale magic-DNS hostname instead
-        # (e.g. http://gaming-rig.tail-scale.ts.net:8881/v1).
-        "default_base_url": "http://higgs.local:8881/v1",
-        "model_name": "higgs",
-        "description": "Higgs Audio v2.5 on the Windows GPU box (high-quality path)",
+    "chatterbox": {
+        "presets": PRESETS_CHATTERBOX,
+        # Override at the CLI with --base-url. Default is the Tailscale
+        # hostname for the Windows GPU box. Override examples:
+        #   CHATTERBOX_URL=http://192.168.1.50:8881/v1 python build/audiobook.py --engine chatterbox
+        #   --base-url http://desktop-umt08rn.taildefd38.ts.net:8881/v1
+        "default_base_url": "http://desktop-umt08rn:8881/v1",
+        "model_name": "chatterbox",
+        "requires_auth": True,
+        "description": "Chatterbox (Resemble AI) on the Windows GPU box — voice-cloning, high-quality path",
     },
 }
 
@@ -372,7 +388,16 @@ CHAPTER_FILES = [
     "appendices/appendix-f-regulatory-coverage.md",
 ]
 
-CHUNK_CHAR_BUDGET = 1400  # target per-request size in characters
+CHUNK_CHAR_BUDGET = 700  # target per-request size in characters
+# Lowered from 1400 (2026-04-28, bug-096/bug-097). Root cause is
+# *progressive* slowdown in the CPU Kokoro container — early chunks
+# render in ~3-5s, but after ~70 chunks the same-sized chunk takes
+# 30-60s and the worker eventually hangs (memory leak / thermal /
+# worker degradation). Lowering chunk size is a partial mitigation,
+# not a fix. For long renders on CPU Kokoro the practical paths are:
+# (a) wrap with periodic `docker restart kokoro-fastapi` every ~50
+# chunks; (b) add resume-capable rendering (sidecar manifest + chunk
+# concat); (c) run on a GPU instance. See .wolf/buglog.json bug-097.
 
 # Mapping from dot count to silence duration (seconds). Empirically, Kokoro
 # treats consecutive periods as ~one sentence terminator regardless of count
@@ -921,10 +946,25 @@ SYNTH_HARD_CAP = 1200  # Kokoro prosody degrades past ~900 chars per call;
 
 
 def synth_chunk(client: OpenAI, voice: str, text: str, speed: float,
-                model_name: str = "kokoro", retries: int = 3) -> bytes:
+                model_name: str = "kokoro", retries: int = 3,
+                exaggeration: float | None = None,
+                cfg_weight: float | None = None,
+                temperature: float | None = None) -> bytes:
     text = text[:SYNTH_HARD_CAP]
     last_err = None
-    extra_body = {"speed": speed} if speed and abs(speed - 1.0) > 1e-3 else None
+    extra: dict = {}
+    if speed and abs(speed - 1.0) > 1e-3:
+        extra["speed"] = speed
+    # V12 emotion knobs (Chatterbox); silently no-op for engines that
+    # ignore unknown body fields (e.g. Kokoro). The wrapper validates
+    # bounds — Mac side only forwards the values.
+    if exaggeration is not None:
+        extra["exaggeration"] = exaggeration
+    if cfg_weight is not None:
+        extra["cfg_weight"] = cfg_weight
+    if temperature is not None:
+        extra["temperature"] = temperature
+    extra_body = extra or None
     for attempt in range(1, retries + 1):
         try:
             kwargs = dict(
@@ -1011,6 +1051,9 @@ def render_chapter(
     per_sentence: bool = False,
     max_paragraphs: int | None = None,
     model_name: str = "kokoro",
+    exaggeration: float | None = None,
+    cfg_weight: float | None = None,
+    temperature: float | None = None,
 ) -> dict:
     script = build_script(md_path)
     source_script = build_source_script(md_path)
@@ -1052,7 +1095,11 @@ def render_chapter(
                 tag = f"PAUSE {duration:.2f}s"
                 is_pause = True
             else:
-                mp3 = synth_chunk(client, voice, chunk, speed, model_name=model_name)
+                mp3 = synth_chunk(client, voice, chunk, speed,
+                                  model_name=model_name,
+                                  exaggeration=exaggeration,
+                                  cfg_weight=cfg_weight,
+                                  temperature=temperature)
                 tag = f"{len(chunk):4d} chars"
                 is_pause = False
             if i > 1:
@@ -1120,9 +1167,11 @@ def main() -> None:
         epilog=epilog,
     )
     ap.add_argument("--engine", choices=list(ENGINES.keys()), default="kokoro",
-                    help="TTS backend (default: kokoro). 'higgs' targets Higgs Audio v2.5 "
-                         "on the Windows GPU box; expects the same OpenAI-compatible API. "
-                         "Override the per-engine default base URL with --base-url.")
+                    help="TTS backend (default: kokoro). 'chatterbox' targets the Chatterbox "
+                         "(Resemble AI) server on the Windows GPU box; expects the same "
+                         "OpenAI-compatible API and a Bearer token via TTS_API_KEY env "
+                         "var (or --api-key). Override the per-engine default base URL "
+                         "with --base-url.")
     ap.add_argument("--preset", default="male",
                     help="default voice preset. Default: male (Kokoro: am_michael+am_fenrir "
                          "blend at 0.92 — less stylized than sinek, better for straight "
@@ -1138,8 +1187,26 @@ def main() -> None:
                     help="TTS speed multiplier (0.5-2.0). Overrides --preset.")
     ap.add_argument("--base-url", default=None,
                     help="HTTP base URL for the engine API (default: per-engine default — "
-                         "Kokoro localhost:8880, Higgs higgs.local:8881). Override for "
-                         "remote GPU server, Tailscale hostname, or stage-vs-prod swaps.")
+                         "Kokoro localhost:8880, Chatterbox desktop-umt08rn:8881). "
+                         "Override for remote GPU server, Tailscale FQDN, or stage-vs-prod "
+                         "swaps.")
+    ap.add_argument("--api-key", default=None,
+                    help="Bearer token for engines that require auth. Default: read from "
+                         "the TTS_API_KEY env var. Required for --engine chatterbox; "
+                         "ignored for engines whose requires_auth=False.")
+    ap.add_argument("--exaggeration", type=float, default=None,
+                    help="Emotion intensity (Chatterbox V12+ only; ignored by Kokoro). "
+                         "Model default ~0.5 used when omitted. 0.7+ for narrative-driven "
+                         "chapters; pair with --cfg-weight 0.3 for the documented "
+                         "dramatic-narrator recipe.")
+    ap.add_argument("--cfg-weight", type=float, default=None,
+                    help="Classifier-free guidance weight (Chatterbox V12+ only). "
+                         "Model default ~0.5 used when omitted. Lower (0.3) = slower, "
+                         "more deliberate pacing; pairs with --exaggeration 0.7+.")
+    ap.add_argument("--temperature", type=float, default=None,
+                    help="Sampling temperature (Chatterbox V12+ only). Model default "
+                         "(~0.8) used when omitted. Lower (0.5) for reproducibility "
+                         "across re-renders.")
     ap.add_argument("--only", help="render only chapters whose source name contains this string (e.g. 'ch05')")
     ap.add_argument("--force", action="store_true", help="re-render even if an MP3 already exists")
     ap.add_argument("--dry-run", action="store_true", help="print chunk counts only")
@@ -1208,7 +1275,20 @@ def main() -> None:
     print(f"  model:    {model_name}")
     print(f"Default preset: {args.preset}  chapter-map: {'off' if args.no_chapter_map else 'on'}")
 
-    client = OpenAI(base_url=base_url, api_key="not-needed")
+    if engine.get("requires_auth"):
+        api_key = args.api_key or os.environ.get("TTS_API_KEY")
+        if not api_key:
+            print(
+                f"Engine {args.engine!r} requires auth. Set the TTS_API_KEY env "
+                f"var or pass --api-key <token>. The token is the same Bearer "
+                f"value the Windows server uses for /v1/audio/speech.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+    else:
+        api_key = "not-needed"
+
+    client = OpenAI(base_url=base_url, api_key=api_key)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     SCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1270,12 +1350,21 @@ def main() -> None:
         entry = render_chapter(client, voice, speed, md_path, out_path, script_path,
                                per_sentence=args.per_sentence,
                                max_paragraphs=args.max_paragraphs,
-                               model_name=model_name)
+                               model_name=model_name,
+                               exaggeration=args.exaggeration,
+                               cfg_weight=args.cfg_weight,
+                               temperature=args.temperature)
         entry["engine"] = args.engine
         entry["preset"] = preset_name
         entry["voice"] = voice
         entry["speed"] = speed
         entry["mode"] = "sentence" if args.per_sentence else "chunk"
+        if args.exaggeration is not None:
+            entry["exaggeration"] = args.exaggeration
+        if args.cfg_weight is not None:
+            entry["cfg_weight"] = args.cfg_weight
+        if args.temperature is not None:
+            entry["temperature"] = args.temperature
         by_source[entry["source"]] = entry
         manifest["chapters"] = [by_source[s] for s in [c["source"] for c in manifest.get("chapters", [])] + [entry["source"]] if s in by_source]
         # deduplicate preserving first-seen order

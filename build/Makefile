@@ -4,6 +4,7 @@
 CHAPTERS_DIR := chapters
 OUT_DIR := build/output
 PANDOC := pandoc
+PYTHON ?= python3
 
 CHAPTER_FILES := \
 	$(CHAPTERS_DIR)/front-matter/preface.md \
@@ -69,11 +70,11 @@ epub: $(OUT_DIR)
 
 .PHONY: audiobook
 audiobook:
-	python build/audiobook.py
+	$(PYTHON) build/audiobook.py
 
 .PHONY: audiobook-hd
 audiobook-hd:
-	python build/audiobook.py --per-sentence
+	$(PYTHON) build/audiobook.py --per-sentence
 
 # audiobook-sample: render the first N body paragraphs of a single chapter
 # to <stem>_sample.mp3. Fast voice/preset iteration loop — typically ~30s
@@ -95,42 +96,116 @@ endif
 
 .PHONY: audiobook-sample
 audiobook-sample:
-	python build/audiobook.py $(sample_args)
+	$(PYTHON) build/audiobook.py $(sample_args)
 
-# Higgs-engine variants — render against the Windows GPU box's Higgs Audio
-# v2.5 server. HIGGS_URL points at the Windows machine's LAN IP (or the
-# Tailscale magic-DNS hostname if you've set Tailscale up). Override per-
-# render or once per shell session:
+# Chatterbox-engine variants — render against the Windows GPU box's
+# Chatterbox (Resemble AI) server. Auth via Bearer token in TTS_API_KEY.
+# CHATTERBOX_URL points at the Tailscale hostname (default) or LAN IP.
+# Override per-render or once per shell session:
 #
-#   HIGGS_URL=http://192.168.1.50:8881/v1 make audiobook-sample-higgs ch=ch01
-#   HIGGS_URL=http://gaming-rig.tail-scale.ts.net:8881/v1 make audiobook-higgs
+#   export TTS_API_KEY=<token>
+#   CHATTERBOX_URL=http://192.168.1.50:8881/v1 make audiobook-sample-chatterbox ch=ch01
+#   CHATTERBOX_URL=http://desktop-umt08rn.taildefd38.ts.net:8881/v1 make audiobook-chatterbox
+CHATTERBOX_URL ?= http://desktop-umt08rn:8881/v1
+chatterbox_args = --engine chatterbox --base-url $(CHATTERBOX_URL)
+
+.PHONY: audiobook-chatterbox
+audiobook-chatterbox:
+	$(PYTHON) build/audiobook.py $(chatterbox_args)
+
+.PHONY: audiobook-sample-chatterbox
+audiobook-sample-chatterbox:
+	$(PYTHON) build/audiobook.py $(sample_args) $(chatterbox_args)
+
+# audiobook-voices-chatterbox: query the Chatterbox server for its voice
+# catalog. Run this after standing up the Windows server, after every voice
+# upload, and before filling persona slots in PRESETS_CHATTERBOX.
+.PHONY: audiobook-voices-chatterbox
+audiobook-voices-chatterbox:
+	@$(PYTHON) build/voice_upload.py --base-url $(CHATTERBOX_URL) list || \
+		(echo "Could not reach $(CHATTERBOX_URL). Check TTS_API_KEY + Windows server." && exit 1)
+
+# audiobook-voice-upload: upload (or replace) a single voice via the
+# multipart PUT API. Args:
+#   id=<voice_id>          required — slug (lowercase alphanumeric/_/-)
+#   audio=<path>           required — wav/mp3/flac
+#   transcript=<text>      required — exact text spoken in the clip
+#   display_name=<text>    optional — human label
+#   language=<bcp47>       optional — en-US, ru, pt-BR, …
+#   notes=<text>           optional — provenance
 #
-# Default is the LAN-mDNS hostname 'higgs.local' — works if the Windows
-# machine advertises mDNS (most Windows 11 setups do not by default; set
-# HIGGS_URL explicitly or install Bonjour Print Services on Windows to
-# enable mDNS responder).
-HIGGS_URL ?= http://higgs.local:8881/v1
-higgs_args = --engine higgs --base-url $(HIGGS_URL)
+# Example:
+#   make audiobook-voice-upload id=voss audio=references/voss-30s.wav \
+#     transcript="Procurement isn't where compliance lives." \
+#     display_name="Council member — Voss" language=en-US
+.PHONY: audiobook-voice-upload
+audiobook-voice-upload:
+	@test -n "$(id)"          || (echo "id=<voice_id> required" && exit 2)
+	@test -n "$(audio)"       || (echo "audio=<path> required" && exit 2)
+	@test -n "$(transcript)"  || (echo "transcript=<text> required" && exit 2)
+	$(PYTHON) build/voice_upload.py --base-url $(CHATTERBOX_URL) put $(id) \
+	  --audio "$(audio)" --transcript "$(transcript)" \
+	  $(if $(display_name),--display-name "$(display_name)") \
+	  $(if $(language),--language "$(language)") \
+	  $(if $(notes),--notes "$(notes)")
 
-.PHONY: audiobook-higgs
-audiobook-higgs:
-	python build/audiobook.py $(higgs_args)
+# audiobook-voice-delete: remove a voice. Stock voices (en_man, en_woman,
+# etc.) are protected on the server side and return 403.
+.PHONY: audiobook-voice-delete
+audiobook-voice-delete:
+	@test -n "$(id)" || (echo "id=<voice_id> required" && exit 2)
+	$(PYTHON) build/voice_upload.py --base-url $(CHATTERBOX_URL) delete $(id)
 
-.PHONY: audiobook-sample-higgs
-audiobook-sample-higgs:
-	python build/audiobook.py $(sample_args) $(higgs_args)
+# librivox-search: find candidate audiobooks for narrator reference clips.
+# Args:
+#   language=<text>   default English
+#   solo=1            restrict to single-reader books (best for cloning)
+#   limit=<n>         default 30
+#   reader=<id>       LibriVox reader_id (find via https://librivox.org/reader/<id>)
+#
+# Example:
+#   make librivox-search language=Russian solo=1
+#   make librivox-search reader=263 solo=1
+language ?= English
+limit    ?= 30
+.PHONY: librivox-search
+librivox-search:
+	$(PYTHON) build/librivox_browse.py search --language "$(language)" --limit $(limit) \
+	  $(if $(solo),--solo-only) \
+	  $(if $(reader),--reader "$(reader)")
 
-# audiobook-voices-higgs: query the Higgs server for its voice catalog.
-# Run this after standing up the Windows server but before filling in
-# PRESETS_HIGGS in audiobook.py.
-.PHONY: audiobook-voices-higgs
-audiobook-voices-higgs:
-	@curl -s $(HIGGS_URL)/audio/voices | python3 -m json.tool || \
-		(echo "Could not reach $(HIGGS_URL). Set HIGGS_URL or check the Windows server is up." && exit 1)
+# librivox-sections: list sections + per-section reader for a book.
+.PHONY: librivox-sections
+librivox-sections:
+	@test -n "$(book)" || (echo "book=<id> required" && exit 2)
+	$(PYTHON) build/librivox_browse.py sections --book $(book)
+
+# librivox-preview: extract a clip to /tmp/ for listening. Args:
+#   book=<id>     required
+#   section=<n>   required — section number (1-indexed)
+#   start=<tc>    default 1:00 (skip LibriVox boilerplate intro)
+#   length=<sec>  default 30
+.PHONY: librivox-preview
+librivox-preview:
+	@test -n "$(book)"    || (echo "book=<id> required" && exit 2)
+	@test -n "$(section)" || (echo "section=<n> required" && exit 2)
+	$(PYTHON) build/librivox_browse.py preview --book $(book) --section $(section) \
+	  $(if $(start),--start $(start)) $(if $(length),--length $(length))
+
+# librivox-extract: extract a clean reference clip to disk for upload.
+# Args same as preview, plus:
+#   out=<path>    required — .wav (preferred) / .mp3 / .flac
+.PHONY: librivox-extract
+librivox-extract:
+	@test -n "$(book)"    || (echo "book=<id> required" && exit 2)
+	@test -n "$(section)" || (echo "section=<n> required" && exit 2)
+	@test -n "$(out)"     || (echo "out=<path> required" && exit 2)
+	$(PYTHON) build/librivox_browse.py extract --book $(book) --section $(section) \
+	  --out $(out) $(if $(start),--start $(start)) $(if $(length),--length $(length))
 
 .PHONY: m4b
 m4b:
-	python build/m4b.py
+	$(PYTHON) build/m4b.py
 
 # normalize: EBU R128 loudness normalization. Default target is `podcast`
 # spec (-16 LUFS / -1.5 dBTP / 96 kbps) for Apple Books / Leanpub. Use
@@ -138,15 +213,15 @@ m4b:
 # Two-pass mode is the default for both — single-pass not recommended for ACX.
 .PHONY: normalize
 normalize:
-	python build/normalize.py
+	$(PYTHON) build/normalize.py
 
 .PHONY: normalize-acx
 normalize-acx:
-	python build/normalize.py --target acx
+	$(PYTHON) build/normalize.py --target acx
 
 .PHONY: normalize-fast
 normalize-fast:
-	python build/normalize.py --single-pass
+	$(PYTHON) build/normalize.py --single-pass
 
 # verify-loudness: re-measure each normalized MP3 against its target spec
 # and exit non-zero if any chapter is out of spec. Run after `make normalize`
@@ -155,17 +230,17 @@ normalize-fast:
 # loudnorm should have caught but didn't (silent drift on long files).
 .PHONY: verify-loudness
 verify-loudness:
-	python build/verify_loudness.py
+	$(PYTHON) build/verify_loudness.py
 
 .PHONY: verify-loudness-acx
 verify-loudness-acx:
-	python build/verify_loudness.py --target acx
+	$(PYTHON) build/verify_loudness.py --target acx
 
 # embed-cover: add ID3v2 APIC frame (cover image) to every chapter MP3
 # so individual chapter files display book art in audiobook players.
 .PHONY: embed-cover
 embed-cover:
-	python build/embed-cover.py
+	$(PYTHON) build/embed-cover.py
 
 # voice-pass: rewrite chapters through voice agents per chapters/voice-plan.yaml.
 # Pass 1 applies the guest voice (Gladwell, Brown, Grant, Godin, Lencioni)
@@ -174,29 +249,29 @@ embed-cover:
 # Review and merge selectively — does not overwrite source chapters.
 .PHONY: voice-pass
 voice-pass:
-	python build/voice-pass.py
+	$(PYTHON) build/voice-pass.py
 
 .PHONY: voice-pass-1
 voice-pass-1:
-	python build/voice-pass.py --pass 1
+	$(PYTHON) build/voice-pass.py --pass 1
 
 .PHONY: voice-pass-2
 voice-pass-2:
-	python build/voice-pass.py --pass 2
+	$(PYTHON) build/voice-pass.py --pass 2
 
 .PHONY: voice-plan
 voice-plan:
-	python build/voice-pass.py --plan-only
+	$(PYTHON) build/voice-pass.py --plan-only
 
 # audio-copy: run alone, with stability check on (protects against picking
 # up in-flight files when an audiobook render is happening in another shell).
 .PHONY: audio-copy
 audio-copy:
-	python build/copy-to-dropbox.py
+	$(PYTHON) build/copy-to-dropbox.py
 
 .PHONY: audio-copy-all
 audio-copy-all:
-	python build/copy-to-dropbox.py --include-m4b --include-scripts --include-epub
+	$(PYTHON) build/copy-to-dropbox.py --include-m4b --include-scripts --include-epub
 
 # audiobook-deploy is the audiobook pipeline: regen MP3s, normalize loudness,
 # embed per-chapter cover, bundle .m4b, copy MP3s+manifest+.m4b to Dropbox.
@@ -210,27 +285,27 @@ audiobook-deploy: audiobook normalize embed-cover m4b-deploy
 # only the bundle needs (re)generation + deploy.
 .PHONY: m4b-deploy
 m4b-deploy: m4b
-	python build/copy-to-dropbox.py --include-m4b --no-stability-check
+	$(PYTHON) build/copy-to-dropbox.py --include-m4b --no-stability-check
 
 # audiobook-deploy-mp3 is the lighter variant: regen MP3s, normalize,
 # embed cover, copy. Skip the .m4b rebuild. Useful for iteration on
 # individual chapters.
 .PHONY: audiobook-deploy-mp3
 audiobook-deploy-mp3: audiobook normalize embed-cover
-	python build/copy-to-dropbox.py --no-stability-check
+	$(PYTHON) build/copy-to-dropbox.py --no-stability-check
 
 # epub-deploy: regenerate the .epub and copy it to Dropbox. Independent
 # of the audiobook pipeline; can run any time the manuscript is updated.
 .PHONY: epub-deploy
 epub-deploy: epub
-	python build/copy-to-dropbox.py --include-epub --no-stability-check
+	$(PYTHON) build/copy-to-dropbox.py --include-epub --no-stability-check
 
 # book-deploy: ship everything — audiobook (regen + normalize + per-chapter
 # cover + .m4b) AND .epub. Canonical "ship the entire book in every
 # format" target.
 .PHONY: book-deploy
 book-deploy: audiobook normalize embed-cover m4b epub
-	python build/copy-to-dropbox.py --include-m4b --include-epub --no-stability-check
+	$(PYTHON) build/copy-to-dropbox.py --include-m4b --include-epub --no-stability-check
 
 .PHONY: chapter-pdf
 chapter-pdf: $(OUT_DIR)
@@ -270,18 +345,18 @@ clean:
 
 .PHONY: check-audit
 check-audit:
-	python build/check_audit.py
+	$(PYTHON) build/check_audit.py
 
 .PHONY: promote-chapter promote-all promote-reject
 promote-chapter:
-	python build/promote.py --chapter $(ch)
+	$(PYTHON) build/promote.py --chapter $(ch)
 
 promote-all:
-	python build/promote.py --all
+	$(PYTHON) build/promote.py --all
 
 promote-reject:
-	python build/promote.py --reject $(ch) --reason "$(reason)"
+	$(PYTHON) build/promote.py --reject $(ch) --reason "$(reason)"
 
 .PHONY: check-stale
 check-stale:
-	python build/check_stale.py
+	$(PYTHON) build/check_stale.py

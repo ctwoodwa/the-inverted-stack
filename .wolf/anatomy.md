@@ -1,11 +1,12 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-27T18:13:26.156Z
-> Files: 179 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-28T19:16:50.935Z
+> Files: 211 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/
 
-- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~836 tok)
+- `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~925 tok)
+- `project_audiobook_topology.md` — Topology (~3242 tok)
 - `reference_migration_memory_path.md` — What happened (~808 tok)
 
 ## ../../Users/Chris/.claude/agents/
@@ -93,7 +94,7 @@
 - `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
 - `AUDIO-DOCKER.md` — Audiobook Generation — Docker Setup (~4120 tok)
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~16522 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~17914 tok)
 - `build_overlays.py` — Whispersync-capable EPUB build (Phases B-E). (~6341 tok)
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `check_first_use.py` — First-use rule checker. (~3348 tok)
@@ -104,13 +105,15 @@
 - `embed-cover.py` — Embed cover art as an ID3v2 APIC frame in every chapter MP3. (~2078 tok)
 - `generate_chapter_overview.py` — Generate chapter-overview.md for the inverted-stack-conformance skill. (~874 tok)
 - `generate_implementation_spec.py` — Generate the human-readable implementation-specification.md from the (~3052 tok)
+- `librivox_browse.py` — Browse LibriVox for usable narrator reference clips. (~3880 tok)
 - `m4b.py` — Build a single .m4b audiobook file from the per-chapter MP3s. (~2027 tok)
-- `Makefile` — The Inverted Stack — Build Targets (~2928 tok)
+- `Makefile` — The Inverted Stack — Build Targets (~3878 tok)
 - `normalize.py` — EBU R128 loudness normalization for the audiobook MP3s. (~2557 tok)
 - `promote.py` — Phase 4 promotion script. (~2233 tok)
 - `remediate_first_use.py` — Remediate first-use rule violations across all chapter sources. (~3156 tok)
 - `update_kleppmann_citation.py` — One-shot updater: standardize all Kleppmann et al. 2019 citations (~1568 tok)
 - `verify_loudness.py` — Verify normalized chapter MP3s land within their target loudness spec. (~2823 tok)
+- `voice_upload.py` — Mac-side client for the Chatterbox voice-upload API. (~2974 tok)
 - `voice-pass.py` — Voice-agent orchestrator: rewrite chapters through guest voice agents (~5068 tok)
 - `word-count.py` — Word count per chapter vs. target. (~666 tok)
 
@@ -166,7 +169,7 @@
 ## chapters/appendices/
 
 - `appendix-a-sync-daemon-wire-protocol.md` — Appendix A — Sync Daemon Wire Protocol (~6830 tok)
-- `appendix-b-threat-model-worksheets.md` — Appendix B — Threat Model Worksheets (~6601 tok)
+- `appendix-b-threat-model-worksheets.md` — Appendix B — Threat Model Worksheets (~7554 tok)
 - `appendix-c-further-reading.md` — Appendix C — Further Reading (~6367 tok)
 - `appendix-d-testing-the-inverted-stack.md` — Appendix D — Testing the Inverted Stack (~5969 tok)
 - `appendix-e-citation-style.md` — Appendix E — Citation Style (~1667 tok)
@@ -202,27 +205,71 @@
 - `ch12-crdt-engine-data-layer.md` — Chapter 12 — CRDT Engine and Data Layer (~10389 tok)
 - `ch13-schema-migration-evolution.md` — Chapter 13 — Schema Migration and Evolution (~6932 tok)
 - `ch14-sync-daemon-protocol.md` — Chapter 14 — Sync Daemon Protocol (~7080 tok)
-- `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~27793 tok)
-- `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~8462 tok)
+- `ch15-security-architecture.md` — Chapter 15 — Security Architecture (~39197 tok)
+- `ch16-persistence-beyond-the-node.md` — Chapter 16 — Persistence Beyond the Node (~12416 tok)
 
 ## chapters/part-4-implementation-playbooks/
 
 - `ch17-building-first-node.md` — Chapter 17 — Building Your First Node (~7551 tok)
 - `ch18-migrating-existing-saas.md` — Chapter 18 — Migrating an Existing SaaS (~7278 tok)
 - `ch19-shipping-to-enterprise.md` — The Procurement Conversation (~8859 tok)
-- `ch20-ux-sync-conflict.md` — Chapter 20 — UX, Sync, and Conflict (~6549 tok)
+- `ch20-ux-sync-conflict.md` — Chapter 20 — UX, Sync, and Conflict (~15917 tok)
+
+## docs/audio/
+
+- `CHATTERBOX-V12-EMOTION-KNOBS.md` — V12: Expose emotion-control parameters in /v1/audio/speech (~3874 tok)
 
 ## docs/book-update-plan/
 
-- `state.yaml` — Declares first (~15102 tok)
+- `state.yaml` — Declares first (~26070 tok)
+
+## docs/book-update-plan/working/10-data-class-escalation/
+
+- `code-check-report.md` — Code-Check Report — Extension #10 (Data-Class Escalation) (~2266 tok)
+- `draft-ch15.md` — Event-Triggered Re-classification (~2590 tok)
+- `draft-ch20.md` — Data-Class Escalation UX (~2434 tok)
+- `draft-report.md` — Draft Report — Extension #10: Data-Class Escalation (Event-Triggered Re-classification) (~4159 tok)
+- `outline.md` — Complete outline §A–§K: motivation, 5 sub-patterns (10a–10e), chapter selection (Ch15+Ch20), Sunfish packages, citations, FAILED conditions, cross-references, word budgets, novelty flag (~8000 tok)
+- `prose-review-report.md` — Prose Review Report — Extension #10 (Data-Class Escalation) (~1968 tok)
+- `technical-review-report.md` — Technical Review — Extension #10 (Data-Class Escalation) (~3148 tok)
+
+## docs/book-update-plan/working/12-privacy-aggregation/
+
+- `code-check-report.md` — Code-check report — #12 Privacy-Preserving Aggregation at Relay (~5870 tok)
+- `draft-report.md` — Draft report — #12 Privacy-Preserving Aggregation at Relay (~4073 tok)
+- `draft.md` — Privacy-Preserving Aggregation at Relay (~3043 tok)
+- `outline.md` — 12 — Privacy-Preserving Aggregation at Relay — Outline (~7549 tok)
+- `prose-review-report.md` — Prose-review report — #12 Privacy-Preserving Aggregation at Relay (~4076 tok)
+- `technical-review-report.md` — Technical-review report — #12 Privacy-Preserving Aggregation at Relay (~4360 tok)
+
+## docs/book-update-plan/working/44-per-data-class-device-distribution/
+
+- `code-check-report.md` — Code-check report — #44 Per-Data-Class Device-Distribution (~9826 tok)
+- `draft-report.md` — Draft report — #44 Per-Data-Class Device-Distribution (~3746 tok)
+- `draft.md` — Per-Data-Class Device-Distribution (~3308 tok)
+- `outline.md` — 44 — Per-Data-Class Device-Distribution Policy — Outline (~8017 tok)
+- `prose-review-report.md` — Prose Review Report — #44 Per-Data-Class Device-Distribution (~2322 tok)
+- `technical-review-report.md` — Technical Review Report — #44 Per-Data-Class Device Distribution (~1939 tok)
 
 ## docs/book-update-plan/working/46-forward-secrecy/
 
 - `code-check-report.md` — Code-check report — #46 Forward Secrecy and Post-Compromise Security (~1576 tok)
+- `prose-review-report.md` — Prose-review report — #46 Forward Secrecy and Post-Compromise Security (~3337 tok)
+- `technical-review-report.md` — Technical-review report — #46 Forward Secrecy and Post-Compromise Security (~2657 tok)
 
 ## docs/book-update-plan/working/47-endpoint-compromise/
 
 - `code-check-report.md` — Code-check report — #47 Endpoint Compromise (~2211 tok)
+- `prose-review-report.md` — Prose-review report — #47 Endpoint Compromise (~2463 tok)
+- `technical-review-report.md` — Technical-review report — #47 Endpoint Compromise (~3882 tok)
+
+## docs/book-update-plan/working/9-chain-of-custody/
+
+- `code-check-report.md` — Code-check report — #9 Chain-of-Custody for Multi-Party Transfers (~4497 tok)
+- `draft-report.md` — Draft report — #9 Chain-of-Custody for Multi-Party Transfers (~3404 tok)
+- `draft.md` — Draft — #9 Chain-of-Custody for Multi-Party Transfers (~5796 tok)
+- `prose-review-report.md` — Prose-review report — #9 Chain-of-Custody for Multi-Party Transfers (~3625 tok)
+- `technical-review-report.md` — Technical-review report — #9 Chain-of-Custody for Multi-Party Transfers (~4786 tok)
 
 ## docs/icm/
 
