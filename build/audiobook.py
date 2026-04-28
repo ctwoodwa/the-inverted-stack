@@ -276,30 +276,40 @@ PRESETS_KOKORO: dict[str, dict] = {
 
 # Chatterbox preset voices. Chatterbox is voice-cloning native — non-stock
 # voice IDs are reference-clip uploads, queried via `GET /v1/audio/voices`
-# (auth required). Stock voices that ship with the model are used as
-# fallbacks for `male`/`female`; persona-specific slots stay None until
-# reference clips are uploaded via build/voice_upload.py.
+# (auth required). Stock voices that ship with the model are used for
+# the universal narrator slot (broom_salesman per author decision
+# 2026-04-28).
 #
 # Stock catalog (verified 2026-04-28 against the Windows server):
 #   en_man, en_woman, broom_salesman (Ollivander/British male older),
 #   mabel (warm British-leaning female). The other ~12 stock voices are
 #   sitcom characters, child voices, or non-English — not narrator-fit.
 #
-# NOTE: Chatterbox renders at 24 kHz mono. Speed values below are kept
-# as hints; the server clamps to a sane range. Verify when wiring up
-# new persona voices via build/audiobook_voices_init.py (planned).
+# UNIVERSAL NARRATOR DECISION 2026-04-28: the author selected
+# `broom_salesman` as the single narrator for the entire book — Parts I,
+# III, IV, the Epilogue, the Preface, AND all Part II council chapters.
+# All preset slots route to broom_salesman. Cloned LibriVox voices for
+# the council members (ferreira-trial-rogeriom, shevchenko-trial-yakovlev,
+# voss-trial-savage, okonkwo-trial-klett, kelsey-trial-smith) are
+# preserved on the TTS server for optional per-chapter regeneration via
+# `--voice <id>` CLI override; they are not wired into the preset map.
+#
+# NOTE: Chatterbox renders at 24 kHz mono. Speed values are kept as hints;
+# the server clamps to a sane range. broom_salesman is a stock voice — pair
+# with V12 dramatic recipe (--exaggeration 0.7 --cfg-weight 0.3) for the
+# narrative-driven Part I and Epilogue chapters.
 PRESETS_CHATTERBOX: dict[str, dict] = {
-    "female":      {"voice": "en_woman",       "speed": 1.0},   # stock fallback
-    "female-solo": {"voice": "en_woman",       "speed": 1.0},   # stock fallback
-    "male":        {"voice": "en_man",         "speed": 1.0},   # stock fallback
-    "male-solo":   {"voice": "en_man",         "speed": 1.0},   # stock fallback
-    "sinek":       {"voice": "en_man",         "speed": 0.92},  # stock fallback; TODO upload warm low-pitch male
-    "practitioner":{"voice": "en_man",         "speed": 1.0},   # stock fallback; TODO upload Lusophone-adjacent male (Ferreira)
-    "british":     {"voice": "mabel",          "speed": 1.0},   # stock British-leaning female (warm)
-    "british-male":{"voice": "broom_salesman", "speed": 1.0},   # stock older British male
-    "fry":         {"voice": "broom_salesman", "speed": 1.0},   # closest stock RP register
-    "fry-blend":   {"voice": "broom_salesman", "speed": 1.0},   # alias (no blend support in Chatterbox)
-    "fenrir":      {"voice": "en_man",         "speed": 1.0},   # stock fallback; TODO upload polished corporate male
+    "female":      {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "female-solo": {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "male":        {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (default)
+    "male-solo":   {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "sinek":       {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Sinek hunt canceled per author decision)
+    "practitioner":{"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Ferreira clone available as ferreira-trial-rogeriom for per-chapter regen)
+    "british":     {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Okonkwo clone available as okonkwo-trial-klett for per-chapter regen)
+    "british-male":{"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "fry":         {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Shevchenko clone available as shevchenko-trial-yakovlev for per-chapter regen)
+    "fry-blend":   {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "fenrir":      {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Kelsey clone available as kelsey-trial-smith for per-chapter regen)
 }
 
 # Backwards-compat alias — old code paths may import PRESETS_HIGGS.
@@ -345,6 +355,15 @@ PRESETS = PRESETS_KOKORO
 # (Ch07, F, Nigerian), Kelsey (Ch08, M), Ferreira (Ch09, M, Lusophone).
 # Kokoro lacks Slavic/Nigerian/Lusophone English accents, so prose register
 # carries the accent work; voices select for gender + persona register.
+#
+# UNIVERSAL NARRATOR DECISION 2026-04-28: this map is now a no-op for the
+# Chatterbox engine because every preset slot in PRESETS_CHATTERBOX routes
+# to broom_salesman. For Kokoro the per-chapter persona mapping still
+# applies as originally designed. Per-chapter Chatterbox voicing can be
+# resurrected later by pointing individual preset slots back at the
+# uploaded cloned voices (ferreira-trial-rogeriom, shevchenko-trial-yakovlev,
+# voss-trial-savage, okonkwo-trial-klett, kelsey-trial-smith) — those
+# voices remain on the TTS server and in references/CREDITS.md.
 CHAPTER_PRESET_MAP: dict[str, str] = {
     "preface":                             "sinek",        # author's voice, deliberate cadence
     "ch05-enterprise-lens":                "female-solo",  # Voss — F, professional/authoritative (af_bella)
