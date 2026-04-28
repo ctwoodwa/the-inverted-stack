@@ -388,7 +388,17 @@ CHAPTER_FILES = [
     "appendices/appendix-f-regulatory-coverage.md",
 ]
 
-CHUNK_CHAR_BUDGET = 700  # target per-request size in characters
+CHUNK_CHAR_BUDGET = 700  # target per-request size in characters (Kokoro default)
+
+# Engine-aware chunk budget. Chatterbox caps each request at ~100 sec /
+# ~2500 tokens; cloned voices + V12 dramatic recipe (cfg_weight=0.3
+# slows pacing) push longer chunks past the cap, producing trailing
+# silence. 400 char target keeps each chunk well under the limit even
+# with the slowest combinations.
+CHUNK_BUDGETS_BY_ENGINE: dict[str, int] = {
+    "kokoro":     700,
+    "chatterbox": 400,
+}
 # Lowered from 1400 (2026-04-28, bug-096/bug-097). Root cause is
 # *progressive* slowdown in the CPU Kokoro container — early chunks
 # render in ~3-5s, but after ~70 chunks the same-sized chunk takes
@@ -578,7 +588,8 @@ def _expand_numbers(t: str) -> str:
     return t
 
 
-def narratable_text(md: str, source_only: bool = False) -> str:
+def narratable_text(md: str, source_only: bool = False,
+                    engine: str = "kokoro") -> str:
     """Convert a chapter markdown file to a clean narration script.
 
     When ``source_only`` is True, only structural transforms run (strip
@@ -591,7 +602,17 @@ def narratable_text(md: str, source_only: bool = False) -> str:
     capture a ``source_text`` field on each alignment chunk for EPUB 3 Media
     Overlay fragment ID injection — the source text matches what Pandoc
     emits in the XHTML, while the TTS-rendered text does not.
+
+    The ``engine`` parameter gates espeak-specific transforms that hurt
+    quality on neural TTS engines like Chatterbox. Chatterbox handles
+    foreign names, acronyms, and em-dash pacing natively — the
+    PROPER_NOUN_FIXES / ACRONYM_FIXES / em-dash → comma passes were
+    designed around espeak's mispronunciations and force unnecessary
+    letter-by-letter enunciation on Chatterbox. Default is "kokoro"
+    (full preprocessing) to preserve existing behavior; pass
+    "chatterbox" to skip espeak-specific transforms.
     """
+    is_neural = engine == "chatterbox"
     t = md
 
     # Strip HTML comments (ICM stage markers, target word counts, etc.)
@@ -668,14 +689,13 @@ def narratable_text(md: str, source_only: bool = False) -> str:
     t = re.sub(r"(?m)^\s*[-*+]\s+", "", t)
     t = re.sub(r"(?m)^\s*\d+\.\s+", "", t)
 
-    # Em-dash / en-dash handling. Both spaced (apposition) and unspaced
-    # (compound-word) em-dashes collapse to a comma for a micro-pause.
-    # Earlier versions converted spaced em-dashes to "..." for a longer
-    # beat, but in long-form chapter narration the dot-marker pauses
-    # accumulate into noticeable mid-sentence dead air, especially after
-    # voice-pass tunes that increase em-dash apposition density. A comma
-    # gives espeak a natural prosody pause without injecting silence.
-    if not source_only:
+    # Em-dash / en-dash handling. For espeak-backed engines (Kokoro), the
+    # em-dash is unreliable as a pause cue — collapsed to a comma for
+    # consistent micro-pauses. Neural engines (Chatterbox) handle em-dash
+    # pacing natively and the V12 dramatic recipe relies on em-dashes for
+    # rhythmic structure; converting to comma kills that structure and
+    # forces a faster, more clipped delivery. Skip for chatterbox.
+    if not source_only and not is_neural:
         t = t.replace(" — ", ", ").replace(" – ", ", ")
         t = t.replace("—", ", ").replace("–", ", ")
 
@@ -716,16 +736,23 @@ def narratable_text(md: str, source_only: bool = False) -> str:
         # "(1) ... (2) ... (3)" which espeak reads as "left-paren one right-paren".
         t = re.sub(r"\((\d+)\)", lambda m: _ordinal_word(int(m.group(1))), t)
 
-        # Acronym pre-processing for known-mangled terms (applied before
-        # terminal-punctuation guarantee so word boundaries still match).
-        for pat, repl in ACRONYM_FIXES.items():
-            t = re.sub(pat, repl, t)
+        # Acronym pre-processing for known-mangled terms. Espeak says
+        # "krdt" for CRDT without dashes; Chatterbox handles acronyms
+        # natively and the dashed form ("C-R-D-T") forces stilted
+        # letter-by-letter pronunciation. Skip for neural engines.
+        if not is_neural:
+            for pat, repl in ACRONYM_FIXES.items():
+                t = re.sub(pat, repl, t)
 
-        # Proper-noun pronunciation lexicon. Council member names and other
-        # repeated proper nouns the book cites. Applied after acronym fixes
-        # so neither pass interferes with the other.
-        for pat, repl in PROPER_NOUN_FIXES.items():
-            t = re.sub(pat, repl, t)
+        # Proper-noun pronunciation lexicon. Espeak mispronounces foreign
+        # names ("Tomás Ferreira" → "tomas ferrera"); the dashed
+        # pronunciations ("toh-MAHS feh-RAY-rah") fix that. Chatterbox's
+        # neural model handles foreign names natively from training data;
+        # the dashed forms force unnatural letter-stress patterns. Skip
+        # for neural engines.
+        if not is_neural:
+            for pat, repl in PROPER_NOUN_FIXES.items():
+                t = re.sub(pat, repl, t)
 
     # Collapse soft newlines (single newlines inside a paragraph) into
     # spaces before guaranteeing terminal punctuation. Markdown soft-wraps
@@ -985,10 +1012,10 @@ def synth_chunk(client: OpenAI, voice: str, text: str, speed: float,
     raise RuntimeError(f"{model_name} synth failed after {retries} retries: {last_err!r}")
 
 
-def build_script(md_path: Path) -> str:
+def build_script(md_path: Path, engine: str = "kokoro") -> str:
     """Build the narration script from a chapter markdown file."""
     raw = md_path.read_text(encoding="utf-8")
-    script = narratable_text(raw)
+    script = narratable_text(raw, engine=engine)
     # Chapter lead-in pause — gives listener a beat before the chapter title.
     script = "... \n\n" + script
     return script
@@ -1055,7 +1082,7 @@ def render_chapter(
     cfg_weight: float | None = None,
     temperature: float | None = None,
 ) -> dict:
-    script = build_script(md_path)
+    script = build_script(md_path, engine=model_name)
     source_script = build_source_script(md_path)
     if max_paragraphs is not None:
         script = truncate_to_paragraphs(script, max_paragraphs)
@@ -1065,11 +1092,14 @@ def render_chapter(
 
     # Chunk TTS + source in lockstep so source_text on each alignment entry
     # matches the Pandoc XHTML for EPUB Media Overlay fragment ID injection.
+    # Engine-aware budget — see CHUNK_BUDGETS_BY_ENGINE for rationale.
+    chunk_budget = CHUNK_BUDGETS_BY_ENGINE.get(model_name, CHUNK_CHAR_BUDGET)
     if per_sentence:
         chunks = chunk_sentences(script)
         source_chunks = chunk_sentences(source_script)
     else:
-        chunks, source_chunks = chunk_text_paired(script, source_script)
+        chunks, source_chunks = chunk_text_paired(script, source_script,
+                                                   budget=chunk_budget)
     total_chars = sum(len(c) for c in chunks)
     mode = "sentence" if per_sentence else "chunk"
     print(f"  {md_path.name}: {len(chunks)} {mode}s, {total_chars:,} chars")
@@ -1325,14 +1355,14 @@ def main() -> None:
         script_path = SCRIPTS_DIR / (out_stem + ".txt")
 
         if args.dry_run:
-            script = build_script(md_path)
+            script = build_script(md_path, engine=args.engine)
             chunks = chunk_sentences(script) if args.per_sentence else chunk_text(script)
             mode = "sentence" if args.per_sentence else "chunk"
             print(f"{rel}: {len(chunks)} {mode}s, {sum(len(c) for c in chunks):,} chars")
             continue
 
         if args.scripts_only:
-            script = build_script(md_path)
+            script = build_script(md_path, engine=args.engine)
             script_path.parent.mkdir(parents=True, exist_ok=True)
             script_path.write_text(script, encoding="utf-8")
             print(f"  wrote {script_path.relative_to(REPO).as_posix()} ({len(script):,} chars)")
