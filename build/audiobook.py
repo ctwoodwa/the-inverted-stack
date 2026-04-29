@@ -439,6 +439,7 @@ CHAPTER_FILES = [
     "appendices/appendix-d-testing-the-inverted-stack.md",
     "appendices/appendix-e-citation-style.md",
     "appendices/appendix-f-regulatory-coverage.md",
+    "appendices/appendix-g-glossary.md",
 ]
 
 CHUNK_CHAR_BUDGET = 700  # target per-request size in characters (Kokoro default)
