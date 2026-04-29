@@ -129,6 +129,70 @@ The storage budget, eviction policy, and minimum stub retention period are confi
 
 ---
 
+## Per-Data-Class Device-Distribution
+
+<!-- code-check: namespaces referenced — Sunfish.Kernel.Buckets (in canon, Ch16:128, extended for class-subscription manifest), Sunfish.Kernel.Sync (in canon, Ch14, extended for class-aware push filter), Sunfish.Kernel.Audit (in canon per cerebrum 2026-04-28, packages/kernel-audit/), Sunfish.Foundation.Fleet (forward-looking, Volume 1 extension roadmap from #11; not yet present in Sunfish reference implementation per Ch21:8). No new top-level namespace. Default to direct extension of Sunfish.Kernel.Buckets for the manifest; consider sub-namespace Sunfish.Kernel.Buckets.Subscription only if the manifest's surface area pulls in unrelated dependencies — confirm at code-check stage. APIs illustrative pending v1.0. -->
+
+Device fleets in production are heterogeneous by design. A restaurant's floor tablet — handled by servers — holds customer orders and table assignments. The same restaurant's back-office laptop — held by the owner — holds payroll and vendor invoices. Uniform replication fails this fleet two ways at once: the floor tablet holds payroll records a server has no operational need for, and a constrained Android tablet's storage budget is consumed by classes it will never display.
+
+The first failure is a security-surface problem. Application access controls prevent a server from executing a payroll lookup, but once payroll records sit in the local encrypted database the risk surface shifts to a decryption-key exposure, a debugger attach, or a future application bug. A record that is not on a device cannot be leaked from that device. The second failure is a storage-budget problem. The bucket model in §Declarative Sync Buckets already filters at bucket granularity, asking what attestations the user holds. Per-data-class device-distribution adds an orthogonal axis: not what the user is authorized to see, but what classes this physical device's operational role requires it to hold at all. The distinction matters in MDM (Mobile Device Management)-managed fleets where IT policy sets device class independently of the user's role.
+
+### The class-subscription manifest
+
+Each device carries a signed manifest declaring the data classes it accepts. The manifest is not an attestation. Role attestations are user-bound claims issued by the identity authority that authorize access to specific buckets; the class-subscription manifest is device-bound policy, set by the MDM operator or by the user in consumer deployments, declaring which classes the device's operational role requires. A device can hold a `financial_role` attestation and still exclude detailed customer-record classes through its manifest — the manifest restricts the attestation-granted set, never expands it.
+
+The manifest is a signed CBOR (Concise Binary Object Representation) document under the device's own Ed25519 keypair, making it tamper-evident and attributable. It carries the device identifier, the issuer (an MDM authority key, or a self-signed user key in consumer deployments), the list of accepted data-class identifiers, an issued-at timestamp, an expiry, and the signature. The manifest travels with the device identity during the five-step handshake (Ch14 §Five-Step Handshake), where the sending peer reads it before constructing any outbound delta.
+
+A data class is a higher-level abstraction over buckets. Each bucket entry in the YAML carries an optional `data_class` label; a class resolves to the union of bucket entries sharing that label. The manifest operates at the class level; `Sunfish.Kernel.Buckets` resolves class to bucket membership internally. Every manifest change produces a new signed version retained in the audit log for compliance reconstruction. PowerSync's bucket-definition model [5] influenced this shape with one inversion: PowerSync evaluates rules server-side per client parameter; the architecture evaluates the manifest client-side as device-declared policy and applies it on the sending peer.
+
+### Sync-daemon push filter
+
+`Sunfish.Kernel.Sync` on the sending node applies the receiver's manifest as a push filter before constructing outbound deltas. The filter sits at the same tier as the stream-level scope in Ch14 §Data Minimization at the Stream Level — after attestation verification, before delta construction. The two compose: the attestation filter removes streams the receiver lacks role authorization for; the class-subscription filter removes record-class operations within otherwise-authorized streams.
+
+The send tier drops records of an excluded class silently. The receiving daemon never sees the operation. The filter emits no error, mirroring the existing field-level out-of-scope behavior. The filter operates on the data-class label attached at write time; classes are declared in the document schema and assigned at record creation. Reclassification at runtime is the domain of event-triggered escalation (Ch15 §Event-Triggered Re-classification) and composes with this filter through the eviction protocol below. Filter evaluation is O(1) per operation — a hash-set membership check against the receiver's accepted classes. ElectricSQL's shape filtering [4] is the closest production analogue at the WAN-sync level; the architecture differs in operating on schema-declared class labels rather than SQL `WHERE` predicates.
+
+### Cross-class references: the policy-blocked placeholder
+
+A record in class A that holds a reference to a record in class B presents a problem on a device subscribed to class A but not class B: the A-record arrives with a reference the device cannot resolve locally. Three responses are possible — refuse delivery of the A-record, deliver it with a reference that silently returns null, or deliver it with an explicit placeholder.
+
+The architecture chooses the third. The placeholder follows the stub model from §Lazy Fetch and Storage Budgets, with one critical difference. **A lazy-evicted stub is fetchable on demand. A class-excluded placeholder is not.** The device's manifest excludes the referenced class, and the sync daemon will not retrieve it regardless of demand.
+
+This is where consumer-software analogues mislead. OneDrive Files On-Demand [2] presents a placeholder identical to a downloaded file in Explorer; the file fetches transparently on first access. iCloud's Optimize Mac Storage [3] removes local content and re-materialises it on access. In both, the stub indicates deferred latency, not policy denial. Dropbox Selective Sync [1] comes closer — an excluded folder simply does not appear locally — but creates an untyped void rather than a typed placeholder, leaving applications with broken paths and no semantic signal.
+
+The class-excluded placeholder differs in kind. Its structure carries the referenced record's identifier, its class label, an exclusion reason of `class_not_subscribed`, and no content. The application renders it as a restricted-reference indicator — not a missing-data error, not a broken link, but a policy-gated boundary the user can see and reason about. A task referencing a payroll record (class: financial) on a device excluding financial records does not render as "no data found." It renders as "restricted — not available on this device."
+
+The UI layer enforces the rendering contract because the architecture cannot detect every misuse of a placeholder. The architecture guarantees that unresolvable cross-class references are detectable and labeled, not silent. A device holding class A verifies every class-A-internal reference; references to excluded classes carry explicit marks.
+
+### MDM-driven manifest update and propagation
+
+The class-subscription manifest changes by signed update. An IT administrator pushes a new manifest version through the OTA (Over-the-Air) update channel, signed under the MDM authority key. The receiving device's sync daemon loads the new manifest at the next capability negotiation cycle. The manifest version increments. The audit log records the change. Subscription change is a revocation-shaped event; cross-reference Ch15 §Collaborator Revocation for the analogous primitive at the user-attestation layer.
+
+When a manifest tightens, the sync daemon evicts every record of the removed class from the local database. Eviction follows the stub-conversion mechanism from §Lazy Fetch and Storage Budgets: the daemon retains identifiers and metadata as class-excluded placeholders and purges content. The daemon logs the eviction to `Sunfish.Kernel.Audit` against the manifest version that triggered it. Composition with event-triggered class escalation (Ch15 §Event-Triggered Re-classification) reuses this path: when escalation moves a record into a class the device's manifest excludes, the daemon receives the class-change record, evaluates it against the current manifest, and schedules eviction. The two extensions compose at the manifest interface — escalation produces the class-change event; the manifest filter reacts to it.
+
+When a manifest expands, backfill proceeds according to the bucket entry's replication mode. Eager buckets backfill on the next sync cycle. Lazy buckets produce stubs immediately and full content on demand. Expansion does not blanket-fetch every newly-accepted record. Cross-reference Ch21 §21.1 Why fleet management is a distinct discipline (and the §11a–§11d sub-patterns that follow) for the administrative workflow that governs manifest update authorization, approval, and rollout.
+
+### Audit and observability
+
+An administrator who cannot verify what a device actually holds cannot reason about the fleet's data-exposure surface. Each device maintains a signed class-inventory record listing the classes it currently holds, the count of full records and placeholders per class, and the manifest version under which each class was acquired or evicted. The inventory updates on every sync session and on every manifest change.
+
+`Sunfish.Foundation.Fleet` aggregates per-device inventories into a fleet-level view. An administrator queries, per device, the subscribed classes, the actual held counts, the last manifest version, and the last sync timestamp. When a device's actual held classes diverge from its current manifest — the window that opens during an offline manifest update before eviction completes — the fleet dashboard flags the discrepancy; the device resolves it at the next sync cycle. Every manifest change, every eviction, and every class backfill produces a signed, attributable, append-only entry in `Sunfish.Kernel.Audit`, reusing the substrate Ch15 specifies for revocation and key-loss recovery. Bayou's subscription model [6] is the academic precedent — device-level partial replication with explicit subscription declarations dates to 1995. The architecture's contribution is the policy-blocked placeholder semantics and the MDM-signed manifest as a first-class fleet artifact.
+
+### Failure modes
+
+**Manifest conflated with attestation.** The manifest is device-bound operator policy. Attestation is user-bound identity claim. Conflating them collapses the security model — a user with `financial_role` attestation on a device whose MDM manifest excludes financial classes must not receive financial records. The manifest restricts; attestation does not override.
+
+**Placeholder treated as error state.** A class-excluded placeholder is a visible policy boundary, not a missing record, not a sync failure, not a data-integrity defect. Applications that render it as "data not found" mislead users about whether the data exists or simply is unreachable from this device.
+
+**Manifest expansion treated as eager backfill.** The bucket's replication mode governs backfill rate. Eager backfills on the next sync cycle; lazy produces stubs and fetches on demand. Treating every expansion as eager saturates network and storage budgets.
+
+**Eviction-on-tightening skipped.** When a class is removed, every record of that class on the device must convert to a class-excluded placeholder. Skipping eviction leaves orphaned content on the device after the policy change — the security benefit the manifest exists to provide collapses.
+
+**Forward-secrecy boundary at mid-stream subscription.** A device added to a class subscription mid-stream may not be able to decrypt historical operations encrypted under earlier session key material. Ch15 §Forward Secrecy and Post-Compromise Security specifies a per-message ratchet between session pairs (sub-pattern 46a-46b), not a per-class key chain — so the boundary the manifest expansion creates depends on whether the architecture chooses to derive class-scoped session keys from the per-message ratchet or to ship a one-time key bundle to newly-subscribing devices. The newly-subscribed device receives operations from the manifest's effective date forward in either case. <!-- CLAIM: source? — Ch15 §Forward Secrecy specifies per-message session-pair ratcheting, not per-class key chains; the mid-stream subscription onboarding behavior must be specified jointly with #46 (key-bundle delivery vs. forward-only boundary). Tech-review to resolve against the current #46 spec or escalate to a #46 follow-up. -->
+
+**Kill trigger.** If technical review determines that the class-subscription manifest cannot coexist with the existing bucket YAML schema without a breaking change to the `required_attestation` field's role-driven semantics, escalate before continuing. The manifest's device-policy axis and the attestation's user-role axis must compose in a single bucket evaluation; if they cannot, the extension's scope changes and the present specification requires redesign.
+
+---
+
 ## Snapshot Format and Rehydration
 
 Reading an aggregate's state from the raw event log becomes expensive as the log grows. Snapshots exist to bound that cost. A snapshot captures the current state of an aggregate at a point in time, indexed to the last event it incorporates.
@@ -327,6 +391,24 @@ Layer 5 was introduced in the five-layer architecture as an optional enterprise 
 Persistence beyond the node is a composition of decisions, not a single mechanism. Each layer resolves a distinct failure mode. Together they ensure the user's data survives the device, the application, and the operator.
 
 The governing constraint across all five layers is the same: the user's data must remain in the user's control and in a form the user can verify. Bucket access control enforces minimization at the protocol layer. Backup destinations are user-controlled and provider-agnostic, with named jurisdictional endpoints satisfying every major data sovereignty regime. The relay routes ciphertext only, is protocol-open and self-hostable, and cannot produce decryptable content under legal compulsion because it does not possess decryptable content. Snapshots are performance optimizations over an event log the user can read. Export produces four formats — JSON, CSV, SQLite, Markdown — that require no vendor cooperation to open, closing Property 5 (the long now) and Property 7 (ultimate ownership) as structural guarantees. The offline recovery bundle ensures that device loss at a site without connectivity is recoverable without IdP availability. The three-state backup UX surfaces risk honestly rather than hiding it behind a perpetually green indicator. None of these properties are incidental. Each is a design decision made in favor of the person who owns the data.
+
+---
+
+---
+
+## References
+
+[1] Dropbox, "Selective Sync overview," *Dropbox Help Center*, 2024. [Online]. Available: https://help.dropbox.com/sync/selective-sync-overview. [Accessed: Apr. 2026].
+
+[2] Microsoft, "Save disk space with OneDrive Files On-Demand for Windows," *Microsoft Support*, 2024. [Online]. Available: https://support.microsoft.com/en-us/office/save-disk-space-with-onedrive-files-on-demand-for-windows-0e6860d3-d9f3-4971-b321-7092438fb38e. [Accessed: Apr. 2026].
+
+[3] Apple Inc., "Optimise Mac storage in iCloud," *Apple Support*, 2024. [Online]. Available: https://support.apple.com/guide/mac-help/optimise-storage-space-mh35873/mac. [Accessed: Apr. 2026].
+
+[4] ElectricSQL, "ElectricSQL v0.10 released — shape-based partial replication," *electric-sql.com Blog*, Apr. 10, 2024. [Online]. Available: https://electric-sql.com/blog/2024/04/10/electricsql-v0.10-released. [Accessed: Apr. 2026].
+
+[5] PowerSync, "Sync Rules — Bucket Definitions," *PowerSync Documentation*, 2024. [Online]. Available: https://docs.powersync.com/usage/sync-rules. [Accessed: Apr. 2026].
+
+[6] D. B. Terry, M. M. Theimer, K. Petersen, A. J. Demers, M. J. Spreitzer, and C. H. Hauser, "Managing update conflicts in Bayou, a weakly connected replicated storage system," in *Proc. 15th ACM Symp. Operating Systems Principles (SOSP '95)*, Copper Mountain, CO, USA, Dec. 1995, pp. 172–182, doi: 10.1145/224056.224070.
 
 ---
 

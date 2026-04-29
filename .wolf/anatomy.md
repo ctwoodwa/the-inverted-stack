@@ -1,13 +1,17 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-04-28T19:16:50.935Z
-> Files: 211 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-04-29T18:16:26.240Z
+> Files: 222 tracked | Anatomy hits: 0 | Misses: 0
 
 ## ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/
 
 - `MEMORY.md` — Memory Index — The Inverted Stack Book Project (~925 tok)
 - `project_audiobook_topology.md` — Topology (~3242 tok)
 - `reference_migration_memory_path.md` — What happened (~808 tok)
+
+## ../../Library/CloudStorage/Dropbox/the-inverted-stack/voice-samples-2026-04-28/
+
+- `README.md` — Project documentation (~862 tok)
 
 ## ../../Users/Chris/.claude/agents/
 
@@ -94,7 +98,7 @@
 - `__init__.py` — build/__init__.py (~6 tok)
 - `apply_phase0a.py` — One-shot Phase 0a HIGH-tier compressor. (~15490 tok)
 - `AUDIO-DOCKER.md` — Audiobook Generation — Docker Setup (~4120 tok)
-- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~17914 tok)
+- `audiobook.py` — Generate audiobook MP3s from chapter markdown using a local Kokoro TTS server. (~19396 tok)
 - `build_overlays.py` — Whispersync-capable EPUB build (Phases B-E). (~6341 tok)
 - `check_audit.py` — Reference-integrity check: every jurisdiction in inline prose appears in Appendix F. (~581 tok)
 - `check_first_use.py` — First-use rule checker. (~3348 tok)
@@ -174,6 +178,7 @@
 - `appendix-d-testing-the-inverted-stack.md` — Appendix D — Testing the Inverted Stack (~5969 tok)
 - `appendix-e-citation-style.md` — Appendix E — Citation Style (~1667 tok)
 - `appendix-f-regulatory-coverage.md` — Appendix F — Regulatory Coverage Map — 7-region matrix of 40+ frameworks with per-chapter reverse index; the canonical compliance reference for the book (~3200 tok)
+- `appendix-g-glossary.md` — Appendix G — Glossary (~6224 tok)
 
 ## chapters/epilogue/
 
@@ -185,10 +190,10 @@
 
 ## chapters/part-1-thesis-and-pain/
 
-- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~9970 tok)
-- `ch02-local-first-serious-stack.md` — Chapter 2 — Local-First: From Sync Toy to Serious Stack (~7791 tok)
-- `ch03-inverted-stack-one-diagram.md` — Chapter 3 — The Inverted Stack in One Diagram (~6573 tok)
-- `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~5955 tok)
+- `ch01-when-saas-fights-reality.md` — Chapter 1 — When SaaS Fights Reality (~10353 tok)
+- `ch02-local-first-serious-stack.md` — Chapter 2 — Local-First: From Sync Toy to Serious Stack (~9426 tok)
+- `ch03-inverted-stack-one-diagram.md` — Chapter 3 — The Inverted Stack in One Diagram (~7399 tok)
+- `ch04-choosing-your-architecture.md` — Chapter 4 — Choosing Your Architecture (~8662 tok)
 
 ## chapters/part-2-council-reads-the-paper/
 
@@ -271,6 +276,17 @@
 - `prose-review-report.md` — Prose-review report — #9 Chain-of-Custody for Multi-Party Transfers (~3625 tok)
 - `technical-review-report.md` — Technical-review report — #9 Chain-of-Custody for Multi-Party Transfers (~4786 tok)
 
+## docs/book-update-plan/working/council-review-2026-04-29-part1/
+
+- `ch01-round-1.md` — Kleppmann Council Review — Round 1 (~9848 tok)
+- `ch01-round-2.md` — Kleppmann Council Review — Round 2 (~7877 tok)
+- `ch02-round-1.md` — KLEPPMANN COUNCIL REVIEW — Part I, Round 1 (~10354 tok)
+- `ch02-round-2.md` — KLEPPMANN COUNCIL REVIEW — Part I, Round 2 (~10179 tok)
+- `ch03-round-1.md` — Document role under review (~9835 tok)
+- `ch03-round-2.md` — Round 2 charter (~9156 tok)
+- `ch04-round-1.md` — SEAT 1 — The Theorist (academic / theoretical correctness) (~9334 tok)
+- `ch04-round-2.md` — Round-1-to-Round-2 Resolution Audit (run before scoring) (~8661 tok)
+
 ## docs/icm/
 
 
@@ -330,6 +346,10 @@
 ## prospectus/
 
 - `prospectus.md` — Book Prospectus (~4256 tok)
+
+## references/
+
+- `CREDITS.md` — Audiobook voice credits (~1757 tok)
 
 ## reviews/
 

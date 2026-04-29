@@ -72,7 +72,7 @@ List every actor who interacts with your system, or who could realistically inte
 
 ### THREAT-10 — Compromised Endpoint
 
-THREAT-10 is the first numbered, structured entry in this taxonomy. Subsequent extensions follow the same THREAT-NN format.
+Subsequent threat entries follow the same THREAT-NN format used here.
 
 **Actor profile.** A device fully owned by an attacker. The OS is no longer trustworthy: persistent malware, a zero-click exploit, or other privileged code execution defeats application-layer protections. Consumer spyware and nation-state tooling both fall in this category. The capability ceiling differs; the architectural exposure does not.
 
@@ -231,6 +231,73 @@ Send this message to every team member in the affected role. Adjust the brackete
 | USA (state laws — CCPA (California Consumer Privacy Act), etc.) | Varies | Varies |
 
 Verify the jurisdictional obligations for every market the team operates in before the first incident occurs. The retention floor above is an audit control. The table above is the incident SLA.
+
+---
+
+## Section 5 — Chain-of-Custody Worksheet
+
+Use this worksheet when the deployment transfers sensitive data to a third party (insurer, regulator, auditor, legal counsel, successor entity), handles evidence-class data (dashcam footage, healthcare records, financial audit logs), or operates a mandated regulatory-export stream (MDS-style telemetry, financial reporting, healthcare event reporting). Fill it in before the first evidence-class transfer; revisit when regulatory scope changes. Architectural specification: Ch15 §Chain-of-Custody for Multi-Party Transfers.
+
+### Field 1 — Parties
+
+| Role | Identity | Device key fingerprint | Jurisdiction |
+|---|---|---|---|
+| Transferor (originating custodian) | | | |
+| Recipient (receiving custodian) | | | |
+| External authority (regulator, TSA, court) — if applicable | | | |
+
+Record fingerprints from the published key hierarchy, not informal channels.
+
+### Field 2 — Data class
+
+| Data class | Evidence-class? | Retention floor | Crypto-shred eligible? |
+|---|---|---|---|
+| | Yes / No | | Yes / No |
+
+Under-designation saves setup cost until the first legal dispute exposes the gap.
+
+### Field 3 — Transfer trigger
+
+Name the event that initiates transfer (scheduled regulatory export, insurer claim request, auditor engagement, departure partition under §Collaborator Revocation 45e, subpoena, warrant) and the authorization gate — who signs off before a `CustodyTransferInitiated` event emits.
+
+### Field 4 — Signing requirements
+
+- [ ] Both transferor and recipient device keys are in the published key hierarchy with valid attestation at transfer time.
+- [ ] Transferor signing role grants `re-transfer` scope (onward custody) or excludes it (custody terminal at recipient).
+- [ ] One-sided `transfer-initiated` records are flagged incomplete and excluded from any artifact represented as completed.
+- [ ] Audit-log validation rejects `CustodyTransferConfirmed` events lacking both signatures.
+
+### Field 5 — Timestamping
+
+| Item | Decision |
+|---|---|
+| External TSA required? | Yes (evidence-class) / No (consumer-tier) |
+| TSA provider and qualification basis | e.g., eIDAS qualified TSP (EU); equivalent per jurisdiction |
+| TSA endpoint and certificate fingerprint | |
+| Max `tsa-pending` duration before compliance escalation | |
+| Offline policy | Queue and submit on next relay window / Block transfer until TSA reachable |
+
+Record the TSA certificate fingerprint locally so the verifier detects a substituted endpoint.
+
+### Field 6 — Verification
+
+- [ ] Merkle-chain verification documented for streaming exports — root cadence, hash function (SHA-256 default), proof format.
+- [ ] Receipt-verification documented for bilateral transfers — signature check, version-vector match, TSA-token validation.
+- [ ] Attestation artifacts (TSA tokens, Merkle proofs, signed receipts) retained alongside the data they attest. Lost artifacts reduce the transfer to `transfer-initiated` retroactively.
+
+### Field 7 — Escalation paths
+
+On `CustodyTransferDisputed` (recipient version mismatches transferor assertion):
+
+1. Halt further transfers of the affected object pending resolution.
+2. Log the dispute event with both signed events.
+3. Engage legal counsel before responding to any external party.
+4. Diagnose divergence: transferor error, recipient error, network corruption, adversarial tampering. Each path differs.
+5. Do not reconcile by modifying either local log. The disputed state is the legally relevant state.
+
+On TSA outages exceeding the declared pending duration, escalate to the compliance officer. On Merkle-chain verification failures recipient-side, treat as a stream-omission incident before responding to the regulator.
+
+The worksheet is deployment-time. Per-transfer enforcement happens in `Sunfish.Kernel.Custody` through the four event contracts named in Ch15 §Chain-of-Custody.
 
 ---
 
