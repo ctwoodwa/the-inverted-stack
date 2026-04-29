@@ -1,0 +1,75 @@
+# Audiobook generation stack — local TTS engines.
+#
+# Usage:
+#   docker compose -f build/docker-compose.audio.yml up -d kokoro      # always-on draft engine
+#   docker compose -f build/docker-compose.audio.yml up -d higgs       # high-quality engine (slow)
+#   docker compose -f build/docker-compose.audio.yml down              # stop everything
+#   docker compose -f build/docker-compose.audio.yml logs -f kokoro
+#
+# Either engine speaks the OpenAI Audio Speech API at /v1/audio/speech, so
+# the existing build/audiobook.py points at one or the other via --base-url.
+#
+# The kokoro service is the daily-iteration default. Quality is "good
+# enough for technical-book audio" but noticeably TTS-y compared to
+# higgs/eleven; runs at ~0.6x realtime on a 2.3 GHz Intel i9.
+#
+# The higgs service is the higher-quality path with voice cloning. Prebuilt
+# images do not exist as of this writing — see build/AUDIO-DOCKER.md for
+# how to build the sorbetstudio/faster-higgs-audio fork locally. The block
+# below is a placeholder you uncomment after building.
+#
+# DOCKER MEMORY: bump Docker Desktop's memory limit to 12 GB minimum BEFORE
+# starting higgs — it OOMs at the 4 GB Docker default. Settings -> Resources
+# -> Memory in Docker Desktop on macOS.
+
+services:
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    container_name: kokoro-fastapi
+    ports:
+      - "8880:8880"
+    restart: unless-stopped
+    volumes:
+      # Persist the model cache so the container does not redownload weights
+      # on every restart. The image embeds Kokoro-82M v1.0 (~440 MB) at
+      # /app/api/src/models/v1_0; bind it to a named volume so the host
+      # owns the cache lifecycle.
+      - kokoro-models:/app/api/src/models/v1_0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8880/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # higgs (commented until a local image is built — see AUDIO-DOCKER.md)
+  #
+  # higgs:
+  #   image: faster-higgs-audio:local
+  #   container_name: higgs-audio-v2
+  #   ports:
+  #     - "8881:8000"   # external 8881 to avoid Kokoro collision; internal 8000
+  #   restart: unless-stopped
+  #   environment:
+  #     DEVICE: cpu                          # forces CPU mode; default is auto (CUDA if present)
+  #     HIGGS_QUANTIZATION: int8             # int4 for tighter memory at slight quality cost
+  #     HIGGS_VOICE_DIR: /app/voices         # mount preset + cloned voices here
+  #   volumes:
+  #     - higgs-models:/root/.cache/huggingface
+  #     - ./audio/voices:/app/voices         # bind a host folder for voice samples
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 10g                      # quantized; full-precision needs 24g
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  #     interval: 60s
+  #     timeout: 15s
+  #     retries: 3
+  #     start_period: 300s
+
+volumes:
+  kokoro-models:
+    name: kokoro-models
+  # higgs-models:
+  #   name: higgs-models

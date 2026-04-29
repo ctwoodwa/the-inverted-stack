@@ -70,6 +70,48 @@ List every actor who interacts with your system, or who could realistically inte
 | High | Sophisticated attacker; zero-day capability; nation-state or well-funded criminal |
 | Limited | Access is structurally constrained (e.g., ciphertext only — no key material) |
 
+### THREAT-10 — Compromised Endpoint
+
+Subsequent threat entries follow the same THREAT-NN format used here.
+
+**Actor profile.** A device fully owned by an attacker. The OS is no longer trustworthy: persistent malware, a zero-click exploit, or other privileged code execution defeats application-layer protections. Consumer spyware and nation-state tooling both fall in this category. The capability ceiling differs; the architectural exposure does not.
+
+**Capabilities.**
+
+| Tier | Examples | Practical implication |
+|---|---|---|
+| Medium | Scripted exploit, consumer spyware | Reads OS keychain on non-enclave devices; reads in-memory plaintext during active session; captures session tokens |
+| High | Pegasus, Predator, Hermit (zero-click, nation-state) | All of the above, plus persistence across reboots; covert sync-mesh participation until revocation |
+
+Most real-world compromises are Medium. High capability changes the calculus for hardware enclaves: only enclave-backed key storage retains protection; the OS keychain is read.
+
+**Attack surface.** OS keychain, in-memory key material during active session, application database (decryptable with the locally-held DEKs), session tokens, biometric authentication flow.
+
+**Architecture protects.** Other devices in the user's fleet (per-device keypair isolation). Other users' data on the relay (role-scoped access). Future state after revocation propagates. Transaction-log integrity — backdate attacks blocked by the append-only log and per-device signing.
+
+**Architecture does not protect.** Local cached data that was decryptable before compromise. Current-session plaintext in memory. Keys held in the OS keychain on non-enclave devices.
+
+**Residual risk.** Scoped to the compromised device's cached copy. On enclave-class devices (Secure Enclave, Titan M, Pluton), the KEK is protected even under OS compromise; in-memory plaintext remains exposed. On non-enclave devices, the KEK is exposed and all locally-cached ciphertext is decryptable.
+
+#### Attack tree — primary branch: mobile zero-click compromise
+
+1. **Attacker delivers zero-click exploit.** No user interaction. Targets the OS messaging stack or browser engine. Device is compromised silently.
+2. **Attacker reads OS keychain.** Non-enclave devices: KEK is extracted; locally-cached ciphertext is decryptable. Attack succeeds at the data-access goal.
+3. **Enclave check.** Enclave-class devices: KEK is inaccessible via OS API. Attack contained to in-memory plaintext during active session only.
+4. **Attacker reads in-memory plaintext.** Whatever the application has decrypted for display is accessible. Re-authentication interval (Ch15 §In-Memory Key Handling) limits the window — four hours consumer, sixty minutes regulated.
+5. **Attacker attempts relay impersonation.** Captured session token used to forge writes. Blocked when the token is bound to the device keypair and the relay enforces keypair-session binding. Bearer-only tokens succeed — that is an architectural failure against §47e.
+6. **Operator issues remote-wipe broadcast.** Revocation plus crypto-shred propagates. The device evicts key material on next connection. An attacker who keeps the device offline defers the wipe; MDM (parallel channel) catches that case for enterprise deployments.
+
+#### Mitigation summary
+
+- Mandate enclave-backed key storage for any deployment with regulated or sensitive individual data.
+- Enforce re-authentication intervals: four hours consumer, sixty minutes regulated.
+- Integrate MDM (Intune, Jamf, Google MDM) for enterprise deployments. MDM wipe runs in parallel with crypto-shred.
+- Enforce device attestation at relay handshake for high-security deployments.
+- Communicate honestly: no architecture protects data on a fully-compromised device where the attacker has extracted keys from a non-enclave keychain.
+
+Cross-references: Ch15 §Endpoint Compromise (full specification); Ch15 §In-Memory Key Handling (re-authentication interval); Ch15 §Collaborator Revocation (the broadcast mechanism reused by remote wipe).
+
 ---
 
 ## Section 3 — Worked Example: Construction PM Vertical
@@ -189,6 +231,73 @@ Send this message to every team member in the affected role. Adjust the brackete
 | USA (state laws — CCPA (California Consumer Privacy Act), etc.) | Varies | Varies |
 
 Verify the jurisdictional obligations for every market the team operates in before the first incident occurs. The retention floor above is an audit control. The table above is the incident SLA.
+
+---
+
+## Section 5 — Chain-of-Custody Worksheet
+
+Use this worksheet when the deployment transfers sensitive data to a third party (insurer, regulator, auditor, legal counsel, successor entity), handles evidence-class data (dashcam footage, healthcare records, financial audit logs), or operates a mandated regulatory-export stream (MDS-style telemetry, financial reporting, healthcare event reporting). Fill it in before the first evidence-class transfer; revisit when regulatory scope changes. Architectural specification: Ch15 §Chain-of-Custody for Multi-Party Transfers.
+
+### Field 1 — Parties
+
+| Role | Identity | Device key fingerprint | Jurisdiction |
+|---|---|---|---|
+| Transferor (originating custodian) | | | |
+| Recipient (receiving custodian) | | | |
+| External authority (regulator, TSA, court) — if applicable | | | |
+
+Record fingerprints from the published key hierarchy, not informal channels.
+
+### Field 2 — Data class
+
+| Data class | Evidence-class? | Retention floor | Crypto-shred eligible? |
+|---|---|---|---|
+| | Yes / No | | Yes / No |
+
+Under-designation saves setup cost until the first legal dispute exposes the gap.
+
+### Field 3 — Transfer trigger
+
+Name the event that initiates transfer (scheduled regulatory export, insurer claim request, auditor engagement, departure partition under §Collaborator Revocation 45e, subpoena, warrant) and the authorization gate — who signs off before a `CustodyTransferInitiated` event emits.
+
+### Field 4 — Signing requirements
+
+- [ ] Both transferor and recipient device keys are in the published key hierarchy with valid attestation at transfer time.
+- [ ] Transferor signing role grants `re-transfer` scope (onward custody) or excludes it (custody terminal at recipient).
+- [ ] One-sided `transfer-initiated` records are flagged incomplete and excluded from any artifact represented as completed.
+- [ ] Audit-log validation rejects `CustodyTransferConfirmed` events lacking both signatures.
+
+### Field 5 — Timestamping
+
+| Item | Decision |
+|---|---|
+| External TSA required? | Yes (evidence-class) / No (consumer-tier) |
+| TSA provider and qualification basis | e.g., eIDAS qualified TSP (EU); equivalent per jurisdiction |
+| TSA endpoint and certificate fingerprint | |
+| Max `tsa-pending` duration before compliance escalation | |
+| Offline policy | Queue and submit on next relay window / Block transfer until TSA reachable |
+
+Record the TSA certificate fingerprint locally so the verifier detects a substituted endpoint.
+
+### Field 6 — Verification
+
+- [ ] Merkle-chain verification documented for streaming exports — root cadence, hash function (SHA-256 default), proof format.
+- [ ] Receipt-verification documented for bilateral transfers — signature check, version-vector match, TSA-token validation.
+- [ ] Attestation artifacts (TSA tokens, Merkle proofs, signed receipts) retained alongside the data they attest. Lost artifacts reduce the transfer to `transfer-initiated` retroactively.
+
+### Field 7 — Escalation paths
+
+On `CustodyTransferDisputed` (recipient version mismatches transferor assertion):
+
+1. Halt further transfers of the affected object pending resolution.
+2. Log the dispute event with both signed events.
+3. Engage legal counsel before responding to any external party.
+4. Diagnose divergence: transferor error, recipient error, network corruption, adversarial tampering. Each path differs.
+5. Do not reconcile by modifying either local log. The disputed state is the legally relevant state.
+
+On TSA outages exceeding the declared pending duration, escalate to the compliance officer. On Merkle-chain verification failures recipient-side, treat as a stream-omission incident before responding to the regulator.
+
+The worksheet is deployment-time. Per-transfer enforcement happens in `Sunfish.Kernel.Custody` through the four event contracts named in Ch15 §Chain-of-Custody.
 
 ---
 

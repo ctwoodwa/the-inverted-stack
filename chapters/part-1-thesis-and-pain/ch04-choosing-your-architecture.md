@@ -25,9 +25,11 @@ Most real products contain both. A project management tool's core value is user-
 
 ---
 
+The five filters apply in order. Three of them (F1, F2, F4) can produce hard-stop verdicts; the order matters because any hard stop ends the evaluation. The order also reflects how decisively each filter rules: F1 is a property of the domain (independent of business model and team), F2 is a property of who owns the data (independent of how the team monetizes it), F3 is a property of the operational environment, F4 is a property of the business model, and F5 is a property of the team's capacity. Apply them top-down. If F1 stops the evaluation, F2 through F5 do not run. If F1 and F2 pass but F4 produces a hard stop (revenue requires data custody), the architecture cannot be reconciled with the business — F4 wins, even if F2 and F3 cleared. The five-filter sequence is therefore a precedence chain, not five independent tests.
+
 ## Filter 1: Consistency Requirements (Hard Stop)
 
-This is the only filter that can disqualify the entire architecture. Answer each question honestly.
+This is the strongest filter for disqualifying the entire architecture. Answer each question honestly.
 
 | Question | If yes |
 |---|---|
@@ -52,9 +54,10 @@ Who is the natural owner of the primary records?
 |---|---|
 | User creates data; data describes the user's own work or clients | Local-first |
 | Vendor aggregates anonymous user behavior as the product itself | Centralized |
-| Regulatory custodian must hold the authoritative copy (SEC, FINRA, FDA) | Centralized |
 | User owns their data but wants optional sharing and sync with peers | Local-first + relay |
 | Data has value only when pooled: market prices, rankings, recommendations | Centralized |
+
+(Regulatory-custodian-mandated authoritative copy — SEC, FINRA, FDA, certain healthcare and export-controlled workflows — is treated as an F1-class hard stop and is covered in Filter 1's eventual-consistency-not-acceptable cases. If a regulator, not the user or vendor, must hold the system of record, the architecture cannot make that guarantee structurally and the evaluation should have ended at F1.)
 
 The distinction is not who *stores* the data. It is who *creates* it, who *uses* it, and who loses something meaningful if it becomes inaccessible. A construction PM's project files belong to the PM and their firm. The records describe their work, their bids, their subcontractor relationships. No other firm's data makes them more or less useful. The natural owner is obvious.
 
@@ -62,7 +65,9 @@ Contrast that with a platform whose core product is behavioral aggregation. An a
 
 The most common real-world case is mixed ownership. It resolves to Zone C: user-owned records for the day-to-day data plane, with specific aggregated surfaces — org-wide dashboards, cross-team reporting, benchmarking — handled by a separate service. The local-node architecture handles user-owned records. It treats aggregated surfaces as optional read models, not authoritative sources.
 
-If a regulatory custodian — not the user, not the vendor, but a regulator — must hold the authoritative copy, the architecture cannot make that guarantee structurally. Healthcare records under HIPAA (Health Insurance Portability and Accountability Act), financial records under FINRA, export-controlled data under ITAR (International Traffic in Arms Regulations): each has regulatory frameworks specifying where authoritative custody must reside. HIPAA accommodates local-first when a Business Associate Agreement covers the storage architecture and audit trails satisfy 45 CFR §164.312's access controls. FINRA Rule 4511 and SEC Rule 17a-4 specify third-party WORM (write-once-read-many) storage for broker-dealer records — requirements that may route specific retention flows to a centralized custodian even when day-to-day operations run local-first. Know which regime applies before reaching this filter.
+If a regulatory custodian — not the user, not the vendor, but a regulator — must hold the authoritative copy, the architecture cannot make that guarantee structurally. Healthcare records under HIPAA, financial records under FINRA, export-controlled data under ITAR: each has frameworks specifying where authoritative custody must reside.
+
+HIPAA accommodates local-first when a Business Associate Agreement covers the storage architecture and audit trails satisfy 45 CFR §164.312's technical safeguards. The administrative safeguards under §164.308 (workforce training, access management, contingency planning) are operator-policy concerns that endpoints make harder, not easier, because each endpoint is its own access boundary. FINRA Rule 4511 and SEC Rule 17a-4 specify third-party WORM storage for broker-dealer records — requirements that may route specific retention flows to a centralized custodian even when day-to-day operations run local-first. Know which regime applies before reaching this filter.
 
 ---
 
@@ -89,7 +94,7 @@ For these users, the question is not "can the software degrade gracefully?" It i
 
 The enterprise environment deserves separate attention. IT departments in regulated industries — finance, healthcare, defense contracting, government — often require that data not leave controlled infrastructure. A cloud SaaS where data lives on a vendor's servers in a region the vendor selects fails this requirement directly. A local-node architecture where data lives on MDM-managed endpoints under IT's control passes it. The data residency properties this architecture provides as a structural side effect of its design are a primary procurement advantage in enterprise sales — not a secondary nice-to-have.
 
-The regulatory landscape behind this filter is now global. European pressure comes from the 2020 Schrems II ruling, which constrains EU personal data transfers to US cloud providers without supplemental safeguards — enforced nationally by Germany's BSI (Bundesamt für Sicherheit in der Informationstechnik) and France's CNIL (Commission nationale de l'informatique et des libertés). India's DPDP (Digital Personal Data Protection) Act 2023 and the RBI (Reserve Bank of India) data localization circular, the UAE's DIFC (Dubai International Financial Centre) DPL (Data Protection Law) 2020 (which may legally prohibit foreign cloud storage for DIFC-licensed financial entities), and Russia's Federal Law 242-FZ — among the first general-purpose data localization laws globally, predating GDPR by two years — are representative; the full coverage matrix across GCC (Gulf Cooperation Council), APAC (Asia-Pacific), African, and Americas markets is in Appendix F. In each jurisdiction, the architecture where data lives on the user's own hardware is the architecture that makes compliance tractable. In several (DIFC, RBI, 242-FZ, PIPL (Personal Information Protection Law)), it is closer to the architecture the law requires.
+The regulatory landscape behind this filter is now global. European pressure comes from the 2020 Schrems II ruling, which constrains EU personal data transfers to US cloud providers without supplemental safeguards — followed by the 2023 EU-US Data Privacy Framework, which provides an alternative transfer mechanism for participating US organizations but is itself in active legal review and may not survive the next round of court challenges. National enforcement runs through Germany's BSI (Bundesamt für Sicherheit in der Informationstechnik) and France's CNIL (Commission nationale de l'informatique et des libertés). India's DPDP (Digital Personal Data Protection) Act 2023 and the RBI (Reserve Bank of India) data localization circular, the UAE's DIFC (Dubai International Financial Centre) DPL (Data Protection Law) 2020 (which may legally prohibit foreign cloud storage for DIFC-licensed financial entities), and Russia's Federal Law 242-FZ — among the first general-purpose data localization laws globally, predating GDPR by two years — are representative; the full coverage matrix across GCC (Gulf Cooperation Council), APAC (Asia-Pacific), African, and Americas markets is in Appendix F. In each jurisdiction, the architecture where data lives on the user's own hardware is the architecture that makes compliance tractable. In several (DIFC, RBI, 242-FZ, PIPL (Personal Information Protection Law)), it is closer to the architecture the law requires.
 
 If your users work offline regularly — or in environments where they *should* be able to work offline even if they currently cannot — the connectivity filter points toward local-first.
 
@@ -142,11 +147,13 @@ Four skills separate local-node development from standard web application develo
 
 These skills are learnable, not rare. The combined estimate — three to six months for CRDT and sync plus one to three months for key management — reflects real project history, not pessimism. Teams that treat those months as a legitimate investment ship stable systems. Teams that skip them ship systems that fail on reconnection edge cases and schema incompatibilities in the field.
 
+Engineering capability is necessary but not sufficient. A team that clears all four engineering skills above can still ship Zone A and discover six months later that they cannot operate it. Operational capability is the second half of F5: fleet telemetry exported from unowned endpoints (which fleet members synced recently, which schema version each runs, key-rotation events), MDM coordination with customer IT on installer signing and configuration profiles, supply-chain signing with notarization and a published SBOM, and on-call runbooks for common fleet failure modes (quorum loss, schema-version skew, certificate rotation). Each is a real engineering commitment, not a nice-to-have. Part IV (Chapters 17–20) and Chapter 21 specify the playbooks; a team that treats operational capability as something to figure out post-launch ships software that fails customer 1.
+
 ---
 
 ## The Three Outcome Zones
 
-Running the five filters produces one of three conclusions.
+Running the five filters produces one of three conclusions. The three Zones are presented as discrete categories because most projects land cleanly in one — but they are anchor points on a spectrum, not a strict partition. Some projects sit between Zone A and Zone C (a small team starting Anchor-style on the Anchor accelerator and adding a hosted relay later), and one valid migration path moves a Zone C deployment toward Zone A over years as engineering capacity grows. Read the Zones as the three positions most teams settle at, not as the only positions the architecture supports.
 
 ```mermaid
 flowchart TD
@@ -180,17 +187,56 @@ All five filters clear without a hard stop. The team has the timeline and capabi
 
 Zone A applies to: single-tenant or team-scoped productivity and business software; offline or regulated operational environments; software whose core value exists before any other user joins; professional or enterprise users who install software and expect it to stay installed. Representative domains: project management, professional CRM, field operations tools, legal and healthcare records management, engineering and design applications.
 
+The Zone A operational picture: a fleet of MDM-managed endpoints running the Anchor accelerator (Sunfish `accelerators/anchor/`), a self-hosted or managed relay coordinating peer discovery and serving as a fan-out point when LAN sync is not viable, and a fleet observability pipeline collecting per-endpoint sync-health, schema-version, and key-rotation telemetry. When the relay fails, day-to-day work continues on the local plane; sync catches up when the relay returns. Part III (Chapters 11–16) specifies the architecture; Part IV (Chapters 17–20) and Chapter 21 specify the playbooks for shipping, MDM packaging, enterprise procurement, and fleet operations.
+
 **Zone B — Traditional SaaS or Website**
 
-Filter 1 or Filter 2 produced a hard "Centralized only" verdict. Zone B is the correct answer for: multi-tenant aggregation as the core value proposition; anonymous public access without persistent identity; millisecond global consistency as a domain requirement; pure content delivery.
+Filter 1 or Filter 2 (or Filter 4) produced a hard "Centralized only" verdict. Zone B is the correct answer for: multi-tenant aggregation as the core value proposition; anonymous public access without persistent identity; millisecond global consistency as a domain requirement; pure content delivery; and one common scope-driven case worth naming: a small-team, fast-ship, low-stakes greenfield project where the architecture in this book would be overkill. A two-person team prototyping a public-facing web app over a weekend should not be carrying CRDT debugging discipline as overhead. Zone B is the right answer there too.
 
 Zone B is the right answer for a significant category of software. Building financial trading infrastructure on a local-node architecture is not principled — it is wrong for the domain. The architecture serves specific problems, and those problems are identified by passing all five filters.
 
 **Zone C — Hybrid**
 
-The filters pass for user-scoped primary records but fail for specific coordination features — or Filter 5 indicates a timeline that cannot support the full Zone A investment immediately. Zone C is the most frequent outcome for enterprise software teams adopting local-first incrementally. The local node handles all user-owned data and day-to-day compute. The cloud relay handles sync, cross-organization collaboration, payments, and compliance reporting. A traditional web layer handles public-facing surfaces.
+The filters pass for user-scoped primary records but fail for specific coordination features — or Filter 5 indicates a timeline that cannot support the full Zone A investment immediately. Zone C is the most frequent outcome for enterprise software teams adopting local-first incrementally. The local node handles all user-owned data and day-to-day compute. The cloud relay handles sync, cross-organization collaboration, payments, and compliance reporting. A traditional web layer handles public-facing surfaces. The Bridge accelerator (Sunfish `accelerators/bridge/`) is the reference implementation; Chapter 18 specifies the Zone C migration playbook for an existing hosted SaaS product.
 
 Zone C also applies to teams migrating an existing SaaS product. Retaining cloud infrastructure as the sync relay while adding local-node capability incrementally is a legitimate migration path, not a compromise. Hybrids designed to move toward Zone A over time stay architecturally honest. Hybrids that allow server-side logic to accumulate indefinitely tend to re-centralize gradually — a failure mode the epilogue addresses directly.
+
+One legal nuance worth surfacing for European procurement: under GDPR Article 28, a managed-relay operator that routes encrypted traffic without holding decryption keys is acting as a processor rather than a controller, and the relay-operator-as-processor question is a recurring procurement topic. Chapter 15 specifies the data-processing-agreement template and the relay-operator legal posture in detail.
+
+### Per-Zone Compliance Posture
+
+Each Zone enables a different default compliance posture for the major regulatory regimes. The framework below names the structural baseline; Chapter 15 specifies the supplemental controls and Appendix F details the per-jurisdiction obligations.
+
+| Regulatory regime | Zone A (Local-First Node) | Zone C (Hybrid) | Zone B (Traditional SaaS) |
+|---|---|---|---|
+| **GDPR / Schrems II** | Data residency satisfied structurally; relay holds ciphertext only | Same as Zone A on the data-plane; relay-operator-as-processor agreement under Article 28 required | Requires Standard Contractual Clauses + supplemental safeguards per Schrems II |
+| **HIPAA** | §164.312 technical safeguards met by encryption-at-rest + role-scoped keys; §164.308 administrative safeguards depend on the operator's policies | Same as Zone A on the local-data plane; BAA covers the relay operator | BAA with vendor required; administrative safeguards covered by vendor's compliance program |
+| **DIFC DPL / GCC residency laws** | Authoritative data on user-controlled hardware in-jurisdiction; satisfied by default | Same as Zone A if relay is in-jurisdiction; otherwise transfer requirements apply | Requires in-jurisdiction cloud region + cross-border transfer governance |
+| **India DPDP / RBI circular** | User-controlled storage in-jurisdiction satisfies localization | Relay placement determines transfer posture | Requires in-jurisdiction infrastructure |
+| **China PIPL** | User-controlled storage in-jurisdiction satisfies most data-localization rules; security assessment still required for cross-border transfers | Same as Zone A if relay is in-jurisdiction; cross-border transfer requires CAC security assessment | Requires CAC-approved cross-border transfer mechanism (security assessment, standard contract, or certification) |
+| **Brazil LGPD** | User-controlled storage satisfies data-subject rights structurally | Relay placement determines transfer posture; requires DPA with relay operator | Requires LGPD-compliant transfer mechanism (international cooperation, contractual clauses, certification) |
+| **Japan APPI / Korea PIPA** | User-controlled storage in-jurisdiction simplifies cross-border-transfer analysis | Relay placement governs transfer posture; opt-in consent for cross-border transfer typically required | Requires explicit consent or equivalent mechanism for cross-border transfer of personal data |
+| **South Africa POPIA / Nigeria NDPR** | In-jurisdiction user-controlled storage satisfies the residency-leaning provisions | Same as Zone A if relay is in-jurisdiction; otherwise transfer-restriction analysis applies | Requires in-jurisdiction infrastructure or compliant cross-border transfer mechanism |
+| **Russia 242-FZ** | Personal-data storage on Russian-territory user-controlled hardware satisfies the requirement structurally | Relay must be in-territory for the personal-data flow; or storage component must remain in-jurisdiction with transfer restrictions | Requires in-territory cloud infrastructure for any personal-data-handling subsystem |
+| **SOC 2** | Vendor's own SOC 2 covers software-supply-chain controls; customer's IT covers endpoint operation | Vendor's SOC 2 covers software + relay; customer's IT covers endpoints | Vendor's SOC 2 covers everything end-to-end |
+
+The table inverts a common assumption. Local-first does not skip compliance; it shifts where compliance burden sits. Zone A moves operational compliance toward the customer's IT (which is often what regulated customers want, because they already have the controls). Zone B keeps compliance with the vendor (which is often what customers without strong IT want). Zone C splits the burden along the same line as the data plane.
+
+### A Worked Example: The Construction-Industry SaaS Migration
+
+A 60-person construction-industry software company has shipped a hosted SaaS for project bid management since 2019. Their largest customers are general contractors in Texas, Saudi Arabia, and Germany. The Saudi customer's IT team has flagged data residency as a procurement blocker; the German customer's data protection officer has raised Schrems II concerns; the Texas customer is happy with the current product but is rebidding the contract. The team is evaluating whether to migrate to Zone A, Zone C, or stay in Zone B.
+
+*Filter 1 (Consistency).* Project bids, takeoff sheets, RFI logs, and submittal histories are not atomic-cross-user transactions. A two-hour eventual-consistency window during reconnection is acceptable. The double-entry change-order ledger is the one subsystem that may need CP-class treatment, but it can be modeled as a per-project lease — a Flease-coordinated lease scoped to one project, specified in Chapter 14. **Pass.**
+
+*Filter 2 (Data ownership).* Each general contractor's project data describes their own work, their own subcontractors, and their own contractual obligations. No regulatory custodian needs to hold the authoritative copy. **User is the natural owner. Local-first.**
+
+*Filter 3 (Connectivity).* Field superintendents work on construction sites with intermittent cellular coverage. Owner conferences happen in client offices behind enterprise firewalls. **Local-first mandatory.**
+
+*Filter 4 (Business model).* Revenue comes from per-seat subscription to a managed service: bid templates, integration with QuickBooks and Procore, tier-2 support. Users do not lose data when subscriptions lapse — historical bids remain readable. The business model thrives when users own their data. **Local-first viable.**
+
+*Filter 5 (Team capability).* The team has built sync engines before but not CRDT-based ones. Existing customers cannot tolerate a six-month feature freeze for a from-scratch rewrite. Greenfield Zone A is not the right shape. **Zone C — Hybrid migration, retain cloud relay, add local-node capability incrementally.**
+
+Verdict: Zone C. The team adopts the Bridge accelerator pattern, runs Phase 1 (data-plane local replicas with read-through to the existing API) for 90 days, then Phase 2 (write-path migration to local-first with the existing API as a sync relay) over the following six months. Chapter 18 specifies this migration playbook in detail.
 
 ---
 

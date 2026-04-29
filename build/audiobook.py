@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -185,6 +186,40 @@ ACRONYM_FIXES = {
     r"(?i)\bPart X\b":    "Part 10",
 }
 
+# Chatterbox-only acronym expansions. The neural model handles most
+# acronyms (CRDT, GDPR, HIPAA, API, etc.) by spelling them out
+# letter-by-letter naturally. But word-LIKE acronyms — those that look
+# pronounceable as a syllable — get misread as fake words. "SaaS"
+# becomes "saaars"; "IaaS" / "PaaS" / "IoT" have the same failure mode.
+#
+# Two patterns per term, in order:
+#   1. First-use parenthetical pattern: "SaaS (Software as a Service)"
+#      collapses to just "Software as a Service" — avoids the doubled
+#      phrasing the naive expansion would produce.
+#   2. Standalone form: bare "SaaS" expands to the full phrase.
+#
+# Ordered list (not dict) because the first-use pattern must match
+# BEFORE the standalone pattern strips out "SaaS".
+#
+# Add entries by listening for misread acronyms in a render. Don't add
+# acronyms Chatterbox already handles correctly (CRDT, GDPR, HIPAA,
+# API, KEK, DEK, HSM, TPM, etc.) — over-expanding makes the audio
+# longer without improving intelligibility. Verify with --scripts-only
+# + a short render before locking in.
+CHATTERBOX_EXPANSIONS: list[tuple[str, str]] = [
+    # First-use parenthetical patterns (collapse the doubled phrasing)
+    (r"\bSaaS\s*\(\s*Software as a Service\s*\)",     "Software as a Service"),
+    (r"\bIaaS\s*\(\s*Infrastructure as a Service\s*\)", "Infrastructure as a Service"),
+    (r"\bPaaS\s*\(\s*Platform as a Service\s*\)",     "Platform as a Service"),
+    (r"\bIoT\s*\(\s*Internet of Things\s*\)",         "Internet of Things"),
+    # Standalone forms
+    (r"\bSaaS\b", "Software as a Service"),
+    (r"\bIaaS\b", "Infrastructure as a Service"),
+    (r"\bPaaS\b", "Platform as a Service"),
+    (r"\bIoT\b",  "Internet of Things"),
+]
+
+
 # Proper-noun pronunciation lexicon. These are the names espeak gets wrong
 # enough that listeners notice. Add entries by listening to a render and
 # noting any name that came out wrong. Format is the same as ACRONYM_FIXES:
@@ -227,7 +262,12 @@ ABBREVIATION_FIXES = {
 
 # Named voice + speed presets. --preset selects one; --voice/--speed override.
 # Rationale for each is documented in the audiobook research notes.
-PRESETS: dict[str, dict] = {
+#
+# Two engine catalogs share the same preset KEY space — "sinek", "british",
+# "fenrir", etc. — so CHAPTER_PRESET_MAP works across both engines without
+# rewiring. The VOICE values differ because Kokoro and Higgs have different
+# voice catalogs. resolve_preset() picks the right catalog based on --engine.
+PRESETS_KOKORO: dict[str, dict] = {
     # Female — HH-hour trained voices. Bella = professional core, Nicole = breath texture.
     "female":      {"voice": "af_bella+af_nicole", "speed": 0.92},
     "female-solo": {"voice": "af_bella",           "speed": 0.92},
@@ -268,6 +308,79 @@ PRESETS: dict[str, dict] = {
     "fenrir":      {"voice": "am_fenrir",            "speed": 0.92},
 }
 
+# Chatterbox preset voices. Chatterbox is voice-cloning native — non-stock
+# voice IDs are reference-clip uploads, queried via `GET /v1/audio/voices`
+# (auth required). Stock voices that ship with the model are used for
+# the universal narrator slot (broom_salesman per author decision
+# 2026-04-28).
+#
+# Stock catalog (verified 2026-04-28 against the Windows server):
+#   en_man, en_woman, broom_salesman (Ollivander/British male older),
+#   mabel (warm British-leaning female). The other ~12 stock voices are
+#   sitcom characters, child voices, or non-English — not narrator-fit.
+#
+# UNIVERSAL NARRATOR DECISION 2026-04-28: the author selected
+# `broom_salesman` as the single narrator for the entire book — Parts I,
+# III, IV, the Epilogue, the Preface, AND all Part II council chapters.
+# All preset slots route to broom_salesman. Cloned LibriVox voices for
+# the council members (ferreira-trial-rogeriom, shevchenko-trial-yakovlev,
+# voss-trial-savage, okonkwo-trial-klett, kelsey-trial-smith) are
+# preserved on the TTS server for optional per-chapter regeneration via
+# `--voice <id>` CLI override; they are not wired into the preset map.
+#
+# NOTE: Chatterbox renders at 24 kHz mono. Speed values are kept as hints;
+# the server clamps to a sane range. broom_salesman is a stock voice — pair
+# with V12 dramatic recipe (--exaggeration 0.7 --cfg-weight 0.3) for the
+# narrative-driven Part I and Epilogue chapters.
+PRESETS_CHATTERBOX: dict[str, dict] = {
+    "female":      {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "female-solo": {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "male":        {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (default)
+    "male-solo":   {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "sinek":       {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Sinek hunt canceled per author decision)
+    "practitioner":{"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Ferreira clone available as ferreira-trial-rogeriom for per-chapter regen)
+    "british":     {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Okonkwo clone available as okonkwo-trial-klett for per-chapter regen)
+    "british-male":{"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "fry":         {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Shevchenko clone available as shevchenko-trial-yakovlev for per-chapter regen)
+    "fry-blend":   {"voice": "broom_salesman", "speed": 1.0},   # universal narrator
+    "fenrir":      {"voice": "broom_salesman", "speed": 1.0},   # universal narrator (Kelsey clone available as kelsey-trial-smith for per-chapter regen)
+}
+
+# Backwards-compat alias — old code paths may import PRESETS_HIGGS.
+# Removable once the rest of the tree is swept; harmless until then.
+PRESETS_HIGGS = PRESETS_CHATTERBOX
+
+# Engine catalog. Add a new entry here to support a new TTS backend; the
+# rest of the script picks up the new engine via --engine.
+#
+# `requires_auth: True` engines pull a Bearer token from the TTS_API_KEY env
+# var (or --api-key CLI flag). Kokoro runs locally without auth; Chatterbox
+# on the Windows box requires it.
+ENGINES: dict[str, dict] = {
+    "kokoro": {
+        "presets": PRESETS_KOKORO,
+        "default_base_url": "http://localhost:8880/v1",
+        "model_name": "kokoro",
+        "requires_auth": False,
+        "description": "Kokoro-82M FastAPI on the local Mac (default daily-driver)",
+    },
+    "chatterbox": {
+        "presets": PRESETS_CHATTERBOX,
+        # Override at the CLI with --base-url. Default is the Tailscale
+        # hostname for the Windows GPU box. Override examples:
+        #   CHATTERBOX_URL=http://192.168.1.50:8881/v1 python build/audiobook.py --engine chatterbox
+        #   --base-url http://desktop-umt08rn.taildefd38.ts.net:8881/v1
+        "default_base_url": "http://desktop-umt08rn:8881/v1",
+        "model_name": "chatterbox",
+        "requires_auth": True,
+        "description": "Chatterbox (Resemble AI) on the Windows GPU box — voice-cloning, high-quality path",
+    },
+}
+
+# Backwards-compatibility alias — older callers (tests, external scripts)
+# may import PRESETS directly. Defaults to the Kokoro catalog.
+PRESETS = PRESETS_KOKORO
+
 # Per-chapter preset overrides. Key is matched as a substring against the
 # source path. Part II council chapters each get a voice that gender-matches
 # the named member; Ch10 returns to the main narrator because it's the
@@ -276,6 +389,15 @@ PRESETS: dict[str, dict] = {
 # (Ch07, F, Nigerian), Kelsey (Ch08, M), Ferreira (Ch09, M, Lusophone).
 # Kokoro lacks Slavic/Nigerian/Lusophone English accents, so prose register
 # carries the accent work; voices select for gender + persona register.
+#
+# UNIVERSAL NARRATOR DECISION 2026-04-28: this map is now a no-op for the
+# Chatterbox engine because every preset slot in PRESETS_CHATTERBOX routes
+# to broom_salesman. For Kokoro the per-chapter persona mapping still
+# applies as originally designed. Per-chapter Chatterbox voicing can be
+# resurrected later by pointing individual preset slots back at the
+# uploaded cloned voices (ferreira-trial-rogeriom, shevchenko-trial-yakovlev,
+# voss-trial-savage, okonkwo-trial-klett, kelsey-trial-smith) — those
+# voices remain on the TTS server and in references/CREDITS.md.
 CHAPTER_PRESET_MAP: dict[str, str] = {
     "preface":                             "sinek",        # author's voice, deliberate cadence
     "ch05-enterprise-lens":                "female-solo",  # Voss — F, professional/authoritative (af_bella)
@@ -309,15 +431,37 @@ CHAPTER_FILES = [
     "part-4-implementation-playbooks/ch18-migrating-existing-saas.md",
     "part-4-implementation-playbooks/ch19-shipping-to-enterprise.md",
     "part-4-implementation-playbooks/ch20-ux-sync-conflict.md",
+    "part-5-operational-concerns/ch21-operating-a-fleet.md",
     "epilogue/epilogue-what-the-stack-owes-you.md",
     "appendices/appendix-a-sync-daemon-wire-protocol.md",
     "appendices/appendix-b-threat-model-worksheets.md",
     "appendices/appendix-c-further-reading.md",
     "appendices/appendix-d-testing-the-inverted-stack.md",
     "appendices/appendix-e-citation-style.md",
+    "appendices/appendix-f-regulatory-coverage.md",
+    "appendices/appendix-g-glossary.md",
 ]
 
-CHUNK_CHAR_BUDGET = 1400  # target per-request size in characters
+CHUNK_CHAR_BUDGET = 700  # target per-request size in characters (Kokoro default)
+
+# Engine-aware chunk budget. Chatterbox caps each request at ~100 sec /
+# ~2500 tokens; cloned voices + V12 dramatic recipe (cfg_weight=0.3
+# slows pacing) push longer chunks past the cap, producing trailing
+# silence. 400 char target keeps each chunk well under the limit even
+# with the slowest combinations.
+CHUNK_BUDGETS_BY_ENGINE: dict[str, int] = {
+    "kokoro":     700,
+    "chatterbox": 400,
+}
+# Lowered from 1400 (2026-04-28, bug-096/bug-097). Root cause is
+# *progressive* slowdown in the CPU Kokoro container — early chunks
+# render in ~3-5s, but after ~70 chunks the same-sized chunk takes
+# 30-60s and the worker eventually hangs (memory leak / thermal /
+# worker degradation). Lowering chunk size is a partial mitigation,
+# not a fix. For long renders on CPU Kokoro the practical paths are:
+# (a) wrap with periodic `docker restart kokoro-fastapi` every ~50
+# chunks; (b) add resume-capable rendering (sidecar manifest + chunk
+# concat); (c) run on a GPU instance. See .wolf/buglog.json bug-097.
 
 # Mapping from dot count to silence duration (seconds). Empirically, Kokoro
 # treats consecutive periods as ~one sentence terminator regardless of count
@@ -498,7 +642,8 @@ def _expand_numbers(t: str) -> str:
     return t
 
 
-def narratable_text(md: str, source_only: bool = False) -> str:
+def narratable_text(md: str, source_only: bool = False,
+                    engine: str = "kokoro") -> str:
     """Convert a chapter markdown file to a clean narration script.
 
     When ``source_only`` is True, only structural transforms run (strip
@@ -511,7 +656,17 @@ def narratable_text(md: str, source_only: bool = False) -> str:
     capture a ``source_text`` field on each alignment chunk for EPUB 3 Media
     Overlay fragment ID injection — the source text matches what Pandoc
     emits in the XHTML, while the TTS-rendered text does not.
+
+    The ``engine`` parameter gates espeak-specific transforms that hurt
+    quality on neural TTS engines like Chatterbox. Chatterbox handles
+    foreign names, acronyms, and em-dash pacing natively — the
+    PROPER_NOUN_FIXES / ACRONYM_FIXES / em-dash → comma passes were
+    designed around espeak's mispronunciations and force unnecessary
+    letter-by-letter enunciation on Chatterbox. Default is "kokoro"
+    (full preprocessing) to preserve existing behavior; pass
+    "chatterbox" to skip espeak-specific transforms.
     """
+    is_neural = engine == "chatterbox"
     t = md
 
     # Strip HTML comments (ICM stage markers, target word counts, etc.)
@@ -588,14 +743,13 @@ def narratable_text(md: str, source_only: bool = False) -> str:
     t = re.sub(r"(?m)^\s*[-*+]\s+", "", t)
     t = re.sub(r"(?m)^\s*\d+\.\s+", "", t)
 
-    # Em-dash / en-dash handling. Both spaced (apposition) and unspaced
-    # (compound-word) em-dashes collapse to a comma for a micro-pause.
-    # Earlier versions converted spaced em-dashes to "..." for a longer
-    # beat, but in long-form chapter narration the dot-marker pauses
-    # accumulate into noticeable mid-sentence dead air, especially after
-    # voice-pass tunes that increase em-dash apposition density. A comma
-    # gives espeak a natural prosody pause without injecting silence.
-    if not source_only:
+    # Em-dash / en-dash handling. For espeak-backed engines (Kokoro), the
+    # em-dash is unreliable as a pause cue — collapsed to a comma for
+    # consistent micro-pauses. Neural engines (Chatterbox) handle em-dash
+    # pacing natively and the V12 dramatic recipe relies on em-dashes for
+    # rhythmic structure; converting to comma kills that structure and
+    # forces a faster, more clipped delivery. Skip for chatterbox.
+    if not source_only and not is_neural:
         t = t.replace(" — ", ", ").replace(" – ", ", ")
         t = t.replace("—", ", ").replace("–", ", ")
 
@@ -636,16 +790,30 @@ def narratable_text(md: str, source_only: bool = False) -> str:
         # "(1) ... (2) ... (3)" which espeak reads as "left-paren one right-paren".
         t = re.sub(r"\((\d+)\)", lambda m: _ordinal_word(int(m.group(1))), t)
 
-        # Acronym pre-processing for known-mangled terms (applied before
-        # terminal-punctuation guarantee so word boundaries still match).
-        for pat, repl in ACRONYM_FIXES.items():
-            t = re.sub(pat, repl, t)
+        # Acronym pre-processing for known-mangled terms. Espeak says
+        # "krdt" for CRDT without dashes; Chatterbox handles acronyms
+        # natively and the dashed form ("C-R-D-T") forces stilted
+        # letter-by-letter pronunciation. Skip for neural engines.
+        if not is_neural:
+            for pat, repl in ACRONYM_FIXES.items():
+                t = re.sub(pat, repl, t)
+        else:
+            # Chatterbox-only: word-like acronyms (SaaS, IaaS, IoT, etc.)
+            # get misread as fake words. Expand to the full phrase. The
+            # first-use parenthetical patterns must run BEFORE the
+            # standalone forms — see CHATTERBOX_EXPANSIONS docstring.
+            for pat, repl in CHATTERBOX_EXPANSIONS:
+                t = re.sub(pat, repl, t)
 
-        # Proper-noun pronunciation lexicon. Council member names and other
-        # repeated proper nouns the book cites. Applied after acronym fixes
-        # so neither pass interferes with the other.
-        for pat, repl in PROPER_NOUN_FIXES.items():
-            t = re.sub(pat, repl, t)
+        # Proper-noun pronunciation lexicon. Espeak mispronounces foreign
+        # names ("Tomás Ferreira" → "tomas ferrera"); the dashed
+        # pronunciations ("toh-MAHS feh-RAY-rah") fix that. Chatterbox's
+        # neural model handles foreign names natively from training data;
+        # the dashed forms force unnatural letter-stress patterns. Skip
+        # for neural engines.
+        if not is_neural:
+            for pat, repl in PROPER_NOUN_FIXES.items():
+                t = re.sub(pat, repl, t)
 
     # Collapse soft newlines (single newlines inside a paragraph) into
     # spaces before guaranteeing terminal punctuation. Markdown soft-wraps
@@ -865,14 +1033,30 @@ SYNTH_HARD_CAP = 1200  # Kokoro prosody degrades past ~900 chars per call;
                        # 1400 soft target for paragraph grouping.
 
 
-def synth_chunk(client: OpenAI, voice: str, text: str, speed: float, retries: int = 3) -> bytes:
+def synth_chunk(client: OpenAI, voice: str, text: str, speed: float,
+                model_name: str = "kokoro", retries: int = 3,
+                exaggeration: float | None = None,
+                cfg_weight: float | None = None,
+                temperature: float | None = None) -> bytes:
     text = text[:SYNTH_HARD_CAP]
     last_err = None
-    extra_body = {"speed": speed} if speed and abs(speed - 1.0) > 1e-3 else None
+    extra: dict = {}
+    if speed and abs(speed - 1.0) > 1e-3:
+        extra["speed"] = speed
+    # V12 emotion knobs (Chatterbox); silently no-op for engines that
+    # ignore unknown body fields (e.g. Kokoro). The wrapper validates
+    # bounds — Mac side only forwards the values.
+    if exaggeration is not None:
+        extra["exaggeration"] = exaggeration
+    if cfg_weight is not None:
+        extra["cfg_weight"] = cfg_weight
+    if temperature is not None:
+        extra["temperature"] = temperature
+    extra_body = extra or None
     for attempt in range(1, retries + 1):
         try:
             kwargs = dict(
-                model="kokoro",
+                model=model_name,
                 voice=voice,
                 input=text,
                 response_format="mp3",
@@ -886,16 +1070,51 @@ def synth_chunk(client: OpenAI, voice: str, text: str, speed: float, retries: in
             wait = 2 ** (attempt - 1)
             print(f"      retry {attempt}/{retries} after error: {e!r} (sleep {wait}s)", file=sys.stderr)
             time.sleep(wait)
-    raise RuntimeError(f"Kokoro synth failed after {retries} retries: {last_err!r}")
+    raise RuntimeError(f"{model_name} synth failed after {retries} retries: {last_err!r}")
 
 
-def build_script(md_path: Path) -> str:
+def build_script(md_path: Path, engine: str = "kokoro") -> str:
     """Build the narration script from a chapter markdown file."""
     raw = md_path.read_text(encoding="utf-8")
-    script = narratable_text(raw)
+    script = narratable_text(raw, engine=engine)
     # Chapter lead-in pause — gives listener a beat before the chapter title.
     script = "... \n\n" + script
     return script
+
+
+def truncate_to_paragraphs(script: str, n: int) -> str:
+    """Truncate a narration script to its first N body paragraphs.
+
+    A "body paragraph" is any non-empty paragraph that is neither a
+    pause-only marker (dot-only chunk) nor the chapter title (which is the
+    first non-pause paragraph after the leading pause). Pause markers and
+    the chapter title are preserved verbatim; this just bounds how much
+    body content gets rendered.
+
+    Used by --max-paragraphs for fast preset/voice iteration: render the
+    first 3 body paragraphs of a chapter to <stem><suffix>.mp3 in ~30
+    seconds to hear what a voice/speed combination sounds like before
+    committing to a full ~30-minute chapter render.
+    """
+    paragraphs = re.split(r"\n{2,}", script)
+    kept: list[str] = []
+    body_count = 0
+    title_seen = False
+    for p in paragraphs:
+        kept.append(p)
+        s = p.strip()
+        if not s:
+            continue
+        if _is_pause_only(s):
+            continue
+        if not title_seen:
+            # First non-pause paragraph is the chapter title.
+            title_seen = True
+            continue
+        body_count += 1
+        if body_count >= n:
+            break
+    return "\n\n".join(kept)
 
 
 def build_source_script(md_path: Path) -> str:
@@ -918,19 +1137,30 @@ def render_chapter(
     out_path: Path,
     script_path: Path,
     per_sentence: bool = False,
+    max_paragraphs: int | None = None,
+    model_name: str = "kokoro",
+    exaggeration: float | None = None,
+    cfg_weight: float | None = None,
+    temperature: float | None = None,
 ) -> dict:
-    script = build_script(md_path)
+    script = build_script(md_path, engine=model_name)
     source_script = build_source_script(md_path)
+    if max_paragraphs is not None:
+        script = truncate_to_paragraphs(script, max_paragraphs)
+        source_script = truncate_to_paragraphs(source_script, max_paragraphs)
     script_path.parent.mkdir(parents=True, exist_ok=True)
     script_path.write_text(script, encoding="utf-8")
 
     # Chunk TTS + source in lockstep so source_text on each alignment entry
     # matches the Pandoc XHTML for EPUB Media Overlay fragment ID injection.
+    # Engine-aware budget — see CHUNK_BUDGETS_BY_ENGINE for rationale.
+    chunk_budget = CHUNK_BUDGETS_BY_ENGINE.get(model_name, CHUNK_CHAR_BUDGET)
     if per_sentence:
         chunks = chunk_sentences(script)
         source_chunks = chunk_sentences(source_script)
     else:
-        chunks, source_chunks = chunk_text_paired(script, source_script)
+        chunks, source_chunks = chunk_text_paired(script, source_script,
+                                                   budget=chunk_budget)
     total_chars = sum(len(c) for c in chunks)
     mode = "sentence" if per_sentence else "chunk"
     print(f"  {md_path.name}: {len(chunks)} {mode}s, {total_chars:,} chars")
@@ -949,14 +1179,18 @@ def render_chapter(
         for i, chunk in enumerate(chunks, 1):
             dots = _is_pause_only(chunk)
             if dots >= 2:
-                # Emit explicit silence instead of sending dots to Kokoro.
+                # Emit explicit silence instead of sending dots to the engine.
                 # Default to the 6-dot duration if dot count exceeds the map.
                 duration = PAUSE_DURATIONS.get(dots, PAUSE_DURATIONS[6])
                 mp3 = silence_mp3(duration)
                 tag = f"PAUSE {duration:.2f}s"
                 is_pause = True
             else:
-                mp3 = synth_chunk(client, voice, chunk, speed)
+                mp3 = synth_chunk(client, voice, chunk, speed,
+                                  model_name=model_name,
+                                  exaggeration=exaggeration,
+                                  cfg_weight=cfg_weight,
+                                  temperature=temperature)
                 tag = f"{len(chunk):4d} chars"
                 is_pause = False
             if i > 1:
@@ -1010,26 +1244,60 @@ def out_name_for(src_rel: str) -> str:
 
 
 def main() -> None:
+    # Build the help epilog from whichever engine the user is asking about,
+    # falling back to Kokoro for the no-args case.
+    epilog = "Engines:\n  " + "\n  ".join(
+        f"{name:<8} {cfg['description']}" for name, cfg in ENGINES.items()
+    )
+    epilog += "\n\nKokoro presets:\n  " + "\n  ".join(
+        f"{name:<14} voice={cfg['voice']:<28} speed={cfg['speed']}"
+        for name, cfg in PRESETS_KOKORO.items()
+    )
     ap = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Presets:\n  " + "\n  ".join(
-            f"{name:<14} {cfg['voice']:<28} speed={cfg['speed']}"
-            for name, cfg in PRESETS.items()
-        ),
+        epilog=epilog,
     )
-    ap.add_argument("--preset", choices=list(PRESETS.keys()), default="male",
-                    help="default voice preset. Default: male (am_michael+am_fenrir "
-                         "blend at 0.92 — less stylized than sinek, better for "
-                         "straight technical non-fiction across Parts I/III/IV). "
-                         "Part II chapters and ch10/preface override via "
-                         "CHAPTER_PRESET_MAP unless --no-chapter-map is set.")
+    ap.add_argument("--engine", choices=list(ENGINES.keys()), default="kokoro",
+                    help="TTS backend (default: kokoro). 'chatterbox' targets the Chatterbox "
+                         "(Resemble AI) server on the Windows GPU box; expects the same "
+                         "OpenAI-compatible API and a Bearer token via TTS_API_KEY env "
+                         "var (or --api-key). Override the per-engine default base URL "
+                         "with --base-url.")
+    ap.add_argument("--preset", default="male",
+                    help="default voice preset. Default: male (Kokoro: am_michael+am_fenrir "
+                         "blend at 0.92 — less stylized than sinek, better for straight "
+                         "technical non-fiction across Parts I/III/IV). Part II chapters "
+                         "and ch10/preface override via CHAPTER_PRESET_MAP unless "
+                         "--no-chapter-map is set. Preset KEYS are shared across engines; "
+                         "the actual voice ID resolves through the engine's preset catalog.")
     ap.add_argument("--no-chapter-map", action="store_true",
                     help="disable per-chapter preset overrides (use --preset for all)")
     ap.add_argument("--voice", default=None,
-                    help="explicit Kokoro voice (blend with +). Overrides --preset.")
+                    help="explicit voice ID (engine-native; Kokoro supports + blends). Overrides --preset.")
     ap.add_argument("--speed", type=float, default=None,
                     help="TTS speed multiplier (0.5-2.0). Overrides --preset.")
-    ap.add_argument("--base-url", default="http://localhost:8880/v1")
+    ap.add_argument("--base-url", default=None,
+                    help="HTTP base URL for the engine API (default: per-engine default — "
+                         "Kokoro localhost:8880, Chatterbox desktop-umt08rn:8881). "
+                         "Override for remote GPU server, Tailscale FQDN, or stage-vs-prod "
+                         "swaps.")
+    ap.add_argument("--api-key", default=None,
+                    help="Bearer token for engines that require auth. Default: read from "
+                         "the TTS_API_KEY env var. Required for --engine chatterbox; "
+                         "ignored for engines whose requires_auth=False.")
+    ap.add_argument("--exaggeration", type=float, default=None,
+                    help="Emotion intensity (Chatterbox V12+ only; ignored by Kokoro). "
+                         "Model default ~0.5 used when omitted. 0.7+ for narrative-driven "
+                         "chapters; pair with --cfg-weight 0.3 for the documented "
+                         "dramatic-narrator recipe.")
+    ap.add_argument("--cfg-weight", type=float, default=None,
+                    help="Classifier-free guidance weight (Chatterbox V12+ only). "
+                         "Model default ~0.5 used when omitted. Lower (0.3) = slower, "
+                         "more deliberate pacing; pairs with --exaggeration 0.7+.")
+    ap.add_argument("--temperature", type=float, default=None,
+                    help="Sampling temperature (Chatterbox V12+ only). Model default "
+                         "(~0.8) used when omitted. Lower (0.5) for reproducibility "
+                         "across re-renders.")
     ap.add_argument("--only", help="render only chapters whose source name contains this string (e.g. 'ch05')")
     ap.add_argument("--force", action="store_true", help="re-render even if an MP3 already exists")
     ap.add_argument("--dry-run", action="store_true", help="print chunk counts only")
@@ -1039,12 +1307,32 @@ def main() -> None:
     ap.add_argument("--per-sentence", action="store_true",
                     help="render one sentence per Kokoro call (cleaner prosody, "
                          "~3-5x more API calls and total time). Default: off.")
+    ap.add_argument("--max-paragraphs", type=int, default=None,
+                    help="render only the first N body paragraphs of each chapter "
+                         "(after the chapter title). Used with --output-suffix for "
+                         "fast voice/preset iteration — typically 3-5 paragraphs "
+                         "renders in ~30s and produces ~30-60s of audio.")
+    ap.add_argument("--output-suffix", default="",
+                    help="append this suffix to the output MP3 stem (e.g. '_sample'). "
+                         "Use with --max-paragraphs to avoid overwriting full-chapter "
+                         "renders during voice/preset iteration. Default: empty.")
     args = ap.parse_args()
 
+    engine = ENGINES[args.engine]
+    presets = engine["presets"]
+    base_url = args.base_url or engine["default_base_url"]
+    model_name = engine["model_name"]
+
     if args.list_presets:
-        for name, cfg in PRESETS.items():
-            print(f"{name:<14} voice={cfg['voice']:<28} speed={cfg['speed']}")
+        for name, cfg in presets.items():
+            voice_str = cfg["voice"] if cfg["voice"] is not None else "(unset — TODO)"
+            print(f"{name:<14} voice={voice_str:<28} speed={cfg['speed']}")
         sys.exit(0)
+
+    if args.preset not in presets:
+        print(f"--preset {args.preset!r} not in --engine {args.engine!r} catalog. "
+              f"Available: {sorted(presets.keys())}", file=sys.stderr)
+        sys.exit(2)
 
     def resolve_preset(rel_path: str) -> tuple[str, str, float]:
         """Return (preset_name, voice, speed) for a chapter."""
@@ -1054,14 +1342,44 @@ def main() -> None:
                 if key in rel_path:
                     name = preset_name
                     break
-        cfg = PRESETS[name]
+        if name not in presets:
+            raise RuntimeError(
+                f"Chapter map resolved to preset {name!r} but engine "
+                f"{args.engine!r} has no such preset. Add it to "
+                f"PRESETS_{args.engine.upper()} or pass --no-chapter-map."
+            )
+        cfg = presets[name]
         v = args.voice or cfg["voice"]
+        if v is None:
+            raise RuntimeError(
+                f"Engine {args.engine!r} preset {name!r} has voice=None — "
+                f"the catalog entry hasn't been filled in yet. Either set "
+                f"PRESETS_{args.engine.upper()}[{name!r}]['voice'] to a real "
+                f"voice ID (query GET {base_url}/audio/voices to list "
+                f"available voices) or pass --voice <id> explicitly."
+            )
         s = args.speed if args.speed is not None else cfg["speed"]
         return name, v, s
 
+    print(f"Engine: {args.engine} ({engine['description']})")
+    print(f"  base_url: {base_url}")
+    print(f"  model:    {model_name}")
     print(f"Default preset: {args.preset}  chapter-map: {'off' if args.no_chapter_map else 'on'}")
 
-    client = OpenAI(base_url=args.base_url, api_key="not-needed")
+    if engine.get("requires_auth"):
+        api_key = args.api_key or os.environ.get("TTS_API_KEY")
+        if not api_key:
+            print(
+                f"Engine {args.engine!r} requires auth. Set the TTS_API_KEY env "
+                f"var or pass --api-key <token>. The token is the same Bearer "
+                f"value the Windows server uses for /v1/audio/speech.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+    else:
+        api_key = "not-needed"
+
+    client = OpenAI(base_url=base_url, api_key=api_key)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     SCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1091,19 +1409,21 @@ def main() -> None:
         if not md_path.exists():
             print(f"SKIP missing: {rel}", file=sys.stderr)
             continue
-        out_path = OUT_DIR / out_name_for(rel)
+        suffix = args.output_suffix
+        out_stem = Path(rel).stem + suffix
+        out_path = OUT_DIR / f"{out_stem}.mp3"
 
-        script_path = SCRIPTS_DIR / (Path(rel).stem + ".txt")
+        script_path = SCRIPTS_DIR / (out_stem + ".txt")
 
         if args.dry_run:
-            script = build_script(md_path)
+            script = build_script(md_path, engine=args.engine)
             chunks = chunk_sentences(script) if args.per_sentence else chunk_text(script)
             mode = "sentence" if args.per_sentence else "chunk"
             print(f"{rel}: {len(chunks)} {mode}s, {sum(len(c) for c in chunks):,} chars")
             continue
 
         if args.scripts_only:
-            script = build_script(md_path)
+            script = build_script(md_path, engine=args.engine)
             script_path.parent.mkdir(parents=True, exist_ok=True)
             script_path.write_text(script, encoding="utf-8")
             print(f"  wrote {script_path.relative_to(REPO).as_posix()} ({len(script):,} chars)")
@@ -1115,13 +1435,27 @@ def main() -> None:
 
         preset_name, voice, speed = resolve_preset(rel)
         mode_tag = " per-sentence" if args.per_sentence else ""
+        if args.max_paragraphs is not None:
+            mode_tag += f" max-paragraphs={args.max_paragraphs}"
         print(f"\n=> {rel}  [preset={preset_name} voice={voice} speed={speed}{mode_tag}]")
         entry = render_chapter(client, voice, speed, md_path, out_path, script_path,
-                               per_sentence=args.per_sentence)
+                               per_sentence=args.per_sentence,
+                               max_paragraphs=args.max_paragraphs,
+                               model_name=model_name,
+                               exaggeration=args.exaggeration,
+                               cfg_weight=args.cfg_weight,
+                               temperature=args.temperature)
+        entry["engine"] = args.engine
         entry["preset"] = preset_name
         entry["voice"] = voice
         entry["speed"] = speed
         entry["mode"] = "sentence" if args.per_sentence else "chunk"
+        if args.exaggeration is not None:
+            entry["exaggeration"] = args.exaggeration
+        if args.cfg_weight is not None:
+            entry["cfg_weight"] = args.cfg_weight
+        if args.temperature is not None:
+            entry["temperature"] = args.temperature
         by_source[entry["source"]] = entry
         manifest["chapters"] = [by_source[s] for s in [c["source"] for c in manifest.get("chapters", [])] + [entry["source"]] if s in by_source]
         # deduplicate preserving first-seen order

@@ -116,13 +116,13 @@ Scheduled key rotation is a maintenance operation. Key compromise is an incident
 
 ## Key-Loss Recovery
 
-<!-- code-check: package references in this section include two forward-looking namespaces — `Sunfish.Foundation.Recovery` and `Sunfish.Kernel.Audit` — that are part of the Volume 1 extension roadmap and not yet present in the Sunfish reference implementation. They are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative; a future implementation milestone will land them. The other reference, `Sunfish.Kernel.Security`, is in the current Sunfish package canon. -->
+<!-- code-check: package references in this section include `Sunfish.Foundation.Recovery` (forward-looking — Volume 1 extension roadmap, not yet present in the Sunfish reference implementation; illustrative in the same sense the book's other pre-1.0 Sunfish references are illustrative). The other two references, `Sunfish.Kernel.Security` and `Sunfish.Kernel.Audit`, are in the current Sunfish package canon (verified 2026-04-28: packages/kernel-audit/ exists). -->
 
 My mother called me in the summer of 2023 from my Aunt Vickie's house. Uncle Charlie had died — twenty-three years a Michigan conservation officer, and in his off-hours a hobby photographer who had earned a modest income selling his work online. There was the funeral. There was an iPhone, locked. It had been part of Charlie's daily life and potentially the channel through which his photographs reached buyers. None of us knew exactly what was on it. My aunt was sitting next to my mother, the iPhone on the table between them, and the question my mother was calling to ask, because I work in software, was whether there was a way to recover an iPhone.
 
 I knew the answer before she finished. The honest version is: not really. There is a court order. There is Apple's deceased-relative process. There is a queue, a verification cycle, a chance the data comes back and a chance it doesn't — a probability distribution, not a recovery primitive, and not what my aunt was asking for with the device sitting in front of her.
 
-I told her what I knew. She said okay. We talked about other things. The well-meaning Genius Bar staff could not help. The iPhone is still on a shelf somewhere. Nobody knows what is on it.
+I told her what I knew. She said okay. We talked about other things. The well-meaning Genius Bar staff were eventually able to help, and the photographs are now in my aunt's possession — a probability that resolved favorably, on a timeline outside our control, through the discretion of strangers acting in good faith. The next family in the same posture has no architectural reason to expect the same.
 
 The architecture of this chapter is built for people like Charlie who just use technology on a daily basis, and for those who survive them. It is also built for the moment he never got to have, and for the call I did not have a better answer to.
 
@@ -225,7 +225,7 @@ The threat model for the grace period mechanism specifically is a long-game adve
 
 Sub-pattern 48f is the logging substrate on which all other mechanisms depend. Every recovery initiation, trustee response, dispute, and completion is a signed event in the same encrypted log used for application data. `Sunfish.Kernel.Audit` manages recovery-event records. Each record carries the recovery mechanism type, the trustee identifiers (where applicable), the claimed identity, the grace-period boundaries, and the completion or dispute attestation.
 
-The audit trail is the legal artifact when a recovery is later contested. It is the architectural defense against silent recovery: a recovery that completes without a corresponding event in the log cannot be legitimate, and any node verifying the log detects the gap. The trail composes with the chain-of-custody mechanism (cross-reference #9) — the same multi-party signed-event structure, applied to recovery operations rather than data transfers.
+The audit trail is the legal artifact when a recovery is later contested. It is the architectural defense against silent recovery: a recovery that completes without a corresponding event in the log cannot be legitimate, and any node verifying the log detects the gap. The trail composes with §Chain-of-Custody for Multi-Party Transfers — the same multi-party signed-event structure, applied to recovery operations rather than data transfers.
 
 Recovery audit records are retained by default for the deployment's regulatory retention period. Crypto-shredding the data subject's content stub on an Article 17 erasure request is technically possible; whether the surrounding trustee, custodian, and timing metadata is also erasable is jurisdiction-specific and intersects third-party rights. Trustees and custodians named in a recovery record retain a legitimate evidentiary interest in their participation being preserved against contested claims. Default behavior is to preserve the metadata pending a written legal determination; case-specific erasure follows counsel review (see §GDPR Article 17 and Crypto-Shredding).
 
@@ -301,7 +301,7 @@ A node whose revocation predates its last offline period may have accumulated wr
 
 ## Collaborator Revocation and Post-Departure Partition
 
-<!-- code-check: this section references three Sunfish namespaces. `Sunfish.Kernel.Security` is in the current Sunfish package canon. `Sunfish.Kernel.Audit` is forward-looking — introduced by extension #48 and extended here for revocation and partition records. `Sunfish.Foundation.Recovery` is forward-looking under ADR 0046 and is referenced here for the successor-entity KEK separation in the dissolution scenario. The forward-looking namespaces are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative; future implementation milestones land them. -->
+<!-- code-check: this section references three Sunfish namespaces. `Sunfish.Kernel.Security` and `Sunfish.Kernel.Audit` are in the current Sunfish package canon (verified 2026-04-28: packages/kernel-audit/ exists). `Sunfish.Foundation.Recovery` is forward-looking under ADR 0046 — referenced here for the successor-entity KEK separation in the dissolution scenario; illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. -->
 
 The architecture so far has assumed collaborators stay collaborative. Extension #18 specifies how authority is granted — scoped third-party write access, role distribution, trustee designation. The mirror operation has been missing. Revocation is the runtime mechanism for the ungrant of a delegated capability, and every deployment that ever onboards a second collaborator eventually has to perform one.
 
@@ -386,7 +386,7 @@ Two properties of the partition prevent identifier collision between the success
 
 Each record carries: the revoked collaborator's node identifier or identifiers; the revoking administrator's identity and signature; the UTC timestamp; the revocation scope; the KEK rotation trigger status (rotation initiated, rotation completed, old KEK discarded); the partition boundary definition (when sub-pattern 45e is invoked); and the data-at-risk window — the interval from the departing collaborator's earliest key possession to the confirmed rotation completion. The data-at-risk window is the field auditors most often request and the one that distinguishes a legally defensible record from an incomplete one.
 
-The audit trail is the legally defensible record of when access ended. For employment disputes, it documents when the deployment terminated the former employee's data access. For partnership dissolutions, it is the partition authorization record. For regulated industries — HIPAA, SOX, PCI-DSS, NIST SP 800-12 [11] — it is the access-termination artifact those frameworks require. The trail composes with the recovery-event audit trail in §Key-Loss Recovery sub-pattern 48f; both share the `Sunfish.Kernel.Audit` substrate while their record schemas remain distinct. Cross-reference to the chain-of-custody mechanism (#9) for the multi-party signed-event substrate that underpins both.
+The audit trail is the legally defensible record of when access ended. For employment disputes, it documents when the deployment terminated the former employee's data access. For partnership dissolutions, it is the partition authorization record. For regulated industries — HIPAA, SOX, PCI-DSS, NIST SP 800-12 [11] — it is the access-termination artifact those frameworks require. The trail composes with the recovery-event audit trail in §Key-Loss Recovery sub-pattern 48f; both share the `Sunfish.Kernel.Audit` substrate while their record schemas remain distinct. Cross-reference to §Chain-of-Custody for Multi-Party Transfers for the multi-party signed-event substrate that underpins both.
 
 ### FAILED conditions
 
@@ -412,7 +412,7 @@ This section adds the session-key-compromise row to the §Threat Model taxonomy.
 
 ### Sub-pattern 46a — Per-message ephemeral key derivation
 
-The key hierarchy uses long-lived KEKs to wrap per-document DEKs. That construction protects data at rest. It does not protect the transport of sync events between nodes, which travel through the relay as AES-256-GCM payloads. A relay observer who captures a session key under the long-lived envelope decrypts every event encrypted under that key.
+The key hierarchy uses long-lived KEKs to wrap per-document DEKs. That construction protects data at rest. It does not protect the transport of sync events between nodes, which travel through the relay as AES-256-GCM payloads. A relay observer who captures a long-lived session key decrypts every event encrypted under that key.
 
 Per-message ephemeral key derivation closes that exposure. Each sync event carries a freshly derived message key. An attacker who recovers one message key decrypts exactly that message — not the prior message, not the next message. Compromise of today's message key does not expose yesterday's traffic, and rotation of the message key advances the chain past the compromised state.
 
@@ -430,7 +430,7 @@ The Double Ratchet combines two ratchets. The symmetric ratchet advances on ever
 
 Forward secrecy comes from the symmetric ratchet's one-directionality. An attacker who recovers the ratchet state at time T decrypts messages from T forward but cannot reverse the ratchet to decrypt messages from before T. Post-compromise security comes from the Diffie-Hellman ratchet. Once both parties exchange a new ephemeral keypair — which happens naturally as they communicate — the session advances to a value the attacker who captured the old state cannot compute. The session heals automatically.
 
-Session establishment uses an asynchronous key agreement protocol. The Signal X3DH (Extended Triple Diffie-Hellman) construction [15] establishes the initial shared secret from prekeys published in advance, allowing one party to initiate a session while the other party is offline. The Double Ratchet then runs over the X3DH output. The Inverted Stack adopts X3DH or an equivalent asynchronous key agreement so that a node coming online can begin a session with a peer that is currently offline.
+Session establishment uses an asynchronous key agreement protocol. The Signal X3DH (Extended Triple Diffie-Hellman) construction [15] establishes the initial shared secret from prekeys published in advance, allowing one party to initiate a session while the other party is offline. The Double Ratchet then runs over the X3DH output. The Inverted Stack adopts X3DH or an equivalent asynchronous key agreement so that a node coming online can begin a session with a currently offline peer.
 
 The Noise framework [16] provides a composable substrate for handshake construction. The KK pattern (both parties have known static keypairs) is the closer fit to the Inverted Stack's enrolled-device model, where each node holds a registered device keypair. The architecture does not mandate one specific construction; it mandates that whatever construction is used satisfies the two properties named above. MLS (Messaging Layer Security, RFC 9420) [17] extends ratcheting to group messaging through a TreeKEM construction; deployments with large role groups may adopt MLS in place of pairwise Double Ratchet. The WhatsApp end-to-end encryption specification [18] documents the Double Ratchet at billion-user scale.
 
@@ -440,7 +440,7 @@ The Noise framework [16] provides a composable substrate for handshake construct
 
 Post-compromise security through the DH ratchet is progressive. It heals as parties communicate. Automatic scheduled rotation is the complementary mechanism for deployments where parties stay offline for extended periods between exchanges and the ratchet does not advance through normal traffic.
 
-Two triggers advance the ratchet state independently of message traffic. The first is suspected compromise. When endpoint-compromise detection fires (cross-reference to #47, §Endpoint Compromise: What Stays Protected), the session forces an immediate DH ratchet step. The compromised party generates a new ephemeral X25519 keypair, publishes the new public component, and marks the previous session state as poisoned. Peers receiving the new public key advance their own DH ratchet on receipt. Collaborator revocation (cross-reference to §Collaborator Revocation and Post-Departure Partition) is one trigger: a revocation event forces a ratchet advance for every remaining session, ensuring the revoked party's last-known ratchet state cannot decrypt subsequent messages.
+Two triggers advance the ratchet state independently of message traffic. The first is suspected compromise. When endpoint-compromise detection fires (cross-reference to §Endpoint Compromise: What Stays Protected), the session forces an immediate DH ratchet step. The compromised party generates a new ephemeral X25519 keypair, publishes the new public component, and marks the previous session state as poisoned. Peers advance their own DH ratchet on receipt of the new public key. Collaborator revocation (cross-reference to §Collaborator Revocation and Post-Departure Partition) behaves the same way: a revocation event forces a ratchet advance for every remaining session, so the revoked party's last-known ratchet state cannot decrypt subsequent messages.
 
 The second trigger is scheduled cadence. Even without a detected compromise, the session forces a DH ratchet step every 90 days, matching the KEK rotation cadence in §Key Hierarchy. Scheduled rotation closes the long-lived-session gap that arises when peers communicate frequently but never trigger a fresh DH exchange.
 
@@ -452,15 +452,16 @@ The relay forwards ciphertext between nodes. Even without decrypting payload, th
 
 Sealed sender hides the sender's identity from the relay. The sender encrypts the outer-envelope source identifier under the recipient's long-term public key before submitting the message. The relay sees the destination node identifier but not the source. The recipient unwraps the sealed identity after decrypting the message payload and verifies the sender's role attestation at that point.
 
-The construction creates a validation asymmetry. Without seeing the sender, the relay cannot enforce sender-side authorization. The architecture resolves the asymmetry by moving authorization validation to the recipient: the recipient checks the sender's identity and attestation after unsealing. A relay that enforces authorization without seeing the sender requires zero-knowledge proof machinery; that variant is deferred to a future volume.
+The construction creates a validation asymmetry. Without seeing the sender, the relay cannot enforce sender-side authorization. The architecture resolves the asymmetry by moving authorization validation to the recipient: the recipient checks the sender's identity and attestation after unsealing. A relay that enforces authorization without seeing the sender requires zero-knowledge proof machinery; this book defers that variant to a future volume.
 
 Sealed sender is opt-in. `Sunfish.Kernel.Sync` exposes a sealed-sender policy flag in the session configuration. Setting the flag switches the outer-envelope construction for metadata-sensitive deployments. Cross-reference to §Relay Trust Model for the full discussion of relay-observed metadata and its mitigations.
 
 ### Sub-pattern 46e — Protocol-level forward secrecy commitment
 
-The preceding sub-patterns are implementation choices. Sub-pattern 46e is a declaration: the protocol specification names forward secrecy and post-compromise security as required properties, not as implementation details. Off-The-Record Messaging (Borisov, Goldberg, and Brewer, 2004) [19] established the precedent — naming these properties in the protocol spec itself, not in an implementation note — and Signal, MLS, and Noise all inherited the discipline.
+The preceding sub-patterns are implementation choices. Sub-pattern 46e is a declaration: the protocol specification names forward secrecy and post-compromise security as required properties, not as implementation details. Off-The-Record Messaging (Borisov, Goldberg, and Brewer, 2004) [19] established the precedent — naming these properties in the protocol spec itself, not in an implementation note — and Signal, MLS, and Noise all inherited the discipline. <!-- CLAIM: OTR 2004 [19] named forward secrecy explicitly; "post-compromise security" as a named property post-dates OTR (PCS terminology is generally attributed to Cohn-Gordon, Cremers, Garratt c. 2016). The phrase "these properties" therefore overcredits OTR for both. Defer to next-pass copy-edit (precision tightening, not architectural change). -->
 
-Naming the commitment makes it testable. A conformance test for forward secrecy: given a recorded session state at time T, no key material derivable from that state decrypts a message sent at time T-1. A conformance test for post-compromise security: given a captured ratchet state at time T, after one DH ratchet advance, no key material derivable from the captured state decrypts a message sent at time T+2. These tests live in `Sunfish.Kernel.Security`'s test suite alongside the existing key-zeroing and memory-locking validations. They are cryptographic property assertions, not integration tests; any conforming implementation passes them. Cross-reference to §Key-Loss Recovery for the interaction with #48 — recovery reconstitutes KEK custody but does not reconstitute ratchet state, so forward secrecy for the pre-recovery period is not retroactively recovered.
+
+Naming the commitment makes it testable. A conformance test for forward secrecy: given a recorded session state at time T, no key material derivable from that state decrypts a message sent at time T-1. A conformance test for post-compromise security: given a captured ratchet state at time T, after one DH ratchet advance, no key material derivable from the captured state decrypts a message sent at time T+2. These tests live in `Sunfish.Kernel.Security`'s test suite alongside the existing key-zeroing and memory-locking validations. They are cryptographic property assertions, not integration tests; any conforming implementation passes them. Cross-reference to §Key-Loss Recovery for the recovery interaction: recovery reconstitutes KEK custody but does not reconstitute ratchet state, so forward secrecy for the pre-recovery period is not retroactively recovered.
 
 ### FAILED conditions
 
@@ -488,6 +489,83 @@ The four-hour default is configurable. Deployments with lower sensitivity requir
 
 ---
 
+<!-- code-check: extension #47 endpoint-compromise. Sub-patterns 47a–47f. Sunfish.Kernel.Security only — no new namespace. Forward-looking attestation handshake at Ch14 §Sync Daemon Protocol flagged with CLAIM marker. -->
+
+## Endpoint Compromise: What Stays Protected
+
+The protections in §In-Memory Key Handling assume the OS is honest. This section examines what happens when it is not. P6 makes a strong claim: data is encrypted at rest and in transit, keys never leave the node unencrypted, and the relay sees only ciphertext. That claim holds against a network adversary. It does not hold unchanged against an endpoint adversary.
+
+The distinction is load-bearing. A user who reads only the P6 summary and concludes that their data is safe even when their phone is running Pegasus has drawn an incorrect inference. The architecture is responsible for making the correct inference available. This section adds the endpoint-compromise row to the master taxonomy in §Threat Model and fills it in.
+
+Sub-pattern 47a is the explicit scope declaration: the security chapter itself names what protection the architecture provides and what it does not provide when the endpoint is compromised. Not a footnote. Not a disclaimer appended to the conclusion. A dedicated section a practitioner can reference directly, in response to the council's original challenge on over-claiming security guarantees (Ch7 §The Security Lens).
+
+### Sub-pattern 47a — Scope declaration
+
+The table below is the specification. It states what the architecture protects, what it does not protect, and the residual risk when the endpoint is compromised at OS level or hardware level.
+
+| Protected | Not protected | Residual risk |
+|---|---|---|
+| Other users' data on the relay | Local key material once OS is compromised | Attacker reads plaintext in memory or in the OS keychain |
+| Other devices in the user's fleet | The local node's cached copy | Attacker reads cached documents under the locally-held DEKs |
+| Future ciphertext after key rotation | Past ciphertext under current keys | Attacker holds the keys; decryption is trivial |
+| Transaction integrity (backdate attacks blocked) | The user's current session actions | Attacker impersonates the user going forward until revocation |
+
+The table is not decorative. It is the deliverable for sub-pattern 47a, and it must appear verbatim in any deployment's security reference. The FAILED conditions for the primitive are derived from it: an architecture that allows a compromised endpoint to silently impersonate other devices, to backdate transactions, or that ships without documenting the endpoint-compromise scope, has not met the 47a specification.
+
+### Sub-pattern 47b — HSM and Secure Enclave separation
+
+The strongest hardware-level defense is key material that never leaves a tamper-resistant hardware module, even when the host OS is fully compromised. The Apple Secure Enclave [7], Google Pixel Titan M [20], and Microsoft Pluton [21] are production-deployed examples. The architecture's key hierarchy (§Key Hierarchy) places the root KEK in the platform's secure enclave when available. An attacker who owns the OS cannot extract the KEK by reading process memory or the keychain — the key exists only inside the enclave and is never presented to the OS in plaintext.
+
+The protection boundary requires precision. Enclaves protect key material from OS-level extraction. They do not protect against a user who is coerced into authenticating — the rubber-hose boundary is outside any cryptographic primitive's scope. They do not protect against every physical hardware attack on the enclave itself: Intel SGX is the cautionary tale here, with multiple published academic side-channel attacks against successive generations [22][23][24]. Apple Secure Enclave and Google Titan M have a substantially better field record, and ARM TrustZone offers a comparable model on Arm-class hardware [25]. The architecture does not claim Secure Enclave is immune to all hardware attack; it claims the academic attack record is substantially shorter, and the deployment posture treats SGX and the others differently as a result.
+
+`Sunfish.Kernel.Security` binds key material to the platform's secure enclave API on device classes where an enclave is available. On device classes without a hardware enclave — older Android devices, some Windows devices without Pluton — the package falls back to OS-keystore isolation with explicit documentation that the protection level is lower. The architecture does not silently degrade. The startup report identifies the key-storage tier in use, and administrators enforce a minimum tier through the deployment manifest. Regulated-tier deployments mandate enclave-backed key storage. Consumer-tier deployments encourage it.
+
+### Sub-pattern 47c — Attested boot and integrity measurement
+
+A compromised endpoint is most dangerous when the compromise is invisible — when the device continues to participate in the sync mesh without the relay or other peers detecting the anomaly. Attested boot addresses this. TPM 2.0 and equivalent mechanisms produce a cryptographic proof that the device is running expected, unmodified software at boot time. The node presents the attestation to the relay at handshake; the relay validates it against a known-good measurement before admitting the session. The relay denies admission to a device that fails attestation, and the device falls back to local-only operation. It does not silently contaminate the sync mesh.
+
+The attestation surface integrates at the sync daemon's handshake layer (Ch14 §Sync Daemon Protocol). `Sunfish.Kernel.Security` exposes the attestation; the relay-side enforcement is in the relay's handshake policy, not the node package. <!-- CLAIM: Ch14 §Sync Daemon Protocol does not currently describe attestation validation at the handshake; this section assumes it as a forward dependency. Confirm in Ch14 cross-reference and either back-add or flag as a gap to address with a parallel Ch14 update. -->
+
+The honest limitation is the runtime-compromise gap. Attestation covers boot-time integrity. It does not cover runtime compromise — a device that boots cleanly and is then exploited mid-session is not caught by attestation alone. The residual risk is in-session compromise between attestation events. For high-security deployments, the architecture requires re-attestation at every relay reconnection, which narrows the gap to a single session's duration. It does not eliminate it; an in-session zero-click exploit between two reconnects remains an exposure.
+
+### Sub-pattern 47d — Remote-wipe capability
+
+When a device is confirmed lost or compromised, the operator needs to revoke that device's access and, where possible, crypto-shred the local copy of the data. Remote wipe is the operational procedure. The administrator issues a revocation broadcast for the device's node identity — the same mechanism as §Collaborator Revocation, applied to a device rather than a person — carrying a crypto-shred instruction. On receipt, the node overwrites its local key material and database encryption key with random bytes before exit.
+
+The honest limitation is reachability. Remote wipe is only as reliable as the device's network reachability at the moment the broadcast fires. A device that is powered off, in airplane mode, or behind a network that blocks the relay cannot receive the wipe instruction until it reconnects. The architecture does not guarantee synchronous destruction — it guarantees destruction upon next reachable sync event, with audit-trail confirmation. An attacker who deliberately keeps the device offline defeats this control until reconnection occurs.
+
+MDM (Mobile Device Management) integration is the parallel channel that closes the offline-device gap. Enterprise deployments using Intune, Jamf, or Google Workspace MDM issue an OS-level wipe order through MDM channels in parallel with the architecture's crypto-shred. The two mechanisms are complementary; MDM catches the case where the device never reconnects to the relay. `Sunfish.Kernel.Security` implements the local-side crypto-shred instruction. MDM integration is the deployment layer's responsibility — it is not part of the kernel-security package.
+
+### Sub-pattern 47e — Endpoint-compromise containment
+
+The blast radius of a compromised endpoint must be bounded. Three containment mechanisms enforce the FAILED conditions stated in §Sub-pattern 47a — that a compromised device cannot impersonate other devices, cannot backdate transactions, and cannot access other users' data on the relay.
+
+**Per-device keypair isolation.** Each device in a user's fleet holds a distinct keypair. Compromise of one device's private key does not compromise other devices in the same fleet. The sync daemon rejects session tokens signed by a key it does not recognize, and the relay enforces keypair-session binding at every reconnection. An attacker holding a stolen session token from one device cannot pivot it onto another.
+
+**Append-only transaction log.** The CRDT operation log is append-only and each entry is signed by the originating device keypair. Backdating requires a valid signature from the target timestamp's keypair — an attacker who compromises a device today cannot sign operations as if they occurred last week, because the historical keypair is not the one currently in the OS keychain. Forward-secrecy key rotation (§Forward Secrecy and Post-Compromise Security) further narrows the window during which any single compromised key can sign anything at all.
+
+**Role-scoped access.** A compromised device can access only the data classes and roles it was provisioned to access. It cannot escalate to roles held by other users on the relay. The relay enforces role-level access at every session handshake (§Role Attestation Flow). The compromise stays inside the lane it started in.
+
+### Sub-pattern 47f — Honest documentation of post-compromise risk
+
+This sub-pattern is not a cryptographic mechanism. It is an architectural commitment to honesty. The chapter must state directly what protection lapses at endpoint compromise, not leave the reader to infer it.
+
+The lapses, stated directly: local cached data is readable with the locally-held keys. Peers trust future writes from the compromised device until revocation propagates. A session in progress at compromise time exposes whatever plaintext is already in memory. Biometric authentication on the compromised device cannot be trusted, because the attacker controls the authentication flow.
+
+The architecture does not claim to solve endpoint compromise. It claims four things: blast-radius containment via the three mechanisms in §47e; hardware-backed key protection where the platform offers it; a remote-wipe path that completes when the device is reachable; and honest documentation of the residual risk so practitioners plan against it rather than discover it in an incident post-mortem. Pegasus, Predator, and Hermit operate at the level of full OS compromise with zero-click delivery [26][27]. Against these, hardware enclave separation is the only control that reliably retains key protection. On a fully Pegasus-compromised device, keys in the OS keychain are accessible; keys in a hardware enclave are not. No software-only architecture can claim otherwise.
+
+### FAILED conditions
+
+The primitive's FAILED conditions:
+
+- Compromised endpoint can impersonate other devices in the sync mesh.
+- Compromised endpoint can backdate transactions in the shared log.
+- Endpoint compromise scope is not documented in the deployed architecture's security reference.
+
+Any FAILED condition confirmed at technical review escalates to `Sunfish.Kernel.Security` maintainers before the draft advances. This primitive has security-boundary implications; a confirmed failure is not a prose-pass defect.
+
+---
+
 ## Supply Chain Security
 
 A local-first system that distributes application updates through a CDN inherits an update-pipeline attack surface. A compromised CDN can serve modified binaries. The architecture closes this gap through content addressing, signing, and transparency logging.
@@ -502,6 +580,99 @@ A local-first system that distributes application updates through a CDN inherits
 
 ---
 
+## Chain-of-Custody for Multi-Party Transfers
+
+<!-- code-check annotations: Sunfish.Kernel.Custody (NEW namespace, not in canon — forward-looking); Sunfish.Kernel.Audit (in-canon per cerebrum 2026-04-28, packages/kernel-audit/ exists). 0 class APIs / method signatures introduced. -->
+
+A commercial driver finishes a shift, parks the rig, and uploads the day's dashcam footage. The next morning, an incident from that route arrives on the company's risk desk. The footage now has to travel: to the insurer, to opposing counsel, to a regulator, possibly to a court. At every handoff, a different party must be able to assert two facts — the file is the file the camera produced, and custody passed on a date no one can credibly dispute. A timestamp database can record both facts. It cannot defend them.
+
+The audit trails specified in §Key-Loss Recovery sub-pattern 48f and §Collaborator Revocation sub-pattern 45f rest on the same substrate this section specifies. Both reference the multi-party signed-event mechanism without naming it. This section names it: chain-of-custody is a signed, append-only sequence in which each entry attests to a specific act by a specific party at a specific moment, with the signatures traceable to the deployment's key hierarchy. The distinction matters in court. A timestamp database says "this happened." A chain-of-custody record says "this party asserted this state, at this time, under this authority, and the signature resolves through the published key hierarchy." Only the second claim survives discovery, regulatory inspection, and adversarial challenge.
+
+Three deployment scenarios make the mechanism load-bearing rather than decorative. Commercial-vehicle dashcam footage must survive the handoff chain from in-vehicle capture through insurer adjudication and possible litigation, with no gap a defense expert can exploit. Regulated-industry data transfers — clinical handoffs, audited financial exports, deposition-bound legal records — require both the dispatcher's and the recipient's signed attestation in the same record. LADOT-MDS-style mandated regulatory streams require continuous proof that the operator's exported telemetry is complete, not merely that each individual event is authentic. The architecture treats all three under one signed-receipt primitive; naming the scenarios sets the scope.
+
+### What chain-of-custody is not
+
+Chain-of-custody is not key-loss recovery. Recovery handles the case where a legitimate user loses custody of their own key; chain-of-custody handles the case where data moves from one authoritative party to another with each transition attested. The two share `Sunfish.Kernel.Audit` as substrate but their event schemas, authorization parties, and legal uses are distinct.
+
+Chain-of-custody is not collaborator revocation. Revocation terminates a party's access authority; chain-of-custody attests to the transfer of data to a new custodian. A handoff followed by a revocation produces two distinct records in the same audit log.
+
+Chain-of-custody is not supply-chain security. Supply-chain security addresses the integrity of the software distribution pipeline. Chain-of-custody addresses the integrity of the data-custody sequence at runtime.
+
+State the distinctions once. The sub-patterns below assume them.
+
+### Sub-pattern 9a — Multi-party signed transfer receipt
+
+The transfer receipt is the unit of custody handoff. It binds a single transition: the transferor asserts that a specific data object, at a specific version, left their custody at a specific moment; the recipient asserts that the same data object arrived at their node at a specific moment, matches the transferor's assertion, and is now under their custody.
+
+A receipt carries the data-object identifier (the CRDT document's stable ID, not a mutable name); the operation-vector identifying the specific version transferred (CRDT vector clock or equivalent); the transferor's node identifier and signature; the recipient's node identifier; a UTC transfer-initiation timestamp from the transferor; a UTC receipt-confirmation timestamp from the recipient; the transfer channel (relay, peer-to-peer, out-of-band import); and a custody scope declaring what authority the recipient now holds — read, write, re-transfer. The receipt is incomplete until both signatures land. A one-sided receipt is a `transfer-initiated` record, not a `transfer-completed` record.
+
+The two-signature construction is not stylistic. Evidence-class custody records cannot admit ambiguity about whether the receiving party accepted the object in the state the transferor claims. The transferor cannot later assert the recipient never received the data; the recipient cannot later assert the data arrived in a state other than what the transferor recorded. Certified-mail receipts and bill-of-lading double-endorsement encode the same principle in physical logistics. The architecture renders it as a cryptographic primitive — two device-key signatures over the same content hash, separated in time, both required for the receipt to close.
+
+The version vector matters because CRDT documents evolve. A dashcam frame captured at 14:07:31 and exported to a custody record at 14:07:35 must be identifiable as the specific state at those moments — not "the dashcam recording in general." The CRDT vector clock specifies the exact set of applied operations defining the transferred version, independent of any application-layer name [12][13].
+
+`Sunfish.Kernel.Custody` manages transfer-receipt records. The transferor's node emits the receipt event on dispatch; the recipient's node confirms on delivery. Until the recipient's acknowledgment event arrives and validates against the transferor's original event, the receipt sits in `transfer-initiated` state. After confirmation, it advances to `transfer-completed`. Any mismatch between the transferor's asserted version and the recipient's confirmed version triggers a `transfer-disputed` event and halts the custody chain pending resolution. The receipt verifiability does not depend on either custodian's endpoint integrity — see §Endpoint Compromise: What Stays Protected. A compromised endpoint can refuse to sign or sign falsely, but it cannot forge the counterparty's signature.
+
+### Sub-pattern 9b — Evidence-class temporal attestation
+
+A transfer receipt establishes who handled what and when. Evidence-class temporal attestation strengthens the "when" so it survives adversarial challenge — the timestamp is anchored to an external, independently verifiable time source the architecture itself cannot retroactively alter.
+
+A timestamp recorded by the originating node is only as trustworthy as the node's clock and software stack. An attacker with root access can backdate a timestamp by modifying the system clock before the event is recorded. Against a well-resourced adversary — a defendant in litigation, a counterparty in a regulatory proceeding — a self-attested timestamp is a timestamp the opposing party will challenge. The append-only log already prevents retroactive modification; DAG continuity breaks if the chain is tampered with. The remaining gap is anchor-to-external-time, which the log structure alone does not close.
+
+The architecture integrates RFC 3161 trusted timestamping [28] for evidence-class transfers. The timestamp authority (TSA) is an external service — under EU deployments, a qualified trust service provider (QTSP) issuing qualified electronic time stamps to which eIDAS Article 41 [29] attaches the legal presumption of accuracy and integrity (the technical requirements for qualified time stamps live in Article 42); in other jurisdictions, an authority certified under the equivalent regulation.
+
+On transfer-receipt creation, the transferor's node submits a TimeStampRequest containing a hash of the receipt event (SHA-256 by default) to the TSA. The TSA returns a TimeStampResponse: a signed time-stamp token whose `TSTInfo` structure binds the message imprint, the TSA identity, and the authority's certified time. The token persists alongside the receipt event in the audit log. Any node verifies the token's signature against the TSA's published certificate (per X.509 chain-of-trust [10]) and the message imprint against the receipt event. Backdating now requires compromising both the local log (blocked by DAG continuity) and the TSA (out of scope for a node-level attacker). <!-- design-decisions: §5 #9 + §8.2 — two-signature transfer receipt + RFC 3161 TSA anchoring is the architectural commitment surfaced at design-decisions §5 entry #9 ("multi-party signed transfer receipts, evidence-class temporal attestation"); §8.2 explicitly defers the formalization of multi-party signed transfer receipts to this writing task. -->
+
+Not all deployments need external TSA anchoring. Consumer-tier deployments rely on the log's internal append-only semantics. Regulated deployments — those that produce evidence in legal proceedings, satisfy eIDAS AdES (Advanced Electronic Signature) requirements for evidence preservation, or comply with sector-specific record-keeping standards — declare a qualified TSA in their compliance posture. The deployment manifest records the TSA endpoint; `Sunfish.Kernel.Custody` invokes it on every evidence-class transfer event.
+
+The architecture is local-first; a transfer that occurs while the node is offline cannot reach a TSA. The protocol queues the TimeStampRequest and submits it at the next relay-connected window. The receipt event records `tsa-pending` state until the token arrives. Nodes verifying the chain observe the pending flag and defer final evidence-class validation until the token is attached. An offline evidence-class transfer is not denied — its external timestamp anchor is deferred. The deployment's compliance posture documents the maximum acceptable pending duration before the gap escalates as a compliance event (see App B §Section 5).
+
+### Sub-pattern 9c — Regulatory-export streaming with verifiable completeness
+
+LADOT-MDS-style regulatory exports introduce a third variant. The mechanism is not a point-in-time bilateral receipt but a continuous signed stream emitted to a regulator with cryptographic proof that the stream is complete — no events were omitted, reordered, or modified between source and recipient.
+
+A regulator receiving a data feed from a fleet operator must verify two things: that each individual event in the stream is authentic, and that the stream as a whole is complete. A tampered stream that omits unfavorable events while preserving the remainder is not detectable by verifying individual events in isolation. The stream must carry a running proof of completeness alongside its content.
+
+The architecture addresses this with an append-only Merkle-tree commitment over the event stream, following the construction Crosby and Wallach formalized for tamper-evident logging [30] and standardized for the web PKI in Certificate Transparency [31]. As each event lands in the export log, the export pipeline folds its hash into a running Merkle root. The pipeline signs the root and emits it alongside each event batch. The regulator verifies that the received stream matches the committed root and that the root chain is internally consistent — each new root extends the prior one by exactly the new events, with no gaps. Any omission or reordering breaks the Merkle chain, and the regulator detects the gap without requiring any cooperation from the operator.
+
+The stream operates in two modes. Real-time mode emits events and their Merkle proof to the regulatory endpoint at the cadence the regulator specifies. Batch mode exports a complete signed package at a scheduled interval. Both modes produce the same verifiable-completeness artifact; the difference is delivery cadence, not cryptographic content. Regulated deployments declare the mode in their compliance posture and communicate the choice to the receiving regulator.
+
+Sub-patterns 9a and 9b cover bilateral handoffs — one party transferring to another, with both parties signing. Sub-pattern 9c covers unilateral continuous reporting — one party continuously attesting to a passive verifier. The distinction is authority. In 9a and 9b, the recipient acknowledges receipt and the receipt is a two-signature primitive. In 9c, the regulator validates the completeness proof but does not acknowledge individual events — the stream is unilateral by design, because regulatory recipients cannot be made co-authors of every record they ingest.
+
+### Threat model for chain-of-custody
+
+Chain-of-custody is itself an attack surface. Three failure modes define the threat model.
+
+**Receipt forgery.** An attacker forges a transfer receipt to claim a data object was — or was not — transferred at a time that serves their interest. The two-signature construction in 9a prevents this. A receipt requires both the transferor's and recipient's valid signatures under their device keypairs. Forging the receipt requires compromising both device keypairs simultaneously. A single compromised endpoint can fabricate a one-sided `transfer-initiated` record but cannot complete the receipt without the other party's signature — see §Collaborator Revocation for the per-party key isolation that makes simultaneous compromise of two distinct parties a separate, much harder attack.
+
+**Timestamp manipulation.** An attacker with control of the local node modifies the system clock before recording a transfer event, backdating it. Sub-pattern 9b's external TSA anchor detects this. The TSA token carries the TSA's certified time, independent of the node's clock. A backdated receipt produces a TSA token with a later certified time than the receipt's claimed dispatch time — the mismatch is detectable by any verifier. Evidence-class deployments must use the external TSA. Deployments without a TSA anchor have no defense against local-clock manipulation, and the compliance posture must declare this honestly.
+
+**Stream omission.** An attacker omits events from a regulatory-export stream to conceal unfavorable activity. Sub-pattern 9c's Merkle-chain commitment prevents this. Any omission breaks the chain. The regulator detects the gap on receipt-side verification, without requiring cooperation from the operator who would be the party performing the omission.
+
+### FAILED conditions
+
+The chain-of-custody primitive fails when any of the conditions below holds. Any one of them voids the primitive's guarantees.
+
+- **A transfer receipt is accepted as complete with only one signature.** Architecture failure. Sub-pattern 9a's two-signature requirement is the foundation of the bilateral attestation; a one-signature receipt cannot ground the legal claim of mutual acknowledgment.
+- **A chain-of-custody event does not appear in the encrypted audit log.** Architecture failure. The audit substrate is the tamper-evident anchor; an event recorded outside the log is an event with no cryptographic continuity guarantee.
+- **A regulatory-export stream is accepted as complete without a Merkle-chain verification step.** Compliance failure. Sub-pattern 9c's verifiable-completeness proof is the structural answer to stream omission; bypassing the verification step leaves the regulator with no defense against silent gaps.
+
+The kill trigger for this primitive is a transfer receipt that closes as `transfer-completed` without a verifiable second signature traceable to the recipient's published key. A primitive that cannot guarantee the second signature has not been forged is not a chain-of-custody primitive — it is a logbook with extra ceremony.
+
+### Implementation surfaces
+
+Chain-of-custody is observable through four named event contracts. The list is illustrative; the concrete schema lands when `Sunfish.Kernel.Custody` reaches its first milestone.
+
+- `CustodyTransferInitiated` — the transferor's node has signed and dispatched a transfer receipt; carries the data-object identifier, the version vector, the transferor signature, and the UTC dispatch timestamp.
+- `CustodyTransferConfirmed` — the recipient's node has signed the acknowledgment; the receipt advances to `transfer-completed`; carries the recipient signature and the UTC confirmation timestamp.
+- `CustodyTransferDisputed` — a mismatch between the transferor's asserted version and the recipient's confirmed version; the custody chain halts pending resolution; carries both signatures and the divergence description.
+- `RegulatoryExportBatch` — a signed event-batch and Merkle proof emitted in streaming-export mode; carries the batch range (first and last event sequence numbers), the Merkle root, and the TSA token when evidence-class mode is active.
+
+Nodes integrating custody-verification flows subscribe through `Sunfish.Kernel.Custody`. The audit-log validation layer enforces the two-signature requirement before the `CustodyTransferConfirmed` contract is emitted. Custody records compose with the recovery-event audit trail (§Key-Loss Recovery sub-pattern 48f) and the revocation-event audit trail (§Collaborator Revocation sub-pattern 45f) at the substrate layer; their record schemas remain distinct.
+
+Article 17 erasure requests against an event in a `RegulatoryExportBatch` introduce a tension the streaming-export mode cannot resolve unilaterally — modifying the event would break the Merkle chain and invalidate every batch downstream of it. The architecture's answer is the same as for the compliance-tier CRDT log: crypto-shred the content (destroy the DEK) while preserving the structural entry, satisfying the content-erasure obligation without breaking the stream's completeness proof. See §GDPR Article 17 and Crypto-Shredding for the full mechanism. The deployment-time worksheet for custody operations sits at App B §Section 5.
+
+---
+
 ## GDPR (General Data Protection Regulation) Article 17 and Crypto-Shredding
 
 GDPR Article 17 grants data subjects the right to erasure [3]. Parallel erasure rights exist under India's DPDP (Digital Personal Data Protection) Act, Brazil's LGPD (Lei Geral de Proteção de Dados) Article 18, the UAE's DIFC (Dubai International Financial Centre) DPL (Data Protection Law) 2020 Chapter 4, and the broader matrix of regimes named in Appendix F (LFPDPPP (Ley Federal de Protección de Datos Personales en Posesión de los Particulares), POPIA (Protection of Personal Information Act), NDPR (Nigeria Data Protection Regulation), Kenya DPA, APPI (Act on the Protection of Personal Information), PIPA (Personal Information Protection Act)). The compliance-tier CRDT operation log is immutable by design — tamper evidence for regulated industries depends on DAG (Directed Acyclic Graph) continuity. Conventional deletion breaks the DAG. This creates a direct conflict between the architecture's integrity guarantees and the erasure obligations under these regimes. The crypto-shredding mechanism described below satisfies the content-erasure obligation uniformly across jurisdictions; the metadata residue limitation applies identically to all of them.
@@ -513,6 +684,57 @@ This approach satisfies Article 17 for the content of the targeted record. The o
 Organizations subject to Article 17 must obtain legal review before relying on crypto-shredding as their erasure mechanism. The architecture makes content erasure technically possible. Legal counsel determines whether residual metadata satisfies the specific data subject's request under the applicable national implementation of the GDPR.
 
 **Practical implementation.** The DEK for a targeted record is zeroed from all node keystores through the same broadcast mechanism used for compromised key discard. The operation stub in the log carries a marker indicating the DEK has been destroyed. Audit tools identify destroyed records without reading their content. The erasure event itself is logged with the data subject identifier, the targeted operation identifier, and the timestamp — the log records that an erasure occurred, even though the erased content is unrecoverable.
+
+---
+
+## Event-Triggered Re-classification
+
+<!-- code-check annotations: Sunfish.Kernel.Security (in-canon, extends existing); Sunfish.Kernel.Audit (in-canon per cerebrum 2026-04-28); Sunfish.Kernel.SchemaRegistry (in-canon); Sunfish.Kernel.Sync (in-canon, propagates re-classification operation via gossip). 0 new top-level namespaces. 0 class APIs / method signatures introduced. -->
+
+A commercial driver finishes a delivery shift. The dashcam footage from that route lands in the fleet's local-first store under the routine `operational` class — 30-day rolling retention, dispatcher-role envelope, no signed-export pipeline. Three days later, an insurer phones: a vehicle from that route was named in a third-party collision claim. The footage is now evidence. Its retention must extend, its access must tighten, and its export must carry the chain-of-custody primitive specified in §Chain-of-Custody for Multi-Party Transfers. None of that was true when the record was written; all of it must be true now — and replicas already sit on the driver's tablet, the dispatch desktop, and a back-office relay cache that may be offline until tomorrow morning. Schema-time classification cannot handle this. The architecture treats data-class escalation as a first-class operation on the CRDT log, governed by a CRDT-native invariant and propagated through the same gossip path that carries every other operation.
+
+### Sub-pattern 10a — Re-classification operation and the max-register CRDT invariant
+
+Re-classification is an operation, not a state mutation. The classification service does not overwrite a `class` field. It appends a new operation carrying four fields: the record identifier, the new class level, the trigger event identifier, and the signature of the asserting authority — operator, compliance system, or designated user role. The record's content does not change. Its envelope acquires a new assertion.
+
+The CRDT invariant governing class level is the **max-register**. The class label of a record at any node is `max(L₁, L₂, ..., Lₙ)` taken over every re-classification operation that has reached the node. Max is associative, commutative, and idempotent — the three properties a strict semilattice requires for monotonic convergence. Two nodes that receive the same operations in different orders converge to the same label; a replayed operation does not change the resulting class. The mechanism aligns with the high-watermark principle NIST SP 800-60 prescribes for aggregated systems [37][38] and the periodic-review obligation ISO/IEC 27001:2022 Annex A 5.12 places on classified information [39].
+
+The invariant has a sharp edge. **An operation `(record_id, lower_class)` is rejected at every replica.** Re-classification is monotonic upward; a record at Class 3 cannot be returned to Class 2 by any authority. A downward move would re-grant access already cut off; if a deployment determines an escalation was issued in error, the corrective path is deletion-and-recreation at the lower class with a fresh record identifier. The trigger event identifier is the load-bearing field for accountability — every operation names its cause (an incident-flag, a legal-hold directive, a regulator notice, an inferred-special-category trigger fired when a content scanner detects a GDPR Article 9 attribute [40]) and resolves to a record in `Sunfish.Kernel.Audit`.
+
+**Principal novelty.** Microsoft Purview sensitivity labels [41], AWS Macie, and Google Cloud DLP perform classification and re-classification as centralized, online operations against a canonical store. None applies a max-register CRDT invariant to a security metadata field with access-control re-evaluation as a delivery-side effect. Those systems are the appropriate point of contrast, not the model. The contribution is convergent re-classification under partial replication without duplicating storage and without breaking the immutable audit trail.
+
+### Sub-pattern 10b — Backward propagation across replicated copies
+
+A re-classification operation propagates through the gossip path the sync daemon uses for every operation in `Sunfish.Kernel.Sync`. The mechanism is structurally identical to the revocation broadcast specified in §Collaborator Revocation and Post-Departure Partition. Where revocation broadcasts "this collaborator's KEK share is revoked," re-classification broadcasts "this record's class level has changed, and the new class's access policy applies retroactively." Transport identical; asserted fact different.
+
+What distinguishes re-classification from an ordinary edit is the receiving node's behavior on delivery. The sync daemon hands the operation to `Sunfish.Kernel.Security` for immediate access-control re-evaluation — not on the next refresh cycle, not at the next session handshake, but inline before any pending read or write on the affected record reaches the application layer. Roles that held access at the prior class but lack access at the new class see their next attempted read denied with a `class-escalated` reason code.
+
+Offline-node handling is the case the architecture has to get right. A node offline when the escalation fired holds a previously-lower-class copy. On reconnect, it receives the operation as part of its anti-entropy exchange, and the sync daemon processes the re-classification before delivering any pending reads or writes the application queued during the offline window. The local cached copy is not erased — the architecture does not delete data from offline replicas, the same commitment §Collaborator Revocation makes for revoked collaborators. Forward access at the prior class is cut off; previously-delivered reads are not retrieved. The UX consequence of this forward-only invalidation is specified in Ch20 §Data-Class Escalation UX.
+
+### Sub-pattern 10c — Audit-trail handling under class change
+
+The record's operation history was written under the prior class. Truncating it to hide pre-escalation state is out of scope — it would break the CRDT's append-only invariant. The historical operations remain in the log; the access policy that governs their retrieval changes. A role authorized at Class 1 was authorized to read history at Class 1; after escalation to Class 3, that role is not authorized to read the history unless it also holds access at Class 3. Cached copies a node held before escalation remain locally readable on that node — see §Collaborator Revocation sub-pattern 45c for the cached-copy framework — but no further history can be pulled from peers under the prior credential. The escalation event itself produces a record in `Sunfish.Kernel.Audit` carrying the record identifier, prior and new class levels, trigger identifier, asserting authority, and UTC timestamp; the audit record's own class is the **new** class.
+
+### Sub-pattern 10d — Cross-class references and operator review
+
+A low-class record holding a reference to a high-class record carries an implicit class obligation. The reference does not reveal content, but it proves a relationship exists — in a legal-hold context, a routine note referencing an incident report's identifier may disclose the existence of the investigation. When a record escalates, `Sunfish.Kernel.Security` queries the reference index maintained by `Sunfish.Kernel.SchemaRegistry` for every record holding an inbound reference to the escalated identifier. The audit trail flags those records for operator review; they are **not** auto-escalated, because auto-lifting would cascade unbounded. The operator either confirms referencing records remain at their original class or issues a separate re-classification operation, which propagates through 10b as a first-class escalation. The review surface is specified in Ch20 §Data-Class Escalation UX.
+
+### Sub-pattern 10e — Schema-evolution non-interaction
+
+Class level is a metadata field on the record's envelope, not a schema field on its payload. Re-classification does not change payload shape, does not require a lens, and does not advance the schema version; the migration engine is not invoked. Per-class field-access rules — fields permitted at Class 1 that must be redacted at Class 3 — are enforced at read time by `Sunfish.Kernel.Security`, not by the schema migration engine. Schema migration mutates payload shape; access enforcement filters payload content for delivery.
+
+### Composition forward
+
+A record escalated under §10a that later becomes subject to a deletion request follows §GDPR Article 17 and Crypto-Shredding at the new class level — the DEK destroyed is the new class's DEK. Composition with §Forward Secrecy and Post-Compromise Security is clean. The forward-secrecy ratchet (sub-pattern 46a–46b) operates per-session-pair on sync-event transport; re-classification is an event on the record's envelope, and the two layers do not interact. Envelope-only re-keying — re-wrapping the existing DEK under the new class's KEK — is sufficient for every class transition. The DEK itself does not change; the ratchet does not advance on a re-classification operation any differently than on any other operation; full content re-encryption is not required. Composition with §Chain-of-Custody for Multi-Party Transfers is equally clean. A transfer receipt binds a specific `(object-id, version-vector, transferor-signature, recipient-signature)` tuple at a specific moment. Subsequent escalation does not retroactively modify any field of the prior receipt — it produces a successor event in the audit log. The receipt's class field names the class at time of transfer and remains accurate as a historical fact; it is not made stale by escalation, because the receipt's claim is point-in-time, not perpetual.
+
+### FAILED conditions
+
+- **A re-classification operation lowers a record's class level.** Architecture failure. Max-register monotonicity is the foundation of convergence and access-control correctness.
+- **An offline node delivers reads from a cached prior-class copy after receiving the re-classification operation on reconnect.** Architecture failure. Forward access at the prior class must be cut off inline at delivery.
+- **A cross-class reference cascade auto-escalates referencing records without operator review.** Architecture failure. The §10d gate exists precisely to bound the propagation surface.
+- **The escalation event is not recorded in `Sunfish.Kernel.Audit` at the new class level.** Compliance failure.
+
+The kill trigger for this primitive is a re-classification operation that converges to a lower class than its highest received argument at any replica. A primitive that does not preserve max-register monotonicity is not data-class re-classification — it is mutable-state pretending to converge.
 
 ---
 
@@ -534,6 +756,68 @@ The relay is a ciphertext router. It receives encrypted event payloads from sour
 
 **Traffic analysis resistance.** The current architecture does not implement constant-rate padding between nodes. Organizations whose threat model includes traffic analysis by a well-resourced adversary replace the relay with application-layer obfuscation or route it behind a mixnet. The architecture documents the limitation; the mitigation is an operator deployment choice outside the scope of `Sunfish.Kernel.Security`.
 
+For operators who legitimately derive aggregate statistics from relay traffic — error rates, sync latencies, fleet health counts — §Privacy-Preserving Aggregation at Relay specifies the differential-privacy and k-anonymity mechanisms that satisfy the same metadata-protection intent as a self-hosted relay while still enabling operational intelligence.
+
+---
+
+## Privacy-Preserving Aggregation at Relay
+
+<!-- code-check annotations: Sunfish.Kernel.Sync (in-canon, extends existing). 0 new top-level namespaces. 0 class APIs / method signatures introduced. -->
+
+§Relay Trust Model named the self-hosted relay as the mitigation for metadata-sensitive deployments. That mitigation handles the *access* problem — it removes third-party operators as observers of the communication graph. It does not handle the *aggregation* problem. The organization that hosts its own relay still derives operational intelligence from the traffic it forwards: error rates, per-role sync latencies, fleet health counts, connection-duration distributions. Each retained statistic becomes a record that — if subpoenaed, exfiltrated, or repurposed — reveals individual node behavior at fine grain.
+
+Differential privacy at the relay closes that gap. The relay computes operational statistics with calibrated noise and structural cohort floors. Any single node's contribution becomes statistically indistinguishable from its neighbors' in the published aggregate. The operator retains useful intelligence; individual behavior is protected.
+
+The load-bearing scope: differential privacy here applies *only to metadata aggregates the relay computes as a side effect of routing* — counts, rates, latencies derived from packet headers and session timings. The relay receives ciphertext; payload content is differential-privacy-inaccessible because it is cryptographically inaccessible. Readers who conflate "DP on data" with "DP on relay-side metadata" misread the threat model. Forward secrecy (§Forward Secrecy and Post-Compromise Security) hides content; this section hides aggregates. The two compose orthogonally — neither weakens the other, neither alone closes the other's gap. §Endpoint Compromise: What Stays Protected establishes that the relay sees only ciphertext under any compromise scenario; this section establishes that even the metadata it does see is not retained at single-node granularity.
+
+The section specifies three sub-patterns: differential-privacy noise injection on relay-side aggregates, a k-anonymity floor for per-role partitions with a named carve-out for recovery-event statistics, and a rolling-window privacy budget tracker for repeated time-series queries.
+
+### Sub-pattern 12a — Differential-privacy noise injection
+
+The relay holds plaintext metadata even in an encrypted-payload architecture: per-window operation counts, sync-latency bucket counts, error-event counts per code, connection-duration histograms. These are additive aggregates with sensitivity 1 — one node's participation can change a count by at most 1. The Laplace mechanism (Dwork and Roth [32]) adds noise with scale λ = 1/ε to satisfy ε-differential privacy. The Gaussian mechanism is the analogous construction for (ε, δ)-DP where the relay batches correlated counts.
+
+Two ε settings cover most deployments. Standard operational telemetry uses ε = 1.0 per query (λ = 1) — a defensible baseline that preserves utility for fleet-health dashboards while keeping any single node's contribution recoverable only with low confidence. Regulated deployments — healthcare nodes, financial-services nodes, or any deployment where connection frequency itself is regulated — use ε = 0.1 per query (λ = 10), adding ten times the noise for ten times stronger privacy at the cost of degraded utility on small cohorts.
+
+**Central DP at the relay tier — an architectural decision.** This architecture applies *central* differential privacy at the relay, not *local* differential privacy at each node. Each node reports raw sync events for delivery; the relay applies the noise once, when it publishes an aggregate to a dashboard, monitoring system, or export feed. RAPPOR (Erlingsson, Pihur, and Korolova [33]) and Apple's at-scale telemetry deployment [34] are the canonical local-DP precedents — each contributing node randomizes its own report before transmission, eliminating the need to trust the aggregator. The Inverted Stack chooses central DP. §Relay Trust Model already prescribes a self-hosted relay for metadata-sensitive deployments, and a self-hosted relay operated by the same organization whose nodes generate the statistics satisfies the "trusted curator" assumption central DP requires — by organizational identity rather than cryptographic construction. Central DP produces lower noise for equivalent guarantees because the noise is added once to the aggregate rather than once per contributor — a substantial utility advantage on the small-cohort statistics typical of enterprise sync deployments.
+
+The trade-off is honest. Central DP requires the relay to apply the noise faithfully. For self-hosted deployments, that fidelity is under organizational control. Managed-relay deployments without operator audit rights either accept that operational telemetry is unavailable, contract for explicit audit rights, or layer local-DP randomization at the node tier as defense in depth. The relay exposes the choice — central, local, or hybrid — as a deployment-time configuration and refuses to default to a setting the deployment posture does not earn.
+
+`Sunfish.Kernel.Sync` carries the noise injector as a relay-internal policy component. Mechanism, ε value, and aggregate-output schema are declared in the relay configuration manifest. Metadata-privacy enforcement is a sync-layer concern co-located with the metadata it operates on; no new top-level namespace is introduced.
+
+### Sub-pattern 12b — k-anonymity floor for per-role aggregates
+
+Some relay-side statistics partition by role: error rate for Finance-role nodes, sync latency for Compliance-role nodes, connection-success rate for Field-Operations nodes. If the Finance role has three members and one exhibits a persistent error pattern, the partition leaks that member's identity even after DP noise — Laplace noise with sensitivity 1 cannot mask a signal structurally unique to a partition of three.
+
+The k-anonymity floor (Sweeney [35]) closes the gap. The relay suppresses any per-partition aggregate computed over fewer than k contributing nodes. Three suppression options compose with the policy: withhold the result entirely, merge the partition into a coarser parent (Finance-EMEA into Finance), or return a `below-cohort-minimum` indicator to the consuming dashboard. Withhold is the default; merge requires the operator to declare the parent partition explicitly.
+
+k = 10 is a commonly applied minimum in operational-telemetry deployments and the practical floor recommended for this architecture; Sweeney's k-anonymity model [35] does not prescribe a specific value, and applied-privacy practice spans a k = 5 to k = 25 range depending on attribute sensitivity. Regulated deployments — healthcare, financial services, deployments invoking GDPR Article 25 data minimization — adopt k = 50 as a defensible high-water mark consistent with healthcare-privacy norms. l-diversity (Machanavajjhala et al. [36]) extends the model when a per-role partition has k members but a single sensitive-attribute value dominates; deployments that require l-diversity declare the parameter alongside k in the relay configuration.
+
+**Carve-out for recovery-event partition statistics.** Recovery events are unusually sensitive relay-side statistics. A per-user recovery event — the metric defined by §Key-Loss Recovery sub-pattern 48f — may signal a compromised device before the user has detected the compromise. The k-anonymity floor applies to recovery-event partitions with a named exception: even when the cohort exceeds k, the relay suppresses the recovery-event partition statistic unless the operator holds explicit audit rights declared in the deployment manifest. This is an operator-policy decision, not a general suppression rule. The carve-out exists because the cost of exposing a single recovery event to an operator who lacks the authority to act on it exceeds the operational value of including recovery counts in routine fleet-health summaries.
+
+The k-floor evaluator is a relay-internal policy component within `Sunfish.Kernel.Sync`. It evaluates partition cardinality before the noise injector executes; partitions below floor never reach the noise stage.
+
+### Sub-pattern 12c — Rolling-window privacy budget tracker
+
+Sync telemetry is time-series by construction: the operator runs the same latency-histogram query every hour, the same error-count query every fifteen minutes. Sequential composition is additive — n queries at ε per query consume nε of cumulative budget (Dwork and Roth [32], §3.5). An operator running hourly latency histograms at ε = 0.1 accumulates ε = 72 over thirty days. At that cumulative budget the formal DP guarantee has degraded to a value no privacy practitioner would defend in print.
+
+The rolling-window budget tracker makes the degradation explicit and enforceable. The relay maintains a per-query-type, per-window allocation — default Σε = 10.0 over 30 days for standard operational telemetry. Each query consumes its ε from the active window. At 80% consumption the relay surfaces a `BudgetWarningRaised` event into the operator audit log. At 100% the relay queues subsequent queries of that type until the window advances and freed budget becomes available.
+
+**Honest scoping.** The rolling-window budget is a practical engineering heuristic, not a formal solution to temporal differential privacy. Time-series DP composition under temporal correlation is an open research problem; the architecture does not claim to solve it. The tracker's value is operational: it forces the operator to confront the cumulative budget cost at deployment time rather than discover it after the formal guarantee has silently collapsed. Deployments requiring tighter bounds adopt advanced composition accounting (Dwork and Roth [32], §3.5) — the relay exposes simple-versus-advanced composition as a configuration knob, with simple as the conservative default.
+
+**Tension with §Endpoint Compromise.** An endpoint-compromise incident produces a forensic burst — rapid reconnection attempts, anomalous operation counts, atypical latency profiles on the affected node. DP noise on these counts may mask the signal the operator needs to detect and scope the incident. The architecture's answer is a named incident-response mode that suspends DP aggregation for the affected node's metrics, recording raw events into a separate operator-controlled audit log for the incident's duration and resuming DP on closure. The suspension itself emits a signed event into `Sunfish.Kernel.Audit`, preserving the audit trail across the suspension period. The suspension event is encrypted to the operator role only — visible to the operator and to auditors holding the operator-role key, not to the broader node fleet — so the existence of the suspension does not itself leak the fact of an unconfirmed incident before the operator has scoped it.
+
+The budget tracker is the third relay-internal policy component within `Sunfish.Kernel.Sync`. It composes upstream of the noise injector: a query that fails the budget gate never reaches DP evaluation, and a partition that fails the k-floor never reaches the budget gate.
+
+### FAILED conditions
+
+The privacy-aggregation primitive fails when any of the conditions below holds. Any one voids the primitive's guarantees.
+
+- **A DP-labeled aggregate is published over a cohort smaller than the k-anonymity floor.** Architecture failure. Below floor, the noise required to mask a single contributor exceeds the signal magnitude, and the published number is privacy theater rather than privacy protection.
+- **Cumulative ε within the rolling window exceeds the configured Σε without the budget gate halting subsequent queries.** Architecture failure. A budget gate that does not enforce its window allocation surrenders the formal guarantee while still labeling output as DP-protected.
+- **Recovery-event partition statistics are published without the operator holding explicit audit rights declared in the deployment manifest.** Carve-out failure. The §12b exception exists precisely because routine inclusion of recovery counts exposes per-user compromise signals; bypassing the audit-rights gate defeats the carve-out's purpose.
+
+The kill trigger for this primitive is a published DP-labeled statistic computed over a cohort below the k-anonymity floor. A primitive that labels noise-dominated output as differential privacy is not privacy preservation — it is a confidence trick performed on the operator and on the people whose behavior the data describes.
+
 ---
 
 ## Security Properties Summary
@@ -546,6 +830,7 @@ The four defensive layers, key hierarchy, and operational procedures provide fou
 | **Integrity** | Tampering with historical records breaks DAG continuity and is detectable by any node that validates the log. Unsigned administrative events — key bundles, revocations, role changes — are rejected at receipt. | Append-only, DAG-linked CRDT operation log; administrator-signed administrative events. |
 | **Availability** | An unavailable relay does not prevent local operations. Confidentiality and integrity guarantees hold offline. Sync resumes when the relay becomes available and the node's attestations are current. | Local-node primary architecture; relay is an optional sync peer, not a required dependency. |
 | **Non-repudiation** | Every write is attributed to the device key of the originating node. A node cannot deny authorship of an operation it signed. | Long-lived Ed25519 device keypairs stored in hardware-backed OS keystores where available. |
+| **Metadata minimization** | Relay-side aggregate statistics satisfy (ε, δ)-differential privacy with a k-anonymity floor. Per-partition aggregates below floor are suppressed. Cumulative ε is gated against a rolling-window budget, so individual-node behavior is not recoverable from published telemetry. | Central differential privacy at the relay tier, k-anonymity floor evaluator, and rolling-window budget tracker — all relay-internal policy components within `Sunfish.Kernel.Sync`. Suspension-event audit trail in `Sunfish.Kernel.Audit`. |
 
 These properties hold under the threat model stated at the opening of this chapter. They do not hold if the administrator's device is compromised and the attacker performs fraudulent key distribution before detection. The administrator device is the system's trust anchor; its protection is an organizational security responsibility outside the scope of `Sunfish.Kernel.Security`.
 
@@ -587,6 +872,50 @@ These properties hold under the threat model stated at the opening of this chapt
 
 [17] R. Barnes, B. Beurdouche, R. Robert, J. Millican, E. Omara, and K. Cohn-Gordon, "The Messaging Layer Security (MLS) Protocol," Internet Engineering Task Force, RFC 9420, Jul. 2023. [Online]. Available: https://www.rfc-editor.org/rfc/rfc9420
 
-[18] WhatsApp Inc., "WhatsApp Encryption Overview — Technical White Paper," Sep. 2021. [Online]. Available: https://www.whatsapp.com/security/WhatsApp-Security-Whitepaper.pdf
+[18] WhatsApp Inc., "WhatsApp Encryption Overview — Technical White Paper," Nov. 2021. [Online]. Available: https://www.whatsapp.com/security/WhatsApp-Security-Whitepaper.pdf
 
 [19] N. Borisov, I. Goldberg, and E. Brewer, "Off-the-Record Communication, or, Why Not To Use PGP," in *Proc. ACM Workshop on Privacy in the Electronic Society (WPES)*, Washington, DC, USA, Oct. 2004, pp. 77–84.
+
+[20] Google, "Pixel Titan M and Android Hardware-Backed Keystore," Android Developers documentation, 2024. [Online]. Available: https://source.android.com/docs/security/features/keystore and https://developer.android.com/privacy-and-security/keystore
+
+[21] Microsoft, "Microsoft Pluton security processor," Microsoft Security Blog, Nov. 17, 2020. [Online]. Available: https://www.microsoft.com/en-us/security/blog/2020/11/17/meet-the-microsoft-pluton-processor-the-security-chip-designed-for-the-future-of-windows-pcs/
+
+[22] J. Van Bulck *et al.*, "Foreshadow: Extracting the Keys to the Intel SGX Kingdom with Transient Out-of-Order Execution," in *Proc. 27th USENIX Security Symposium*, 2018, pp. 991–1008.
+
+[23] K. Murdock *et al.*, "Plundervolt: Software-based Fault Injection Attacks against Intel SGX," in *Proc. IEEE Symposium on Security and Privacy (S&P)*, 2020, pp. 1466–1482.
+
+[24] S. van Schaik *et al.*, "SGAxe: How SGX Fails in Practice," 2020. [Online]. Available: https://sgaxe.com/
+
+[25] Arm Ltd., "Arm Security Technology — Building a Secure System using TrustZone Technology," white paper, Apr. 2009 (rev. 2022). [Online]. Available: https://developer.arm.com/documentation/prd29-genc-009492/
+
+[26] Amnesty International Security Lab, "Forensic Methodology Report: How to catch NSO Group's Pegasus," Jul. 2021. [Online]. Available: https://www.amnesty.org/en/latest/research/2021/07/forensic-methodology-report-how-to-catch-nso-groups-pegasus/ (cross-confirmed by Citizen Lab peer review).
+
+[27] Lookout Threat Intelligence, "Lookout Discovers Hermit Spyware," Apr. 2022 (with subsequent Citizen Lab confirmation of Kazakhstan use Jun. 2022). [Online]. Available: https://www.lookout.com/threat-intelligence/article/hermit-spyware-discovery — supplement with Google Threat Analysis Group analysis of Predator/Cytrox at https://blog.google/threat-analysis-group/.
+
+[28] Internet Engineering Task Force (IETF), "Internet X.509 Public Key Infrastructure Time-Stamp Protocol (TSP)," RFC 3161, Aug. 2001. [Online]. Available: https://www.rfc-editor.org/rfc/rfc3161
+
+[29] European Parliament and Council, "Regulation (EU) No 910/2014 on electronic identification and trust services for electronic transactions in the internal market (eIDAS)," Official Journal of the European Union, Jul. 2014, Art. 41. [Online]. Available: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32014R0910
+
+[30] S. A. Crosby and D. S. Wallach, "Efficient Data Structures for Tamper-Evident Logging," in *Proc. 18th USENIX Security Symposium*, Montreal, Aug. 2009, pp. 317–334. [Online]. Available: https://www.usenix.org/legacy/event/sec09/tech/full_papers/crosby.pdf
+
+[31] Internet Engineering Task Force (IETF), "Certificate Transparency Version 2.0," RFC 9162, Dec. 2021. [Online]. Available: https://www.rfc-editor.org/rfc/rfc9162
+
+[32] C. Dwork and A. Roth, "The Algorithmic Foundations of Differential Privacy," *Foundations and Trends in Theoretical Computer Science*, vol. 9, nos. 3–4, pp. 211–487, 2014. [Online]. Available: https://www.cis.upenn.edu/~aaroth/Papers/privacybook.pdf
+
+[33] Ú. Erlingsson, V. Pihur, and A. Korolova, "RAPPOR: Randomized Aggregatable Privacy-Preserving Ordinal Response," in *Proc. ACM Conference on Computer and Communications Security (CCS)*, Scottsdale, AZ, Nov. 2014. [Online]. Available: https://dl.acm.org/doi/10.1145/2660267.2660348
+
+[34] Apple Inc. Differential Privacy Team, "Learning with Privacy at Scale," *Apple Machine Learning Journal*, vol. 1, no. 8, Dec. 2017. [Online]. Available: https://docs-assets.developer.apple.com/ml-research/papers/learning-with-privacy-at-scale.pdf
+
+[35] L. Sweeney, "k-Anonymity: A Model for Protecting Privacy," *International Journal on Uncertainty, Fuzziness and Knowledge-Based Systems*, vol. 10, no. 5, pp. 557–570, 2002. [Online]. Available: https://dl.acm.org/doi/10.1142/S0218488502001648
+
+[36] A. Machanavajjhala, D. Kifer, J. Gehrke, and M. Venkitasubramaniam, "l-Diversity: Privacy Beyond k-Anonymity," *ACM Transactions on Knowledge Discovery from Data*, vol. 1, no. 1, Mar. 2007. [Online]. Available: https://dl.acm.org/doi/10.1145/1217299.1217302
+
+[37] National Institute of Standards and Technology (NIST), "Guide for Mapping Types of Information and Information Systems to Security Categories," SP 800-60 Vol. 1 Rev. 1, Aug. 2008. [Online]. Available: https://csrc.nist.gov/pubs/sp/800/60/v1/r1/final
+
+[38] National Institute of Standards and Technology (NIST), "Guide for Mapping Types of Information and Information Systems to Security Categories," SP 800-60 Rev. 2 (Initial Working Draft), 2024. [Online]. Available: https://csrc.nist.gov/pubs/sp/800/60/r2/iwd
+
+[39] International Organization for Standardization, "Information security, cybersecurity and privacy protection — Information security management systems — Requirements," ISO/IEC 27001:2022, Annex A 5.12 — Classification of information.
+
+[40] European Parliament, "Regulation (EU) 2016/679 (General Data Protection Regulation)," Official Journal of the European Union, Apr. 2016, Art. 9. [Online]. Available: https://gdpr-info.eu/art-9-gdpr/
+
+[41] Microsoft, "Learn about sensitivity labels — Microsoft Purview," Microsoft Learn documentation, 2024. [Online]. Available: https://learn.microsoft.com/en-us/purview/sensitivity-labels

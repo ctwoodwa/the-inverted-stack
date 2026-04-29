@@ -7,7 +7,7 @@
       "error_message": "Wrong reference: eleven should be twelve",
       "file": ".claude/agents/literary-board.md",
       "root_cause": "Used \"eleven\" instead of \"twelve\"",
-      "fix": "Changed eleven \u2192 twelve",
+      "fix": "Changed eleven → twelve",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -23,7 +23,7 @@
       "error_message": "Wrong reference: Five should be Six",
       "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
       "root_cause": "Used \"Five\" instead of \"Six\"",
-      "fix": "Changed Five \u2192 Six",
+      "fix": "Changed Five → Six",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -39,7 +39,7 @@
       "error_message": "Wrong reference: 000 should be 500",
       "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
       "root_cause": "Used \"000\" instead of \"500\"",
-      "fix": "Changed 000 \u2192 500",
+      "fix": "Changed 000 → 500",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -55,7 +55,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 17\u219231 lines (3 removed)",
+      "fix": "Rewrote 17→31 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -71,7 +71,7 @@
       "error_message": "Wrong reference: 000 should be 500",
       "file": "book-structure.md",
       "root_cause": "Used \"000\" instead of \"500\"",
-      "fix": "Changed 000 \u2192 500",
+      "fix": "Changed 000 → 500",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -103,7 +103,7 @@
       "error_message": "Wrong reference: correct should be deterministically",
       "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
       "root_cause": "Used \"correct\" instead of \"deterministically\"",
-      "fix": "Changed correct \u2192 deterministically",
+      "fix": "Changed correct → deterministically",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -199,7 +199,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
       "root_cause": "6 lines replaced/restructured",
-      "fix": "Rewrote 13\u21923 lines (6 removed)",
+      "fix": "Rewrote 13→3 lines (6 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -214,7 +214,7 @@
       "timestamp": "2026-04-24T15:02:38.004Z",
       "error_message": "Incorrect value in code",
       "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
-      "root_cause": "Had 's Data Protection Act \u2014 data residency and consen",
+      "root_cause": "Had 's Data Protection Act — data residency and consen",
       "fix": "Changed to 's Data Protection Act, and Russia'",
       "tags": [
         "auto-detected",
@@ -231,7 +231,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md",
       "root_cause": "7 lines replaced/restructured",
-      "fix": "Rewrote 13\u21925 lines (7 removed)",
+      "fix": "Rewrote 13→5 lines (7 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -263,7 +263,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 5\u21925 lines (2 removed)",
+      "fix": "Rewrote 5→5 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -295,7 +295,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-2-council-reads-the-paper/ch05-enterprise-lens.md",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 5\u21923 lines (3 removed)",
+      "fix": "Rewrote 5→3 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -310,7 +310,7 @@
       "timestamp": "2026-04-24T16:46:39.518Z",
       "error_message": "Missing error handling in unknown",
       "file": "chapters/part-2-council-reads-the-paper/ch06-distributed-systems-lens.md",
-      "root_cause": "Code path had no error handling \u2014 exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -343,7 +343,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-2-council-reads-the-paper/ch09-local-first-practitioner-lens.md",
       "root_cause": "6 lines replaced/restructured",
-      "fix": "Rewrote 13\u21927 lines (6 removed)",
+      "fix": "Rewrote 13→7 lines (6 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -375,7 +375,7 @@
       "error_message": "Wrong reference: Five should be Six",
       "file": "chapters/part-2-council-reads-the-paper/ch10-synthesis.md",
       "root_cause": "Used \"Five\" instead of \"Six\"",
-      "fix": "Changed Five \u2192 Six",
+      "fix": "Changed Five → Six",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -423,7 +423,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/Makefile",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 9\u219218 lines (2 removed)",
+      "fix": "Rewrote 9→18 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -455,7 +455,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 10\u219216 lines (2 removed) | Also: def synth_chunk(client: OpenAI, voice: str, text: ; with client.audio.speech.with_streaming_response.c | Also: ap.add_argument(\"--voice\", default=\"af_sky+af_bell; manifest: dict = {\"voice\": args.voice, \"chapters\": | Also: raw = md_path.read_text(encoding=\"utf-8\"); chunks = chunk_text(narratable_text(raw))",
+      "fix": "Rewrote 10→16 lines (2 removed) | Also: def synth_chunk(client: OpenAI, voice: str, text: ; with client.audio.speech.with_streaming_response.c | Also: ap.add_argument(\"--voice\", default=\"af_sky+af_bell; manifest: dict = {\"voice\": args.voice, \"chapters\": | Also: raw = md_path.read_text(encoding=\"utf-8\"); chunks = chunk_text(narratable_text(raw))",
       "tags": [
         "auto-detected",
         "refactor",
@@ -471,7 +471,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-4-implementation-playbooks/ch17-building-first-node.md",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 10\u219211 lines (3 removed) | Also: @if (writeState == WriteState.Pending); else if (writeState == WriteState.Confirmed) | Also: Implement `ILocalNodePlugin` from `Sunfish.Kernel.; public string PluginId => \"com.yourorg.reports\";",
+      "fix": "Rewrote 10→11 lines (3 removed) | Also: @if (writeState == WriteState.Pending); else if (writeState == WriteState.Confirmed) | Also: Implement `ILocalNodePlugin` from `Sunfish.Kernel.; public string PluginId => \"com.yourorg.reports\";",
       "tags": [
         "auto-detected",
         "refactor",
@@ -487,7 +487,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 12\u219231 lines (5 removed)",
+      "fix": "Rewrote 12→31 lines (5 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -503,7 +503,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-4-implementation-playbooks/ch18-migrating-existing-saas.md",
       "root_cause": "6 lines replaced/restructured",
-      "fix": "Rewrote 17\u219222 lines (6 removed)",
+      "fix": "Rewrote 17→22 lines (6 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -519,7 +519,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 4\u219214 lines (4 removed)",
+      "fix": "Rewrote 4→14 lines (4 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -535,7 +535,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 12\u219212 lines (5 removed)",
+      "fix": "Rewrote 12→12 lines (5 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -551,7 +551,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 6\u219211 lines (5 removed) | Also: ## The Non-Technical Trust Gap; Architecture does not sell itself. A legal practic",
+      "fix": "Rewrote 6→11 lines (5 removed) | Also: ## The Non-Technical Trust Gap; Architecture does not sell itself. A legal practic",
       "tags": [
         "auto-detected",
         "refactor",
@@ -567,7 +567,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/front-matter/preface.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3\u21923 lines (2 removed) | Also: I spent a year designing a local-node architecture; What emerged from Round 2 was an architecture I co",
+      "fix": "Rewrote 3→3 lines (2 removed) | Also: I spent a year designing a local-node architecture; What emerged from Round 2 was an architecture I co",
       "tags": [
         "auto-detected",
         "refactor",
@@ -583,7 +583,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/epilogue/epilogue-what-the-stack-owes-you.md",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 13\u219225 lines (3 removed)",
+      "fix": "Rewrote 13→25 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -599,7 +599,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 5\u21929 lines (2 removed) | Also: The maximum allowed body size is 4,194,304 bytes (; Every CBOR body is a CBOR map. Every map contains  | Also: **Founder bundles:** `issuer_public_key` equals `s; `snapshot` is an opaque byte sequence produced by  | Also: 4. A message carrying `protocol_version` greater t; 5. The `supported_versions` array in HELLO enables",
+      "fix": "Rewrote 5→9 lines (2 removed) | Also: The maximum allowed body size is 4,194,304 bytes (; Every CBOR body is a CBOR map. Every map contains  | Also: **Founder bundles:** `issuer_public_key` equals `s; `snapshot` is an opaque byte sequence produced by  | Also: 4. A message carrying `protocol_version` greater t; 5. The `supported_versions` array in HELLO enables",
       "tags": [
         "auto-detected",
         "refactor",
@@ -614,7 +614,7 @@
       "timestamp": "2026-04-24T21:12:11.270Z",
       "error_message": "Missing error handling in unknown",
       "file": "chapters/appendices/appendix-a-sync-daemon-wire-protocol.md",
-      "root_cause": "Code path had no error handling \u2014 exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -631,7 +631,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/appendices/appendix-b-threat-model-worksheets.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3\u21924 lines (2 removed) | Also: | Former team member (post-revocation) | None afte; **Customization guidance:** Add actors specific to | Also: > Your access credentials for [team name] have bee; > Documents in [role name] from [start date] to [e",
+      "fix": "Rewrote 3→4 lines (2 removed) | Also: | Former team member (post-revocation) | None afte; **Customization guidance:** Add actors specific to | Also: > Your access credentials for [team name] have bee; > Documents in [role name] from [start date] to [e",
       "tags": [
         "auto-detected",
         "refactor",
@@ -647,7 +647,7 @@
       "error_message": "Significant refactor of ",
       "file": "chapters/appendices/appendix-d-testing-the-inverted-stack.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3\u21928 lines (2 removed) | Also: | Storage extraction without credentials | A runni; | Key rotation blocks former member | A team with  | Also: Configure CI in four tiers that reflect the cost a; **Per pull request:** Run Level 1 (property-based)",
+      "fix": "Rewrote 3→8 lines (2 removed) | Also: | Storage extraction without credentials | A runni; | Key rotation blocks former member | A team with  | Also: Configure CI in four tiers that reflect the cost a; **Per pull request:** Run Level 1 (property-based)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -662,7 +662,7 @@
       "timestamp": "2026-04-24T21:37:06.891Z",
       "error_message": "Missing error handling in unknown",
       "file": "chapters/appendices/appendix-e-citation-style.md",
-      "root_cause": "Code path had no error handling \u2014 exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -679,7 +679,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 13\u219218 lines (4 removed) | Also: # Em-dash / en-dash -> comma pause. Kokoro's espea; # inconsistently; a comma gives a reliable micro-p | Also: ap.add_argument(\"--preset\", choices=list(PRESETS.k; help=\"default voice preset. Default: sinek. Part I",
+      "fix": "Rewrote 13→18 lines (4 removed) | Also: # Em-dash / en-dash -> comma pause. Kokoro's espea; # inconsistently; a comma gives a reliable micro-p | Also: ap.add_argument(\"--preset\", choices=list(PRESETS.k; help=\"default voice preset. Default: sinek. Part I",
       "tags": [
         "auto-detected",
         "refactor",
@@ -695,7 +695,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "8 lines replaced/restructured",
-      "fix": "Rewrote 14\u219218 lines (8 removed)",
+      "fix": "Rewrote 14→18 lines (8 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -710,7 +710,7 @@
       "timestamp": "2026-04-24T22:57:32.704Z",
       "error_message": "Incorrect value in code",
       "file": "build/copy-to-dropbox.py",
-      "root_cause": "Had \"(dry run \u2014 no files will be copied)\"",
+      "root_cause": "Had \"(dry run — no files will be copied)\"",
       "fix": "Changed to \"(dry run - no files will be copied)\"",
       "tags": [
         "auto-detected",
@@ -727,7 +727,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/Makefile",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 24\u219229 lines (2 removed)",
+      "fix": "Rewrote 24→29 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -743,7 +743,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/m4b.py",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 5\u21926 lines (2 removed)",
+      "fix": "Rewrote 5→6 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -759,7 +759,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 5\u21926 lines (2 removed) | Also: print(f\"\\n=> {rel}  [preset={preset_name} voice={v; entry = render_chapter(client, voice, speed, md_pa",
+      "fix": "Rewrote 5→6 lines (2 removed) | Also: print(f\"\\n=> {rel}  [preset={preset_name} voice={v; entry = render_chapter(client, voice, speed, md_pa",
       "tags": [
         "auto-detected",
         "refactor",
@@ -775,7 +775,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/Makefile",
       "root_cause": "11 lines replaced/restructured",
-      "fix": "Rewrote 37\u219263 lines (11 removed)",
+      "fix": "Rewrote 37→63 lines (11 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -791,7 +791,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 15\u219221 lines (4 removed)",
+      "fix": "Rewrote 15→21 lines (4 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -823,7 +823,7 @@
       "error_message": "Wrong reference: jpg should be large",
       "file": "build/Makefile",
       "root_cause": "Used \"jpg\" instead of \"large\"",
-      "fix": "Changed jpg \u2192 large",
+      "fix": "Changed jpg → large",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -855,7 +855,7 @@
       "error_message": "Wrong reference: Woodward should be Wood",
       "file": "build/Makefile",
       "root_cause": "Used \"Woodward\" instead of \"Wood\"",
-      "fix": "Changed Woodward \u2192 Wood",
+      "fix": "Changed Woodward → Wood",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -871,7 +871,7 @@
       "error_message": "Wrong reference: Woodward should be Wood",
       "file": "LICENSE",
       "root_cause": "Used \"Woodward\" instead of \"Wood\"",
-      "fix": "Changed Woodward \u2192 Wood",
+      "fix": "Changed Woodward → Wood",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -887,7 +887,7 @@
       "error_message": "Wrong reference: Woodward should be Wood",
       "file": "prospectus/prospectus.md",
       "root_cause": "Used \"Woodward\" instead of \"Wood\"",
-      "fix": "Changed Woodward \u2192 Wood",
+      "fix": "Changed Woodward → Wood",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -903,7 +903,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/embed-cover.py",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 23\u219244 lines (3 removed)",
+      "fix": "Rewrote 23→44 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -935,7 +935,7 @@
       "error_message": "Wrong reference: Chris should be Christopher",
       "file": ".claude/agents/literary-board.md",
       "root_cause": "Used \"Chris\" instead of \"Christopher\"",
-      "fix": "Changed Chris \u2192 Christopher",
+      "fix": "Changed Chris → Christopher",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -967,7 +967,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/voice-pass.py",
       "root_cause": "7 lines replaced/restructured",
-      "fix": "Rewrote 27\u219238 lines (7 removed)",
+      "fix": "Rewrote 27→38 lines (7 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -983,7 +983,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/voice-pass.py",
       "root_cause": "16 lines replaced/restructured",
-      "fix": "Rewrote 25\u219245 lines (16 removed)",
+      "fix": "Rewrote 25→45 lines (16 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -999,7 +999,7 @@
       "error_message": "Significant refactor of ",
       "file": "docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3\u21925 lines (2 removed) | Also: Add a third column to `chapters/voice-plan.yaml`: ; Run `python build/voice-pass.py --force` over the ",
+      "fix": "Rewrote 3→5 lines (2 removed) | Also: Add a third column to `chapters/voice-plan.yaml`: ; Run `python build/voice-pass.py --force` over the ",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1015,7 +1015,7 @@
       "error_message": "Significant refactor of ",
       "file": "docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 5\u21927 lines (2 removed) | Also: For each guest agent (gladwell, brown, grant, godi; - All six agent files updated and committed | Also: - Add a third column to `chapters/voice-plan.yaml`; - Decide whether Appendix F gets voice-passed at a | Also: | 1 | Frontmatter syntax check on each agent file;; | 2 | Per-pilot orchestrator OK; both pass-1 and p | Also: - **Phase 2:** if 2 of 4 pilots FAIL after Phase 1; - **Phase 4:** first 3 promoted chapters breaking  | Also: - 27 chapters \u00d7 up to 2 passes = up to 54 Claude h; - 12 guest-voice pass-1 + 27 pass-2 = 39 expected. | Also: | 5 CORE: Success Criteria | \u2705 \u00a72 with binary FAIL; | 5 CORE: Assumptions & Validation | \u2705 \u00a73 with Con",
+      "fix": "Rewrote 5→7 lines (2 removed) | Also: For each guest agent (gladwell, brown, grant, godi; - All six agent files updated and committed | Also: - Add a third column to `chapters/voice-plan.yaml`; - Decide whether Appendix F gets voice-passed at a | Also: | 1 | Frontmatter syntax check on each agent file;; | 2 | Per-pilot orchestrator OK; both pass-1 and p | Also: - **Phase 2:** if 2 of 4 pilots FAIL after Phase 1; - **Phase 4:** first 3 promoted chapters breaking  | Also: - 27 chapters × up to 2 passes = up to 54 Claude h; - 12 guest-voice pass-1 + 27 pass-2 = 39 expected. | Also: | 5 CORE: Success Criteria | ✅ §2 with binary FAIL; | 5 CORE: Assumptions & Validation | ✅ §3 with Con",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1079,7 +1079,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/voice-pass.py",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 34\u219262 lines (3 removed)",
+      "fix": "Rewrote 34→62 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1127,7 +1127,7 @@
       "error_message": "Significant refactor of ",
       "file": "docs/superpowers/specs/2026-04-25-phase2-pilot-grading.md",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 11\u219228 lines (3 removed)",
+      "fix": "Rewrote 11→28 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1143,7 +1143,7 @@
       "error_message": "Significant refactor of ",
       "file": "docs/superpowers/specs/2026-04-25-voice-pass-orchestration-design.md",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 19\u219225 lines (2 removed)",
+      "fix": "Rewrote 19→25 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1159,7 +1159,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 6\u21929 lines (5 removed)",
+      "fix": "Rewrote 6→9 lines (5 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1175,7 +1175,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "13 lines replaced/restructured",
-      "fix": "Rewrote 22\u219268 lines (13 removed) | Also: def _decide_dollar_word(after_text: str) -> str:; \"\"\"Return 'dollar' or 'dollars' based on what foll",
+      "fix": "Rewrote 22→68 lines (13 removed) | Also: def _decide_dollar_word(after_text: str) -> str:; \"\"\"Return 'dollar' or 'dollars' based on what foll",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1207,7 +1207,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 8\u219212 lines (4 removed)",
+      "fix": "Rewrote 8→12 lines (4 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1223,7 +1223,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/check_stale.py",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 41\u219267 lines (2 removed)",
+      "fix": "Rewrote 41→67 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1239,7 +1239,7 @@
       "error_message": "Wrong reference: Conflict should be Libraries",
       "file": "chapters/appendices/appendix-c-further-reading.md",
       "root_cause": "Used \"Conflict\" instead of \"Libraries\"",
-      "fix": "Changed Conflict \u2192 Libraries",
+      "fix": "Changed Conflict → Libraries",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -1271,7 +1271,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/audiobook.py",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3\u219215 lines (2 removed)",
+      "fix": "Rewrote 3→15 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1287,7 +1287,7 @@
       "error_message": "Wrong reference: chapter_stem should be int",
       "file": "build/build_overlays.py",
       "root_cause": "Used \"chapter_stem\" instead of \"int\"",
-      "fix": "Changed chapter_stem \u2192 int",
+      "fix": "Changed chapter_stem → int",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -1303,7 +1303,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/build_overlays.py",
       "root_cause": "38 lines replaced/restructured",
-      "fix": "Rewrote 66\u2192108 lines (38 removed) | Also: def generate_smil(alignment: dict, xhtml_filename:; \"\"\"Generate EPUB 3 SMIL Media Overlay XML for one ",
+      "fix": "Rewrote 66→108 lines (38 removed) | Also: def generate_smil(alignment: dict, xhtml_filename:; \"\"\"Generate EPUB 3 SMIL Media Overlay XML for one ",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1319,7 +1319,7 @@
       "error_message": "Significant refactor of ",
       "file": "build/build_overlays.py",
       "root_cause": "9 lines replaced/restructured",
-      "fix": "Rewrote 12\u21923 lines (9 removed)",
+      "fix": "Rewrote 12→3 lines (9 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -1346,6 +1346,805 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-04-26T09:30:00.000Z"
+    },
+    {
+      "id": "bug-085",
+      "timestamp": "2026-04-27T16:57:52.908Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: [20] Apple Inc., \"Apple Platform Security — Secure Enclave,\"; [21] Google, \"Pixel Titan M and Android Hardware-Backed Keys",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-27T16:58:13.706Z"
+    },
+    {
+      "id": "bug-086",
+      "timestamp": "2026-04-27T16:58:50.600Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/appendices/appendix-b-threat-model-worksheets.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T16:58:50.600Z"
+    },
+    {
+      "id": "bug-087",
+      "timestamp": "2026-04-27T16:59:32.297Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 13→14 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T16:59:32.297Z"
+    },
+    {
+      "id": "bug-088",
+      "timestamp": "2026-04-27T17:03:07.745Z",
+      "error_message": "Function not marked async",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "Function uses await but wasn't declared async",
+      "fix": "Added async modifier",
+      "tags": [
+        "auto-detected",
+        "async-fix",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-27T17:03:26.825Z"
+    },
+    {
+      "id": "bug-089",
+      "timestamp": "2026-04-27T17:49:38.971Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/normalize.py",
+      "root_cause": "23 lines replaced/restructured",
+      "fix": "Rewrote 106→137 lines (23 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T17:49:38.971Z"
+    },
+    {
+      "id": "bug-090",
+      "timestamp": "2026-04-27T17:49:49.314Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "build/normalize.py",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T17:49:49.314Z"
+    },
+    {
+      "id": "bug-091",
+      "timestamp": "2026-04-27T17:51:11.301Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/Makefile",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 21→62 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "unknown"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T17:51:11.301Z"
+    },
+    {
+      "id": "bug-092",
+      "timestamp": "2026-04-27T18:10:58.035Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "12 lines replaced/restructured",
+      "fix": "Rewrote 21→35 lines (12 removed) | Also: for name, cfg in PRESETS.items():; print(f\"{name:<14} voice={cfg['voice']:<28} speed=",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-27T18:11:09.452Z"
+    },
+    {
+      "id": "bug-093",
+      "timestamp": "2026-04-27T18:13:11.485Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/AUDIO-DOCKER.md",
+      "root_cause": "63 lines replaced/restructured",
+      "fix": "Rewrote 113→296 lines (63 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-27T18:13:11.485Z"
+    },
+    {
+      "id": "bug-094",
+      "timestamp": "2026-04-28T06:38:18Z",
+      "error_message": "make audiobook-sample (and all audio targets) failed: 'python: command not found' on macOS Intel i9",
+      "file": "build/Makefile",
+      "root_cause": "Makefile recipes hard-coded `python` while macOS ships only `python3` (no `python` symlink). All 27 audiobook/build python invocations broke on a fresh macOS shell.",
+      "fix": "Added `PYTHON ?= python3` near the header; substituted `^\\tpython ` -> `\\t$(PYTHON) ` across all 27 recipe lines. Override per-call via `make PYTHON=/path/to/venv/bin/python <target>`.",
+      "tags": [
+        "mac",
+        "build",
+        "makefile",
+        "python",
+        "audiobook",
+        "kokoro"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T06:38:18Z"
+    },
+    {
+      "id": "bug-095",
+      "timestamp": "2026-04-28T06:38:19.776Z",
+      "error_message": "Wrong reference: Sep should be Nov",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Used \"Sep\" instead of \"Nov\"",
+      "fix": "Changed Sep → Nov",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T06:38:19.776Z"
+    },
+    {
+      "id": "bug-096",
+      "timestamp": "2026-04-28T07:17:08Z",
+      "error_message": "Full Ch01 audiobook render failed: kokoro synth failed after 3 retries: APIConnectionError. Container exited cleanly (ExitCode=0, OOMKilled=false), auto-restarted via restart:unless-stopped policy.",
+      "file": "build/audiobook.py",
+      "root_cause": "CHUNK_CHAR_BUDGET=1400 produces chunks Kokoro CPU image cannot finish under its internal worker timeout. Empirically: a 957-char chunk took 164.9s on this Intel i9 (no GPU); next request after that hit 'peer closed connection without sending complete message body' as the Kokoro worker had restarted. Failure is reproducible at chunk 9/46 of Ch01.",
+      "fix": "Two complementary mitigations: (1) lower CHUNK_CHAR_BUDGET from 1400 → ~700 in build/audiobook.py for CPU Kokoro renders; (2) prefer --per-sentence mode for final-quality renders (cleaner prosody per existing audiobook.py comment, smaller per-call payloads). Long-term: add resume/checkpoint to audiobook.py so partial renders survive container restart. Audiobook-sample at 2 paragraphs unaffected because chunks fit under the timeout.",
+      "tags": [
+        "kokoro",
+        "audiobook",
+        "docker",
+        "timeout",
+        "cpu",
+        "chunking"
+      ],
+      "related_bugs": [
+        "bug-094"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T07:17:08Z"
+    },
+    {
+      "id": "bug-097",
+      "timestamp": "2026-04-28T07:26:33Z",
+      "error_message": "Ch01 audiobook render failed at chunk 77/393 even with --per-sentence + CHUNK_CHAR_BUDGET=700. RestartCount=2.",
+      "file": "build/audiobook.py",
+      "root_cause": "Progressive slowdown in Kokoro CPU image — NOT chunk size. Chunks 1-74 ran ~3-5s each; chunk 75 (50 chars) took 39s, chunk 76 (104 chars) took 35s, chunk 77 hung 60+s and triggered the same APIConnectionError. Pattern matches Python process memory leak, sustained CPU thermal throttle, or Kokoro worker state degradation. Lowering chunk budget did not help — small chunks are also affected once degradation sets in.",
+      "fix": "Three options, increasing in cost: (1) PERIODIC RESTART — wrap the render loop to docker restart kokoro-fastapi every ~50 chunks to clear memory; cheapest, but adds ~30s of cold-start overhead per restart. (2) RESUME-CAPABLE RENDER — extend audiobook.py with checkpoint-and-resume so a crashed render picks up where it left off (track completed chunks in a sidecar JSON; concat MP3 segments). Required for any multi-chapter overnight render to be reliable on this hardware. (3) RUN ON THE WINDOWS GPU BOX via Higgs once that's debugged — GPU sustained workload doesn't degrade like CPU does. Or use a paid cloud TTS for final master.",
+      "tags": [
+        "kokoro",
+        "audiobook",
+        "docker",
+        "memory-leak",
+        "cpu",
+        "thermal",
+        "reliability"
+      ],
+      "related_bugs": [
+        "bug-094",
+        "bug-096"
+      ],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T07:26:33Z"
+    },
+    {
+      "id": "bug-098",
+      "timestamp": "2026-04-28T07:26:58.305Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 6→10 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T07:26:58.305Z"
+    },
+    {
+      "id": "bug-099",
+      "timestamp": "2026-04-28T07:28:21.077Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 7→10 lines (2 removed) | Also: status: not-started; history: []",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T07:28:57.545Z"
+    },
+    {
+      "id": "bug-100",
+      "timestamp": "2026-04-28T07:45:29.351Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Had 's node submits a TimeStampRequest containing the ",
+      "fix": "Changed to 's node submits a TimeStampRequest containing a ha",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T07:45:29.351Z"
+    },
+    {
+      "id": "bug-101",
+      "timestamp": "2026-04-28T08:15:57.048Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Had `BudgetWarning`",
+      "fix": "Changed to `BudgetWarningRaised`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T08:15:57.048Z"
+    },
+    {
+      "id": "bug-102",
+      "timestamp": "2026-04-28T08:23:22.962Z",
+      "error_message": "Wrong return value",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Was returning: a `below-cohort-minimum` indicator to the consumin",
+      "fix": "Now returns: a `below-cohort-minimum` indicator to the consumin",
+      "tags": [
+        "auto-detected",
+        "return-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T08:23:22.962Z"
+    },
+    {
+      "id": "bug-103",
+      "timestamp": "2026-04-28T09:02:50.520Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 9→10 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T09:02:50.520Z"
+    },
+    {
+      "id": "bug-104",
+      "timestamp": "2026-04-28T09:03:32.227Z",
+      "error_message": "Incorrect value in code",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "Had \"docs/book-update-plan/working/10-data-class-escal",
+      "fix": "Changed to \"docs/book-update-plan/working/10-data-class-escal",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T09:03:32.227Z"
+    },
+    {
+      "id": "bug-105",
+      "timestamp": "2026-04-28T09:49:48.887Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/book-update-plan/state.yaml",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→3 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "yaml"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T09:49:48.888Z"
+    },
+    {
+      "id": "bug-106",
+      "timestamp": "2026-04-28T09:52:51.763Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Had 's DEK. Composition with §Forward Secrecy and Post",
+      "fix": "Changed to 's DEK. Composition with §Forward Secrecy and Post",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T09:56:39.948Z"
+    },
+    {
+      "id": "bug-107",
+      "timestamp": "2026-04-28T09:56:56.791Z",
+      "error_message": "Wrong reference: find should be see",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Used \"find\" instead of \"see\"",
+      "fix": "Changed find → see",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T09:56:56.791Z"
+    },
+    {
+      "id": "bug-108",
+      "timestamp": "2026-04-28T10:23:41.936Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-3-reference-architecture/ch15-security-architecture.md",
+      "root_cause": "Had `Sunfish.Kernel.Audit`",
+      "fix": "Changed to 's other pre-1.0 Sunfish references are illustrati",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T10:23:41.936Z"
+    },
+    {
+      "id": "bug-109",
+      "timestamp": "2026-04-28T16:45:14.346Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "20 lines replaced/restructured",
+      "fix": "Rewrote 22→31 lines (20 removed) | Also: \"higgs\": {; \"presets\": PRESETS_HIGGS, | Also: help=\"TTS backend (default: kokoro). 'higgs' targe; \"on the Windows GPU box; expects the same OpenAI-c | Also: \"Kokoro localhost:8880, Higgs higgs.local:8881). O; \"remote GPU server, Tailscale hostname, or stage-v",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-04-28T16:45:46.697Z"
+    },
+    {
+      "id": "bug-110",
+      "timestamp": "2026-04-28T16:49:44.441Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/Makefile",
+      "root_cause": "25 lines replaced/restructured",
+      "fix": "Rewrote 30→104 lines (25 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "unknown"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T16:49:44.441Z"
+    },
+    {
+      "id": "bug-111",
+      "timestamp": "2026-04-28T16:52:23.434Z",
+      "error_message": "Significant refactor of ",
+      "file": "../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md",
+      "root_cause": "19 lines replaced/restructured",
+      "fix": "Rewrote 33→127 lines (19 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T16:52:23.434Z"
+    },
+    {
+      "id": "bug-112",
+      "timestamp": "2026-04-28T18:24:22.048Z",
+      "error_message": "Incorrect value in code",
+      "file": "docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md",
+      "root_cause": "Had `ChatterboxTurboTTS.generate()`",
+      "fix": "Changed to `ChatterboxTTS.generate()`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T18:24:22.048Z"
+    },
+    {
+      "id": "bug-113",
+      "timestamp": "2026-04-28T18:24:32.885Z",
+      "error_message": "Significant refactor of ",
+      "file": "docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 8→12 lines (4 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T18:24:32.885Z"
+    },
+    {
+      "id": "bug-114",
+      "timestamp": "2026-04-28T18:25:23.609Z",
+      "error_message": "Significant refactor of ",
+      "file": "../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md",
+      "root_cause": "7 lines replaced/restructured",
+      "fix": "Rewrote 9→28 lines (7 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T18:25:23.609Z"
+    },
+    {
+      "id": "bug-115",
+      "timestamp": "2026-04-28T18:59:15.070Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 15→30 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T18:59:15.070Z"
+    },
+    {
+      "id": "bug-116",
+      "timestamp": "2026-04-28T19:16:24.563Z",
+      "error_message": "Significant refactor of ",
+      "file": "../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md",
+      "root_cause": "24 lines replaced/restructured",
+      "fix": "Rewrote 28→37 lines (24 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T19:16:24.563Z"
+    },
+    {
+      "id": "bug-117",
+      "timestamp": "2026-04-28T19:28:53.510Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "9 lines replaced/restructured",
+      "fix": "Rewrote 39→87 lines (9 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T19:28:53.510Z"
+    },
+    {
+      "id": "bug-118",
+      "timestamp": "2026-04-28T20:10:17.255Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 10→17 lines (5 removed) | Also: script = build_script(md_path); chunks, source_chunks = chunk_text_paired(script, ",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T20:11:20.104Z"
+    },
+    {
+      "id": "bug-119",
+      "timestamp": "2026-04-28T23:15:47.750Z",
+      "error_message": "Significant refactor of ",
+      "file": "build/audiobook.py",
+      "root_cause": "17 lines replaced/restructured",
+      "fix": "Rewrote 27→37 lines (17 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "py"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-28T23:15:47.750Z"
+    },
+    {
+      "id": "bug-120",
+      "timestamp": "2026-04-28T23:16:41.426Z",
+      "error_message": "Significant refactor of ",
+      "file": "references/CREDITS.md",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 8→17 lines (5 removed) | Also: ## Voice catalog (custom uploads); Each entry below names: the voice ID used in `audi",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-28T23:16:52.054Z"
+    },
+    {
+      "id": "bug-121",
+      "timestamp": "2026-04-29T16:33:09.353Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T16:33:09.353Z"
+    },
+    {
+      "id": "bug-122",
+      "timestamp": "2026-04-29T16:33:22.426Z",
+      "error_message": "Wrong reference: sixth should be seventh",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Used \"sixth\" instead of \"seventh\"",
+      "fix": "Changed sixth → seventh",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 4,
+      "last_seen": "2026-04-29T16:33:56.999Z"
+    },
+    {
+      "id": "bug-123",
+      "timestamp": "2026-04-29T16:36:29.911Z",
+      "error_message": "Significant refactor of ",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 9→3 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T16:36:29.911Z"
+    },
+    {
+      "id": "bug-124",
+      "timestamp": "2026-04-29T16:38:53.922Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
+      "root_cause": "Had 's DIFC (Dubai International Financial Centre) DPL",
+      "fix": "Changed to 's DIFC (Dubai International Financial Centre) DPL",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-04-29T16:39:09.071Z"
+    },
+    {
+      "id": "bug-125",
+      "timestamp": "2026-04-29T16:43:11.901Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Had 's browser shell: the same `",
+      "fix": "Changed to `Sunfish.UICore`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T16:43:11.901Z"
+    },
+    {
+      "id": "bug-126",
+      "timestamp": "2026-04-29T16:45:02.076Z",
+      "error_message": "Wrong reference: six should be seven",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Used \"six\" instead of \"seven\"",
+      "fix": "Changed six → seven",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T16:45:02.076Z"
+    },
+    {
+      "id": "bug-127",
+      "timestamp": "2026-04-29T16:45:16.627Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T16:45:16.627Z"
+    },
+    {
+      "id": "bug-128",
+      "timestamp": "2026-04-29T16:50:35.554Z",
+      "error_message": "Missing error handling in unknown",
+      "file": "chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T16:50:35.554Z"
+    },
+    {
+      "id": "bug-129",
+      "timestamp": "2026-04-29T17:38:52.994Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had 's servers; the architecture in this book takes th",
+      "fix": "Changed to 's servers; the architecture in this book takes th",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T17:38:52.994Z"
+    },
+    {
+      "id": "bug-130",
+      "timestamp": "2026-04-29T17:39:36.433Z",
+      "error_message": "Wrong reference: Pass should be a",
+      "file": "chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md",
+      "root_cause": "Used \"Pass\" instead of \"a\"",
+      "fix": "Changed Pass → a",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T17:39:36.433Z"
+    },
+    {
+      "id": "bug-131",
+      "timestamp": "2026-04-29T18:11:53.584Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md",
+      "root_cause": "Had 's DIFC (Dubai International Financial Centre) Dat",
+      "fix": "Changed to 's DIFC (Dubai International Financial Centre) Dat",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T18:11:53.584Z"
+    },
+    {
+      "id": "bug-132",
+      "timestamp": "2026-04-29T18:13:52.929Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md",
+      "root_cause": "Had 's BSI (Bundesamt für Sicherheit in der Informatio",
+      "fix": "Changed to 's BSI and France'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T18:13:52.929Z"
+    },
+    {
+      "id": "bug-133",
+      "timestamp": "2026-04-29T18:14:43.657Z",
+      "error_message": "Incorrect value in code",
+      "file": "chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md",
+      "root_cause": "Had 's DPDP (Digital Personal Data Protection) Act 202",
+      "fix": "Changed to 's DPDP Act 2023 and the RBI'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "md"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-04-29T18:14:43.657Z"
     }
   ]
 }

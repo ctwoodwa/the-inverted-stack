@@ -2,6 +2,12 @@
 
 > Chronological action log. Hooks and AI append to this file automatically.
 > Old sessions are consolidated by the daemon weekly.
+| 2026-04-28 | Wired Chatterbox engine (Resemble AI on Windows GPU box, replacing planned Higgs Audio v2.5) into audiobook pipeline + scaffolded Mac-side voice-cloning workflow | build/audiobook.py (rename higgs→chatterbox, add TTS_API_KEY auth via OpenAI client api_key, requires_auth flag per engine, --api-key CLI arg, PRESETS_CHATTERBOX with stock fallbacks for male/female/british/british-male/fry slots and TODO=None for sinek/practitioner/fenrir persona slots), build/voice_upload.py (NEW — list/get/put/delete client for /v1/audio/voices CRUD with multipart upload, auth via TTS_API_KEY env or --api-key, slug + audio + transcript validation), build/librivox_browse.py (NEW — search/sections/preview/extract subcommands; ffmpeg HTTP-range streaming so 30s clip pulls ~250KB instead of full ~14MB chapter; default 24kHz mono WAV output for Chatterbox upload), build/Makefile (rename audiobook-{higgs→chatterbox} targets, HIGGS_URL→CHATTERBOX_URL, add audiobook-voice-{upload,delete}, librivox-{search,sections,preview,extract} targets), memory/project_audiobook_topology.md (engine correction note + new workflow section) | live smoke tests: GET /v1/audio/voices auth via Bearer succeeds (16 stock voices listed); POST /v1/audio/speech with voice=en_man returns 156KB 24kHz mono MP3 in ~3s; voice_upload.py list parses + tabulates; librivox_browse.py preview pulls 15s of Bleak House ch1 in ~1s (118KB MP3). Server-side voice upload endpoints (PUT/DELETE /v1/audio/voices/{id}) NOT YET DEPLOYED — spec sent to user for Windows-side implementation; Mac-side helper is ready to call when server lands. Stock Chatterbox catalog has 4 narrator-fit voices (en_man, en_woman, broom_salesman, mabel); persona slots for Voss/Shevchenko/Okonkwo/Ferreira/Sinek-author voice need custom uploads via librivox_browse.py extract → voice_upload.py put. | ~22000 |
+
+| 2026-04-28 | Code-check of #44 Per-Data-Class Device-Distribution — Ch16 §Per-Data-Class Device-Distribution (lines 132-190) post iter-0032 draft | chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md (read-only), docs/book-update-plan/working/44-per-data-class-device-distribution/code-check-report.md (created) | PASS-with-claim-markers. 4 namespaces declared in HTML annotation header (Buckets/Sync/Audit verified in-canon by directory listing of Sunfish/packages/; Foundation.Fleet flagged as inconsistent with Ch21:8 forward-looking declaration — queued for tech-review correction); 0 new top-level namespaces; 0 code fences in new section; 0 invented APIs; 0 TBD markers; 1 new CLAIM marker line 188 (within ≤1 budget). 7 of 8 cross-refs resolve cleanly; **1 fails** — Ch16:170 says "Ch11 §Fleet Management" but Ch11 has no such section (correct target is Ch21 — Operating a Fleet); flagged for tech-review correction. Parallel-draft dependency for Ch15 §Event-Triggered Re-classification resolved positively (#10 already landed in Ch15:690). All 5 sub-patterns 44a-44e covered to outline §B spec. All 6 IEEE refs [1]-[6] resolve both directions; Ch16-local numbering accepted per Appendix E final-assembly renumbering rule (consistent with Ch12/Ch13/Ch14 chapter-local convention; Ch15 cumulative is the exception). Word count 1,754 body words = 6.3% over ±10% (1,650), 2.6% below ±20% (1,800) — accepted per loop-plan §QC-1 ±20% policy. build/code-check.py exits 1 (1 CLAIM marker — the deliberately-preserved one); human override accepted. 11 items queued for technical-review (1 CLAIM resolution + 4 drafter-forwarded flags + 6 code-check additions, including the Ch11→Ch21 cross-reference correction and Foundation.Fleet annotation header alignment). Gate: code-check → technical-review PASSES. | ~10000 |
+| 2026-04-28 | Prose-review of #12 Privacy-Preserving Aggregation at Relay — Ch15 §Privacy-Preserving Aggregation at Relay (lines 710-767) post iter-0030 technical-review | chapters/part-3-reference-architecture/ch15-security-architecture.md (2 edits), docs/book-update-plan/working/12-privacy-aggregation/prose-review-report.md (created) | PASS. 2 edits applied: §12b paragraph split (7-sentence cap violation introduced by tech-review k=10 qualification → 4+3 split at natural seam between operational-mechanism and parameter-value paragraphs); §Security Properties Summary metadata-minimization row register parallelism (semicolons → periods to match four pre-existing rows). 0 word delta — punctuation-and-paragraphing only. All preservation flags honored (§12c Honest scoping verbatim, paragraph-3 scope clarification, recovery-event carve-out, k=10 architecture qualification). Voice register Part III specification voice maintained. Anti-AI tells spot-check zero matches across §1/§7/§8/§9/§16/§25/§27/§29. 0 internal extension-number leaks (#12/#46/#47/#48). §Relay Trust Model close-out forward pointer reads natural+active without edit. Gate decision: prose-review → voice-check PASS. | ~7000 |
+| 2026-04-28 | Code-check iter-0028 of #12 Privacy-Preserving Aggregation at Relay — Ch15 §Privacy-Preserving Aggregation at Relay (lines 710-764) | chapters/part-3-reference-architecture/ch15-security-architecture.md (read-only), docs/book-update-plan/working/12-privacy-aggregation/code-check-report.md (created) | PASS-with-claim-markers. Sunfish.Kernel.Sync (3 sites, in-canon, declared in HTML annotation header line 712); Sunfish.Kernel.Audit (1 site, in-canon per cerebrum 2026-04-28 — body prose only, not in header); 0 new namespaces; 0 code fences; 0 invented APIs; 0 TBD markers; 1 new CLAIM marker line 750 (within ≤1 budget); all 6 cross-refs resolve (§Relay Trust Model ×2, §Forward Secrecy, §Endpoint Compromise ×2, §Key-Loss Recovery 48f); all 5 new IEEE refs [32]-[36] resolve both directions; 3 sub-patterns 12a/12b/12c covered; FAILED block (line 756) + kill trigger (line 764) + load-bearing scope (line 718) all present; word count 1,674 body words = 1.5% over ±10% within ±20% policy. build/code-check.py exits 1 (3 CLAIM markers — 2 pre-existing #46/#47, 1 new #12); human override accepted. 11 items queued for technical-review. Gate: code-check → technical-review PASSES. | ~9000 |
+| 2026-04-28 | Prose-review iter-0027 of #9 Chain-of-Custody — Ch15 §Chain-of-Custody for Multi-Party Transfers + App B §Section 5 | chapters/part-3-reference-architecture/ch15-security-architecture.md, chapters/appendices/appendix-b-threat-model-worksheets.md, docs/book-update-plan/working/9-chain-of-custody/prose-review-report.md | 3 edits applied (Ch15 line 621 paragraph split for ≤6 cap; Ch15 line 633 Merkle pipeline active-voice + strong verbs; App B line 280 active voice). All preservation flags honored (line 645 honesty-bound, eIDAS Article 41/42 framing, design-decisions annotation, sub-pattern labels §9a/§9b/§9c). Voice register confirmed on-voice for both files. Gate decision: prose-review → voice-check PASS. | ~6500 |
 | 2026-04-25 | Task 18: per-invocation logging in voice-pass.py — TDD (red→green), log_invocation(), _sha256(), _claude_cli_version(), run_voice_pass updated, 2 call sites in main() get pass_num | build/voice-pass.py, tests/build/test_voice_pass.py | DONE — 4/4 tests pass, --plan-only clean, commit 43f7815; council B3/C9 closed | ~3000 |
 | 2026-04-25 | Task 27: check_stale.py stale-draft detector — TDD (red→green), find_stale_drafts(), main() with exit 0/1 + re-run hints, Make check-stale target | build/check_stale.py, tests/build/test_check_stale.py, build/Makefile | DONE — 4/4 tests pass, smoke exit 0, commit 7ed73c8; council C8 wired | ~1200 |
 | 22:07 | Task 29: Phase 4 promotion script — TDD (red->green 7/7), promote_chapter(), compute_sha256(), latest_log_for(), log_rejection(), HashMismatchError, Makefile targets | build/promote.py, tests/build/test_promote.py, build/Makefile | DONE — 7/7 tests pass, --help clean, --reject smoke test verified+cleaned, commit 843adc5; council C3/C11 closed | ~2500 |
@@ -1155,3 +1161,443 @@
 | 03:26 | Edited chapters/part-2-council-reads-the-paper/ch07-security-lens.md | inline fix | ~10 |
 | 03:26 | Edited chapters/appendices/appendix-c-further-reading.md | inline fix | ~8 |
 | 03:26 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~11 |
+
+## Session: 2026-04-27 12:48
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-27 12:49
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-27 12:52
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 12:57 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | added error handling | ~3283 |
+| 12:58 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | expanded (+18 lines) | ~582 |
+| 12:58 | Edited chapters/appendices/appendix-b-threat-model-worksheets.md | added error handling | ~1211 |
+| 12:58 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~38 |
+| 12:59 | Edited docs/book-update-plan/state.yaml | 13→14 lines | ~986 |
+| 12:59 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~580 |
+| 13:00 | iter-0016: applied #47 endpoint-compromise to Ch15 + App B; renumbered refs [14]-[22] -> [20]-[28] | chapters/part-3-reference-architecture/ch15-security-architecture.md, chapters/appendices/appendix-b-threat-model-worksheets.md, docs/book-update-plan/state.yaml | DONE — Ch15 §Endpoint Compromise inserted between §In-Memory Key Handling and §Supply Chain Security; App B §THREAT-10 appended to §Section 2; 9 new refs; 1 CLAIM marker preserved at §47c (Ch14 attestation forward dep); ~2,245 words total | ~6500 |
+| 13:02 | Created docs/book-update-plan/working/46-forward-secrecy/code-check-report.md | — | ~1681 |
+| 13:02 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~38 |
+| 13:03 | Edited docs/book-update-plan/state.yaml | 11→14 lines | ~913 |
+| 13:03 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~685 |
+| 13:15 | iter-0017 SUMMARY: #46 code-check PASS — direct script-driven check (no subagent) | working/46-forward-secrecy/code-check-report.md, state.yaml | DONE — 2 Sunfish ns (canon); 0 code/class/placeholder/CLAIM; 8 xrefs+6 citations resolve; 9 items queued for tech-review | ~4000 |
+| 13:05 | Created docs/book-update-plan/working/47-endpoint-compromise/code-check-report.md | — | ~2358 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~38 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~38 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~712 |
+| 13:06 | Edited docs/book-update-plan/state.yaml | expanded (+8 lines) | ~795 |
+| 13:07 | Session end: 15 writes across 4 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md) | 6 reads | ~47584 tok |
+| 13:12 | Created ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/reference_migration_memory_path.md | — | ~862 |
+| 13:12 | Edited ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/MEMORY.md | 1→2 lines | ~250 |
+| 13:13 | Session end: 17 writes across 6 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 10 reads | ~48775 tok |
+| 13:19 | Session end: 17 writes across 6 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 10 reads | ~48775 tok |
+| 13:26 | Session end: 17 writes across 6 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 10 reads | ~48775 tok |
+| 13:37 | Session end: 17 writes across 6 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 13 reads | ~66979 tok |
+| 13:49 | Edited build/normalize.py | modified measure() | ~1542 |
+| 13:49 | Edited build/normalize.py | modified exists() | ~545 |
+| 13:49 | Edited build/normalize.py | 4→4 lines | ~39 |
+| 13:50 | Edited build/audiobook.py | 8→10 lines | ~143 |
+| 13:50 | Edited build/audiobook.py | modified build_script() | ~442 |
+| 13:50 | Edited build/audiobook.py | modified render_chapter() | ~169 |
+| 13:50 | Edited build/audiobook.py | expanded (+9 lines) | ~271 |
+| 13:50 | Edited build/audiobook.py | modified exists() | ~102 |
+| 13:50 | Edited build/audiobook.py | 5→8 lines | ~153 |
+| 13:51 | Edited build/Makefile | expanded (+41 lines) | ~547 |
+| 13:52 | Created build/verify_loudness.py | — | ~2823 |
+| 13:58 | Created build/docker-compose.audio.yml | — | ~864 |
+| 13:59 | Created build/AUDIO-DOCKER.md | — | ~2767 |
+| 14:00 | Session end: 30 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 14 reads | ~79768 tok |
+| 14:04 | Session end: 30 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 14 reads | ~79768 tok |
+| 14:09 | Edited build/audiobook.py | expanded (+53 lines) | ~1548 |
+| 14:10 | Edited build/audiobook.py | modified synth_chunk() | ~293 |
+| 14:10 | Edited build/audiobook.py | modified render_chapter() | ~72 |
+| 14:10 | Edited build/audiobook.py | 9→9 lines | ~138 |
+| 14:10 | Edited build/audiobook.py | modified main() | ~650 |
+| 14:11 | Edited build/audiobook.py | modified resolve_preset() | ~627 |
+| 14:11 | Edited build/audiobook.py | 3→5 lines | ~88 |
+| 14:13 | Edited build/AUDIO-DOCKER.md | modified VM() | ~2718 |
+| 14:13 | Edited build/Makefile | expanded (+31 lines) | ~381 |
+| 14:14 | Session end: 39 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 15 reads | ~89815 tok |
+| 15:58 | Session end: 39 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 15 reads | ~89815 tok |
+| 16:09 | Session end: 39 writes across 12 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 15 reads | ~89815 tok |
+| 16:35 | Created ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md | — | ~1724 |
+| 16:35 | Edited ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/MEMORY.md | 1→2 lines | ~190 |
+| 16:35 | Session end: 41 writes across 13 files (ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, state.yaml, code-check-report.md, reference_migration_memory_path.md) | 15 reads | ~91867 tok |
+
+## Session: 2026-04-28 02:10
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+
+## Session: 2026-04-28 02:13
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 02:36 | Edited build/Makefile | 3→4 lines | ~23 |
+| 02:38 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~47 |
+| 02:38 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 1→2 lines | ~245 |
+| 02:38 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 2→2 lines | ~218 |
+| 02:38 | Mac Kokoro pipeline validated end-to-end + Makefile PYTHON fix | build/Makefile, .wolf/cerebrum.md, .wolf/buglog.json | ch01 sample 1:03 mp3 24kHz; normalize-acx 1.5MB; verify-loudness OK | ~3500 |
+| 02:38 | Session end: 4 writes across 2 files (Makefile, ch15-security-architecture.md) | 6 reads | ~32866 tok |
+| 02:39 | Created docs/book-update-plan/working/46-forward-secrecy/technical-review-report.md | — | ~2834 |
+| 2026-04-28 | Technical-review #46 §Forward Secrecy and Post-Compromise Security (iter-0019) | chapters/part-3-reference-architecture/ch15-security-architecture.md, docs/book-update-plan/working/46-forward-secrecy/technical-review-report.md | PASS-with-claim-markers (1 marker, ≤2 budget); fixed [18] WhatsApp whitepaper date Sep.→Nov. 2021; flagged §46e OTR over-attribution of post-compromise security; verified [14]-[19] live URLs + DBLP metadata for OTR | ~5000 |
+| 02:41 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 02:41 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~40 |
+| 02:41 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~647 |
+| 02:41 | Session end: 8 writes across 4 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml) | 7 reads | ~51711 tok |
+| 02:57 | Session end: 8 writes across 4 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml) | 7 reads | ~51711 tok |
+| 02:59 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 3→3 lines | ~376 |
+| 02:59 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~207 |
+| 02:59 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | Deibert() → 2022() | ~502 |
+| 03:01 | Created docs/book-update-plan/working/47-endpoint-compromise/technical-review-report.md | — | ~4141 |
+| 03:02 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:02 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~41 |
+| 03:03 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~797 |
+| 03:03 | Session end: 15 writes across 4 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml) | 14 reads | ~76784 tok |
+| 03:04 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~203 |
+| 03:05 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~60 |
+| 03:05 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~42 |
+| 03:05 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~27 |
+| 03:06 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~41 |
+| 03:08 | Created docs/book-update-plan/working/46-forward-secrecy/prose-review-report.md | — | ~3559 |
+| iter-0020 | Prose-review #46 §Forward Secrecy and Post-Compromise Security | chapters/part-3-reference-architecture/ch15-security-architecture.md, docs/book-update-plan/working/46-forward-secrecy/prose-review-report.md | 5 edits applied (synonym cycling, two passive→active, two #N internal-numbering leaks, sub-case framing); CLAIM marker preserved; advance prose-review→voice-check | ~7000 |
+| 03:08 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:08 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~43 |
+| 03:09 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~828 |
+| 03:09 | Session end: 24 writes across 5 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 16 reads | ~92276 tok |
+| 03:11 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~112 |
+| 03:11 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~10 |
+| 03:11 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~51 |
+| 03:11 | Session end: 27 writes across 5 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 16 reads | ~92453 tok |
+| 03:11 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~173 |
+| 03:12 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~43 |
+| 03:12 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~103 |
+| 03:13 | Edited chapters/appendices/appendix-b-threat-model-worksheets.md | 5→5 lines | ~121 |
+| 03:15 | Created docs/book-update-plan/working/47-endpoint-compromise/prose-review-report.md | — | ~2627 |
+| 03:15 | iter-0022 prose-review #47 endpoint-compromise — 7 edits Ch15 + 1 edit App B | ch15-security-architecture.md, appendix-b-threat-model-worksheets.md, prose-review-report.md | PASS — gate to voice-check, §47f hard sentence preserved, 1 CLAIM marker preserved | ~6000 |
+| 03:16 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:16 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~44 |
+| 03:16 | Edited docs/book-update-plan/state.yaml | modified Compromise() | ~856 |
+| 03:17 | Session end: 35 writes across 6 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 16 reads | ~96638 tok |
+| 03:19 | Edited build/audiobook.py | modified 1400() | ~120 |
+| 03:19 | Session end: 36 writes across 7 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 17 reads | ~113280 tok |
+| 03:24 | Session end: 36 writes across 7 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 19 reads | ~114962 tok |
+| 03:25 | Created docs/book-update-plan/working/9-chain-of-custody/draft.md | — | ~6579 |
+| 03:26 | Edited build/audiobook.py | 6→10 lines | ~192 |
+| 03:26 | Created docs/book-update-plan/working/12-privacy-aggregation/outline.md | — | ~8052 |
+| 03:27 | Created docs/book-update-plan/working/10-data-class-escalation/outline.md | — | ~7043 |
+| 03:27 | Session end: 40 writes across 9 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 23 reads | ~159555 tok |
+| 08:30 | @research-assistant: produced complete outline §A-§K for extension #10 data-class-escalation. Targets Ch15 (between GDPR Art.17 and Relay Trust Model) + Ch20 (between Revocation UX and Accessibility as a Contract). 2,000w target. Max-register CRDT invariant for class label; Sunfish.Kernel.Security extends (no new package). 5 citations needed (NIST 800-60, ISO 27001 A5.12, GDPR Art.9, HIPAA). 6 open tech-review items. Novelty flag on in-place re-classification with audit-trail preservation. | docs/book-update-plan/working/10-data-class-escalation/outline.md | DONE | ~12000 |
+| 03:28 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/outline.md | — | ~8552 |
+| 2026-04-28 | #44 per-data-class device-distribution outline | docs/book-update-plan/working/44-per-data-class-device-distribution/outline.md | DONE — 1,500w outline, §A-§K, sub-patterns 44a-44e, placeholder pattern, eviction protocol, citations, cross-refs | ~4500 |
+| 03:28 | Edited docs/book-update-plan/state.yaml | modified NOVELTY() | ~714 |
+| 03:28 | Created docs/book-update-plan/working/9-chain-of-custody/draft.md | — | ~6183 |
+| 03:28 | Edited docs/book-update-plan/state.yaml | modified confirmed() | ~774 |
+| 03:29 | Edited docs/book-update-plan/state.yaml | modified NOVELTY() | ~982 |
+| 03:29 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:29 | Session end: 46 writes across 9 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 23 reads | ~178484 tok |
+| 03:33 | Created docs/book-update-plan/working/9-chain-of-custody/draft-report.md | — | ~3631 |
+| 2026-04-28 | iter-0023 #9 chain-of-custody draft — Ch15 §Chain-of-Custody for Multi-Party Transfers (2,394 words) + App B §Section 5 worksheet (548 words); refs [28]–[31] (RFC 3161, eIDAS Art 41, Crosby&Wallach 2009, RFC 9162); new Sunfish.Kernel.Custody namespace declared forward-looking; 2 cross-refs updated (lines 228/389); 1 CLAIM marker on TSA construction | chapters/part-3-reference-architecture/ch15-security-architecture.md, chapters/appendices/appendix-b-threat-model-worksheets.md, docs/book-update-plan/working/9-chain-of-custody/draft.md, docs/book-update-plan/working/9-chain-of-custody/draft-report.md | DONE — Ch15 -4.2% / App B +9.6% of targets; sub-patterns 9a/9b/9c covered; FAILED conditions + kill trigger present | ~9000 |
+| 03:35 | Edited docs/book-update-plan/state.yaml | 4→4 lines | ~48 |
+| 03:35 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~966 |
+| 03:35 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:36 | Session end: 50 writes across 10 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 24 reads | ~188434 tok |
+| 03:40 | Created docs/book-update-plan/working/9-chain-of-custody/code-check-report.md | — | ~4797 |
+| 03:41 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:41 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~38 |
+| 03:42 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~1163 |
+| 03:42 | Session end: 54 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 26 reads | ~199290 tok |
+| 03:45 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | "s node submits a TimeStam" → "s node submits a TimeStam" | ~410 |
+| 03:47 | Created docs/book-update-plan/working/9-chain-of-custody/technical-review-report.md | — | ~5105 |
+| 12:00 | Tech review iter-0026: chain-of-custody (#9) section in Ch15 + App B Section 5 | chapters/part-3-reference-architecture/ch15-security-architecture.md, docs/book-update-plan/working/9-chain-of-custody/technical-review-report.md | PASS — 0 CLAIM markers remaining; CLAIM at line 621 converted to design-decisions §5 #9 + §8.2 reference annotation; eIDAS Article 41 scope corrected (Art 41 = legal effect, Art 3(20) = QTSP definition, Art 42 = qualified TS requirements); RFC 3161 framing tightened to TSTInfo + messageImprint terminology; refs [28]-[31] verified | ~14000 |
+| 03:48 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:48 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~43 |
+| 03:49 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~1301 |
+| 03:50 | Session end: 59 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 28 reads | ~211348 tok |
+| 03:52 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 1→3 lines | ~410 |
+| 03:52 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~205 |
+| 03:52 | Edited chapters/appendices/appendix-b-threat-model-worksheets.md | inline fix | ~26 |
+| 03:54 | Created docs/book-update-plan/working/9-chain-of-custody/prose-review-report.md | — | ~3867 |
+| 03:55 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 03:55 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~43 |
+| 03:56 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~1266 |
+| 03:57 | Session end: 66 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 29 reads | ~229724 tok |
+| 03:59 | Created docs/book-update-plan/working/12-privacy-aggregation/draft.md | — | ~3484 |
+| 04:00 | Created docs/book-update-plan/working/12-privacy-aggregation/draft.md | — | ~3355 |
+| 04:02 | Created docs/book-update-plan/working/12-privacy-aggregation/draft.md | — | ~3301 |
+| 04:03 | Created docs/book-update-plan/working/12-privacy-aggregation/draft.md | — | ~3246 |
+| 04:05 | Created docs/book-update-plan/working/12-privacy-aggregation/draft-report.md | — | ~4345 |
+| 2026-04-28 | Draft iter-0027 of #12 Privacy-Preserving Aggregation at Relay — new Ch15 section between §Relay Trust Model and §Security Properties Summary | chapters/part-3-reference-architecture/ch15-security-architecture.md, docs/book-update-plan/working/12-privacy-aggregation/draft.md, docs/book-update-plan/working/12-privacy-aggregation/draft-report.md | Inserted ~1,716-word section (1,674 body, +1.5% over ±10% upper, within ±20% acceptable). Sub-patterns 12a (central-DP-at-relay), 12b (k-anonymity floor + recovery-event carve-out), 12c (rolling-window budget + honest scoping). Refs [32]–[36] appended (Dwork & Roth, RAPPOR, Apple, Sweeney, l-Diversity). Sunfish.Kernel.Sync in-canon, no new namespace. 1 CLAIM marker on rolling-window-vs-formal-temporal-DP framing. | ~9000 |
+| 04:07 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 04:07 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~37 |
+| 04:07 | Edited docs/book-update-plan/state.yaml | modified NOVELTY() | ~1428 |
+| 04:08 | Session end: 74 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 31 reads | ~259816 tok |
+| 04:12 | Created docs/book-update-plan/working/12-privacy-aggregation/code-check-report.md | — | ~6262 |
+| 04:13 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 04:13 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~39 |
+| 04:14 | Edited docs/book-update-plan/state.yaml | modified references() | ~1580 |
+| 04:14 | Session end: 78 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 31 reads | ~268163 tok |
+| 04:15 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | "BudgetWarning" → "BudgetWarningRaised" | ~26 |
+| 04:16 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~72 |
+| 04:16 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~112 |
+| 04:16 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 1→3 lines | ~208 |
+| 04:16 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 1→2 lines | ~211 |
+| 04:16 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~133 |
+| 04:17 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~67 |
+| 04:18 | Created docs/book-update-plan/working/12-privacy-aggregation/technical-review-report.md | — | ~4651 |
+| 04:19 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 04:19 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~44 |
+| 04:20 | Edited docs/book-update-plan/state.yaml | 3→4 lines | ~1108 |
+| 04:21 | Session end: 89 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 32 reads | ~284776 tok |
+| 04:23 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | 1→3 lines | ~325 |
+| 04:23 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~146 |
+| 04:25 | Created docs/book-update-plan/working/12-privacy-aggregation/prose-review-report.md | — | ~4347 |
+| 04:26 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 04:26 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~44 |
+| 04:27 | Edited docs/book-update-plan/state.yaml | modified HONORED() | ~898 |
+| 04:27 | Session end: 95 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 35 reads | ~299798 tok |
+| 04:49 | Session end: 95 writes across 11 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 37 reads | ~315815 tok |
+| 04:51 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch15.md | — | ~3969 |
+| 04:52 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/draft.md | — | ~4033 |
+| 04:52 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch15.md | — | ~3247 |
+| 04:53 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch15.md | — | ~3095 |
+| 04:53 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/draft.md | — | ~3752 |
+| 04:54 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch15.md | — | ~2789 |
+| 04:55 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/draft.md | — | ~3529 |
+| 04:55 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch20.md | — | ~2309 |
+| 04:56 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch20.md | — | ~2596 |
+| 04:57 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/draft-report.md | — | ~3995 |
+| 04:58 | Created docs/book-update-plan/working/10-data-class-escalation/draft-ch15.md | — | ~2763 |
+| 2026-04-28 | Draft #44 Per-Data-Class Device-Distribution — Ch16 §Per-Data-Class Device-Distribution (between §Lazy Fetch and §Snapshot Format, line 132); first Ch16 ref-list created [1]–[6] | chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md, docs/book-update-plan/working/44-per-data-class-device-distribution/draft.md, docs/book-update-plan/working/44-per-data-class-device-distribution/draft-report.md | DONE. 1,754 body words vs 1,500 target (+17%, within ±20% policy); rationale: 44c policy-blocked-vs-fetchable distinction is principal novelty and needs the budget. All 5 sub-patterns (44a manifest / 44b push filter / 44c placeholder / 44d MDM update / 44e audit). 6 citations [1] Dropbox, [2] OneDrive Files On-Demand, [3] iCloud Optimize Mac Storage, [4] ElectricSQL v0.10, [5] PowerSync, [6] Bayou (Terry 1995). 4 in-canon namespaces extended (Sunfish.Kernel.Buckets / .Sync / .Audit / Sunfish.Foundation.Fleet); no new top-level namespace. 1 CLAIM marker on forward-secrecy mid-stream subscription boundary (within ≤1 policy). FAILED conditions block (5 items) + kill trigger present. Cross-refs to Ch11 §Fleet Management, Ch14 §Five-Step Handshake, Ch14 §Data Minimization at the Stream Level, Ch15 §Collaborator Revocation, Ch15 §Forward Secrecy, Ch15 §Event-Triggered Re-classification (forward, #10 drafts in parallel). Ref numbering deviation from prompt's [42]-[47]: Ch16 had no ref list; chapter-local convention applies; final-assembly renumber pass per Appendix E. Gate: draft → code-check. | ~12000 |
+| 04:58 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 04:59 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~41 |
+| 04:59 | Edited docs/book-update-plan/state.yaml | modified NOVELTY() | ~1083 |
+| 05:00 | Created docs/book-update-plan/working/10-data-class-escalation/draft-report.md | — | ~4437 |
+| 05:00 | Session end: 110 writes across 13 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 42 reads | ~375911 tok |
+| 2026-04-28 | Drafted #10 Data-Class Escalation — Ch15 §Event-Triggered Re-classification (~1,408 words) + Ch20 §Data-Class Escalation UX (~1,392 words). All 5 sub-patterns 10a-10e covered; FAILED + kill trigger in both; 1 CLAIM marker (within ≤1 budget) flagging fwd-secrecy + chain-of-custody composition tensions for tech-review. IEEE refs [37]-[41] appended to Ch15 (NIST SP 800-60 v1+v2IWD, ISO 27001:2022 A.5.12, GDPR Art 9, MS Purview). 0 new namespaces; 0 invented APIs. | chapters/part-3-reference-architecture/ch15-security-architecture.md, chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md, docs/book-update-plan/working/10-data-class-escalation/draft-{ch15,ch20,report}.md | DONE — drafts inserted at correct locations; combined ~2,800 words = +40% over 2,000 target, rationale documented in draft-report.md (5 sub-patterns × 2 sections > 2,000 at this voice register; trim path attempted; further trimming threatens spec completeness). Recommended next stage: code-check then technical-review. | ~12000 |
+| 05:02 | Edited docs/book-update-plan/state.yaml | 9→10 lines | ~160 |
+| 05:03 | Edited docs/book-update-plan/state.yaml | modified DESIGN() | ~1270 |
+| 05:03 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 05:04 | Session end: 113 writes across 13 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 43 reads | ~377548 tok |
+| 05:06 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/code-check-report.md | — | ~10481 |
+| 05:08 | Session end: 114 writes across 13 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 44 reads | ~393206 tok |
+| 05:41 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~193 |
+| 05:41 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~130 |
+| 05:46 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~272 |
+| 05:48 | Session end: 117 writes across 14 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 46 reads | ~407633 tok |
+| 05:49 | Created docs/book-update-plan/working/10-data-class-escalation/code-check-report.md | — | ~2417 |
+| 05:49 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 05:49 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~40 |
+| 05:49 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~59 |
+| 05:50 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/technical-review-report.md | — | ~2068 |
+| 05:50 | Edited docs/book-update-plan/state.yaml | 1→2 lines | ~480 |
+| 05:50 | Edited docs/book-update-plan/state.yaml | 1→3 lines | ~948 |
+| 05:52 | Session end: 124 writes across 14 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 46 reads | ~413984 tok |
+| 05:52 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | "s DEK. Composition with §" → "s DEK. Composition with §" | ~351 |
+| 05:52 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~52 |
+| 05:52 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~51 |
+| 05:53 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~100 |
+| 05:53 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | 1→3 lines | ~239 |
+| 05:53 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~219 |
+| 05:53 | Edited chapters/part-3-reference-architecture/ch16-persistence-beyond-the-node.md | inline fix | ~38 |
+| 05:54 | Created docs/book-update-plan/working/10-data-class-escalation/technical-review-report.md | — | ~3358 |
+| 05:55 | Created docs/book-update-plan/working/44-per-data-class-device-distribution/prose-review-report.md | — | ~2476 |
+| 05:55 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 05:55 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~44 |
+| 05:55 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~48 |
+| 05:56 | Session end: 136 writes across 14 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 46 reads | ~424430 tok |
+| 05:56 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~273 |
+| 05:56 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~240 |
+| 05:56 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~40 |
+| 05:57 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | inline fix | ~191 |
+| 05:57 | Edited chapters/part-4-implementation-playbooks/ch20-ux-sync-conflict.md | inline fix | ~173 |
+| 05:58 | Created docs/book-update-plan/working/10-data-class-escalation/prose-review-report.md | — | ~2099 |
+| 05:59 | Edited docs/book-update-plan/state.yaml | 2→2 lines | ~19 |
+| 05:59 | Edited docs/book-update-plan/state.yaml | 3→3 lines | ~44 |
+| 05:59 | Session end: 144 writes across 15 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 46 reads | ~427724 tok |
+| 06:23 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~125 |
+| 06:23 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~124 |
+| 06:23 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~64 |
+| 06:24 | Session end: 147 writes across 15 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 46 reads | ~428057 tok |
+| 09:25 | Session end: 147 writes across 15 files (Makefile, ch15-security-architecture.md, technical-review-report.md, state.yaml, prose-review-report.md) | 46 reads | ~428057 tok |
+
+## Session: 2026-04-28 10:15
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 11:34 | Edited ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md | expanded (+10 lines) | ~376 |
+| 11:35 | Session end: 1 writes across 1 files (project_audiobook_topology.md) | 2 reads | ~17099 tok |
+| 11:43 | Session end: 1 writes across 1 files (project_audiobook_topology.md) | 2 reads | ~17099 tok |
+| 11:58 | Session end: 1 writes across 1 files (project_audiobook_topology.md) | 2 reads | ~17099 tok |
+| 12:44 | Edited build/audiobook.py | added 1 import(s) | ~51 |
+| 12:45 | Edited build/audiobook.py | modified catalog() | ~596 |
+| 12:45 | Edited build/audiobook.py | box() → Chatterbox() | ~351 |
+| 12:45 | Edited build/audiobook.py | 4→6 lines | ~140 |
+| 12:45 | Edited build/audiobook.py | 4→9 lines | ~187 |
+| 12:45 | Edited build/audiobook.py | modified get() | ~224 |
+| 12:46 | Created build/voice_upload.py | — | ~2974 |
+| 12:48 | Created build/librivox_browse.py | — | ~3880 |
+| 12:49 | Edited build/Makefile | expanded (+74 lines) | ~1283 |
+| 12:52 | Edited ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md | modified audio() | ~1399 |
+| 12:52 | Session end: 11 writes across 5 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~31309 tok |
+| 12:58 | Session end: 11 writes across 5 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~31309 tok |
+| 13:08 | Session end: 11 writes across 5 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~31309 tok |
+| 13:13 | Session end: 11 writes across 5 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~31309 tok |
+| 13:20 | Session end: 11 writes across 5 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~31309 tok |
+| 13:23 | Created docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md | — | ~3569 |
+| 13:24 | Session end: 12 writes across 6 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~35133 tok |
+| 13:31 | Session end: 12 writes across 6 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~35133 tok |
+| 13:58 | Session end: 12 writes across 6 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 3 reads | ~35133 tok |
+| 14:09 | Session end: 12 writes across 6 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 4 reads | ~74277 tok |
+| 14:20 | Session end: 12 writes across 6 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 4 reads | ~74277 tok |
+| 14:24 | Edited docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md | Turbo() → Chatterbox() | ~217 |
+| 14:24 | Edited docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md | 4→4 lines | ~37 |
+| 14:24 | Edited docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md | inline fix | ~20 |
+| 14:24 | Edited docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md | and() → model() | ~163 |
+| 14:25 | Edited ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md | expanded (+19 lines) | ~437 |
+| 14:25 | Session end: 17 writes across 6 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 4 reads | ~75212 tok |
+| 14:53 | Edited chapters/part-3-reference-architecture/ch15-security-architecture.md | inline fix | ~108 |
+| 14:54 | Session end: 18 writes across 7 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 4 reads | ~75327 tok |
+| 14:57 | Edited docs/book-update-plan/state.yaml | modified outcome() | ~661 |
+| 14:57 | Edited build/audiobook.py | 7→7 lines | ~215 |
+| 14:59 | Edited build/audiobook.py | modified synth_chunk() | ~343 |
+| 14:59 | Edited build/audiobook.py | modified render_chapter() | ~104 |
+| 14:59 | Edited build/audiobook.py | 1→5 lines | ~85 |
+| 14:59 | Edited build/audiobook.py | expanded (+13 lines) | ~367 |
+| 14:59 | Edited build/audiobook.py | expanded (+9 lines) | ~268 |
+| 15:04 | Session end: 25 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 5 reads | ~103606 tok |
+| 15:16 | Edited ../../.claude/projects/-Users-christopherwood-Projects-the-inverted-stack/memory/project_audiobook_topology.md | modified guide() | ~586 |
+| 15:16 | Edited docs/audio/CHATTERBOX-V12-EMOTION-KNOBS.md | modified delta() | ~588 |
+| 15:17 | Session end: 27 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 6 reads | ~104863 tok |
+| 15:28 | Edited build/audiobook.py | added 1 import(s) | ~58 |
+| 15:28 | Edited build/audiobook.py | modified render_chapter() | ~112 |
+| 15:28 | Edited build/audiobook.py | modified enumerate() | ~1140 |
+| 15:29 | Edited build/audiobook.py | expanded (+6 lines) | ~216 |
+| 15:29 | Edited build/audiobook.py | 7→8 lines | ~147 |
+| 15:37 | Session end: 32 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~107216 tok |
+| 15:44 | Session end: 32 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~107216 tok |
+| 15:51 | Session end: 32 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~107216 tok |
+| 16:09 | Edited build/audiobook.py | modified narratable_text() | ~423 |
+| 16:10 | Edited build/audiobook.py | spaced() → engines() | ~166 |
+| 16:10 | Edited build/audiobook.py | modified items() | ~258 |
+| 16:10 | Edited build/audiobook.py | modified build_script() | ~102 |
+| 16:10 | Edited build/audiobook.py | expanded (+10 lines) | ~139 |
+| 16:11 | Edited build/audiobook.py | 15→18 lines | ~276 |
+| 16:11 | Edited build/audiobook.py | modified len() | ~198 |
+| 16:14 | Session end: 39 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~109245 tok |
+| 16:33 | Session end: 39 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~109245 tok |
+| 16:56 | Session end: 39 writes across 8 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~109245 tok |
+| 17:16 | Created references/CREDITS.md | — | ~1602 |
+| 17:17 | Session end: 40 writes across 9 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 7 reads | ~110961 tok |
+| 17:20 | Session end: 40 writes across 9 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~112616 tok |
+| 17:53 | Created ../../Library/CloudStorage/Dropbox/the-inverted-stack/voice-samples-2026-04-28/README.md | — | ~920 |
+| 18:09 | Session end: 41 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~113602 tok |
+| 19:15 | Edited build/audiobook.py | modified catalog() | ~785 |
+| 19:16 | Edited build/audiobook.py | expanded (+9 lines) | ~330 |
+| 19:16 | Edited references/CREDITS.md | expanded (+9 lines) | ~253 |
+| 19:16 | Edited references/CREDITS.md | 6→11 lines | ~180 |
+| 19:17 | Edited references/CREDITS.md | 15→17 lines | ~234 |
+| 19:18 | Session end: 46 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~115668 tok |
+| 20:10 | Session end: 46 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~115668 tok |
+| 20:18 | Session end: 46 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~115668 tok |
+| 22:18 | Session end: 46 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~115668 tok |
+| 06:03 | Session end: 46 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~115668 tok |
+| 06:23 | Session end: 46 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~115668 tok |
+| 06:53 | Edited build/audiobook.py | expanded (+34 lines) | ~598 |
+| 06:54 | Edited build/audiobook.py | modified items() | ~224 |
+| 06:56 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 07:18 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 07:40 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 07:43 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 07:48 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 09:19 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 09:24 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 10:24 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 10:27 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 10:45 | Session end: 48 writes across 10 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 8 reads | ~116654 tok |
+| 10:55 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch01-round-1.md | — | ~10504 |
+| 10:55 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch04-round-1.md | — | ~9957 |
+| 10:55 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch02-round-1.md | — | ~11045 |
+| 10:56 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch03-round-1.md | — | ~10491 |
+| 10:59 | Session end: 52 writes across 14 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 21 reads | ~219459 tok |
+| 11:12 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~129 |
+| 11:13 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | expanded (+12 lines) | ~263 |
+| 11:13 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | 9→9 lines | ~175 |
+| 11:13 | Session end: 55 writes across 15 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 21 reads | ~220066 tok |
+| 12:33 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | expanded (+8 lines) | ~723 |
+| 12:33 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~89 |
+| 12:33 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~11 |
+| 12:33 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~69 |
+| 12:33 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~49 |
+| 12:34 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~231 |
+| 12:34 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~87 |
+| 12:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | reduced (-6 lines) | ~409 |
+| 12:36 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~151 |
+| 12:38 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~252 |
+| 12:38 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~399 |
+| 12:39 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | "s team data. Writes go to" → "s team data [8]. Writes g" | ~288 |
+| 12:39 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→3 lines | ~485 |
+| 12:39 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~456 |
+| 12:40 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | expanded (+12 lines) | ~344 |
+| 12:41 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~147 |
+| 12:41 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | expanded (+15 lines) | ~725 |
+| 12:43 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | "s browser shell: the same" → "Sunfish.UICore" | ~133 |
+| 12:43 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~243 |
+| 12:43 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 3→5 lines | ~299 |
+| 12:45 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~103 |
+| 12:45 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 3→5 lines | ~351 |
+| 12:46 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 7→7 lines | ~580 |
+| 12:47 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | 1→3 lines | ~190 |
+| 12:47 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~276 |
+| 12:47 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~367 |
+| 12:48 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 3→5 lines | ~264 |
+| 12:49 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 7→8 lines | ~210 |
+| 12:49 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | expanded (+12 lines) | ~628 |
+| 12:49 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 3→3 lines | ~164 |
+| 12:50 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | added error handling | ~1063 |
+| 12:51 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | expanded (+30 lines) | ~1325 |
+| 12:51 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~314 |
+| 12:51 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~166 |
+| 12:56 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch01-round-2.md | — | ~8402 |
+| 12:57 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch03-round-2.md | — | ~9767 |
+| 12:57 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch02-round-2.md | — | ~10857 |
+| 12:57 | Created docs/book-update-plan/working/council-review-2026-04-29-part1/ch04-round-2.md | — | ~9238 |
+| 12:58 | Session end: 93 writes across 22 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 25 reads | ~318007 tok |
+| 13:38 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | "s servers; the architectu" → "s servers; the architectu" | ~346 |
+| 13:39 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~140 |
+| 13:39 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→5 lines | ~100 |
+| 13:39 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | inline fix | ~114 |
+| 13:45 | Created chapters/appendices/appendix-g-glossary.md | — | ~6639 |
+| 13:45 | Edited build/audiobook.py | 1→2 lines | ~27 |
+| 13:46 | Session end: 99 writes across 23 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 25 reads | ~325898 tok |
+| 14:07 | literary-board ch04 review (12 critics) | docs/book-update-plan/working/literary-board-2026-04-29-part1/ch04.md | board score 7.58, POLISH; 1 P0 (compliance-table regional gaps); P0/P1/P2 + strengths | ~13k |
+| 14:09 | Session end: 99 writes across 23 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 31 reads | ~371396 tok |
+| 14:10 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~96 |
+| 14:11 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~116 |
+| 14:11 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~134 |
+| 14:11 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~183 |
+| 14:11 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | inline fix | ~335 |
+| 14:12 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | 1→5 lines | ~525 |
+| 14:12 | Edited chapters/part-1-thesis-and-pain/ch01-when-saas-fights-reality.md | 5→3 lines | ~214 |
+| 14:13 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | inline fix | ~138 |
+| 14:13 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→3 lines | ~406 |
+| 14:14 | Edited chapters/part-1-thesis-and-pain/ch02-local-first-serious-stack.md | 1→5 lines | ~116 |
+| 14:14 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | "s DPDP (Digital Personal " → "s DPDP Act 2023 and the R" | ~136 |
+| 14:14 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~180 |
+| 14:15 | Edited chapters/part-1-thesis-and-pain/ch03-inverted-stack-one-diagram.md | inline fix | ~31 |
+| 14:15 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 3→8 lines | ~508 |
+| 14:16 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | 1→3 lines | ~269 |
+| 14:16 | Edited chapters/part-1-thesis-and-pain/ch04-choosing-your-architecture.md | reduced (-10 lines) | ~233 |
+| 14:18 | Session end: 115 writes across 23 files (project_audiobook_topology.md, audiobook.py, voice_upload.py, librivox_browse.py, Makefile) | 31 reads | ~375463 tok |
+
+## Session: 2026-04-29 14:44
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
