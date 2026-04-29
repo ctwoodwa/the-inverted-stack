@@ -38,7 +38,7 @@ space). Written last.*
 ### Preface
 - Why this book exists: the gap between local-first ideals and production-grade systems
 - Who it's for: software architects, technical founders, senior engineers, IT decision-makers
-- How to read it: Part I convinces, Part II stress-tests, Part III specifies, Part IV implements
+- How to read it: Part I convinces, Part II stress-tests, Part III specifies, Part IV implements, Part V operates
 - Note on Sunfish as the living reference implementation
 - Note on the Kleppmann Council as structured adversarial evaluation
 
@@ -220,19 +220,24 @@ return to individual chapters as you build.*
   relay-only vs. attested hosted peer vs. no hosted peer trust levels
 
 ### Chapter 15 — Security Architecture
-*~4,000 words*
+*~5,500 words (revised target post-split per UPF 2026-04-29; was ~4,000)*
+
+Architectural-spec only. Operational flows (incident response, recovery, revocation, forward
+secrecy, endpoint compromise) moved to Ch22 (Part V — Operational Concerns) per the Ch15 split
+UPF. Cross-references: Ch15 specifies the architecture; Ch22 specifies how to operate it.
+
 - Threat model: distributed endpoints vs. central honeypot; insider threat; physical access;
   supply chain; relay compromise
 - Device and user identity: Ed25519 device keypairs, OS-native keystore, OIDC/SAML IdP mapping
 - DEK/KEK envelope encryption: per-document DEKs, per-role KEKs, key wrapping and distribution
-- Key rotation and revocation: rotation work proportional to document count not size;
-  re-keying procedure; offline node revocation window and reconnection behavior
 - Four defensive layers: encryption at rest (SQLCipher), field-level encryption,
   stream-level data minimization, circuit breaker quarantine queue
-- Key compromise incident response: detection, re-keying procedure, data-at-risk scope,
-  user-visible notification, forward secrecy window
+- Role attestation flow: how roles are issued, signed, propagated, and verified at the
+  authorization boundary
 - Compliance framework mapping: SOC 2, HIPAA, GDPR Article 17 and crypto-shredding
 - In-memory key material: locked memory pages, key zeroing on process exit, re-authentication intervals
+- Forward references to Ch22 for: key rotation procedures, key compromise incident response,
+  collaborator revocation, post-departure partition, forward secrecy ratchets, endpoint compromise scope
 
 ### Chapter 16 — Persistence Beyond the Node
 *~3,000 words | CONSOLIDATED: Storage/Backup + Relay/Federation*
@@ -309,6 +314,53 @@ finished product.*
 
 ---
 
+## Part V — Operational Concerns
+*~18,000 words (target). Post-deploy lifecycle: how a fleet of local-first nodes is operated
+once it's in users' hands. Distinct from Part IV (build playbooks) — this Part covers the
+running-and-recovering modes.*
+
+### Chapter 21 — Operating a Fleet of Local-First Nodes
+*~6,500 words*
+- Fleet-management posture: operator visibility limits in a local-first system; why
+  centralized dashboards are an antipattern; what an operator can and cannot see
+- Health telemetry: structured-log emission, ciphertext-only relay metadata, opt-in
+  diagnostic uploads, anonymized aggregation
+- Fleet-wide change rollout: schema-epoch coordination, staged rollout via attestation
+  tiers, rollback when a fraction of the fleet rejects an update
+- Capacity and storage: per-node growth profiles, BYOC backup adoption rates, when a
+  cohort needs sharding or relay-tier upgrades
+- Incident response across a fleet: single-node investigation vs. fleet-wide pattern
+  detection; the limits of what's detectable from outside the nodes
+- Decommissioning workflows: graceful node retirement, data portability handoff,
+  long-term archive
+
+### Chapter 22 — Security Operations
+*~10,000 words (post-prune target; UPF 2026-04-29). Absorbs the operational security
+material previously in Ch15. If post-prune lands above 12,000 words, splits into Ch22
+(Key Lifecycle Operations) + Ch23 (Endpoint + Collaborator Operations).*
+
+- Key compromise incident response: detection, re-keying procedure, data-at-risk scope,
+  user-visible notification, forward secrecy window
+- Key-loss recovery: the six recovery mechanisms (multi-sig trustee, off-chain backup,
+  cross-device, social-recovery, time-locked recovery, dispute-aware) — when each
+  applies and how they compose
+- Recovery state-machine convergence under partition; recovery as an attack vector;
+  operator mitigations
+- Offline node revocation and reconnection: the revocation window, reconnection behavior,
+  edge cases for nodes that miss multiple revocation cycles
+- Collaborator revocation and post-departure partition: explicit revocation events,
+  post-revocation key rotation, cached-copy management, revocation propagation, data
+  partition for dissolution and dispute, revocation-event audit trail
+- Forward secrecy and post-compromise security: per-message ephemeral key derivation,
+  Double Ratchet (sender + receiver ratchet), automatic key rotation on suspected
+  compromise, sealed sender, protocol-level forward secrecy commitment
+- Endpoint compromise: what stays protected: scope declaration, HSM and Secure Enclave
+  separation, attested boot and integrity measurement, remote-wipe capability
+- Cross-references back to Ch15 for the architectural primitives each operational flow
+  consumes
+
+---
+
 ## Epilogue — What the Stack Owes You
 *~2,500 words*
 - What the council agreed the architecture must never compromise
@@ -358,6 +410,24 @@ finished product.*
   web/online source
 - Consistency rules for multi-source citations and capitalization
 
+### Appendix F — Regulatory Coverage Map
+- Canonical compliance matrix: SOC 2, HIPAA, GDPR (Articles 17, 25, 32, 33), CCPA, PCI-DSS,
+  SOX, FERPA, FISMA, ISO 27001
+- Per-framework mapping: which architectural primitive (encryption-at-rest, ciphertext-only
+  relay, audit-trail, crypto-shredding, etc.) satisfies which control requirement
+- Inline reference target: Ch15 (Security Architecture) + Ch22 (Security Operations) cite
+  this appendix for compliance-mapping detail rather than repeating the matrix in-line
+- Coverage gaps: regulatory regimes the architecture does NOT satisfy without additional
+  per-vertical work (e.g., FedRAMP attested boot requirements, EU NIS2 incident reporting)
+
+### Appendix G — Glossary
+- Specialized vocabulary used throughout the book — local-first terms (CRDT, Lamport
+  timestamp, vector clock, causal stability, AP/CP), cryptography terms (envelope encryption,
+  forward secrecy, ratchet, ephemeral key, HKDF), distributed-systems terms (Flease,
+  schema epoch, manifest, attestation tier, witness)
+- Acronyms (DEK, KEK, FQDN, IDP, NACHA, OIDC, etc.) with first-use page references
+- Cross-listed Sunfish-specific terms (Anchor, Bridge, sync daemon, kernel, foundation tier)
+
 ---
 
 ## Word Count Targets
@@ -367,11 +437,17 @@ finished product.*
 | Front Matter (Preface + Foreword) | ~2,000 |
 | Part I — Thesis and Pain (Ch 1–4) | ~16,200 |
 | Part II — The Council (Ch 5–10) | ~20,000 |
-| Part III — Reference Architecture (Ch 11–16) | ~22,000 |
+| Part III — Reference Architecture (Ch 11–16; Ch15 slimmed post-split) | ~21,500 |
 | Part IV — Implementation Playbooks (Ch 17–20) | ~14,000 |
+| Part V — Operational Concerns (Ch 21–22) | ~16,500 |
 | Epilogue | ~2,500 |
-| Appendices A–D | ~8,000 |
-| **Total** | **~84,700** |
+| Appendices A–G | ~13,000 |
+| **Total** | **~105,700** |
+
+(Pre-split target was ~84,700; post-split + Part V + Appendices F+G adds Part V's ~16,500
+and Appendices F+G's ~5,000 while moving ~10,000 words from Ch15 to Ch22 — net target
+growth ~+21k. Manuscript currently sits at 145,255; PAO's editorial-prune work will
+target ~120,000 final.)
 
 ---
 
