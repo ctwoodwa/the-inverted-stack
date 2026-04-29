@@ -170,6 +170,42 @@ Apply before every chapter PR merge. All items must pass.
 - CRDT engine: YDotNet is the current Sunfish implementation; Loro is the aspirational target.
   The architecture is engine-agnostic via `ICrdtEngine`. Mention both where relevant.
 
+## Live signaling to XO (research session) — `yeoman-*` beacons
+
+When chapter progress is gated on a Sunfish-side question (current ADR cross-reference status, workstream timing, architectural detail), write a beacon to **Sunfish's** `research-inbox` rather than emailing the question into the void. Yeoman is this session; XO is the research session in the Sunfish repo. The inbox lives at `/Users/christopherwood/Projects/Sunfish/icm/_state/research-inbox/`. XO scans it on every loop iteration; beacons survive session restarts; trimmed weekly.
+
+**File naming:** `yeoman-{type}-YYYY-MM-DDTHH-MMZ-{slug}.md` where `type ∈ {question, resumed}`. Yeoman doesn't use `idle` (book writing has independent paths — pause and switch chapters instead).
+
+**Body** (~10 lines max — signal, not narrative):
+
+```
+---
+type: question | resumed
+chapter: <ch-NN-slug>
+last-pr: <gh-link-in-book-repo>
+---
+
+**Context:** <1-2 sentences>
+**What would unblock me:** <1-2 sentences>
+```
+
+**How to write a beacon (cross-repo):**
+
+```bash
+cd /Users/christopherwood/Projects/Sunfish
+git worktree add /tmp/sunfish-yeoman-beacon-wt origin/main -b chore/yeoman-beacon-<slug>
+# author /tmp/sunfish-yeoman-beacon-wt/icm/_state/research-inbox/yeoman-question-<ts>-<slug>.md
+cd /tmp/sunfish-yeoman-beacon-wt
+git add icm/_state/research-inbox/ && git commit -m "chore(inbox): yeoman question — <slug>"
+git push -u origin HEAD && gh pr create --title "chore(inbox): yeoman question — <slug>" --body "<context>"
+gh pr merge --auto --squash
+cd - && git worktree remove /tmp/sunfish-yeoman-beacon-wt
+```
+
+Then pause that chapter section and pick up an unblocked chapter. When XO answers (hand-off / ledger update / ADR amendment in Sunfish), the beacon gets `git mv`-ed to `_archive/` in the resolving PR. Optionally write a `yeoman-resumed-*.md` to close the loop.
+
+Canonical protocol spec: Sunfish `CLAUDE.md` § "Live signaling to XO — `research-inbox/`".
+
 ---
 
 ## Build Targets
