@@ -170,39 +170,41 @@ Apply before every chapter PR merge. All items must pass.
 - CRDT engine: YDotNet is the current Sunfish implementation; Loro is the aspirational target.
   The architecture is engine-agnostic via `ICrdtEngine`. Mention both where relevant.
 
-## Live signaling to XO (research session) — `yeoman-*` beacons
+## Org chart + coordination
 
-When chapter progress is gated on a Sunfish-side question (current ADR cross-reference status, workstream timing, architectural detail), write a beacon to **Sunfish's** `research-inbox` rather than emailing the question into the void. Yeoman is this session; XO is the research session in the Sunfish repo. The inbox lives at `/Users/christopherwood/Projects/Sunfish/icm/_state/research-inbox/`. XO scans it on every loop iteration; beacons survive session restarts; trimmed weekly.
+Naval-org: **CO** (Chris, BDFL) → **XO** (research session in `/Users/christopherwood/Projects/Sunfish`) → {**COB** (sunfish-PM, code), **PAO** (book editor/publisher, this repo) → **Yeoman** (technical writer, this repo)}.
 
-**File naming:** `yeoman-{type}-YYYY-MM-DDTHH-MMZ-{slug}.md` where `type ∈ {question, resumed}`. Yeoman doesn't use `idle` (book writing has independent paths — pause and switch chapters instead).
+**Yeoman** drafts and revises chapters; runs the audiobook pipeline. Reports to PAO.
 
-**Body** (~10 lines max — signal, not narrative):
+**PAO** is the book editor + publisher: enforces clarity / structure / voice; reviews chapters; rewrites weak sections; recommends reorganizations; manages Yeoman's daily editorial work. Cross-repo funnel for Sunfish-architecture questions. Reports to XO. Doesn't draft prose; doesn't make Sunfish-architecture calls.
 
-```
----
-type: question | resumed
-chapter: <ch-NN-slug>
-last-pr: <gh-link-in-book-repo>
----
+## Two-tier inbox protocol
 
-**Context:** <1-2 sentences>
-**What would unblock me:** <1-2 sentences>
-```
+### Tier 1 — book-internal (Yeoman ↔ PAO): `.pao-inbox/`
 
-**How to write a beacon (cross-repo):**
+Filesystem inbox at `.pao-inbox/` in the book repo root. Yeoman writes `yeoman-question-*.md` when blocked on style / pacing / structural calls; PAO scans and resolves inline. Archived beacons go to `.pao-inbox/_archive/`. State snapshots (PAO's authoritative read of book status) go to `.pao-inbox/_state-snapshots/`. **Snapshots and beacons MUST be committed + pushed to the book repo** — leaving them in the working tree alone defeats persistence across session restarts.
+
+**File naming:** `yeoman-{question|resumed}-YYYY-MM-DDTHH-MMZ-{slug}.md`. **Body:** 3-line YAML frontmatter (`type`, `chapter`, `last-pr`) + ≤2 lines context + ≤2 lines "what would unblock me." Tight; signal, not narrative.
+
+### Tier 2 — cross-repo escalation (PAO → XO): Sunfish's `research-inbox/`
+
+When chapter progress is gated on a Sunfish-side question (ADR status, workstream timing, foundational-paper alignment) PAO can't resolve from the book + Sunfish docs alone, **PAO writes** `pao-question-*.md` to Sunfish's `icm/_state/research-inbox/`. PAO is the cross-repo funnel for the book side. **Yeoman does NOT write directly to Sunfish** unless PAO is offline AND the question is critical (PAO-bypass fallback; flag in body).
+
+**Cross-repo write recipe (PAO):**
 
 ```bash
 cd /Users/christopherwood/Projects/Sunfish
-git worktree add /tmp/sunfish-yeoman-beacon-wt origin/main -b chore/yeoman-beacon-<slug>
-# author /tmp/sunfish-yeoman-beacon-wt/icm/_state/research-inbox/yeoman-question-<ts>-<slug>.md
-cd /tmp/sunfish-yeoman-beacon-wt
-git add icm/_state/research-inbox/ && git commit -m "chore(inbox): yeoman question — <slug>"
-git push -u origin HEAD && gh pr create --title "chore(inbox): yeoman question — <slug>" --body "<context>"
+git fetch origin main
+git worktree add /tmp/sunfish-pao-beacon-wt origin/main -b chore/pao-beacon-<slug>
+# author /tmp/sunfish-pao-beacon-wt/icm/_state/research-inbox/pao-question-<ts>-<slug>.md
+cd /tmp/sunfish-pao-beacon-wt
+git add icm/_state/research-inbox/ && git -c commit.gpgsign=false commit -m "chore(inbox): pao question — <slug>"
+git push -u origin HEAD && gh pr create --title "chore(inbox): pao question — <slug>" --body "<context>"
 gh pr merge --auto --squash
-cd - && git worktree remove /tmp/sunfish-yeoman-beacon-wt
+cd - && git worktree remove /tmp/sunfish-pao-beacon-wt
 ```
 
-Then pause that chapter section and pick up an unblocked chapter. When XO answers (hand-off / ledger update / ADR amendment in Sunfish), the beacon gets `git mv`-ed to `_archive/` in the resolving PR. Optionally write a `yeoman-resumed-*.md` to close the loop.
+When XO answers (hand-off / ledger update / ADR amendment in Sunfish), the beacon gets `git mv`-ed to `_archive/` in the resolving PR.
 
 Canonical protocol spec: Sunfish `CLAUDE.md` § "Live signaling to XO — `research-inbox/`".
 
