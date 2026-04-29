@@ -186,6 +186,40 @@ ACRONYM_FIXES = {
     r"(?i)\bPart X\b":    "Part 10",
 }
 
+# Chatterbox-only acronym expansions. The neural model handles most
+# acronyms (CRDT, GDPR, HIPAA, API, etc.) by spelling them out
+# letter-by-letter naturally. But word-LIKE acronyms — those that look
+# pronounceable as a syllable — get misread as fake words. "SaaS"
+# becomes "saaars"; "IaaS" / "PaaS" / "IoT" have the same failure mode.
+#
+# Two patterns per term, in order:
+#   1. First-use parenthetical pattern: "SaaS (Software as a Service)"
+#      collapses to just "Software as a Service" — avoids the doubled
+#      phrasing the naive expansion would produce.
+#   2. Standalone form: bare "SaaS" expands to the full phrase.
+#
+# Ordered list (not dict) because the first-use pattern must match
+# BEFORE the standalone pattern strips out "SaaS".
+#
+# Add entries by listening for misread acronyms in a render. Don't add
+# acronyms Chatterbox already handles correctly (CRDT, GDPR, HIPAA,
+# API, KEK, DEK, HSM, TPM, etc.) — over-expanding makes the audio
+# longer without improving intelligibility. Verify with --scripts-only
+# + a short render before locking in.
+CHATTERBOX_EXPANSIONS: list[tuple[str, str]] = [
+    # First-use parenthetical patterns (collapse the doubled phrasing)
+    (r"\bSaaS\s*\(\s*Software as a Service\s*\)",     "Software as a Service"),
+    (r"\bIaaS\s*\(\s*Infrastructure as a Service\s*\)", "Infrastructure as a Service"),
+    (r"\bPaaS\s*\(\s*Platform as a Service\s*\)",     "Platform as a Service"),
+    (r"\bIoT\s*\(\s*Internet of Things\s*\)",         "Internet of Things"),
+    # Standalone forms
+    (r"\bSaaS\b", "Software as a Service"),
+    (r"\bIaaS\b", "Infrastructure as a Service"),
+    (r"\bPaaS\b", "Platform as a Service"),
+    (r"\bIoT\b",  "Internet of Things"),
+]
+
+
 # Proper-noun pronunciation lexicon. These are the names espeak gets wrong
 # enough that listeners notice. Add entries by listening to a render and
 # noting any name that came out wrong. Format is the same as ACRONYM_FIXES:
@@ -761,6 +795,13 @@ def narratable_text(md: str, source_only: bool = False,
         # letter-by-letter pronunciation. Skip for neural engines.
         if not is_neural:
             for pat, repl in ACRONYM_FIXES.items():
+                t = re.sub(pat, repl, t)
+        else:
+            # Chatterbox-only: word-like acronyms (SaaS, IaaS, IoT, etc.)
+            # get misread as fake words. Expand to the full phrase. The
+            # first-use parenthetical patterns must run BEFORE the
+            # standalone forms — see CHATTERBOX_EXPANSIONS docstring.
+            for pat, repl in CHATTERBOX_EXPANSIONS:
                 t = re.sub(pat, repl, t)
 
         # Proper-noun pronunciation lexicon. Espeak mispronounces foreign
