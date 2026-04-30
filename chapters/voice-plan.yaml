@@ -42,6 +42,10 @@ ch18-migrating-existing-saas:           lencioni
 ch19-shipping-to-enterprise:            sinek
 ch20-ux-sync-conflict:                  brown
 
+# Part V — operational concerns
+ch21-operating-a-fleet:                 sinek
+ch22-security-operations:               sinek
+
 # Back matter
 epilogue-what-the-stack-owes-you:       sinek
 appendix-a-sync-daemon-wire-protocol:   sinek

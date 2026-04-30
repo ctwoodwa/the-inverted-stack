@@ -17,31 +17,7 @@ Local-first architecture does not mean data lives only on one machine. It means 
 
 ## Five-Layer Storage Architecture
 
-The architecture composes five specialized storage tiers rather than relying on a single database system.
-
-**Tier 1 — Local encrypted database.** The primary operational store. All reads and all writes hit this layer first.
-
-**Tier 2 — CRDT (Conflict-free Replicated Data Type) and event log.** An append-only log of all CRDT operations and domain events. The event log is the source of truth for sync and for audit. The local database is derived from it; the log survives the database.
-
-**Tier 3 — User-controlled cloud backup.** A configurable object storage adapter provides disaster recovery. The user controls the backup destination. The system does not assume any particular cloud provider.
-
-**Tier 4 — Content-addressed distribution (opt-in).** Integrity-verified asset distribution and deduplication. Enabled when nodes need to share large binary assets with verified integrity without duplicating storage.
-
-**Tier 5 — Decentralized archival (opt-in, enterprise tier).** Cryptographic proof-of-storage for regulated industries that require verifiable long-term retention. Not required by the core system.
-
-Tiers 4 and 5 are opt-in. The core system is fully operational on tiers 1–3 alone. An implementation that skips tiers 4 and 5 is not a degraded implementation. It is the standard configuration for most deployments.
-
-```mermaid
-graph TD
-    A[Application] --> T1[Tier 1: Local encrypted database]
-    T1 --> T2[Tier 2: CRDT and event log]
-    T2 --> T3[Tier 3: User-controlled cloud backup]
-    T3 -.-> T4["Tier 4: Content-addressed distribution (opt-in)"]
-    T3 -.-> T5["Tier 5: Decentralized archival (opt-in, enterprise)"]
-
-    style T4 stroke-dasharray: 5 5
-    style T5 stroke-dasharray: 5 5
-```
+Persistence in the local-first architecture composes five tiers, specified in Chapter 12 §The Five-Layer Storage Architecture. This chapter focuses on what each tier owns operationally — bucket subscription, lazy fetch, snapshot rehydration, backup UX, relay metadata posture, and disaster recovery — assuming the reader has the five-tier model from Ch12. Tiers 4 and 5 are opt-in; the core system is fully operational on tiers 1–3 alone.
 
 ---
 
@@ -229,15 +205,7 @@ When no valid snapshot exists — on a fresh install, after a breaking schema mi
 
 ## CRDT Growth and Garbage Collection
 
-CRDT documents grow monotonically under naive storage. Every insert, every delete, every concurrent edit leaves a trace in the internal structure. Tombstones, historical vector clock entries, and retired operation identifiers accumulate without bound. The architecture names the problem and specifies three mitigation strategies.
-
-**Strategy 1 — Library-level compaction.** Modern CRDT libraries perform internal garbage collection and use compact binary encodings that amortize historical state. Library selection treats compaction behavior as a first-class evaluation criterion alongside merge semantics and conflict resolution. `Sunfish.Kernel.Crdt` provides YDotNet (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI (Foreign Function Interface)) (the .NET CRDT engine port of Yjs ([github.com/yjs/yjs](https://github.com/yjs/yjs), the JavaScript CRDT library) via Rust FFI (Foreign Function Interface)) as the current CRDT engine via `ICrdtEngine`, with Loro ([github.com/loro-dev/loro](https://github.com/loro-dev/loro), a Rust-core CRDT library) as the target for a future engine-agnostic transition. Both libraries expose compaction controls; the architecture leaves compaction scheduling to the engine.
-
-**Strategy 2 — Application-level document sharding.** Large logical documents are split into sub-documents keyed under a parent map. When a section is archived or retired, its key is deleted from the parent map. The CRDT engine garbage-collects the sub-document without touching the rest of the document. This strategy applies to large structured documents — boards, wikis, large project hierarchies — where sections have well-defined lifecycles.
-
-**Strategy 3 — Periodic shallow snapshots.** For document types with extreme write rates — programmatically generated logs, real-time sensor feeds, high-churn audit trails — the system periodically creates a shallow snapshot and discards old operation history. A shallow snapshot captures the current document state without the history required to merge with older versions. This strategy is reserved for document types where bounded storage takes priority over long-term mergeability. It is not a default.
-
-The default policy is conservative. Full history is retained, relying on library-level compaction. Application-level purging and shallow snapshots are opt-in per document type, configured in the document schema. Teams that enable them for a document type accept the tradeoff: nodes holding history older than the shallow snapshot cannot merge with nodes that have discarded that history. The tradeoff is explicit and schema-bound.
+CRDT growth and the three-tier garbage collection policy are specified in Chapter 12 §CRDT Growth and Garbage Collection. The garbage collection tier assignment lives in the bucket's `IStreamDefinition`; Ch12 specifies the GC policy itself. Teams that enable application-level purging or shallow snapshots for a document type accept the tradeoff: nodes holding history older than the shallow snapshot cannot merge with nodes that have discarded that history. The tradeoff is explicit and schema-bound.
 
 ---
 
@@ -275,7 +243,7 @@ The relay is the architecture's most structurally ambiguous component: an extern
 
 **Ciphertext-only invariant.** The relay routes encrypted CRDT operation frames between authenticated peers. It does not hold decryption keys. It cannot read payload content. Every frame the relay forwards is encrypted end-to-end under keys that never leave originating devices — the relay sees peer identities (Ed25519 public keys), workspace identifiers, and frame envelopes, but no plaintext data. This is the guarantee Chapter 7's Okonkwo council established as inviolable and Chapter 15's security architecture specified cryptographically. A compromised relay exposes connection metadata — who communicates with whom, at what times, at what volume — not content.
 
-**Managed relay deployment.** The managed relay is a horizontally-scaled service accepting WebSocket connections over TLS (Transport Layer Security) 1.3 on port 443. The service terminates TLS at an edge proxy, authenticates each connection against the Ed25519 public key presented in the handshake, and forwards CRDT operation frames to subscribing peers. Horizontal scaling is stateless at the forwarding layer: any relay node can route any frame. Per-peer connection affinity is handled by consistent hashing on node_id for subscription routing. The managed relay is operated per jurisdiction: `eu-relay.example.com` (Frankfurt, EU-resident for Schrems II), `me-relay.example.com` (DIFC-resident for UAE/DIFC compliance), `in-relay.example.com` (Mumbai for RBI localization), `ru-relay.example.com` (Moscow for 242-FZ), and so forth. Teams select the relay endpoint at onboarding; cross-jurisdiction deployments configure multiple endpoints with relay-to-relay interconnect (also over TLS 1.3, authenticated by operator-held relay keys).
+**Managed relay deployment.** The managed relay is a horizontally-scaled service accepting WebSocket connections over TLS (Transport Layer Security) 1.3 on port 443. The service terminates TLS at an edge proxy, authenticates each connection against the Ed25519 public key presented in the handshake, and forwards CRDT operation frames to subscribing peers. Horizontal scaling is stateless at the forwarding layer: any relay node can route any frame. Per-peer connection affinity is handled by consistent hashing on node_id for subscription routing. The managed relay operates per jurisdiction; teams select the relay endpoint at onboarding to satisfy data-residency obligations (Appendix F maps jurisdictional endpoints to regulatory frameworks). Cross-jurisdiction deployments configure multiple endpoints with relay-to-relay interconnect over TLS 1.3, authenticated by operator-held relay keys.
 
 **Self-hosted relay.** The relay is a single binary distributed as both a native executable and an OCI container image. Resource profile for a fifty-person team: 512 MiB RAM, 2 vCPU, 10 GiB disk for operational logs, no persistent state required beyond the subscription routing table. The self-hosted relay implements the same protocol as the managed relay; a node cannot distinguish them at the protocol level. Organizations operating under compelled-access threat models — CIS jurisdictions, regulated financial services, public sector — deploy the self-hosted relay on infrastructure they control, or on sovereign-cloud infrastructure within their jurisdiction, and point their nodes' `relayEndpoint` configuration at it. The protocol specification (Chapter 14) is published under the same license as the kernel; any organization can implement a compatible relay.
 
