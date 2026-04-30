@@ -19,7 +19,7 @@ Frameworks are grouped by region. Each entry gives: framework name and citation;
 
 The foundational EU data-residency and individual-rights regime. Article 5(1)(c) (data minimization) and Article 5(1)(e) (storage limitation) create architectural pressure toward bounded local storage. Article 17 (right to erasure) is the book's most significant unresolved tension: CRDTs retain full operation history by design; DEK destruction (crypto-shredding, Chapter 15) is the proposed erasure mechanism, but CNIL in France and several German DPAs have not definitively resolved whether it constitutes lawful Article 17 compliance — the question is unsettled, not foreclosed. Article 30 (records of processing) and Article 33 (72-hour breach notification) operate at the node level. Article 44 restricts transfers to third countries lacking adequacy.
 
-**Chapters:** Preface, Ch02–Ch07, Ch09–Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue, Appendix A, Appendix B, Appendix D
+**Chapters:** Preface, Ch02–Ch07, Ch09–Ch11, Ch13–Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix A, Appendix B, Appendix D
 
 ### Schrems II (*Data Protection Commissioner v. Facebook Ireland Limited and Maximillian Schrems*, CJEU C-311/18, 16 July 2020)
 
@@ -27,7 +27,7 @@ The foundational EU data-residency and individual-rights regime. Article 5(1)(c)
 
 The strongest European compliance argument for local-first. The CJEU ruled that Privacy Shield was invalid and that SCCs alone are insufficient where the importing country's surveillance laws preclude effective protection. A local-first node that never exports personal data to a foreign cloud bypasses the transfer mechanism entirely — Schrems II does not apply when there is no cross-border transfer to evaluate. The architecture answers the ruling structurally, not contractually.
 
-**Chapters:** Preface, Ch02–Ch06, Ch09–Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue, Appendix D
+**Chapters:** Preface, Ch02–Ch06, Ch09–Ch11, Ch13–Ch15, Ch18–Ch19, Ch23, Epilogue, Appendix D
 
 ### UK GDPR
 
@@ -39,13 +39,13 @@ The strongest European compliance argument for local-first. The CJEU ruled that 
 
 SCCs (updated 2021, Commission Decision C(2021) 3972) are the primary EU transfer mechanism to non-adequate countries; post-Schrems II they require supplemental Transfer Impact Assessments. BCRs (Article 47) cover intragroup transfers. A local-first architecture that maintains data on-device within the EEA reduces but does not eliminate SCC exposure.
 
-**Chapters:** Ch02, Ch10
+**Chapters:** Ch02, Ch10, Ch23
 
 ### National DPAs: CNIL (France), German Datenschutzbehörden
 
 Neither authority has definitively resolved whether DEK destruction constitutes lawful Article 17 erasure. The EDPB's supplementary-measures guidance (Guidelines 05/2021) is the operative framework for evaluating whether technical measures qualify as lawful transfer safeguards.
 
-**Chapters:** Ch02, Ch06, Ch10, Epilogue
+**Chapters:** Ch02, Ch06, Ch10, Ch22, Epilogue
 
 ---
 
@@ -57,13 +57,13 @@ Neither authority has definitively resolved whether DEK destruction constitutes 
 
 The most structurally decisive regime in this book's GCC arguments. The DIFC DPL uniquely *prohibits* foreign cloud storage for DIFC-licensed financial entities — not a constraint to satisfy contractually, but a categorical prohibition. A local-first node that never routes personal data through an offshore cloud satisfies this prohibition at the architectural level. Chapter 4 develops the argument; Chapter 14 addresses the compelled-access threat model in the DIFC context.
 
-**Chapters:** Preface, Ch02–Ch06, Ch09–Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue, Appendix D
+**Chapters:** Preface, Ch02–Ch06, Ch09–Ch11, Ch13–Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix D
 
 ### UAE Federal Data Protection Law 2022 (Federal Decree-Law No. 45 of 2021, effective 2 January 2022)
 
 Establishes data processing principles, consent requirements, and erasure rights (Article 16) for UAE federal and private-sector processing outside DIFC/ADGM. Article 16 carries the same crypto-shredding tension as GDPR Article 17.
 
-**Chapters:** Preface, Ch02–Ch05, Ch11, Ch13, Ch19, Epilogue
+**Chapters:** Preface, Ch02–Ch05, Ch11, Ch13, Ch19, Ch22, Epilogue
 
 ### Saudi PDPL (Royal Decree M/19, 2021)
 
@@ -79,13 +79,13 @@ Establishes data processing principles, consent requirements, and erasure rights
 
 **Effective:** Notified August 2023; implementing rules pending as of this writing. Section 12 establishes erasure rights parallel to GDPR Article 17. For BFSI deployments, the RBI circular (below) layers a hard localization mandate on top.
 
-**Chapters:** Preface, Ch02–Ch06, Ch09, Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue, Appendix A, Appendix D
+**Chapters:** Preface, Ch02–Ch06, Ch09, Ch11, Ch13–Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix A, Appendix D
 
 ### RBI Data Localization Circular (April 2018, DPSS.CO.OD No.2785)
 
 **Effective:** October 2018 for payment system operators. Requires all payment-related data to be stored exclusively in India — a hard territorial mandate, not a design preference. Chapter 13 treats it as a Tier 3 architectural driver alongside 242-FZ and DIFC.
 
-**Chapters:** Ch04–Ch06, Ch09, Ch11, Ch13–Ch14, Ch18, Appendix D
+**Chapters:** Ch04–Ch06, Ch09, Ch11, Ch13–Ch14, Ch18, Ch23, Appendix D
 
 ### Bangladesh DPA
 
@@ -99,19 +99,19 @@ Dedicated legislation was in draft as of this writing. Implementers should verif
 
 PIPL Article 47 establishes erasure rights parallel to GDPR Article 17. Cross-border transfer restrictions are among the strictest globally — personal data of Chinese residents must generally be stored within China. MLPS 2.0 adds a security classification and certification layer. Together they create one of the strongest architectural arguments for local-first in this roster.
 
-**Chapters:** Ch02–Ch06, Ch08–Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue, Appendix D
+**Chapters:** Ch02–Ch06, Ch08–Ch11, Ch13–Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix D
 
 ### Japan APPI / PIPA (revised 2022)
 
 **Effective:** 1 April 2022 (revised). Article 34 (third-party restrictions), Article 36 (cross-border transfer consent). The 2022 revision strengthened transfer controls; Article 36 erasure-equivalent right carries the same CRDT/DEK-destruction tension.
 
-**Chapters:** Preface, Ch02–Ch03, Ch05, Ch07–Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue, Appendix A, Appendix D
+**Chapters:** Preface, Ch02–Ch03, Ch05, Ch07–Ch11, Ch13–Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix A, Appendix D
 
 ### South Korea PIPA + ISMS-P
 
 Strong erasure rights; ISMS-P is a procurement-required certification standard in Korean enterprise procurement. Chapter 8 treats it alongside SOC 2 and ISO 27001 as documentation the local-first vendor must produce.
 
-**Chapters:** Preface, Ch02–Ch03, Ch05, Ch08–Ch11, Ch13–Ch14, Ch18–Ch19, Epilogue, Appendix A, Appendix D
+**Chapters:** Preface, Ch02–Ch03, Ch05, Ch08–Ch11, Ch13–Ch14, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix A, Appendix D
 
 ### Taiwan PDPA / Singapore PDPA
 
@@ -127,19 +127,19 @@ Both establish cross-border transfer controls and data subject rights. Relevant 
 
 The NDPA (Act No. 40 of 2023) re-enacted and strengthened NDPR, establishing a dedicated Data Protection Commission. Erasure rights parallel GDPR Article 17. Sectoral regulators in BFSI and telecom compound NDPA requirements with additional localization obligations.
 
-**Chapters:** Preface, Ch02–Ch03, Ch05, Ch07–Ch11, Ch13, Ch15, Ch18–Ch19, Epilogue, Appendix A, Appendix D
+**Chapters:** Preface, Ch02–Ch03, Ch05, Ch07–Ch11, Ch13, Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix A, Appendix D
 
 ### South Africa POPIA (Protection of Personal Information Act 4 of 2013, effective 1 July 2021)
 
 Section 24 (right to correction and deletion). Section 72 prohibits cross-border transfers to countries lacking adequate protection — the same structural argument as GDPR for on-device residency.
 
-**Chapters:** Preface, Ch02–Ch03, Ch05, Ch07–Ch11, Ch13, Ch15, Ch18–Ch19, Epilogue, Appendix A, Appendix D
+**Chapters:** Preface, Ch02–Ch03, Ch05, Ch07–Ch11, Ch13, Ch15, Ch18–Ch19, Ch22–Ch23, Epilogue, Appendix A, Appendix D
 
 ### Kenya Data Protection Act 2019 (Act No. 24 of 2019)
 
 **Effective:** November 2019. Section 40 (erasure rights). The ODPC has issued binding financial-sector guidance.
 
-**Chapters:** Ch05, Ch07–Ch09, Ch11, Ch13, Ch15, Ch18–Ch19, Appendix D
+**Chapters:** Ch05, Ch07–Ch09, Ch11, Ch13, Ch15, Ch18–Ch19, Ch22, Appendix D
 
 ### Ghana DPA (Act 843 of 2012) / ECOWAS Supplementary Act (A/SA.1/01/10, 2010)
 
@@ -155,13 +155,13 @@ Ghana's DPA is one of Africa's earliest; the ECOWAS Act provides a common floor 
 
 Article 18 establishes erasure rights parallel to GDPR Article 17. The ANPD has not yet settled whether crypto-shredding constitutes lawful erasure.
 
-**Chapters:** Ch02–Ch03, Ch05, Ch07, Ch09–Ch11, Ch13–Ch15, Ch18, Epilogue
+**Chapters:** Ch02–Ch03, Ch05, Ch07, Ch09–Ch11, Ch13–Ch15, Ch18, Ch22, Epilogue
 
 ### Mexico LFPDPPP (2010) — ARCO Rights
 
 Cancellation right (the ARCO "C") parallels GDPR Article 17. Data localization requirements are sector-specific.
 
-**Chapters:** Ch02, Ch07, Ch09, Ch11, Ch15
+**Chapters:** Ch02, Ch07, Ch09, Ch11, Ch15, Ch22
 
 ### Colombia Ley 1581 (2012) / Argentina Ley 25.326 (2000) / Canada PIPEDA
 
@@ -188,7 +188,7 @@ No omnibus federal privacy law. The book addresses:
 
 **Effective:** 1 September 2015 — enacted two years before GDPR and the earliest major national localization mandate. 242-FZ amended Federal Law 152-FZ to require that personal data of Russian citizens be initially collected and stored on servers physically located in Russia. The book repeatedly emphasizes this chronology: Russia established the doctrinal pattern of hard localization mandates before Europe's rights-based framework took effect. A local-first node within Russia satisfies 242-FZ at the architectural level — the same structural answer as Schrems II, but with a harder territorial requirement. Roskomnadzor enforcement has intensified since 2022.
 
-**Chapters:** Ch02–Ch06, Ch09, Ch11, Ch13–Ch15, Ch18–Ch19, Epilogue
+**Chapters:** Ch02–Ch06, Ch09, Ch11, Ch13–Ch15, Ch18–Ch19, Ch23, Epilogue
 
 ### Russia Federal Law 152-FZ (2006, as amended) / Federal Law 188-FZ (2015)
 
@@ -239,7 +239,9 @@ Reverse index showing frameworks each compressed chapter originally cited inline
 | Ch12 | GDPR, Schrems II, PIPL, Russia 242-FZ, DIFC DPL, DPDP, RBI, Japan APPI/PIPA, South Korea PIPA, POPIA, NDPR (inline list retained) |
 | Ch13 | GDPR, UK GDPR, Schrems II, DIFC DPL, UAE DPL, DPDP, RBI, PIPL, Japan APPI/PIPA, South Korea PIPA, LGPD, Russia 242-FZ |
 | Ch14 | GDPR Art. 5(1)(c)/(1)(e), Schrems II, DPDP, RBI, DIFC DPL, PIPL, Japan APPI/PIPA, South Korea PIPA, UAE DPL, LGPD, POPIA, NDPR, LFPDPPP, Russia 152-FZ/242-FZ |
-| Ch15 | DPDP, LGPD Art. 18, DIFC DPL, LFPDPPP, POPIA, NDPR, Kenya DPA, Japan APPI, South Korea PIPA, Schrems II, Russia 242-FZ |
+| Ch15 | DIFC DPL, Schrems II, Russia 242-FZ (architectural compliance: foreign-cloud prohibition, transfer architecture, localization) |
+| Ch22 | GDPR Art. 17, DPDP Sec. 12, UAE DPL Art. 16, LGPD Art. 18, LFPDPPP, POPIA Sec. 24, NDPR, Kenya DPA, Japan APPI Art. 36, South Korea PIPA, PIPL Art. 47, EDPB, CNIL (crypto-shredding via DEK destruction = key-lifecycle operation) |
+| Ch23 | GDPR Art. 33, Schrems II, DIFC DPL, UAE DPL, DPDP, RBI, PIPL, Japan APPI/PIPA, South Korea PIPA+ISMS-P, NDPR, POPIA Sec. 72, LGPD, Russia 242-FZ, SCCs (endpoint controls, breach notification, multi-party transfer custody, sectoral localization) |
 | Appendix D | GDPR, Schrems II, DIFC DPL, RBI, DPDP, PIPL, MLPS 2.0, Japan APPI/PIPA, South Korea PIPA+ISMS-P, LGPD, POPIA, NDPR |
 | Ch18 | GDPR Art. 30, Schrems II, DIFC DPL, UAE DPL, DPDP, RBI, PIPL, Japan APPI, South Korea PIPA, LGPD, LFPDPPP, NDPR, POPIA, Kenya DPA, Russia 242-FZ |
 | Ch19 | DIFC DPL, RBI, Schrems II, Russia 242-FZ, 188-FZ/import substitution, NDPR, POPIA, PIPL, Japan APPI, South Korea PIPA, LGPD, Kenya DPA, DPDP, FedRAMP, SOC 2, CMMC |
