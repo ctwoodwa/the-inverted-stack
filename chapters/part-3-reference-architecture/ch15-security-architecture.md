@@ -110,13 +110,13 @@ Operational flows specified in Chapter 22 §Key-Loss Recovery.
 
 ## Offline Node Revocation and Reconnection
 
-Operational flows specified in Chapter 22 §Offline Node Revocation and Reconnection.
+Operational flows specified in Chapter 23 §Offline Node Revocation and Reconnection.
 
 ---
 
 ## Collaborator Revocation and Post-Departure Partition
 
-Operational flows specified in Chapter 22 §Collaborator Revocation and Post-Departure Partition.
+Operational flows specified in Chapter 23 §Collaborator Revocation and Post-Departure Partition.
 
 ---
 
@@ -144,7 +144,7 @@ The four-hour default is configurable. Deployments with lower sensitivity requir
 
 ## Endpoint Compromise: What Stays Protected
 
-Operational flows specified in Chapter 22 §Endpoint Compromise: What Stays Protected.
+Operational flows specified in Chapter 23 §Endpoint Compromise: What Stays Protected.
 
 ---
 
@@ -164,7 +164,7 @@ A local-first system that distributes application updates through a CDN inherits
 
 ## Chain-of-Custody for Multi-Party Transfers
 
-Operational flows specified in Chapter 22 §Chain-of-Custody for Multi-Party Transfers.
+Operational flows specified in Chapter 23 §Chain-of-Custody for Multi-Party Transfers.
 
 ---
 
@@ -184,7 +184,7 @@ Organizations subject to Article 17 must obtain legal review before relying on c
 
 ## Event-Triggered Re-classification
 
-Operational flows specified in Chapter 22 §Event-Triggered Re-classification.
+Operational flows specified in Chapter 23 §Event-Triggered Re-classification.
 
 ---
 

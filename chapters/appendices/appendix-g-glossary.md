@@ -115,7 +115,7 @@ The 1996 US law (with the 2003 Privacy Rule and 2005 Security Rule) governing pr
 A NIST-standard key derivation function (RFC 5869) that produces multiple distinct keys from a single high-entropy input. The local-node architecture uses HKDF-SHA256 to derive per-purpose keys from the OS-keystore root seed. Specified in: Chapter 15 §Key Hierarchy.
 
 **HSM (Hardware Security Module)**
-A dedicated hardware device that performs cryptographic operations and stores keys in tamper-resistant memory. The local-node architecture uses platform-provided hardware-backed keystores (Apple Secure Enclave, Pixel Titan M, Windows Pluton) where available; dedicated HSMs are a deployment option for high-sensitivity operator infrastructure. See also: TPM, Secure Enclave. Specified in: Chapter 15 §Endpoint Compromise.
+A dedicated hardware device that performs cryptographic operations and stores keys in tamper-resistant memory. The local-node architecture uses platform-provided hardware-backed keystores (Apple Secure Enclave, Pixel Titan M, Windows Pluton) where available; dedicated HSMs are a deployment option for high-sensitivity operator infrastructure. See also: TPM, Secure Enclave. Specified in: Chapter 23 §Endpoint Compromise.
 
 ---
 
@@ -236,7 +236,7 @@ The open-source reference implementation of the architecture this book describes
 A mesh VPN service built on WireGuard that handles NAT traversal and provides stable peer-to-peer hostnames. The local-node architecture's mesh-VPN peer-discovery tier uses WireGuard; Tailscale is one production implementation. Specified in: Chapter 14.
 
 **TPM (Trusted Platform Module)**
-A hardware cryptographic module specified by ISO/IEC 11889. Modern endpoints use TPM 2.0 (or platform-equivalent — Apple Secure Enclave on macOS/iOS, Pixel Titan M on Pixel, Windows Pluton on recent Windows). The local-node architecture uses TPM-backed keystore storage where available for the device-identity keypair and the root seed. See also: HSM. Specified in: Chapter 15 §Endpoint Compromise.
+A hardware cryptographic module specified by ISO/IEC 11889. Modern endpoints use TPM 2.0 (or platform-equivalent — Apple Secure Enclave on macOS/iOS, Pixel Titan M on Pixel, Windows Pluton on recent Windows). The local-node architecture uses TPM-backed keystore storage where available for the device-identity keypair and the root seed. See also: HSM. Specified in: Chapter 23 §Endpoint Compromise.
 
 ---
 

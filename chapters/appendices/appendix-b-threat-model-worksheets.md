@@ -110,7 +110,7 @@ Most real-world compromises are Medium. High capability changes the calculus for
 - Enforce device attestation at relay handshake for high-security deployments.
 - Communicate honestly: no architecture protects data on a fully-compromised device where the attacker has extracted keys from a non-enclave keychain.
 
-Cross-references: Ch15 §Endpoint Compromise (full specification); Ch15 §In-Memory Key Handling (re-authentication interval); Ch15 §Collaborator Revocation (the broadcast mechanism reused by remote wipe).
+Cross-references: Ch23 §Endpoint Compromise (full specification); Ch15 §In-Memory Key Handling (re-authentication interval); Ch23 §Collaborator Revocation (the broadcast mechanism reused by remote wipe).
 
 ---
 
@@ -145,7 +145,7 @@ This is the highest-probability threat for this vertical. Project managers carry
 1. **Attacker steals project manager's laptop from vehicle.** Physical access is achieved.
 2. **Disk encryption check.** If BitLocker is not enforced through MDM policy, the attacker reads the filesystem directly. Mitigation: enforce BitLocker through MDM policy (Intune Device Compliance policy). Confirm the compliance check is enforced before the node is permitted to join the sync mesh.
 3. **Disk encryption is active.** The attacker reads the SQLCipher database file. Without the SQLCipher passphrase, the database is ciphertext. The attack fails at this branch.
-4. **Device is powered on at time of theft.** The cold-boot attack window applies. See Ch 15 §7 for the in-memory key handling policy. A realistic cold-boot attack requires laboratory conditions: DRAM module removal within seconds of power loss, chilled-memory preservation (liquid nitrogen or coolant spray to slow decay), and forensic imaging equipment. Unencrypted hibernation files and suspend-to-disk images expand the window. Disable both via MDM. Treat this as residual risk outside high-security environments. In government, defense, or intelligence contexts, consult Ch 15 for the re-authentication interval guidance and enforce shorter intervals.
+4. **Device is powered on at time of theft.** The cold-boot attack window applies. See Ch15 §In-Memory Key Handling for the policy. A realistic cold-boot attack requires laboratory conditions: DRAM module removal within seconds of power loss, chilled-memory preservation (liquid nitrogen or coolant spray to slow decay), and forensic imaging equipment. Unencrypted hibernation files and suspend-to-disk images expand the window. Disable both via MDM. Treat this as residual risk outside high-security environments. In government, defense, or intelligence contexts, consult Ch15 §In-Memory Key Handling for the re-authentication interval guidance and enforce shorter intervals.
 5. **Attacker targets OS keychain.** The role KEK and the device keypair sit in the Windows Credential Manager. To get to them you need the device PIN or the biometric. An attacker without the credential cannot extract key material from a locked device. Mitigation: enforce a 6-digit minimum PIN through MDM. Disable USB boot. Lock down BIOS settings changes.
 6. **Attacker copies SQLCipher DB offline.** Without the KEK and the SQLCipher passphrase, the ciphertext is unreadable. The attack fails.
 
@@ -236,7 +236,7 @@ Verify the jurisdictional obligations for every market the team operates in befo
 
 ## Section 5 — Chain-of-Custody Worksheet
 
-Use this worksheet when the deployment transfers sensitive data to a third party (insurer, regulator, auditor, legal counsel, successor entity), handles evidence-class data (dashcam footage, healthcare records, financial audit logs), or operates a mandated regulatory-export stream (MDS-style telemetry, financial reporting, healthcare event reporting). Fill it in before the first evidence-class transfer; revisit when regulatory scope changes. Architectural specification: Ch15 §Chain-of-Custody for Multi-Party Transfers.
+Use this worksheet when the deployment transfers sensitive data to a third party (insurer, regulator, auditor, legal counsel, successor entity), handles evidence-class data (dashcam footage, healthcare records, financial audit logs), or operates a mandated regulatory-export stream (MDS-style telemetry, financial reporting, healthcare event reporting). Fill it in before the first evidence-class transfer; revisit when regulatory scope changes. Architectural specification: Ch23 §Chain-of-Custody for Multi-Party Transfers.
 
 ### Field 1 — Parties
 
@@ -297,7 +297,7 @@ On `CustodyTransferDisputed` (recipient version mismatches transferor assertion)
 
 On TSA outages exceeding the declared pending duration, escalate to the compliance officer. On Merkle-chain verification failures recipient-side, treat as a stream-omission incident before responding to the regulator.
 
-The worksheet is deployment-time. Per-transfer enforcement happens in `Sunfish.Kernel.Custody` through the four event contracts named in Ch15 §Chain-of-Custody.
+The worksheet is deployment-time. Per-transfer enforcement happens in `Sunfish.Kernel.Custody` through the four event contracts named in Ch23 §Chain-of-Custody.
 
 ---
 
