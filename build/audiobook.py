@@ -432,6 +432,8 @@ CHAPTER_FILES = [
     "part-4-implementation-playbooks/ch19-shipping-to-enterprise.md",
     "part-4-implementation-playbooks/ch20-ux-sync-conflict.md",
     "part-5-operational-concerns/ch21-operating-a-fleet.md",
+    "part-5-operational-concerns/ch22-security-operations.md",
+    "part-5-operational-concerns/ch23-endpoint-collaborator-ops.md",
     "epilogue/epilogue-what-the-stack-owes-you.md",
     "appendices/appendix-a-sync-daemon-wire-protocol.md",
     "appendices/appendix-b-threat-model-worksheets.md",
