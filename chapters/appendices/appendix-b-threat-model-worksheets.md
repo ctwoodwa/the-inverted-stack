@@ -258,7 +258,7 @@ Under-designation saves setup cost until the first legal dispute exposes the gap
 
 ### Field 3 — Transfer trigger
 
-Name the event that initiates transfer (scheduled regulatory export, insurer claim request, auditor engagement, departure partition under §Collaborator Revocation 45e, subpoena, warrant) and the authorization gate — who signs off before a `CustodyTransferInitiated` event emits.
+Name the event that initiates transfer (scheduled regulatory export, insurer claim request, auditor engagement, departure partition under Ch23 §Collaborator Revocation sub-pattern 45e, subpoena, warrant) and the authorization gate — who signs off before a `CustodyTransferInitiated` event emits.
 
 ### Field 4 — Signing requirements
 
