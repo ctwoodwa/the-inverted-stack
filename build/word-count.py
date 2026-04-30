@@ -26,6 +26,9 @@ TARGETS = {
     "ch18": 3500,
     "ch19": 3500,
     "ch20": 3000,
+    "ch21": 6500,
+    "ch22": 7400,
+    "ch23": 9000,
     "epilogue": 2500,
     "appendix-a": 2000,
     "appendix-b": 2000,
@@ -33,6 +36,7 @@ TARGETS = {
     "appendix-d": 2000,
     "appendix-e": 500,
     "appendix-f": 2000,
+    "appendix-g": 3000,
 }
 
 CHAPTERS_DIR = os.path.join(os.path.dirname(__file__), "..", "chapters")
