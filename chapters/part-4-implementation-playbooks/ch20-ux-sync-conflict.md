@@ -251,7 +251,7 @@ public enum SyncState
 
 <!-- code-check: this section references two forward-looking Sunfish namespaces — `Sunfish.Foundation.Recovery` and `Sunfish.Kernel.Audit` — that are part of the Volume 1 extension roadmap and not yet present in the Sunfish reference implementation. They are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. `Sunfish.Kernel.Security` is in the current Sunfish package canon. -->
 
-Key-loss recovery splits across a policy chapter and a UX chapter, paired by design. Ch15 §Key-Loss Recovery specifies the cryptographic constructions, the deployment combinations, and the convergence rules — the layer the architecture commits to. This section is the layer the user sees: setup-time flows, recovery initiation after loss, the grace-period experience, and the completion confirmation that closes the loop. Each subsection here has a counterpart there; the two are read together or not at all.
+Key-loss recovery splits across a policy chapter and a UX chapter, paired by design. Ch22 §Key-Loss Recovery specifies the cryptographic constructions, the deployment combinations, and the convergence rules — the layer the architecture commits to. This section is the layer the user sees: setup-time flows, recovery initiation after loss, the grace-period experience, and the completion confirmation that closes the loop. Each subsection here has a counterpart there; the two are read together or not at all.
 
 Get the UX wrong and users skip setup. A user who skipped recovery setup faces permanent data loss at the first forgotten password. Get it right and users complete setup without distress and know exactly what to do when recovery becomes necessary.
 
@@ -293,7 +293,7 @@ As trustees sign their shares, the progress display updates: "Trustee 1: confirm
 
 The original holder's existing devices — every device associated with the account — receive a high-priority notification the moment the user submits a recovery claim: "Someone is requesting recovery of your account. If this is not you, dispute this request now." The notification appears through every channel the user has opted into: in-app banner on any running instance, OS push notification, email, SMS.
 
-The dispute action is one tap or one click. Tapping "This is not me" halts the recovery immediately, logs the dispute as a signed event in the audit trail, and alerts the user's trustees. A confirmed dispute triggers the compromise response procedure from Ch15 §Key Compromise Incident Response — because an unauthorized recovery attempt is evidence of credential compromise, not just a false claim.
+The dispute action is one tap or one click. Tapping "This is not me" halts the recovery immediately, logs the dispute as a signed event in the audit trail, and alerts the user's trustees. A confirmed dispute triggers the compromise response procedure from Ch22 §Key Compromise Incident Response — because an unauthorized recovery attempt is evidence of credential compromise, not just a false claim.
 
 Multi-channel notification is not optional. Routing recovery claims through a single channel is defeatable by an adversary who controls that channel. `Sunfish.Foundation.Recovery` sends through every configured channel simultaneously and logs each delivery. An undisputed claim in a channel the user does not monitor is the architecture's honest limitation; the application prompts users during setup to configure at least two independent notification channels.
 
@@ -301,7 +301,7 @@ In high-outage environments — rural deployments where 2G or intermittent conne
 
 If the original holder has genuinely lost all notification channels — no running devices, no email access, no SMS — the silence is the signal. The grace period elapses, and recovery completes. The architecture cannot distinguish a user who has truly lost everything from a user who is simply not checking. The grace period is the only gate between those two states.
 
-This is the architecture's deliberate trade-off. Without the silence-completes rule, a user who genuinely lost everything would have no recovery path at all — the system would refuse to act on their behalf because the system could not confirm their absence was loss rather than choice. The grace period is calibrated to make the silence detectable while there is still time to dispute, and the deployment-class table in Ch15 §Key-Loss Recovery picks that window per audience.
+This is the architecture's deliberate trade-off. Without the silence-completes rule, a user who genuinely lost everything would have no recovery path at all — the system would refuse to act on their behalf because the system could not confirm their absence was loss rather than choice. The grace period is calibrated to make the silence detectable while there is still time to dispute, and the deployment-class table in Ch22 §Key-Loss Recovery picks that window per audience.
 
 ### Recovery Completion Confirmation
 
@@ -311,7 +311,7 @@ The completion screen is concrete about what happens next: "Recovery complete. Y
 
 That last sentence is the transition to ongoing maintenance. A recovery that succeeds is also a signal that the arrangement worked — and that it may be time to review whether the trustees are still the right people, whether the custodian relationship is current, and whether the paper key is still in the safe.
 
-`Sunfish.Foundation.Recovery` schedules a recovery-readiness audit reminder 12 months after setup or after the last confirmed recovery event. The reminder is a short prompt: "Your recovery arrangement was last verified 12 months ago. Verify that your trustees are still reachable and that your backup key is where you left it." The reminder is calibrated to appear once per year, not once per month. A recovery prompt that appears every 30 days becomes ambient noise. One that appears annually is specific enough to act on. See Ch15 §Key-Loss Recovery — Boundaries and Operator Mitigations for the boundary the periodic audit does and does not protect against.
+`Sunfish.Foundation.Recovery` schedules a recovery-readiness audit reminder 12 months after setup or after the last confirmed recovery event. The reminder is a short prompt: "Your recovery arrangement was last verified 12 months ago. Verify that your trustees are still reachable and that your backup key is where you left it." The reminder is calibrated to appear once per year, not once per month. A recovery prompt that appears every 30 days becomes ambient noise. One that appears annually is specific enough to act on. See Ch22 §Key-Loss Recovery — Boundaries and Operator Mitigations for the boundary the periodic audit does and does not protect against.
 
 The recovery flow above completes the ownership story this chapter has been telling: a user who keeps their keys keeps their data, a user who loses them recovers through the arrangement they made before the loss, and a user who never made an arrangement faces the honest consequence that the chapter's first-run prompt warned about. Two surfaces remain in this chapter that the same ownership story depends on — first revocation, the mirror of recovery, where authority is taken back rather than restored; and then accessibility, because every flow in this chapter has to land for a user navigating with a screen reader, a keyboard, or a high-contrast display.
 
@@ -319,7 +319,7 @@ The recovery flow above completes the ownership story this chapter has been tell
 
 <!-- code-check: this section references three Sunfish namespaces. `Sunfish.Kernel.Security` is in the current Sunfish package canon. `Sunfish.Kernel.Audit` is forward-looking — introduced by extension #48 and extended here for revocation and partition records. `Sunfish.Foundation.Recovery` is forward-looking under ADR 0046 and is referenced for the successor-entity KEK separation in the dissolution scenario. The forward-looking namespaces are illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. -->
 
-Revocation pairs a policy layer with a UX layer by design. Ch15 §Collaborator Revocation and Post-Departure Partition specifies what the architecture commits to cryptographically. This section covers what the user sees: the administrator initiating the revocation, the revoked party encountering the access change, and the partition wizard for the dissolution scenario. Each subsection here has a counterpart there.
+Revocation pairs a policy layer with a UX layer by design. Ch23 §Collaborator Revocation and Post-Departure Partition specifies what the architecture commits to cryptographically. This section covers what the user sees: the administrator initiating the revocation, the revoked party encountering the access change, and the partition wizard for the dissolution scenario. Each subsection here has a counterpart there.
 
 ### Initiating revocation — the administrator's flow
 
@@ -327,7 +327,7 @@ The revocation action lives in the team administration panel, not in any per-use
 
 After confirmation, the UX shows a revocation-in-progress state: "Revoking [name]'s access and rotating role keys. This may take a few minutes while documents are re-encrypted." The team continues using the application during re-wrapping; documents remain accessible under the current KEK until re-wrapping completes. Do not surface technical key-rotation terminology — "KEK re-wrapping," "DEK re-encryption," "discard broadcast" — to the administrator. Surface the business outcome: "Access revoked. Documents secured."
 
-`Sunfish.Kernel.Security` manages the underlying key rotation and the revocation event publication. Cross-reference to Ch15 §Collaborator Revocation and Post-Departure Partition sub-pattern 45b for the rotation specification.
+`Sunfish.Kernel.Security` manages the underlying key rotation and the revocation event publication. Cross-reference to Ch23 §Collaborator Revocation and Post-Departure Partition sub-pattern 45b for the rotation specification.
 
 ### Communicating the action's effects — what the revoked party experiences
 
@@ -343,7 +343,7 @@ The dissolution scenario is rare enough that it does not belong in the standard 
 
 The wizard walks you through three steps. First, define the boundary: select the data objects, roles, and time ranges that belong to each successor entity. Second, confirm both parties are present or that you hold the legal authority to act on behalf of the absent party. Third, review the partition summary and initiate. The confirmation screen names the legal effect in plain language: "This creates two separate workspaces. Each party keeps their own data from this point forward. Historical shared data is preserved in both workspaces as a read-only record."
 
-The audit log entry for the partition operation surfaces in the administration panel's "Access log" view alongside routine revocation records. Each entry shows the revoked collaborator's name, the timestamp, the rotation completion status, and the data-at-risk window — the artifact a compliance team or legal counsel can read without extracting raw event data. For partition events, the entry additionally carries the boundary definition and the authorizing parties. Both successor entities receive a copy of the partition event record in their respective audit logs. Cross-reference to Ch15 §Collaborator Revocation and Post-Departure Partition sub-patterns 45e and 45f for the underlying specification.
+The audit log entry for the partition operation surfaces in the administration panel's "Access log" view alongside routine revocation records. Each entry shows the revoked collaborator's name, the timestamp, the rotation completion status, and the data-at-risk window — the artifact a compliance team or legal counsel can read without extracting raw event data. For partition events, the entry additionally carries the boundary definition and the authorizing parties. Both successor entities receive a copy of the partition event record in their respective audit logs. Cross-reference to Ch23 §Collaborator Revocation and Post-Departure Partition sub-patterns 45e and 45f for the underlying specification.
 
 ### The departure moment
 
@@ -355,7 +355,7 @@ Revocation is the rare protocol operation that arrives with emotional weight out
 
 <!-- code-check annotations: Sunfish.Kernel.Security (in-canon, surfaces the re-classification policy and the access-control re-evaluation); Sunfish.Kernel.Audit (in-canon per cerebrum 2026-04-28, supplies the escalation-event record the operator UI reads); Sunfish.Kernel.SchemaRegistry (in-canon, supplies the cross-class reference index the operator review surface queries); Sunfish.Kernel.Sync (in-canon, propagates the operation); Sunfish.UIAdapters.Blazor (in-canon, hosts the class-indicator component alongside SunfishFreshnessBadge). 0 new top-level namespaces. 0 class APIs / method signatures introduced. -->
 
-Revocation removes a person from a workspace. Re-classification changes what a record is. Both shift access without user action, and both belong in the same UX neighbourhood — a user who has just learned to read the revocation message should find the escalation message immediately legible from the same vocabulary. Ch15 §Event-Triggered Re-classification specifies the mechanism; this section covers what the user sees: the escalated-record indicator on the affected card, the access-tightened message that lands when a previously-readable record refuses a read, the offline-reconnect experience, the operator-side escalation flow, and the cross-class reference review prompt that follows an escalation upstream.
+Revocation removes a person from a workspace. Re-classification changes what a record is. Both shift access without user action, and both belong in the same UX neighbourhood — a user who has just learned to read the revocation message should find the escalation message immediately legible from the same vocabulary. Ch23 §Event-Triggered Re-classification specifies the mechanism; this section covers what the user sees: the escalated-record indicator on the affected card, the access-tightened message that lands when a previously-readable record refuses a read, the offline-reconnect experience, the operator-side escalation flow, and the cross-class reference review prompt that follows an escalation upstream.
 
 The §AP/CP Visibility by Data Class table at the top of this chapter assigned each record a class at deployment time. Re-classification changes which row of that table a record belongs to. The freshness threshold, the staleness UI, and the read-access constraint move with it.
 
@@ -377,7 +377,7 @@ If the user holds a role with access at the new class, no message appears at all
 
 ### The offline-reconnect experience
 
-A user offline when the escalation fired returns to the application and finds an access change they did not initiate. The reconnect handshake processes the re-classification operation before any reads complete (Ch15 §Event-Triggered Re-classification sub-pattern 10b). On the first attempt to open the affected record, the access-tightened message appears with a small addition: "This record was re-classified on 12 March, while you were offline, and your role no longer has access."
+A user offline when the escalation fired returns to the application and finds an access change they did not initiate. The reconnect handshake processes the re-classification operation before any reads complete (Ch23 §Event-Triggered Re-classification sub-pattern 10b). On the first attempt to open the affected record, the access-tightened message appears with a small addition: "This record was re-classified on 12 March, while you were offline, and your role no longer has access."
 
 Do not surface the escalation as a separate notification on reconnect. A list of "things that changed while you were away" invites the user to investigate records they may have no current intention of opening, which surfaces escalation events to roles that no longer hold access at all. The message lands at the moment of attempted access, where the user has a concrete intention and the message has a concrete answer.
 
@@ -393,7 +393,7 @@ Do not surface "max-register invariant" or "CRDT operation" to the operator. Sur
 
 ### Cross-class reference review
 
-After the escalation propagates, the reference index in `Sunfish.Kernel.SchemaRegistry` identifies records holding inbound references to the escalated record (Ch15 §Event-Triggered Re-classification sub-pattern 10d). Those candidates surface in the operator's review queue as a "References to recently-escalated records" panel — a list with the candidate record, its current class, the escalated record it references, and two actions: "Confirm class unchanged" and "Re-classify upward."
+After the escalation propagates, the reference index in `Sunfish.Kernel.SchemaRegistry` identifies records holding inbound references to the escalated record (Ch23 §Event-Triggered Re-classification sub-pattern 10d). Those candidates surface in the operator's review queue as a "References to recently-escalated records" panel — a list with the candidate record, its current class, the escalated record it references, and two actions: "Confirm class unchanged" and "Re-classify upward."
 
 The review queue does not auto-resolve. An unreviewed candidate remains in the queue indefinitely, surfaced on the operator's next session and on the periodic compliance-review prompt. The commitment is not to resolve the question — the question is domain-specific — but to refuse to lose track of it. Auto-lifting cascades unbounded; auto-dismissing leaves an audit gap. The review queue is the human-in-the-loop surface that bounds both failure modes.
 
