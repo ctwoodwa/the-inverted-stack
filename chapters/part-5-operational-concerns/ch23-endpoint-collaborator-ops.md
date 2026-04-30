@@ -20,6 +20,28 @@ Each section is a self-contained operational flow. Cross-references point back t
 
 A node that is offline when a revocation event occurs does not receive that event until reconnection. The relay enforces revocation at the handshake layer, not through an out-of-band push.
 
+```mermaid
+sequenceDiagram
+    participant Node as Offline Node
+    participant Relay as Relay
+    participant Admin as Admin Device
+    participant IdP as IdP
+
+    Node->>Relay: Reconnect with current attestation bundle
+    Relay->>Relay: Check key identifiers vs revocation log
+    alt Key revoked while offline
+        Relay-->>Node: ERR_KEY_REVOKED
+        Node->>IdP: Re-authenticate
+        IdP-->>Node: Fresh role attestations
+        Admin->>Admin: Detect reconnected node
+        Admin->>Node: Issue new wrapped KEK copies
+        Node->>Node: Store role keys in OS keystore
+        Node->>Relay: Resume sync (now valid)
+    else Keys still valid
+        Relay-->>Node: Sync proceeds
+    end
+```
+
 When an offline node attempts to reconnect, the sync daemon presents the node's current attestation bundle to the relay. The relay checks each key identifier in the bundle against the revocation log. If any key has been revoked, the relay rejects the handshake with error code `ERR_KEY_REVOKED` — not a generic connection failure. The specific error code allows the node's client to distinguish between a network problem, an expired certificate, and a deliberate revocation.
 
 The node cannot resume sync until the user re-authenticates through the IdP (Identity Provider). Re-authentication establishes fresh role attestations against current team state. After successful re-authentication, the administrator's device detects the reconnected node and issues new wrapped KEK copies for the roles the user currently holds. Once the new key bundle arrives and is stored in the OS keystore, sync resumes.
@@ -38,6 +60,28 @@ A node whose revocation predates its last offline period may have accumulated wr
 <!-- code-check: this section references three Sunfish namespaces. `Sunfish.Kernel.Security` and `Sunfish.Kernel.Audit` are in the current Sunfish package canon (verified 2026-04-28: packages/kernel-audit/ exists). `Sunfish.Foundation.Recovery` is forward-looking under ADR 0046 — referenced here for the successor-entity KEK separation in the dissolution scenario; illustrative in the same sense the book's existing pre-1.0 Sunfish references are illustrative. -->
 
 The architecture so far has assumed collaborators stay collaborative. Extension #18 specifies how authority is granted — scoped third-party write access, role distribution, trustee designation. The mirror operation has been missing. Revocation is the runtime mechanism for the ungrant of a delegated capability, and every deployment that ever onboards a second collaborator eventually has to perform one.
+
+```mermaid
+flowchart LR
+    subgraph Before["Before revocation"]
+        TeamA[Team]
+        AliceA[Alice<br/>finance role]
+        BobA[Bob<br/>finance role]
+        CarolA[Carol<br/>departing]
+        TeamA --> AliceA
+        TeamA --> BobA
+        TeamA --> CarolA
+    end
+    subgraph After["After revocation + KEK rotation"]
+        TeamB[Team]
+        AliceB[Alice<br/>new finance KEK]
+        BobB[Bob<br/>new finance KEK]
+        CarolB[Carol<br/>old KEK only<br/>read-only access to historical]
+        TeamB --> AliceB
+        TeamB --> BobB
+        TeamB -.x.-> CarolB
+    end
+```
 
 ### Why this matters
 
@@ -220,6 +264,21 @@ A commercial driver finishes a shift, parks the rig, and uploads the day's dashc
 The audit trails specified in §Key-Loss Recovery sub-pattern 48f and §Collaborator Revocation sub-pattern 45f rest on the same substrate this section specifies. Both reference the multi-party signed-event mechanism without naming it. This section names it: chain-of-custody is a signed, append-only sequence in which each entry attests to a specific act by a specific party at a specific moment, with the signatures traceable to the deployment's key hierarchy. The distinction matters in court. A timestamp database says "this happened." A chain-of-custody record says "this party asserted this state, at this time, under this authority, and the signature resolves through the published key hierarchy." Only the second claim survives discovery, regulatory inspection, and adversarial challenge.
 
 Three deployment scenarios make the mechanism load-bearing rather than decorative. Commercial-vehicle dashcam footage must survive the handoff chain from in-vehicle capture through insurer adjudication and possible litigation, with no gap a defense expert can exploit. Regulated-industry data transfers — clinical handoffs, audited financial exports, deposition-bound legal records — require both the dispatcher's and the recipient's signed attestation in the same record. LADOT-MDS-style mandated regulatory streams require continuous proof that the operator's exported telemetry is complete, not merely that each individual event is authentic. The architecture treats all three under one signed-receipt primitive; naming the scenarios sets the scope.
+
+```mermaid
+sequenceDiagram
+    participant Source as Source Operator<br/>(captures evidence)
+    participant Dispatcher as Dispatcher<br/>(initiates handoff)
+    participant Recipient as Recipient<br/>(insurer / counsel / regulator)
+    participant Audit as Sunfish.Kernel.Custody<br/>+ Sunfish.Kernel.Audit
+
+    Source->>Audit: Sign capture event<br/>(timestamp + content hash + key)
+    Dispatcher->>Audit: Sign dispatch event<br/>(addressee + reason)
+    Audit-->>Recipient: Signed attestation chain
+    Recipient->>Audit: Sign receipt event<br/>(custody accepted)
+    Recipient->>Audit: Sign access event<br/>(each subsequent read)
+    Audit->>Audit: Append-only ledger<br/>survives discovery
+```
 
 ### What chain-of-custody is not
 

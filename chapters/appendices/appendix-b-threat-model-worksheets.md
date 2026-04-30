@@ -3,13 +3,13 @@
 <!-- icm/prose-review -->
 
 <!-- Target: ~1,800 words -->
-<!-- Source: v13 §11.1, Ch 15 -->
+<!-- Source: v13 §11.1, Ch15, Ch22, Ch23 -->
 
 ---
 
 ## Introduction
 
-Build your deployment threat model with these four worksheets. Fill them in before your first production deployment. Update them when the asset inventory changes. Run the incident response template the moment a key compromise is suspected — not the moment it is confirmed. Chapter 15 carries the full security architecture: the DEK (Data Encryption Key)/KEK (Key Encryption Key) key hierarchy, the role attestation flow, the compelled-access resistance model, and the key compromise incident response procedure. Complete Chapter 19's compliance checklist before you start this exercise. The checklist names the regulatory ground these worksheets stand on.
+Build your deployment threat model with these four worksheets. Fill them in before your first production deployment. Update them when the asset inventory changes. Run the incident response template the moment a key compromise is suspected — not the moment it is confirmed. Chapter 15 carries the security architecture: the DEK (Data Encryption Key)/KEK (Key Encryption Key) key hierarchy, the role attestation flow, and the compelled-access resistance model. Chapter 22 carries the key compromise incident response procedure. Complete Chapter 19's compliance checklist before you start this exercise. The checklist names the regulatory ground these worksheets stand on.
 
 ---
 

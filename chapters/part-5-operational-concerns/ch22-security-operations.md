@@ -20,6 +20,17 @@ Endpoint compromise, collaborator revocation, multi-party chain-of-custody, and 
 
 Scheduled key rotation is a maintenance operation. Key compromise is an incident. The response procedure differs from routine rotation in one critical way: the new KEK must not derive from the compromised key.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Detected: physical loss / anomaly / explicit report
+    Detected --> NewKekGenerated: admin generates fresh KEK
+    NewKekGenerated --> DeksReWrapped: background job re-wraps DEKs
+    DeksReWrapped --> OldKekDiscarded: discard signal broadcast
+    OldKekDiscarded --> RevocationBroadcast: relay rejects revoked key
+    RevocationBroadcast --> UsersNotified: data-at-risk window communicated
+    UsersNotified --> [*]
+```
+
 **Detection triggers.** The system logs all key access events to the audit log. Detection arrives from three sources: a physical loss report from a user whose device was stolen or found in an untrusted state; anomalous access patterns in the audit log that suggest unauthorized key use; or an explicit administrator report of suspected credential exposure. The incident response procedure activates on any of these triggers.
 
 **New KEK generation.** The administrator generates an entirely new KEK for the affected role from a fresh entropy source. Derivation from the compromised key would propagate the compromise forward. All other aspects of the distribution flow — wrapping with member public keys, publishing as signed administrative events — are identical to routine rotation.
@@ -70,6 +81,18 @@ Pick the deployment class first; the rest of the section describes the mechanism
 | Consumer | Multi-sig social (3-of-5) | Paper-key offline | 14 days |
 | SMB | Custodian-held + 2-of-3 social | Paper-key in safe | 7 days |
 | Regulated (HIPAA, PCI, financial) | Custodian-held under attestation | Multi-sig social with named officers | 30 days |
+
+```mermaid
+flowchart TD
+    Start[Team configures recovery at first-run] --> Q1{Deployment class}
+    Q1 -->|Consumer| ConsumerCfg[3-of-5 social + paper-key in safe<br/>Grace: 14 days]
+    Q1 -->|SMB| SmbCfg[Custodian + 2-of-3 social + paper-key<br/>Grace: 7 days]
+    Q1 -->|Regulated<br/>HIPAA / PCI / Financial| RegCfg[Custodian under attestation +<br/>multi-sig social with named officers<br/>Grace: 30 days]
+    ConsumerCfg --> Manifest[Class declared in signed config manifest]
+    SmbCfg --> Manifest
+    RegCfg --> Manifest
+    Manifest --> Audit[Audit log records class<br/>Sunfish.Kernel.Audit]
+```
 
 The deployment class is declared at first-run and persists in the team's signed configuration manifest. `Sunfish.Foundation.Recovery` reads the class on initialization and binds the corresponding threshold and grace-period values; the manifest entry is itself a signed event in the audit log, so a class change is an audited operation that any node can verify.
 

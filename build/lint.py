@@ -3,7 +3,7 @@
 
 Checks:
 - All chapters in book-structure.md have corresponding stub files
-- Chapter numbering is consistent (ch01 through ch20 in order)
+- Chapter numbering is consistent (ch01 through ch23 in order; Part V added 2026-04-30)
 - Internal markdown links resolve to real files
 - Cross-reference mentions ("see Chapter N", "Chapter N covers") point to valid chapters
 - Unresolved <!-- TODO --> and <!-- CLAIM --> markers
@@ -39,15 +39,20 @@ EXPECTED_CHAPTERS = [
     ("part-4-implementation-playbooks/ch18-migrating-existing-saas.md", "ch18"),
     ("part-4-implementation-playbooks/ch19-shipping-to-enterprise.md", "ch19"),
     ("part-4-implementation-playbooks/ch20-ux-sync-conflict.md", "ch20"),
+    ("part-5-operational-concerns/ch21-operating-a-fleet.md", "ch21"),
+    ("part-5-operational-concerns/ch22-security-operations.md", "ch22"),
+    ("part-5-operational-concerns/ch23-endpoint-collaborator-ops.md", "ch23"),
     ("epilogue/epilogue-what-the-stack-owes-you.md", "epilogue"),
     ("appendices/appendix-a-sync-daemon-wire-protocol.md", "appendix-a"),
     ("appendices/appendix-b-threat-model-worksheets.md", "appendix-b"),
     ("appendices/appendix-c-further-reading.md", "appendix-c"),
     ("appendices/appendix-d-testing-the-inverted-stack.md", "appendix-d"),
     ("appendices/appendix-e-citation-style.md", "appendix-e"),
+    ("appendices/appendix-f-regulatory-coverage.md", "appendix-f"),
+    ("appendices/appendix-g-glossary.md", "appendix-g"),
 ]
 
-CHAPTER_NUMBER_MAP = {f"ch{i:02d}": i for i in range(1, 21)}
+CHAPTER_NUMBER_MAP = {f"ch{i:02d}": i for i in range(1, 24)}
 
 errors = []
 warnings = []
@@ -81,7 +86,7 @@ for rel_path, key in EXPECTED_CHAPTERS:
         print(f"  OK    {rel_path}")
 
 
-# ── 2. Chapter numbering: ch01–ch20 in order with no gaps ─────────────────────
+# ── 2. Chapter numbering: ch01–ch23 in order with no gaps ─────────────────────
 
 print("\n[2] Chapter numbering")
 chapter_files = []
@@ -93,7 +98,7 @@ for root, dirs, files in os.walk(CHAPTERS_DIR):
             chapter_files.append((int(m.group(1)), os.path.join(root, fname)))
 
 chapter_files.sort()
-expected_nums = list(range(1, 21))
+expected_nums = list(range(1, 24))
 actual_nums = [n for n, _ in chapter_files]
 
 for n in expected_nums:
@@ -145,9 +150,9 @@ for rel_path, key in EXPECTED_CHAPTERS:
         continue
     for m in xref_pattern.finditer(content):
         n = int(m.group(1))
-        if n < 1 or n > 20:
+        if n < 1 or n > 23:
             errors.append(
-                f"  ERROR [{key}] Cross-reference to Chapter {n} — out of range (1–20)"
+                f"  ERROR [{key}] Cross-reference to Chapter {n} — out of range (1–23)"
             )
             xref_errors += 1
 
