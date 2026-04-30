@@ -44,7 +44,8 @@ ch20-ux-sync-conflict:                  brown
 
 # Part V — operational concerns
 ch21-operating-a-fleet:                 sinek
-ch22-security-operations:               sinek
+ch22-security-operations:               sinek  # scope: Key Lifecycle Operations (post UPF Ch22-Ch23 split)
+ch23-endpoint-collaborator-ops:         sinek
 
 # Back matter
 epilogue-what-the-stack-owes-you:       sinek
