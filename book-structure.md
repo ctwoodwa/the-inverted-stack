@@ -315,9 +315,10 @@ finished product.*
 ---
 
 ## Part V — Operational Concerns
-*~18,000 words (target). Post-deploy lifecycle: how a fleet of local-first nodes is operated
-once it's in users' hands. Distinct from Part IV (build playbooks) — this Part covers the
-running-and-recovering modes.*
+*~22,500 words (target after Ch22-Ch23 split 2026-04-30). Post-deploy lifecycle: how a fleet
+of local-first nodes is operated once it's in users' hands. Distinct from Part IV (build
+playbooks) — this Part covers the running-and-recovering modes. Three chapters: fleet
+operations, key-lifecycle operations, and endpoint/collaborator/custody operations.*
 
 ### Chapter 21 — Operating a Fleet of Local-First Nodes
 *~6,500 words*
@@ -334,30 +335,42 @@ running-and-recovering modes.*
 - Decommissioning workflows: graceful node retirement, data portability handoff,
   long-term archive
 
-### Chapter 22 — Security Operations
-*~10,000 words (post-prune target; UPF 2026-04-29). Absorbs the operational security
-material previously in Ch15. If post-prune lands above 12,000 words, splits into Ch22
-(Key Lifecycle Operations) + Ch23 (Endpoint + Collaborator Operations).*
+### Chapter 22 — Key Lifecycle Operations
+*~7,400 words (post Ch22-Ch23 split 2026-04-30; UPF FAILED-condition fired at Ch22 16,272 >
+12,000 threshold). Lifecycle-of-keys operational flows: what to do when a key changes state.*
 
 - Key compromise incident response: detection, re-keying procedure, data-at-risk scope,
   user-visible notification, forward secrecy window
 - Key-loss recovery: the six recovery mechanisms (multi-sig trustee, off-chain backup,
   cross-device, social-recovery, time-locked recovery, dispute-aware) — when each
-  applies and how they compose
-- Recovery state-machine convergence under partition; recovery as an attack vector;
-  operator mitigations
+  applies and how they compose; recovery state-machine convergence under partition;
+  recovery as an attack vector; operator mitigations
+- Forward secrecy and post-compromise security: per-message ephemeral key derivation,
+  Double Ratchet (sender + receiver ratchet), automatic key rotation on suspected
+  compromise, sealed sender, protocol-level forward secrecy commitment
+- Cross-references back to Ch15 for the architectural primitives (key hierarchy, role
+  attestation flow) each operational flow consumes
+
+### Chapter 23 — Endpoint, Collaborator, and Custody Operations
+*~9,000 words (post Ch22-Ch23 split 2026-04-30). Operational flows whose triggers come
+from outside the key lifecycle: a node returning from offline, a collaborator leaving the
+team, a hostile OS, a multi-party data handoff, a regulatory event escalating a record's class.*
+
 - Offline node revocation and reconnection: the revocation window, reconnection behavior,
   edge cases for nodes that miss multiple revocation cycles
 - Collaborator revocation and post-departure partition: explicit revocation events,
   post-revocation key rotation, cached-copy management, revocation propagation, data
   partition for dissolution and dispute, revocation-event audit trail
-- Forward secrecy and post-compromise security: per-message ephemeral key derivation,
-  Double Ratchet (sender + receiver ratchet), automatic key rotation on suspected
-  compromise, sealed sender, protocol-level forward secrecy commitment
 - Endpoint compromise: what stays protected: scope declaration, HSM and Secure Enclave
   separation, attested boot and integrity measurement, remote-wipe capability
-- Cross-references back to Ch15 for the architectural primitives each operational flow
-  consumes
+- Chain-of-custody for multi-party transfers: signed-receipt primitives, dispatch/recipient
+  attestation pairs, regulated-stream continuity (LADOT-MDS-style), cross-jurisdiction
+  custody handoffs
+- Event-triggered re-classification: re-classification operation as first-class CRDT log
+  entry; max-register convergence invariant; cross-class reference review queue;
+  upstream-record escalation propagation
+- Cross-references to Ch22 (key-lifecycle operations) where these flows trigger key rotation
+  or recovery as a sub-step
 
 ---
 
