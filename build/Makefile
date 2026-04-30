@@ -28,12 +28,17 @@ CHAPTER_FILES := \
 	$(CHAPTERS_DIR)/part-4-implementation-playbooks/ch18-migrating-existing-saas.md \
 	$(CHAPTERS_DIR)/part-4-implementation-playbooks/ch19-shipping-to-enterprise.md \
 	$(CHAPTERS_DIR)/part-4-implementation-playbooks/ch20-ux-sync-conflict.md \
+	$(CHAPTERS_DIR)/part-5-operational-concerns/ch21-operating-a-fleet.md \
+	$(CHAPTERS_DIR)/part-5-operational-concerns/ch22-security-operations.md \
+	$(CHAPTERS_DIR)/part-5-operational-concerns/ch23-endpoint-collaborator-ops.md \
 	$(CHAPTERS_DIR)/epilogue/epilogue-what-the-stack-owes-you.md \
 	$(CHAPTERS_DIR)/appendices/appendix-a-sync-daemon-wire-protocol.md \
 	$(CHAPTERS_DIR)/appendices/appendix-b-threat-model-worksheets.md \
 	$(CHAPTERS_DIR)/appendices/appendix-c-further-reading.md \
 	$(CHAPTERS_DIR)/appendices/appendix-d-testing-the-inverted-stack.md \
-	$(CHAPTERS_DIR)/appendices/appendix-e-citation-style.md
+	$(CHAPTERS_DIR)/appendices/appendix-e-citation-style.md \
+	$(CHAPTERS_DIR)/appendices/appendix-f-regulatory-coverage.md \
+	$(CHAPTERS_DIR)/appendices/appendix-g-glossary.md
 
 $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
